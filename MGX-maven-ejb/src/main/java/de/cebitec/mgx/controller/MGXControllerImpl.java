@@ -1,0 +1,216 @@
+package de.cebitec.mgx.controller;
+
+import de.cebitec.gpms.GPMSException;
+import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.global.MGXGlobal;
+import de.cebitec.gpms.GPMSMasterI;
+import de.cebitec.mgx.model.dao.*;
+import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.model.db.Habitat;
+import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.model.db.Tool;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+
+/**
+ *
+ * @author sjaenick
+ */
+public class MGXControllerImpl implements MGXController {
+
+    private final static Logger logger = Logger.getLogger(MGXControllerImpl.class.getPackage().getName());
+    private GPMSMasterI gpmsmaster;
+    private EntityManagerFactory emf;
+    private EntityManager em;
+    private Map<Class, DAO> daos;
+    //
+    private MGXConfiguration config;
+    private MGXGlobal global;
+
+    public MGXControllerImpl(GPMSMasterI gpms, MGXGlobal global, MGXConfiguration cfg) {
+        this.gpmsmaster = gpms;
+        this.global = global;
+        this.config = cfg;
+        this.emf = gpms.getEntityManagerFactory();
+        this.em = emf.createEntityManager();
+        daos = new HashMap<Class, DAO>();
+    }
+
+    @Override
+    public final void log(String msg) {
+        logger.log(Level.INFO, msg);
+    }
+
+    @Override
+    public final void log(String msg, Object... args) {
+        logger.log(Level.INFO, String.format(msg, args));
+    }
+
+    @Override
+    public EntityManagerFactory getEMF() {
+        return this.emf;
+    }
+
+    @Override
+    public EntityManager getEntityManager() {
+        if (em == null || !em.isOpen()) {
+            em = emf.createEntityManager();
+        }
+        return em;
+    }
+
+    @Override
+    public MGXConfiguration getConfiguration() {
+        return config;
+    }
+
+    @Override
+    public MGXGlobal getGlobal() {
+        return global;
+    }
+
+    @Override
+    public String getProjectDirectory() {
+        return new StringBuilder(getConfiguration().getPersistentDirectory())
+                .append(File.separator)
+                .append(getProjectName())
+                .append(File.separator)
+                .toString();
+
+    }
+
+    @Override
+    public Connection getConnection() {
+        return gpmsmaster.getProjectConnection();
+    }
+
+    @Override
+    public String getDatabaseHost() {
+        try {
+            return gpmsmaster.getProject().getDatabaseHost();
+        } catch (GPMSException ex) {
+            log(ex.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public String getDatabaseName() {
+        try {
+            return gpmsmaster.getProject().getDatabaseName();
+        } catch (GPMSException ex) {
+            log(ex.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public String getJDBCUrl() {
+        try {
+            return gpmsmaster.getProject().getJDBCUrl();
+        } catch (GPMSException ex) {
+            log(ex.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public void close() {
+        if (em != null && em.isOpen()) {
+            em.close();
+            em = null;
+        }
+    }
+
+    @Override
+    public HabitatDAO<Habitat> getHabitatDAO() {
+        return getDAO(HabitatDAO.class);
+    }
+
+    @Override
+    public AttributeDAO<Attribute> getAttributeDAO() {
+        return getDAO(AttributeDAO.class);
+    }
+
+    @Override
+    public SampleDAO<Sample> getSampleDAO() {
+        return getDAO(SampleDAO.class);
+    }
+
+    @Override
+    public DNAExtractDAO<DNAExtract> getDNAExtractDAO() {
+        return getDAO(DNAExtractDAO.class);
+    }
+
+    @Override
+    public SeqRunDAO<SeqRun> getSeqRunDAO() {
+        return getDAO(SeqRunDAO.class);
+    }
+
+    @Override
+    public SequenceDAO<Sequence> getSequenceDAO() {
+        return getDAO(SequenceDAO.class);
+    }
+
+    @Override
+    public ToolDAO<Tool> getToolDAO() {
+        return getDAO(ToolDAO.class);
+    }
+
+    @Override
+    public JobDAO<Job> getJobDAO() {
+        return getDAO(JobDAO.class);
+    }
+
+    @Override
+    public String getProjectName() {
+        return gpmsmaster.getProject().getName();
+    }
+
+    @Override
+    public String getCurrentUser() {
+        return gpmsmaster.getLogin();
+    }
+
+    private <T extends DAO> T getDAO(Class<T> clazz) {
+        if (!daos.containsKey(clazz)) {
+            daos.put(clazz, createDAO(clazz));
+        }
+        return (T) daos.get(clazz);
+    }
+
+    private <T extends DAO> T createDAO(Class<T> clazz) {
+        try {
+            Constructor<T> c = clazz.getConstructor();
+            T instance = c.newInstance();
+            instance.setController(this);
+            return instance;
+        } catch (InstantiationException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (NoSuchMethodException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+        throw new UnsupportedOperationException("Could not create DAO " + clazz);
+    }
+
+}
