@@ -56,9 +56,7 @@ public abstract class DAO<T extends Identifiable> {
             // MGX application
             return ctx.getConnection();
         } else {
-            // FIXME
             // MGX global
-            System.out.println("FIXME");
             return getEntityManager().unwrap(Session.class).connection();
         }
     }
@@ -103,7 +101,7 @@ public abstract class DAO<T extends Identifiable> {
     public void delete(Long id) throws MGXException {
         if (id == null)
             throw new MGXException("No ID supplied.");
-        
+
         T obj = getById(id);
         if (obj != null) {
             EntityManager e = getEntityManager();
