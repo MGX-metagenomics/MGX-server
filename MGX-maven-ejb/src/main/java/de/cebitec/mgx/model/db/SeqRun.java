@@ -31,7 +31,7 @@ public class SeqRun implements Serializable, Identifiable {
     //
     @OneToMany(mappedBy = "seqrun", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<Job> jobs;
-    
+
     public DNAExtract getExtract() {
         return dnaextract;
     }
@@ -86,7 +86,6 @@ public class SeqRun implements Serializable, Identifiable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
         if (!(object instanceof SeqRun)) {
             return false;
         }

@@ -103,7 +103,7 @@ public class Tool implements Serializable, Identifiable {
         this.xml_file = xml_file;
         return this;
     }
- 
+
     @Override
     public int hashCode() {
         int hash = 0;
@@ -113,7 +113,6 @@ public class Tool implements Serializable, Identifiable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
         if (!(object instanceof Tool)) {
             return false;
         }
