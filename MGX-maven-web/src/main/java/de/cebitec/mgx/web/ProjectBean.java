@@ -3,9 +3,9 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.dto.MembershipDTO;
 import de.cebitec.mgx.dto.MembershipDTOList;
 import de.cebitec.mgx.dto.MembershipDTOList.Builder;
-import de.cebitec.gpms.GPMS;
 import de.cebitec.gpms.data.MembershipI;
 import de.cebitec.gpms.common.ProjectClassFactory;
+import de.cebitec.mgx.gpms.impl.GPMSImpl;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -22,7 +22,7 @@ import javax.ws.rs.Produces;
 public class ProjectBean {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms-ejb/GPMSImpl")
-    GPMS gpms;
+    GPMSImpl gpms;
 
     @GET
     @Path("fetchall")
@@ -34,7 +34,7 @@ public class ProjectBean {
         for (MembershipI m : memberships) {
             MembershipDTO dto = MembershipDTO.newBuilder()
                     .setProject(m.getProject().getName())
-                    .setRole(m.getRole().getRolename())
+                    .setRole(m.getRole().getName())
                     .build();
             ret.addMembership(dto);
         }
