@@ -2,11 +2,12 @@ package de.cebitec.mgx.web;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import de.cebitec.gpms.GPMS;
+import de.cebitec.gpms.data.GPMSI;
 import de.cebitec.gpms.common.ProjectClassFactory;
 import de.cebitec.gpms.data.MembershipI;
 import de.cebitec.gpms.data.ProjectClassI;
 import de.cebitec.gpms.data.UserI;
+import de.cebitec.mgx.gpms.impl.GPMSImpl;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,7 +21,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
 
     @Context
     SecurityContext ctx;
-    private GPMS gpms;
+    private GPMSImpl gpms;
     private ProjectClassI pClass;
 
     public UriProjectFilter() {
