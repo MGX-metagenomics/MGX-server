@@ -1,11 +1,11 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.core.MembershipI;
+import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.gpms.util.ProjectClassFactory;
 import de.cebitec.mgx.dto.MembershipDTO;
 import de.cebitec.mgx.dto.MembershipDTOList;
 import de.cebitec.mgx.dto.MembershipDTOList.Builder;
-import de.cebitec.gpms.data.MembershipI;
-import de.cebitec.gpms.common.ProjectClassFactory;
-import de.cebitec.mgx.gpms.impl.GPMSImpl;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -21,8 +21,8 @@ import javax.ws.rs.Produces;
 @Path("Project")
 public class ProjectBean {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms-ejb/GPMSImpl")
-    GPMSImpl gpms;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
+    DBGPMSI gpms;
 
     @GET
     @Path("fetchall")
@@ -30,7 +30,7 @@ public class ProjectBean {
     public MembershipDTOList fetchall() {
         Builder ret = MembershipDTOList.newBuilder();
 
-        List<MembershipI> memberships = gpms.getCurrentUser().getMemberships(ProjectClassFactory.getProjectClass(gpms, "MGX"));
+        List<? extends MembershipI> memberships = gpms.getCurrentUser().getMemberships(ProjectClassFactory.getProjectClass(gpms, "MGX"));
         for (MembershipI m : memberships) {
             MembershipDTO dto = MembershipDTO.newBuilder()
                     .setProject(m.getProject().getName())
