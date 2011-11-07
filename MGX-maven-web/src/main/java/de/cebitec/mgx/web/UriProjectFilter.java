@@ -2,12 +2,12 @@ package de.cebitec.mgx.web;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
-import de.cebitec.gpms.data.GPMSI;
-import de.cebitec.gpms.common.ProjectClassFactory;
-import de.cebitec.gpms.data.MembershipI;
-import de.cebitec.gpms.data.ProjectClassI;
-import de.cebitec.gpms.data.UserI;
-import de.cebitec.mgx.gpms.impl.GPMSImpl;
+import de.cebitec.gpms.core.MembershipI;
+import de.cebitec.gpms.core.ProjectClassI;
+import de.cebitec.gpms.core.UserI;
+import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.gpms.data.DBMembershipI;
+import de.cebitec.gpms.util.ProjectClassFactory;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +21,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
 
     @Context
     SecurityContext ctx;
-    private GPMSImpl gpms;
+    private DBGPMSI gpms;
     private ProjectClassI pClass;
 
     public UriProjectFilter() {
@@ -34,7 +34,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
 
     private void lookupGPMS() {
         try {
-            gpms = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-gpms-ejb/GPMSImpl");
+            gpms = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-gpms/GPMS");
         } catch (NamingException ex) {
             Logger.getLogger(UriProjectFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -72,9 +72,9 @@ public class UriProjectFilter implements ContainerRequestFilter {
         }
 
         UserI u = gpms.getCurrentUser();
-        List<MembershipI> projects = u.getMemberships(pClass);
+        List<DBMembershipI> memberships = (List<DBMembershipI>) u.getMemberships(pClass);
 
-        for (MembershipI m : projects) {
+        for (DBMembershipI m : memberships) {
             if (m.getProject().getName().equals(project)) {
                 // will create a new master or re-use a cached one
                 gpms.createMaster(m);
