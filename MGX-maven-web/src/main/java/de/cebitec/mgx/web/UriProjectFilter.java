@@ -7,8 +7,6 @@ import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.DBMembershipI;
-import de.cebitec.gpms.util.ProjectClassFactory;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -22,14 +20,9 @@ public class UriProjectFilter implements ContainerRequestFilter {
     @Context
     SecurityContext ctx;
     private DBGPMSI gpms;
-    private ProjectClassI pClass;
 
     public UriProjectFilter() {
         lookupGPMS();
-        // preload project class, since this involves reading and parsing
-        // the rnr file
-        System.err.println("new filter instance");
-        pClass = ProjectClassFactory.getProjectClass(gpms, "MGX");
     }
 
     private void lookupGPMS() {
@@ -72,15 +65,14 @@ public class UriProjectFilter implements ContainerRequestFilter {
         }
 
         UserI u = gpms.getCurrentUser();
-        List<DBMembershipI> memberships = (List<DBMembershipI>) u.getMemberships(pClass);
-
-        for (DBMembershipI m : memberships) {
-            if (m.getProject().getName().equals(project)) {
-                // will create a new master or re-use a cached one
-                gpms.createMaster(m);
+        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
+            for (MembershipI m : u.getMemberships(pc)) {
+                if (m.getProject().getName().equals(project)) {
+                    // will create a new master or re-use a cached one
+                    gpms.createMaster((DBMembershipI)m);
+                }
             }
         }
-
         return cr;
     }
 }

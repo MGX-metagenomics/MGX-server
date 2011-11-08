@@ -1,8 +1,8 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.core.MembershipI;
+import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.data.DBGPMSI;
-import de.cebitec.gpms.util.ProjectClassFactory;
 import de.cebitec.mgx.dto.MembershipDTO;
 import de.cebitec.mgx.dto.MembershipDTOList;
 import de.cebitec.mgx.dto.MembershipDTOList.Builder;
@@ -30,13 +30,17 @@ public class ProjectBean {
     public MembershipDTOList fetchall() {
         Builder ret = MembershipDTOList.newBuilder();
 
-        List<? extends MembershipI> memberships = gpms.getCurrentUser().getMemberships(ProjectClassFactory.getProjectClass(gpms, "MGX"));
-        for (MembershipI m : memberships) {
-            MembershipDTO dto = MembershipDTO.newBuilder()
-                    .setProject(m.getProject().getName())
-                    .setRole(m.getRole().getName())
-                    .build();
-            ret.addMembership(dto);
+        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
+            if ("MGX".equals(pc.getName())) {
+                List<? extends MembershipI> memberships = gpms.getCurrentUser().getMemberships(pc);
+                for (MembershipI m : memberships) {
+                    MembershipDTO dto = MembershipDTO.newBuilder()
+                            .setProject(m.getProject().getName())
+                            .setRole(m.getRole().getName())
+                            .build();
+                    ret.addMembership(dto);
+                }
+            }
         }
         return ret.build();
     }
