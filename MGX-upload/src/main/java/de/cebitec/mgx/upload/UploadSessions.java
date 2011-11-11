@@ -53,12 +53,6 @@ public class UploadSessions {
         return uuid;
     }
 
-//    public UUID createSession(MGXController mgx, long seqrun_id) throws MGXException {
-//        UUID uuid = UUID.randomUUID();
-//        sessions.put(uuid, new SeqUploadReceiver<SequenceDTOList>(mgx.getJDBCUrl(), mgx.getProjectName(), seqrun_id));
-//        return uuid;
-//    }
-
     public void addData(UUID uuid, SequenceDTOList seqs) throws MGXException {
         sessions.get(uuid).add(seqs);
     }
