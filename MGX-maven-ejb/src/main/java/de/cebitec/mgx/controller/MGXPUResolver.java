@@ -1,8 +1,8 @@
 package de.cebitec.mgx.controller;
 
 
-import de.cebitec.gpms.EMFNameResolver;
-import de.cebitec.gpms.data.MembershipI;
+import de.cebitec.gpms.core.MembershipI;
+import de.cebitec.gpms.util.EMFNameResolver;
 import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;

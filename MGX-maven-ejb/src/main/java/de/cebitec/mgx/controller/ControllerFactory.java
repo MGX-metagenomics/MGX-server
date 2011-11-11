@@ -1,12 +1,9 @@
 package de.cebitec.mgx.controller;
 
+import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.gpms.GPMSException;
-import de.cebitec.gpms.GPMS;
-import de.cebitec.gpms.GPMSMasterI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Disposes;
@@ -18,8 +15,8 @@ import javax.enterprise.inject.Produces;
  */
 public class ControllerFactory {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms-ejb/GPMSImpl")
-    GPMS gpms;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
+    DBGPMSI gpms;
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXGlobal")
@@ -30,7 +27,7 @@ public class ControllerFactory {
     @RequestScoped
     MGXController getController() {
         //try {
-            GPMSMasterI currentMaster = gpms.getCurrentMaster();
+            DBMasterI currentMaster = gpms.getCurrentMaster();
             return new MGXControllerImpl(currentMaster, global, mgxconfig);
        // } catch (GPMSException ex) {
         //    Logger.getLogger(ControllerFactory.class.getName()).log(Level.SEVERE, null, ex);

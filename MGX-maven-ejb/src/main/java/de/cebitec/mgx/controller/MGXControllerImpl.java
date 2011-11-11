@@ -1,9 +1,8 @@
 package de.cebitec.mgx.controller;
 
-import de.cebitec.gpms.GPMSException;
+import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.gpms.GPMSMasterI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.DNAExtract;
@@ -17,6 +16,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -31,7 +31,7 @@ import javax.persistence.EntityManagerFactory;
 public class MGXControllerImpl implements MGXController {
 
     private final static Logger logger = Logger.getLogger(MGXControllerImpl.class.getPackage().getName());
-    private GPMSMasterI gpmsmaster;
+    private DBMasterI gpmsmaster;
     private EntityManagerFactory emf;
     private EntityManager em;
     private Map<Class, DAO> daos;
@@ -39,7 +39,7 @@ public class MGXControllerImpl implements MGXController {
     private MGXConfiguration config;
     private MGXGlobal global;
 
-    public MGXControllerImpl(GPMSMasterI gpms, MGXGlobal global, MGXConfiguration cfg) {
+    public MGXControllerImpl(DBMasterI gpms, MGXGlobal global, MGXConfiguration cfg) {
         this.gpmsmaster = gpms;
         this.global = global;
         this.config = cfg;
@@ -83,47 +83,34 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getProjectDirectory() {
-        return new StringBuilder(getConfiguration().getPersistentDirectory())
-                .append(File.separator)
-                .append(getProjectName())
-                .append(File.separator)
-                .toString();
+        return new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
 
     }
 
     @Override
     public Connection getConnection() {
-        return gpmsmaster.getProjectConnection();
+        Connection connection = null;
+        try {
+            connection = gpmsmaster.getDataSource().getConnection();
+        } catch (SQLException ex) {
+            Logger.getLogger(MGXControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return connection;
     }
 
     @Override
     public String getDatabaseHost() {
-        try {
-            return gpmsmaster.getProject().getDatabaseHost();
-        } catch (GPMSException ex) {
-            log(ex.getMessage());
-        }
-        return null;
+        return gpmsmaster.getProject().getDBConfig().getDatabaseHost();
     }
 
     @Override
     public String getDatabaseName() {
-        try {
-            return gpmsmaster.getProject().getDatabaseName();
-        } catch (GPMSException ex) {
-            log(ex.getMessage());
-        }
-        return null;
+        return gpmsmaster.getProject().getDBConfig().getDatabaseName();
     }
 
     @Override
     public String getJDBCUrl() {
-        try {
-            return gpmsmaster.getProject().getJDBCUrl();
-        } catch (GPMSException ex) {
-            log(ex.getMessage());
-        }
-        return null;
+        return gpmsmaster.getProject().getDBConfig().getURI();
     }
 
     @Override
@@ -212,5 +199,4 @@ public class MGXControllerImpl implements MGXController {
         }
         throw new UnsupportedOperationException("Could not create DAO " + clazz);
     }
-
 }
