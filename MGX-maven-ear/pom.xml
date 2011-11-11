@@ -79,7 +79,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>MGX-gpms-ejb</artifactId>
+            <artifactId>MGX-gpms</artifactId>
             <version>${project.version}</version>
             <type>ejb</type>
         </dependency>
