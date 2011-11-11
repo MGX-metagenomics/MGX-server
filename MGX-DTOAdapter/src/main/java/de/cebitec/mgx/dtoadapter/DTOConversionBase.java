@@ -1,14 +1,13 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.model.db.Identifiable;
 import java.util.Date;
 
 /**
  *
  * @author sjaenick
  */
-public abstract class DTOConversionBase<T extends Identifiable, U> {
-    
+public abstract class DTOConversionBase<T, U> {
+
     public abstract U toDTO(T a);
 
     public abstract T toDB(U dto);
