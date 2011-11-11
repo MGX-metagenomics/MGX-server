@@ -53,6 +53,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
 
     @Override
     public ContainerRequest filter(ContainerRequest cr) {
+
         String project = getProjectFromPath(cr.getPath());
         String resource = removeProjectFromPath(cr.getPath());
 

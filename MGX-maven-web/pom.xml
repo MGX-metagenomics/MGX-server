@@ -54,13 +54,6 @@
             <artifactId>MGX-DTOAdapter</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- <dependency>
-            xxx ugly exclusion hack xxx
-            <groupId>${project.groupId}</groupId>
-            <artifactId>MGX-gpms</artifactId>
-            <scope>provided</scope>
-            <version>${project.version}</version>
-        </dependency> -->
         <dependency>
             <artifactId>MGX-isequences</artifactId>
             <groupId>${project.groupId}</groupId>

@@ -3,9 +3,14 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.mgx.dto.MGXString;
 import de.cebitec.mgx.dto.MembershipDTO;
 import de.cebitec.mgx.dto.MembershipDTOList;
 import de.cebitec.mgx.dto.MembershipDTOList.Builder;
+import de.cebitec.mgx.dto.ProjectClassDTOList;
+import de.cebitec.mgx.dtoadapter.ProjectClassDTOFactory;
+import de.cebitec.mgx.dtoadapter.ProjectDTOFactory;
+import de.cebitec.mgx.dtoadapter.RoleDTOFactory;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -18,16 +23,33 @@ import javax.ws.rs.Produces;
  * @author sjaenick
  */
 @Stateless
-@Path("Project")
+@Path("GPMSBean")
 public class ProjectBean {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
     DBGPMSI gpms;
 
     @GET
-    @Path("fetchall")
+    @Path("login")
+    public MGXString login() {
+        return MGXString.newBuilder().setValue("MGX").build();
+    }
+
+    @GET
+    @Path("listProjectClasses")
     @Produces("application/x-protobuf")
-    public MembershipDTOList fetchall() {
+    public ProjectClassDTOList listProjectClasses() {
+        ProjectClassDTOList.Builder ret = ProjectClassDTOList.newBuilder();
+        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
+            ret.addProjectclass(ProjectClassDTOFactory.getInstance().toDTO(pc));
+        }
+        return ret.build();
+    }
+
+    @GET
+    @Path("listMemberships")
+    @Produces("application/x-protobuf")
+    public MembershipDTOList listMemberships() {
         Builder ret = MembershipDTOList.newBuilder();
 
         for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
@@ -35,8 +57,8 @@ public class ProjectBean {
                 List<? extends MembershipI> memberships = gpms.getCurrentUser().getMemberships(pc);
                 for (MembershipI m : memberships) {
                     MembershipDTO dto = MembershipDTO.newBuilder()
-                            .setProject(m.getProject().getName())
-                            .setRole(m.getRole().getName())
+                            .setProject(ProjectDTOFactory.getInstance().toDTO(m.getProject()))
+                            .setRole(RoleDTOFactory.getInstance().toDTO(m.getRole()))
                             .build();
                     ret.addMembership(dto);
                 }
