@@ -1,7 +1,5 @@
 package de.cebitec.mgx.gpms.impl.data;
 
-import de.cebitec.mgx.gpms.GPMSException;
-import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.gpms.impl.GPMS;
