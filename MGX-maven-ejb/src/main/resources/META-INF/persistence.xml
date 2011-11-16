@@ -19,7 +19,7 @@
       <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/>
       <property name="hibernate.id.new_generator_mappings" value="true"/>
       <property name="hibernate.connection.release_mode" value="after_statement"/>
-      <property name="hibernate.hbm2ddl.auto" value="create"/>
+      <!-- <property name="hibernate.hbm2ddl.auto" value="create"/> -->
     </properties>
   </persistence-unit>
   <persistence-unit name="MGX-global" transaction-type="JTA">
