@@ -1,6 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.ToolDTO;
+import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.model.db.Tool;
 
 /**

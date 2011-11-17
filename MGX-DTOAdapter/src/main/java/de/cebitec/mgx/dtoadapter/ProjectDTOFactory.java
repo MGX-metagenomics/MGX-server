@@ -1,7 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.ProjectI;
-import de.cebitec.mgx.dto.ProjectDTO;
+import de.cebitec.mgx.dto.dto.ProjectDTO;
 
 /**
  *

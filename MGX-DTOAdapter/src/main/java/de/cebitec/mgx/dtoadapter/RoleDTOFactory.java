@@ -1,7 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.RoleI;
-import de.cebitec.mgx.dto.RoleDTO;
+import de.cebitec.mgx.dto.dto.RoleDTO;
 
 /**
  *

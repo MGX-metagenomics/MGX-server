@@ -1,7 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.model.db.DNAExtract;
-import de.cebitec.mgx.dto.DNAExtractDTO;
+import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 /**
  *
  * @author sjaenick

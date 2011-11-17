@@ -1,6 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.HabitatDTO;
+import de.cebitec.mgx.dto.dto.HabitatDTO;
 import de.cebitec.mgx.model.db.Habitat;
 
 /**
@@ -14,7 +14,8 @@ public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO> {
     }
     protected static HabitatDTOFactory instance;
 
-    private HabitatDTOFactory() {}
+    private HabitatDTOFactory() {
+    }
 
     public static HabitatDTOFactory getInstance() {
         return instance;
@@ -22,28 +23,16 @@ public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO> {
 
     @Override
     public final HabitatDTO toDTO(Habitat h) {
-        return HabitatDTO.newBuilder()
-                .setId(h.getId())
-                .setName(h.getName())
-                .setGPSlocation(h.getLocation())
-                .setAltitude(h.getAltitude())
-                .setBiome(h.getBiome())
-                .setDescription(h.getDescription())
-                .setId(h.getId())
-                .build();
+        return HabitatDTO.newBuilder().setId(h.getId()).setName(h.getName()).setGPSlocation(h.getLocation()).setAltitude(h.getAltitude()).setBiome(h.getBiome()).setDescription(h.getDescription()).setId(h.getId()).build();
     }
 
     @Override
     public final Habitat toDB(HabitatDTO dto) {
-        Habitat h = new Habitat()
-                .setName(dto.getName())
-                .setLocation(dto.getGPSlocation())
-                .setAltitude(dto.getAltitude())
-                .setBiome(dto.getBiome())
-                .setDescription(dto.getDescription());
+        Habitat h = new Habitat().setName(dto.getName()).setLocation(dto.getGPSlocation()).setAltitude(dto.getAltitude()).setBiome(dto.getBiome()).setDescription(dto.getDescription());
 
-        if (dto.hasId())
+        if (dto.hasId()) {
             h.setId(dto.getId());
+        }
 
         return h;
     }

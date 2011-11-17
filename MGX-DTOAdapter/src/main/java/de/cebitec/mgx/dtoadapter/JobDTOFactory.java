@@ -1,8 +1,8 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.JobDTO.Builder;
+import de.cebitec.mgx.dto.dto.JobDTO;
+import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.dto.JobDTO;
 import de.cebitec.mgx.model.db.JobState;
 
 /**

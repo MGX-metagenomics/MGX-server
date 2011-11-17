@@ -2,9 +2,9 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.RoleI;
-import de.cebitec.mgx.dto.ProjectClassDTO;
-import de.cebitec.mgx.dto.RoleDTOList;
-import de.cebitec.mgx.dto.RoleDTOList.Builder;
+import de.cebitec.mgx.dto.dto.ProjectClassDTO;
+import de.cebitec.mgx.dto.dto.RoleDTOList.Builder;
+import de.cebitec.mgx.dto.dto.RoleDTOList;
 
 /**
  *

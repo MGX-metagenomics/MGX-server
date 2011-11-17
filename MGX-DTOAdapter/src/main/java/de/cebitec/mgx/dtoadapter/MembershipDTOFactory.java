@@ -1,7 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.MembershipI;
-import de.cebitec.mgx.dto.MembershipDTO;
+import de.cebitec.mgx.dto.dto.MembershipDTO;
 
 /**
  *

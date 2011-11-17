@@ -1,6 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.SeqRunDTO;
+import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.model.db.SeqRun;
 
 /**

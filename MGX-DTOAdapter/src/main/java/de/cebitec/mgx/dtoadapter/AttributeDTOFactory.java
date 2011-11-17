@@ -1,6 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.model.db.Attribute;
 
 /**
