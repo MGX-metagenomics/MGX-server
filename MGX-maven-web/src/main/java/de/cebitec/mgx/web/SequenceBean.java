@@ -3,7 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.SequenceDTOList;
+import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
