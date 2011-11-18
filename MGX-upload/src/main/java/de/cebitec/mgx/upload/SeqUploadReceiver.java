@@ -2,8 +2,8 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.SequenceDTO;
-import de.cebitec.mgx.dto.SequenceDTOList;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
+import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.DNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
