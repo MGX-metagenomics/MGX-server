@@ -74,13 +74,16 @@ public class SeqRunBean {
         if (id == null) {
             throw new MGXWebException("No ID supplied");
         }
-        Object obj;
+        SeqRun obj;
         try {
             obj = mgx.getSeqRunDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SeqRunDTOFactory.getInstance().toDTO((SeqRun) obj);
+        if (obj == null) {
+            throw new MGXWebException("No such SeqRun");
+        }
+        return SeqRunDTOFactory.getInstance().toDTO(obj);
     }
 
     @GET
@@ -104,9 +107,10 @@ public class SeqRunBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+        // convert to DTO
         Builder b = SeqRunDTOList.newBuilder();
         for (SeqRun o : mgx.getSeqRunDAO().byDNAExtract(d)) {
-            b.addSeqrun(SeqRunDTOFactory.getInstance().toDTO((SeqRun) o));
+            b.addSeqrun(SeqRunDTOFactory.getInstance().toDTO(o));
         }
         return b.build();
     }
