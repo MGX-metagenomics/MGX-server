@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 /**
  *
@@ -20,7 +21,16 @@ public class SeqRun implements Serializable, Identifiable {
     @Basic
     protected String DBFile;
     @Basic
-    String database_accession;
+    protected String database_accession;
+    @Basic
+    @NotNull
+    protected Boolean submitted_to_insdc;
+    @Basic
+    @NotNull
+    protected String sequencing_technology;
+    @Basic
+    @NotNull
+    protected String sequencing_method;
     //
     @OneToMany(mappedBy = "seqrun", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<Sequence> sequences;
@@ -36,8 +46,9 @@ public class SeqRun implements Serializable, Identifiable {
         return dnaextract;
     }
 
-    public void setExtract(DNAExtract dnaextract) {
+    public SeqRun setExtract(DNAExtract dnaextract) {
         this.dnaextract = dnaextract;
+        return this;
     }
 
     @Override
@@ -74,6 +85,34 @@ public class SeqRun implements Serializable, Identifiable {
 
     public SeqRun setSequences(Collection<Sequence> sequences) {
         this.sequences = sequences;
+        return this;
+    }
+
+
+    public String getSequencingMethod() {
+        return sequencing_method;
+    }
+
+    public SeqRun setSequencingMethod(String sequencing_method) {
+        this.sequencing_method = sequencing_method;
+        return this;
+    }
+
+    public String getSequencingTechnology() {
+        return sequencing_technology;
+    }
+
+    public SeqRun setSequencingTechnology(String sequencing_technology) {
+        this.sequencing_technology = sequencing_technology;
+        return this;
+    }
+
+    public Boolean getSubmittedToINSDC() {
+        return submitted_to_insdc;
+    }
+
+    public SeqRun setSubmittedToINSDC(Boolean submitted_to_insdc) {
+        this.submitted_to_insdc = submitted_to_insdc;
         return this;
     }
 
