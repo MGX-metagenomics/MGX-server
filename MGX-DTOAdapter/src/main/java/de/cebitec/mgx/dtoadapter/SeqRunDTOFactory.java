@@ -24,15 +24,21 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO> {
     public final SeqRunDTO toDTO(SeqRun s) {
         return SeqRunDTO.newBuilder()
                 .setId(s.getId())
-                .setAccession(s.getAccession())
                 .setExtractId(s.getExtract().getId())
+                .setAccession(s.getAccession())
+                .setSubmittedToInsdc(s.getSubmittedToINSDC())
+                .setSequencingMethod(s.getSequencingMethod())
+                .setSequencingTechnology(s.getSequencingTechnology())
                 .build();
     }
 
     @Override
     public final SeqRun toDB(SeqRunDTO dto) {
         SeqRun s = new SeqRun()
-                .setAccession(dto.getAccession());
+                .setAccession(dto.getAccession())
+                .setSubmittedToINSDC(dto.getSubmittedToInsdc())
+                .setSequencingMethod(dto.getSequencingMethod())
+                .setSequencingTechnology(dto.getSequencingTechnology());
 
         if (dto.hasId())
             s.setId(dto.getId());
