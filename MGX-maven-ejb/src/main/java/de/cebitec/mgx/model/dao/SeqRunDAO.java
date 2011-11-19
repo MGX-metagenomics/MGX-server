@@ -28,7 +28,8 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
             SeqReaderFactory.delete(sr.getDBFile());
 
             /*
-             * JPA CascadeType.DELETE fetches and delete all entities individually
+             * JPA CascadeType.DELETE fetches and delete all entities individually;
+             * we can do better..
              */
             Connection conn = null;
             PreparedStatement stmt = null;
