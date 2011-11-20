@@ -29,7 +29,7 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
 
             /*
              * JPA CascadeType.DELETE fetches and delete all entities individually;
-             * we can do better..
+             * we can do better by manually deleting all associated reads ..
              */
             Connection conn = null;
             PreparedStatement stmt = null;
