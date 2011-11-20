@@ -86,7 +86,7 @@ public class JobSubmitterImpl implements JobSubmitter {
             return false;
         }
     }
-    
+
     @Override
     public void delete(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
@@ -139,7 +139,7 @@ public class JobSubmitterImpl implements JobSubmitter {
             cmd.append(s);
             cmd.append(" ");
         }
-        
+
         String[] argv = commands.toArray(new String[0]);
 
         StringBuilder output = new StringBuilder();
@@ -186,9 +186,10 @@ public class JobSubmitterImpl implements JobSubmitter {
         String[] params = j.getParameters().split("\\s+");
 
         FileWriter fw = null;
+        BufferedWriter cfgFile = null;
         try {
             fw = new FileWriter(jobconfig.toString(), false);
-            BufferedWriter cfgFile = new BufferedWriter(fw);
+            cfgFile = new BufferedWriter(fw);
 
             cfgFile.write("mgx.username=" + mgxcfg.getMGXUser());
             cfgFile.newLine();
@@ -206,13 +207,12 @@ public class JobSubmitterImpl implements JobSubmitter {
                 cfgFile.newLine();
             }
 
-            cfgFile.close();
-            fw.close();
         } catch (IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXException(ex.getMessage());
         } finally {
             try {
+                cfgFile.close();
                 fw.close();
             } catch (IOException ex) {
                 mgx.log(ex.getMessage());
