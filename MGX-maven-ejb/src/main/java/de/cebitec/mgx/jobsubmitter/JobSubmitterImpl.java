@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import javax.ejb.Stateless;
@@ -129,7 +129,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     private boolean validateParameters(MGXController mgx, Job j) throws MGXInsufficientJobConfigurationException, MGXException {
 
         // build up command string
-        List<String> commands = new LinkedList<String>();
+        List<String> commands = new ArrayList<String>();
         commands.add(mgx.getConfiguration().getValidatorExecutable());
         commands.add(j.getTool().getXMLFile());
         commands.add(createJobConfigFile(mgx, j));
