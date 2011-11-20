@@ -3,7 +3,7 @@ package de.cebitec.mgx.gpms.impl.data;
 import de.cebitec.gpms.core.RightI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.DBRoleI;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,6 +69,6 @@ public class Role implements DBRoleI {
 
     @Override
     public List<RightI> getRights() {
-        return new LinkedList<RightI>();
+        return new ArrayList<RightI>();
     }
 }
