@@ -28,8 +28,12 @@ public class Habitat implements Serializable, Identifiable {
     /* GPS location of habitat */
     @Basic
     @NotNull
-    @Column(name = "location")
-    protected String location;
+    @Column(name = "latitude")
+    protected Double latitude;
+    @Basic
+    @NotNull
+    @Column(name = "longitude")
+    protected Double longitude;
     @Basic
     @Column(name = "description")
     protected String description;
@@ -74,12 +78,21 @@ public class Habitat implements Serializable, Identifiable {
         return this;
     }
 
-    public String getLocation() {
-        return location;
+    public Double getLatitude() {
+        return latitude;
     }
 
-    public Habitat setLocation(String location) {
-        this.location = location;
+    public Habitat setLatitude(Double latitude) {
+        this.latitude = latitude;
+        return this;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public Habitat setLongitude(Double longitude) {
+        this.longitude = longitude;
         return this;
     }
 
