@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collection;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -29,11 +30,11 @@ public class Habitat implements Serializable, Identifiable {
     @Basic
     @NotNull
     @Column(name = "latitude")
-    protected Double latitude;
+    protected BigDecimal latitude;
     @Basic
     @NotNull
     @Column(name = "longitude")
-    protected Double longitude;
+    protected BigDecimal longitude;
     @Basic
     @Column(name = "description")
     protected String description;
@@ -79,20 +80,20 @@ public class Habitat implements Serializable, Identifiable {
     }
 
     public Double getLatitude() {
-        return latitude;
+        return latitude.doubleValue();
     }
 
     public Habitat setLatitude(Double latitude) {
-        this.latitude = latitude;
+        this.latitude = BigDecimal.valueOf(latitude);
         return this;
     }
 
     public Double getLongitude() {
-        return longitude;
+        return longitude.doubleValue();
     }
 
     public Habitat setLongitude(Double longitude) {
-        this.longitude = longitude;
+        this.longitude = BigDecimal.valueOf(longitude);
         return this;
     }
 
