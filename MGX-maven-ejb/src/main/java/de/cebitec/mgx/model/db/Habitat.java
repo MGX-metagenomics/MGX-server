@@ -29,11 +29,11 @@ public class Habitat implements Serializable, Identifiable {
     /* GPS location of habitat */
     @Basic
     @NotNull
-    @Column(name = "latitude")
+    @Column(name = "latitude", precision=11, scale=8)
     protected BigDecimal latitude;
     @Basic
     @NotNull
-    @Column(name = "longitude")
+    @Column(name = "longitude", precision=11, scale=8)
     protected BigDecimal longitude;
     @Basic
     @Column(name = "description")
