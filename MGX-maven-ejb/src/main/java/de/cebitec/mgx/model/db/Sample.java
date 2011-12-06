@@ -5,6 +5,7 @@
 package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import javax.persistence.*;
@@ -31,8 +32,8 @@ public class Sample implements Serializable, Identifiable {
     @Column(name = "material")
     protected String material;
     @Basic
-    @Column(name = "temperature")
-    protected int temperature;
+    @Column(name = "temperature", precision=11, scale=8)
+    protected BigDecimal temperature;
     @Basic
     @Column(name = "volume")
     protected int volume;
@@ -84,12 +85,12 @@ public class Sample implements Serializable, Identifiable {
         return this;
     }
 
-    public int getTemperature() {
-        return temperature;
+    public double getTemperature() {
+        return temperature.doubleValue();
     }
 
-    public Sample setTemperature(int temperature) {
-        this.temperature = temperature;
+    public Sample setTemperature(double temperature) {
+        this.temperature = BigDecimal.valueOf(temperature);
         return this;
     }
 
