@@ -32,7 +32,7 @@ public class Sample implements Serializable, Identifiable {
     @Column(name = "material")
     protected String material;
     @Basic
-    @Column(name = "temperature", precision=11, scale=8)
+    @Column(name = "temperature", precision=7, scale=2)
     protected BigDecimal temperature;
     @Basic
     @Column(name = "volume")
