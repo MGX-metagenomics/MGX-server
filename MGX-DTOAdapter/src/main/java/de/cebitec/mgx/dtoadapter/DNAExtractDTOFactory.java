@@ -23,6 +23,7 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
     public final DNAExtractDTO toDTO(DNAExtract d) {
         return DNAExtractDTO.newBuilder()
                 .setId(d.getId())
+                .setDescription(d.getDescription())
                 .setSampleId(d.getSample().getId())
                 .build();
     }
