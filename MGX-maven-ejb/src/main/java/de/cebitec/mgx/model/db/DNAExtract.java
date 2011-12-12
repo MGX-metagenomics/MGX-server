@@ -16,6 +16,9 @@ public class DNAExtract implements Serializable, Identifiable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Basic
+    @Column(name = "description")
+    protected String description;
     //
     @OneToMany(mappedBy = "dnaextract", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     protected Collection<SeqRun> seqruns;
@@ -39,6 +42,15 @@ public class DNAExtract implements Serializable, Identifiable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public DNAExtract setDescription(String description) {
+        this.description = description;
+        return this;
     }
 
     public Collection<SeqRun> getSeqruns() {
@@ -75,6 +87,6 @@ public class DNAExtract implements Serializable, Identifiable {
 
     @Override
     public String toString() {
-        return "de.cebitec.mgx.ejb.DNAExtract[id=" + id + "]";
+        return "de.cebitec.mgx.model.db.DNAExtract[id=" + id + "]";
     }
 }
