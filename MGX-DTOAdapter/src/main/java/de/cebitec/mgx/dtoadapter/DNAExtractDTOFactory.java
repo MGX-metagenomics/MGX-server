@@ -2,6 +2,8 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
+import de.cebitec.mgx.dto.dto.DNAExtractDTO.Builder;
+
 /**
  *
  * @author sjaenick
@@ -13,7 +15,8 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
     }
     protected static DNAExtractDTOFactory instance;
 
-    private DNAExtractDTOFactory() {}
+    private DNAExtractDTOFactory() {
+    }
 
     public static DNAExtractDTOFactory getInstance() {
         return instance;
@@ -21,20 +24,55 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
 
     @Override
     public final DNAExtractDTO toDTO(DNAExtract d) {
-        return DNAExtractDTO.newBuilder()
-                .setId(d.getId())
-                .setDescription(d.getDescription())
-                .setSampleId(d.getSample().getId())
-                .build();
+        Builder b = DNAExtractDTO.newBuilder();
+        if (d.getId() != null) {
+            b.setId(d.getId());
+        }
+        b = b.setSampleId(d.getSample().getId());
+
+        b = b.setMethod(d.getMethod());
+        b = b.setProtocolName(d.getProtocol());
+
+        // optional fields
+        b = b.setFivePrimePrimer(d.getFivePrimer());
+        b = b.setThreePrimePrimer(d.getThreePrimer());
+        b = b.setTargetGene(d.getTargetGene());
+        b = b.setTargetFragment(d.getTargetFragment());
+        b = b.setDescription(d.getDescription());
+
+        return b.build();
     }
 
     @Override
     public final DNAExtract toDB(DNAExtractDTO dto) {
         DNAExtract d = new DNAExtract();
 
-        if (dto.hasId())
+        if (dto.hasId()) {
             d.setId(dto.getId());
+        }
+
+        d.setMethod(dto.getMethod());
+        d.setProtocol(dto.getProtocolName());
+
+        // optional fields
+
+        if (dto.hasFivePrimePrimer()) {
+            d.setFivePrimer(dto.getFivePrimePrimer());
+        }
+        if (dto.hasThreePrimePrimer()) {
+            d.setThreePrimer(dto.getThreePrimePrimer());
+        }
+        if (dto.hasTargetGene()) {
+            d.setTargetGene(dto.getTargetGene());
+        }
+        if (dto.hasTargetFragment()) {
+            d.setTargetFragment(dto.getTargetFragment());
+        }
+        if (dto.hasDescription()) {
+            d.setDescription(dto.getDescription());
+        }
 
         return d;
+
     }
 }
