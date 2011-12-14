@@ -58,7 +58,14 @@ public class SeqRunBean {
     @Path("update")
     @Consumes("application/x-protobuf")
     public Response update(SeqRunDTO dto) {
+        DNAExtract e = null;
+        try {
+            e = mgx.getDNAExtractDAO().getById(dto.getExtractId());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         SeqRun s = SeqRunDTOFactory.getInstance().toDB(dto);
+        s.setExtract(e);
         try {
             mgx.getSeqRunDAO().update(s);
         } catch (MGXException ex) {

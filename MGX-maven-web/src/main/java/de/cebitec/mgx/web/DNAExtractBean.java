@@ -57,9 +57,16 @@ public class DNAExtractBean {
     @Path("update")
     @Consumes("application/x-protobuf")
     public Response update(DNAExtractDTO dto) {
-        DNAExtract h = DNAExtractDTOFactory.getInstance().toDB(dto);
+        Sample s = null;
         try {
-            mgx.getDNAExtractDAO().update(h);
+            s = mgx.getSampleDAO().getById(dto.getSampleId());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        DNAExtract extract = DNAExtractDTOFactory.getInstance().toDB(dto);
+        extract.setSample(s);
+        try {
+            mgx.getDNAExtractDAO().update(extract);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

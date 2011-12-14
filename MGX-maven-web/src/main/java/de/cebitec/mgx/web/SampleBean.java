@@ -59,9 +59,16 @@ public class SampleBean {
     @POST
     @Path("update")
     public Response update(SampleDTO dto) {
-        Sample h = SampleDTOFactory.getInstance().toDB(dto);
+        Habitat h = null;
         try {
-            mgx.getSampleDAO().update(h);
+            h = mgx.getHabitatDAO().getById(dto.getHabitatId());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        Sample sample = SampleDTOFactory.getInstance().toDB(dto);
+        sample.setHabitat(h);
+        try {
+            mgx.getSampleDAO().update(sample);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
