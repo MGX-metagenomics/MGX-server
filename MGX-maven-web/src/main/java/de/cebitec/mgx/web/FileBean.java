@@ -9,7 +9,10 @@ import de.cebitec.mgx.dto.dto.FoDList;
 import de.cebitec.mgx.dto.dto.FoDList.Builder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -32,7 +35,7 @@ public class FileBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public FoDList fetchall() {
-        File basedir = new File(mgx.getProjectDirectory() + "/files/");
+        File basedir = new File(mgx.getProjectDirectory());
         if (!basedir.exists()) {
             basedir.mkdirs();
         }
@@ -56,12 +59,20 @@ public class FileBean {
             FileOrDirectory.Builder entryBuilder = de.cebitec.mgx.dto.dto.FileOrDirectory.newBuilder();
             if (f.isFile()) {
                 dto.File.Builder fileBuilder = de.cebitec.mgx.dto.dto.File.newBuilder();
-                fileBuilder.setName(f.getName());
+                try {
+                    fileBuilder.setName(stripProjectDir(f.getCanonicalPath()));
+                } catch (IOException ex) {
+                    Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 fileBuilder.setSize(f.length());
                 entryBuilder.setFile(fileBuilder.build());
             } else if (f.isDirectory()) {
                 Directory.Builder dirBuilder = de.cebitec.mgx.dto.dto.Directory.newBuilder();
-                dirBuilder.setName(f.getName());
+                try {
+                    dirBuilder.setName(stripProjectDir(f.getCanonicalPath()));
+                } catch (IOException ex) {
+                    Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 // recurse into subdirectory
                 List<FileOrDirectory> entryList = listDir(f.getAbsoluteFile()).getEntryList();
                 dirBuilder.addAllFile(entryList);
@@ -70,5 +81,15 @@ public class FileBean {
             list.addEntry(entryBuilder.build());
         }
         return list.build();
+    }
+    
+    private String stripProjectDir(String input) {
+        String projectDirectory = mgx.getProjectDirectory();
+        if (input.startsWith(projectDirectory)) {
+            input = input.substring(projectDirectory.length());
+        } else {
+            System.err.println(projectDirectory +" not found in "+ input);
+        }
+        return input;
     }
 }
