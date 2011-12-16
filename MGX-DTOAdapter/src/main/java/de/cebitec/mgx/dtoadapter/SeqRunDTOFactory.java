@@ -35,10 +35,12 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO> {
     @Override
     public final SeqRun toDB(SeqRunDTO dto) {
         SeqRun s = new SeqRun()
-                .setAccession(dto.getAccession())
                 .setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(dto.getSequencingMethod())
                 .setSequencingTechnology(dto.getSequencingTechnology());
+        
+        if (dto.getSubmittedToInsdc())
+            s.setAccession(dto.getAccession());
 
         if (dto.hasId())
             s.setId(dto.getId());
