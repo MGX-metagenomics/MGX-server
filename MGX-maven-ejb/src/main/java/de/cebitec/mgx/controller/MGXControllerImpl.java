@@ -83,8 +83,15 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getProjectDirectory() {
-        return new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
-
+        String ret = new StringBuilder(getConfiguration().getPersistentDirectory())
+                .append(File.separator)
+                .append(getProjectName())
+                .append(File.separator)
+                .toString();
+        while (ret.contains(File.separator + File.separator)) {
+            ret = ret.replaceAll(File.separator + File.separator, "/");
+        }
+        return ret;
     }
 
     @Override
