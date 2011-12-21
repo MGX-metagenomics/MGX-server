@@ -3,6 +3,7 @@ package de.cebitec.mgx.seqstorage;
 import de.cebitec.mgx.sequence.FactoryI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -23,6 +24,11 @@ public class ReaderFactory implements FactoryI {
          * the file type and create the correct reader object
          */
 
+        File file = new File(uri);
+        if (!file.exists()) {
+            throw new SeqStoreException("No such file: "+uri);
+        }
+        
         char[] cbuf = new char[4];
         try {
             FileReader fr = new FileReader(uri);
@@ -40,16 +46,13 @@ public class ReaderFactory implements FactoryI {
             case '>':
                 ret = new FastaReader(uri);
                 break;
-//            case '@':
-//                ret = getImpl("de.cebitec.mgx.seqstorage.FASTQReader", filename);
-//                //ret = new FASTQReader(filename);
-//                break;
-//            case 'N':
-//                ret = getImpl("de.cebitec.mgx.seqstorage.CSFReader", filename);
-//                //ret = new CSFReader(filename);
-//                break;
+            case '@':
+                ret = new FASTQReader(uri);
+                break;
+            case 'N':
+                ret = new CSFReader(uri);
+                break;
             default:
-                //ret = new CDBReader(filename);
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");
         }
         

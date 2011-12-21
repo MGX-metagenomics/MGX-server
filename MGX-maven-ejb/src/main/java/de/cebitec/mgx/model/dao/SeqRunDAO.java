@@ -25,7 +25,10 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
         SeqRun sr = getById(id);
         if (sr != null) {
             // remove persistent storage file
-            SeqReaderFactory.delete(sr.getDBFile());
+            String dBFile = sr.getDBFile();
+            if (dBFile != null) {
+                SeqReaderFactory.delete(dBFile);
+            }
 
             /*
              * JPA CascadeType.DELETE fetches and delete all entities individually;
@@ -42,13 +45,13 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
             } finally {
                 close(conn, stmt, null);
             }
-            
+
             // remove persistent entity
             EntityManager e = getEntityManager();
             e.remove(sr);
             e.flush();
         }
-        
+
         super.delete(id);
     }
 
