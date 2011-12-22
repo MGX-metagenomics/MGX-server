@@ -1,6 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
+import de.cebitec.mgx.dto.dto.SeqRunDTO.Builder;
 import de.cebitec.mgx.model.db.SeqRun;
 
 /**
@@ -22,14 +23,17 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO> {
 
     @Override
     public final SeqRunDTO toDTO(SeqRun s) {
-        return SeqRunDTO.newBuilder()
+        Builder b = SeqRunDTO.newBuilder()
                 .setId(s.getId())
                 .setExtractId(s.getExtract().getId())
-                .setAccession(s.getAccession())
                 .setSubmittedToInsdc(s.getSubmittedToINSDC())
                 .setSequencingMethod(s.getSequencingMethod())
-                .setSequencingTechnology(s.getSequencingTechnology())
-                .build();
+                .setSequencingTechnology(s.getSequencingTechnology());
+        
+        if (s.getSubmittedToINSDC()) {
+            b.setAccession(s.getAccession());
+        }
+        return b.build();
     }
 
     @Override
