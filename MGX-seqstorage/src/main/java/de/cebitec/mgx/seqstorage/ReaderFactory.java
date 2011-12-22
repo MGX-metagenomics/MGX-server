@@ -26,9 +26,9 @@ public class ReaderFactory implements FactoryI {
 
         File file = new File(uri);
         if (!file.exists()) {
-            throw new SeqStoreException("No such file: "+uri);
+            throw new SeqStoreException("No such file: " + uri);
         }
-        
+
         char[] cbuf = new char[4];
         try {
             FileReader fr = new FileReader(uri);
@@ -41,7 +41,6 @@ public class ReaderFactory implements FactoryI {
         }
 
         SeqReaderI ret = null;
-
         switch (cbuf[0]) {
             case '>':
                 ret = new FastaReader(uri);
@@ -55,7 +54,7 @@ public class ReaderFactory implements FactoryI {
             default:
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");
         }
-        
+
         return ret;
     }
 }
