@@ -51,8 +51,6 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
             e.remove(sr);
             e.flush();
         }
-
-        super.delete(id);
     }
 
     public Iterable<SeqRun> byDNAExtract(DNAExtract h) {
