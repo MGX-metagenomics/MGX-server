@@ -2,7 +2,6 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +28,6 @@ public class UploadSessions {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
-
     private Map<UUID, UploadReceiverI> sessions = null;
     private int uploadTimeout;
 
@@ -53,12 +51,17 @@ public class UploadSessions {
         return uuid;
     }
 
-    public void addData(UUID uuid, SequenceDTOList seqs) throws MGXException {
-        sessions.get(uuid).add(seqs);
+    public UploadReceiverI getSession(UUID uuid) {
+        return sessions.get(uuid);
     }
 
     public void closeSession(UUID uuid) throws MGXException {
         sessions.get(uuid).close();
+        sessions.remove(uuid);
+    }
+
+    public void cancelSession(UUID uuid) throws MGXException {
+        sessions.get(uuid).cancel();
         sessions.remove(uuid);
     }
 
@@ -68,7 +71,7 @@ public class UploadSessions {
             UploadReceiverI s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
             if (sessionIdleTime > uploadTimeout) {
-                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), killing upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
+                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
                 s.cancel();
                 sessions.remove(uuid);
             }

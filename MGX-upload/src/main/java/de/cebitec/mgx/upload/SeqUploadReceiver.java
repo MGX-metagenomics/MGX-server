@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -46,6 +48,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
             file = getStorageFile(run_id);
             writer = new CSFWriter(file);
+            // FIXME use connection from pool
             conn = DriverManager.getConnection(jdbcUrl, mgxconfig.getMGXUser(), mgxconfig.getMGXPassword());
             conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
         } catch (Exception ex) {
@@ -59,13 +62,13 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
-        int cnt = 0;
+        //int cnt = 0;
         for (SequenceDTO s : seqs.getSeqList()) {
             DNASequenceI d = new DNASequence();
             d.setName(s.getName().getBytes());
             d.setSequence(s.getSequence().getBytes());
             seqholder.add(d);
-            cnt++;
+            //  cnt++;
         }
 
         while (seqholder.size() >= bulksize) {
@@ -89,8 +92,10 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         String sql = createSQLBulkStatement(commitList.size());
         // insert sequence names and fetch list of generated ids
         List<Long> generatedIDs = new ArrayList<Long>(commitList.size());
+        PreparedStatement stmt = null;
+        ResultSet res = null;
         try {
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt = conn.prepareStatement(sql);
 
             int i = 1;
             for (DNASequenceI s : commitList) {
@@ -99,15 +104,19 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 i += 2;
             }
 
-            ResultSet res = stmt.executeQuery();
+            res = stmt.executeQuery();
             while (res.next()) {
                 generatedIDs.add(res.getLong(1));
             }
-            res.close();
-            stmt.close();
-
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
+        } finally {
+            try {
+                res.close();
+                stmt.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         // write sequences to persistent storage
         ListIterator<Long> IDList = generatedIDs.listIterator();
@@ -124,6 +133,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void close() throws MGXException {
+        PreparedStatement stmt = null;
         try {
             // commit pending data
             while (seqholder.size() > 0) {
@@ -132,37 +142,45 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             writer.close();
 
             String sql = "UPDATE seqrun SET dbfile=? WHERE id=?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt = conn.prepareStatement(sql);
             stmt.setString(1, file.getCanonicalPath().toString());
             stmt.setLong(2, runId);
             stmt.executeUpdate();
-            stmt.close();
             //
             conn.setClientInfo("ApplicationName", "");
-            conn.close();
-            conn = null;
-
         } catch (Exception ex) {
             throw new MGXException(ex.getMessage());
+        } finally {
+            try {
+                conn.close();
+                stmt.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         lastAccessed = System.currentTimeMillis();
     }
 
     @Override
     public void cancel() {
+        PreparedStatement stmt = null;
         try {
             writer.close();
             SeqReaderFactory.delete(file.getCanonicalPath().toString());
-            PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?");
+            stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?");
             stmt.setLong(1, runId);
             stmt.executeUpdate();
-            stmt.close();
             //
             conn.setClientInfo("ApplicationName", "");
-            conn.close();
-            conn = null;
         } catch (Exception ex) {
-            System.out.println("CANCEL: " + ex.getMessage());
+            Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                stmt.close();
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
@@ -173,21 +191,22 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     private File getStorageFile(long run_id) throws MGXException {
         StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory())
-                .append(File.separator)
-                .append(getProjectName())
-                .append(File.separator)
-                .append("seqruns")
+                .append(File.separator).append(getProjectName())
+                .append(File.separator).append("seqruns")
                 .append(File.separator);
 
         // create the directory tree
-        new File(fname.toString()).mkdirs();
+        File dirTree = new File(fname.toString());
+        if (!dirTree.exists()) {
+            dirTree.mkdirs();
+        }
 
         fname.append(run_id);
         return new File(fname.toString());
     }
 
     private List<DNASequenceI> fetchChunk() {
-        int chunk = seqholder.size() <  bulksize ? seqholder.size() : bulksize;
+        int chunk = seqholder.size() < bulksize ? seqholder.size() : bulksize;
         List<DNASequenceI> sub = seqholder.subList(0, chunk);
         List<DNASequenceI> subList = new ArrayList<DNASequenceI>(sub);
         sub.clear(); // since sub is backed by seqholder, this removes all sub-list items from seqholder
@@ -200,7 +219,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         for (int cnt = 1; cnt <= elements; cnt++) {
             sql.append("(?,?),");
         }
-        sql.deleteCharAt(sql.toString().length() - 1); // remove additional ","
+        sql.deleteCharAt(sql.toString().length() - 1); // remove trailing ","
 
         /*
          * stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
