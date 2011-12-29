@@ -39,7 +39,7 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     public MGXLong create(ToolDTO dto) {
         Tool h = ToolDTOFactory.getInstance().toDB(dto, false);
-        Long id;
+        Long id = null;
         try {
             id = mgx.getToolDAO().create(h);
         } catch (MGXException ex) {
@@ -52,22 +52,14 @@ public class ToolBean {
     @Path("listGlobalTools")
     @Produces("application/x-protobuf")
     public ToolDTOList listGlobalTools() {
-        Builder b = ToolDTOList.newBuilder();
-        for (Object o : mgx.getGlobal().getToolDAO().getAll()) {
-            b.addTool(ToolDTOFactory.getInstance().toDTO((Tool) o));
-        }
-        return b.build();
+        return ToolDTOFactory.getInstance().toDTOList(mgx.getGlobal().getToolDAO().getAll());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ToolDTOList fetchall() {
-        Builder b = ToolDTOList.newBuilder();
-        for (Object o : mgx.getToolDAO().getAll()) {
-            b.addTool(ToolDTOFactory.getInstance().toDTO((Tool) o));
-        }
-        return b.build();
+        return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
     }
 
     @DELETE

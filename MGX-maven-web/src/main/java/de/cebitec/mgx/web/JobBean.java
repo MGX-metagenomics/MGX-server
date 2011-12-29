@@ -99,11 +99,7 @@ public class JobBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public JobDTOList fetchall() {
-        Builder b = JobDTOList.newBuilder();
-        for (Object o : mgx.getJobDAO().getAll()) {
-            b.addJob(JobDTOFactory.getInstance().toDTO((Job) o));
-        }
-        return b.build();
+        return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().getAll());
     }
 
     @GET

@@ -64,7 +64,22 @@ public class AttributeBean {
 
         return ret.build();
     }
+    
+    @GET
+    @Path("listTypesBySeqRun/{seqrunId}")
+    @Produces("application/x-protobuf")
+    public AttributeDTOList listTypesBySeqRun(@PathParam("seqrunId") Long seqrunId) {
 
+        Builder ret = AttributeDTOList.newBuilder();
+        Set<String> listTypesBySeqRun = mgx.getAttributeDAO().listTypesBySeqRun(seqrunId);
+        for (String type :  listTypesBySeqRun) {
+            AttributeDTO dto = AttributeDTO.newBuilder().setType(type).build();
+            ret.addAttribute(dto);
+        }
+
+        return ret.build();
+    }
+    
     @GET
     @Path("getDistribution/{attrName}/{jobId}/{runIDs}")
     @Produces("application/x-protobuf")

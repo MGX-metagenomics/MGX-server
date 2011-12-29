@@ -41,13 +41,13 @@ public class SeqRunBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public MGXLong create(SeqRunDTO dto) {
-        DNAExtract d = null;
+        DNAExtract extract = null;
         Long SeqRun_id = null;
         try {
-            d = mgx.getDNAExtractDAO().getById(dto.getExtractId());
-            SeqRun s = SeqRunDTOFactory.getInstance().toDB(dto);
-            s.setExtract(d);
-            SeqRun_id = mgx.getSeqRunDAO().create(s);
+            extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
+            SeqRun seqrun = SeqRunDTOFactory.getInstance().toDB(dto);
+            seqrun.setExtract(extract);
+            SeqRun_id = mgx.getSeqRunDAO().create(seqrun);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -58,14 +58,14 @@ public class SeqRunBean {
     @Path("update")
     @Consumes("application/x-protobuf")
     public Response update(SeqRunDTO dto) {
-        DNAExtract e = null;
+        DNAExtract extract = null;
         try {
-            e = mgx.getDNAExtractDAO().getById(dto.getExtractId());
+            extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         SeqRun s = SeqRunDTOFactory.getInstance().toDB(dto);
-        s.setExtract(e);
+        s.setExtract(extract);
         try {
             mgx.getSeqRunDAO().update(s);
         } catch (MGXException ex) {
@@ -78,48 +78,35 @@ public class SeqRunBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTO fetch(@PathParam("id") Long id) {
-        if (id == null) {
-            throw new MGXWebException("No ID supplied");
-        }
-        SeqRun obj;
+        // FIXME add in number of sequences
+        SeqRun seqrun;
         try {
-            obj = mgx.getSeqRunDAO().getById(id);
+            seqrun = mgx.getSeqRunDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        if (obj == null) {
-            throw new MGXWebException("No such SeqRun");
-        }
-        return SeqRunDTOFactory.getInstance().toDTO(obj);
+        return SeqRunDTOFactory.getInstance().toDTO(seqrun);
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        Builder b = SeqRunDTOList.newBuilder();
-        for (SeqRun o : mgx.getSeqRunDAO().getAll()) {
-            b.addSeqrun(SeqRunDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        // FIXME add in number of sequences
+        return SeqRunDTOFactory.getInstance().toDTOList(mgx.getSeqRunDAO().getAll());
     }
 
     @GET
     @Path("byExtract/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTOList byExtract(@PathParam("id") Long extract_id) {
-        DNAExtract d = null;
+        DNAExtract extract = null;
         try {
-            d = mgx.getDNAExtractDAO().getById(extract_id);
+            extract = mgx.getDNAExtractDAO().getById(extract_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        // convert to DTO
-        Builder b = SeqRunDTOList.newBuilder();
-        for (SeqRun o : mgx.getSeqRunDAO().byDNAExtract(d)) {
-            b.addSeqrun(SeqRunDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return SeqRunDTOFactory.getInstance().toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
     }
 
     @DELETE

@@ -88,7 +88,7 @@ public class FileBean {
         if (input.startsWith(projectDirectory)) {
             input = input.substring(projectDirectory.length());
         } else {
-            System.err.println(projectDirectory +" not found in "+ input);
+            Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, projectDirectory +" not found in "+ input);
         }
         return input;
     }

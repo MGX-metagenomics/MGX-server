@@ -39,11 +39,7 @@ public class ProjectBean {
     @Path("listProjectClasses")
     @Produces("application/x-protobuf")
     public ProjectClassDTOList listProjectClasses() {
-        ProjectClassDTOList.Builder ret = ProjectClassDTOList.newBuilder();
-        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
-            ret.addProjectclass(ProjectClassDTOFactory.getInstance().toDTO(pc));
-        }
-        return ret.build();
+        return ProjectClassDTOFactory.getInstance().toDTOList(gpms.getSupportedProjectClasses());
     }
 
     @GET

@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -16,6 +17,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
@@ -34,7 +36,8 @@ public class SequenceBean {
 
     @GET
     @Path("init/{id}")
-    public String init(@PathParam("id") Long seqrun_id) {
+    @Produces("application/x-protobuf")
+    public MGXString init(@PathParam("id") Long seqrun_id) {
         mgx.log("Creating upload session for " + mgx.getProjectName());
         SeqUploadReceiver recv = null;
 
@@ -44,7 +47,8 @@ public class SequenceBean {
             throw new MGXWebException(ex.getMessage());
         }
 
-        return sessions.registerUploadSession(recv).toString();
+        String uuid = sessions.registerUploadSession(recv).toString();
+        return MGXString.newBuilder().setValue(uuid).build();
     }
 
     @GET
@@ -63,10 +67,21 @@ public class SequenceBean {
     @Consumes("application/x-protobuf")
     public Response add(@PathParam("uuid") UUID session_id, SequenceDTOList seqList) {
         try {
-            sessions.addData(session_id, seqList);
+            sessions.getSession(session_id).add(seqList);
+            //sessions.addData(session_id, seqList);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
+    }
+    
+    @GET
+    @Path("cancel/{uuid}")
+    public void cancel(@PathParam("uuid") UUID session_id) {
+        try {
+            sessions.cancelSession(session_id);
+         } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
     }
 }

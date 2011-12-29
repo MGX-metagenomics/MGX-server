@@ -5,7 +5,6 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
-import de.cebitec.mgx.dto.dto.DNAExtractDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.model.db.DNAExtract;
@@ -77,17 +76,11 @@ public class DNAExtractBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public DNAExtractDTO fetch(@PathParam("id") Long id) {
-        if (id == null) {
-            throw new MGXWebException("No ID supplied");
-        }
         DNAExtract obj = null;
         try {
             obj = mgx.getDNAExtractDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-        if (obj == null) {
-            throw new MGXWebException("No such DNAExtract");
         }
         return DNAExtractDTOFactory.getInstance().toDTO(obj);
     }
@@ -96,36 +89,25 @@ public class DNAExtractBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList fetchall() {
-        Builder b = DNAExtractDTOList.newBuilder();
-        for (DNAExtract o : mgx.getDNAExtractDAO().getAll()) {
-            b.addExtract(DNAExtractDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().getAll());
     }
 
     @GET
     @Path("bySample/{id}")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList bySample(@PathParam("id") Long sample_id) {
-        Sample s = null;
+        Sample sample;
         try {
-            s = mgx.getSampleDAO().getById(sample_id);
+            sample = mgx.getSampleDAO().getById(sample_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Builder b = DNAExtractDTOList.newBuilder();
-        for (DNAExtract o : mgx.getDNAExtractDAO().bySample(s)) {
-            b.addExtract(DNAExtractDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample));
     }
 
     @DELETE
     @Path("delete/{id}")
     public Response delete(@PathParam("id") Long id) {
-        if (id == null) {
-            throw new MGXWebException("No ID supplied");
-        }
         try {
             mgx.getDNAExtractDAO().delete(id);
         } catch (MGXException ex) {

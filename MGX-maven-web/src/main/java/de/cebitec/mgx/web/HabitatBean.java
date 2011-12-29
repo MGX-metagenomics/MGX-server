@@ -5,7 +5,6 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.HabitatDTO;
 import de.cebitec.mgx.dto.dto.HabitatDTOList;
-import de.cebitec.mgx.dto.dto.HabitatDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
 import de.cebitec.mgx.model.db.Habitat;
@@ -34,14 +33,6 @@ public class HabitatBean {
     @Inject
     @MGX
     MGXController mgx;
-
-//    @GET
-//    @Path("PING/{id}")
-//    @Consumes("application/x-protobuf")
-//    @Produces("application/x-protobuf")
-//    public MGXLong ping(@PathParam("id") Long in) {
-//        return MGXLong.newBuilder().setValue(in).build();
-//    }
 
     @PUT
     @Path("create")
@@ -88,11 +79,7 @@ public class HabitatBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public HabitatDTOList fetchall() {
-        Builder b = HabitatDTOList.newBuilder();
-        for (Habitat o : mgx.getHabitatDAO().getAll()) {
-            b.addHabitat(HabitatDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
     }
 
     @DELETE

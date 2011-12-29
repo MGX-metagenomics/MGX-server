@@ -6,7 +6,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
-import de.cebitec.mgx.dto.dto.SampleDTOList.Builder;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
@@ -79,16 +78,10 @@ public class SampleBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public SampleDTO fetch(@PathParam("id") Long id) {
-        if (id == null) {
-            throw new MGXWebException("No ID supplied");
-        }
         Sample obj;
         try {
             obj = mgx.getSampleDAO().getById(id);
         } catch (MGXException ex) {
-            throw new MGXWebException("No such Sample");
-        }
-        if (obj == null) {
             throw new MGXWebException("No such Sample");
         }
         return SampleDTOFactory.getInstance().toDTO(obj);
@@ -98,28 +91,20 @@ public class SampleBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SampleDTOList fetchall() {
-        Builder b = SampleDTOList.newBuilder();
-        for (Sample o : mgx.getSampleDAO().getAll()) {
-            b.addSample(SampleDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().getAll());
     }
 
     @GET
     @Path("byHabitat/{id}")
     @Produces("application/x-protobuf")
     public SampleDTOList byHabitat(@PathParam("id") Long hab_id) {
-        Habitat h;
+        Habitat habitat;
         try {
-            h = mgx.getHabitatDAO().getById(hab_id);
+            habitat = mgx.getHabitatDAO().getById(hab_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Builder b = SampleDTOList.newBuilder();
-        for (Sample o : mgx.getSampleDAO().byHabitat(h)) {
-            b.addSample(SampleDTOFactory.getInstance().toDTO(o));
-        }
-        return b.build();
+        return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().byHabitat(habitat));
     }
 
     @DELETE
