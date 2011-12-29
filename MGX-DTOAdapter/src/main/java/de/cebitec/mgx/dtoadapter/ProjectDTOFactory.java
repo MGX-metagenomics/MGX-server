@@ -2,17 +2,18 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.mgx.dto.dto.ProjectDTO;
+import de.cebitec.mgx.dto.dto.ProjectDTOList;
 
 /**
  *
  * @author sjaenick
  */
-public class ProjectDTOFactory extends DTOConversionBase<ProjectI, ProjectDTO> {
+public class ProjectDTOFactory extends DTOConversionBase<ProjectI, ProjectDTO, ProjectDTOList> {
 
     static {
         instance = new ProjectDTOFactory();
     }
-    protected static ProjectDTOFactory instance;
+    protected final static ProjectDTOFactory instance;
 
     private ProjectDTOFactory() {
     }
@@ -33,5 +34,10 @@ public class ProjectDTOFactory extends DTOConversionBase<ProjectI, ProjectDTO> {
     public ProjectI toDB(ProjectDTO dto) {
         // not used
         return null;
+    }
+
+    @Override
+    public ProjectDTOList toDTOList(Iterable<ProjectI> list) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

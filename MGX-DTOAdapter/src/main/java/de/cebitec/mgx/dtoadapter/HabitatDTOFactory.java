@@ -1,18 +1,20 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.HabitatDTO;
+import de.cebitec.mgx.dto.dto.HabitatDTOList;
+import de.cebitec.mgx.dto.dto.HabitatDTOList.Builder;
 import de.cebitec.mgx.model.db.Habitat;
 
 /**
  *
  * @author sjaenick
  */
-public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO> {
+public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO, HabitatDTOList> {
 
     static {
         instance = new HabitatDTOFactory();
     }
-    protected static HabitatDTOFactory instance;
+    protected final static HabitatDTOFactory instance;
 
     private HabitatDTOFactory() {
     }
@@ -51,4 +53,14 @@ public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO> {
 
         return h;
     }
+
+    @Override
+    public HabitatDTOList toDTOList(Iterable<Habitat> list) {
+        Builder b = HabitatDTOList.newBuilder();
+        for (Habitat o : list) {
+            b.addHabitat(toDTO(o));
+        }
+        return b.build();
+    }
+
 }

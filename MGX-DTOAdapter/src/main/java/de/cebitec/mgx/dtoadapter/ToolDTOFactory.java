@@ -1,18 +1,19 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.ToolDTO;
+import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.model.db.Tool;
 
 /**
  *
  * @author sjaenick
  */
-public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO> {
+public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList> {
 
     static {
         instance = new ToolDTOFactory();
     }
-    protected static ToolDTOFactory instance;
+    protected final static ToolDTOFactory instance;
 
     private ToolDTOFactory() {}
 
@@ -49,5 +50,10 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO> {
     @Override
     public Tool toDB(ToolDTO dto) {
         return toDB(dto, true);
+    }
+
+    @Override
+    public ToolDTOList toDTOList(Iterable<Tool> list) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

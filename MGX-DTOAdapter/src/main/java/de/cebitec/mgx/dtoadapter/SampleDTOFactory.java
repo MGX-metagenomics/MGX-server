@@ -1,18 +1,20 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.SampleDTO;
+import de.cebitec.mgx.dto.dto.SampleDTOList;
+import de.cebitec.mgx.dto.dto.SampleDTOList.Builder;
 import de.cebitec.mgx.model.db.Sample;
 
 /**
  *
  * @author sjaenick
  */
-public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO> {
+public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, SampleDTOList> {
 
     static {
         instance = new SampleDTOFactory();
     }
-    protected static SampleDTOFactory instance;
+    protected final static SampleDTOFactory instance;
 
     private SampleDTOFactory() {}
 
@@ -48,5 +50,14 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO> {
 
         return s;
         // cannot set habitat here
+    }
+
+    @Override
+    public SampleDTOList toDTOList(Iterable<Sample> list) {
+        Builder b = SampleDTOList.newBuilder();
+        for (Sample o : list) {
+            b.addSample(SampleDTOFactory.getInstance().toDTO(o));
+        }
+        return b.build();
     }
 }

@@ -3,17 +3,18 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO.Builder;
+import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 
 /**
  *
  * @author sjaenick
  */
-public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtractDTO> {
+public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtractDTO, DNAExtractDTOList> {
 
     static {
         instance = new DNAExtractDTOFactory();
     }
-    protected static DNAExtractDTOFactory instance;
+    protected final static DNAExtractDTOFactory instance;
 
     private DNAExtractDTOFactory() {
     }
@@ -74,5 +75,14 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
 
         return d;
 
+    }
+
+    @Override
+    public DNAExtractDTOList toDTOList(Iterable<DNAExtract> list) {
+        DNAExtractDTOList.Builder b = DNAExtractDTOList.newBuilder();
+        for (DNAExtract o : list) {
+            b.addExtract(toDTO(o));
+        }
+        return b.build();
     }
 }

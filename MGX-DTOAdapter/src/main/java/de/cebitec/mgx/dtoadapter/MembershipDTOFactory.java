@@ -2,17 +2,18 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.mgx.dto.dto.MembershipDTO;
+import de.cebitec.mgx.dto.dto.MembershipDTOList;
 
 /**
  *
  * @author sjaenick
  */
-public class MembershipDTOFactory extends DTOConversionBase<MembershipI, MembershipDTO> {
+public class MembershipDTOFactory extends DTOConversionBase<MembershipI, MembershipDTO, MembershipDTOList> {
 
     static {
         instance = new MembershipDTOFactory();
     }
-    protected static MembershipDTOFactory instance;
+    protected final static MembershipDTOFactory instance;
 
     private MembershipDTOFactory() {
     }
@@ -33,5 +34,10 @@ public class MembershipDTOFactory extends DTOConversionBase<MembershipI, Members
     public MembershipI toDB(MembershipDTO dto) {
         // not used
         return null;
+    }
+
+    @Override
+    public MembershipDTOList toDTOList(Iterable<MembershipI> list) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

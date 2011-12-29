@@ -2,18 +2,19 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTO.Builder;
+import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.model.db.SeqRun;
 
 /**
  *
  * @author sjaenick
  */
-public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO> {
+public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRunDTOList> {
 
     static {
         instance = new SeqRunDTOFactory();
     }
-    protected static SeqRunDTOFactory instance;
+    protected final static SeqRunDTOFactory instance;
 
     private SeqRunDTOFactory() {}
 
@@ -51,5 +52,14 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO> {
 
         return s;
         // cannot set sample here
+    }
+
+    @Override
+    public SeqRunDTOList toDTOList(Iterable<SeqRun> list) {
+        SeqRunDTOList.Builder b = SeqRunDTOList.newBuilder();
+        for (SeqRun o : list) {
+            b.addSeqrun(toDTO(o));
+        }
+        return b.build();
     }
 }

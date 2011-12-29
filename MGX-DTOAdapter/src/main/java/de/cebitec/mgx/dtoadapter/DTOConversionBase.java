@@ -6,11 +6,13 @@ import java.util.Date;
  *
  * @author sjaenick
  */
-public abstract class DTOConversionBase<T, U> {
+public abstract class DTOConversionBase<T, U, V> {
 
     public abstract U toDTO(T a);
 
     public abstract T toDB(U dto);
+    
+    public abstract V toDTOList(Iterable<T> list);
 
     protected static Long toUnixTimeStamp(Date date) {
         if (date == null) {
