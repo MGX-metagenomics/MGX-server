@@ -57,6 +57,7 @@ public abstract class DAO<T extends Identifiable> {
             return ctx.getConnection();
         } else {
             // MGX global
+            // FIXME find better way to obtain connection
             return getEntityManager().unwrap(Session.class).connection();
         }
     }
@@ -99,9 +100,6 @@ public abstract class DAO<T extends Identifiable> {
     }
 
     public void delete(Long id) throws MGXException {
-        if (id == null)
-            throw new MGXException("No ID supplied.");
-
         T obj = getById(id);
         if (obj != null) {
             EntityManager e = getEntityManager();
@@ -179,8 +177,10 @@ public abstract class DAO<T extends Identifiable> {
     }
 
     public void copyFile(File in, File out) throws IOException {
-        FileChannel inChannel = new FileInputStream(in).getChannel();
-        FileChannel outChannel = new FileOutputStream(out).getChannel();
+        FileInputStream fis = new FileInputStream(in);
+        FileOutputStream fos = new FileOutputStream(out);
+        FileChannel inChannel = fis.getChannel();
+        FileChannel outChannel = fos.getChannel();
         try {
             inChannel.transferTo(0, inChannel.size(), outChannel);
         } catch (IOException e) {
@@ -192,6 +192,8 @@ public abstract class DAO<T extends Identifiable> {
             if (outChannel != null) {
                 outChannel.close();
             }
+            fis.close();
+            fos.close();
         }
     }
 }

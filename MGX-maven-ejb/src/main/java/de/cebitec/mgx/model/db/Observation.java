@@ -58,7 +58,9 @@ public class Observation implements Serializable {
     public boolean equals(Object object) {
         if (object instanceof Observation) {
             Observation other = (Observation) object;
-            return (other.seq.getId() == this.seq.getId()) && (other.job.getId() == this.job.getId()) && (other.attribute.getId() == this.attribute.getId());
+            return (other.seq.getId().equals(this.seq.getId())) 
+                    && (other.job.getId().equals(this.job.getId())) 
+                    && (other.attribute.getId().equals(this.attribute.getId()));
         }
         return false;
     }

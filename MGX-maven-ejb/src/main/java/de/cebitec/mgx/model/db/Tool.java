@@ -36,7 +36,6 @@ public class Tool implements Serializable, Identifiable {
     @Column(name = "url")
     protected String url;
     @Basic
-    @NotNull   // FIXME: really?
     @Column(name = "xml_file")
     protected String xml_file;
 

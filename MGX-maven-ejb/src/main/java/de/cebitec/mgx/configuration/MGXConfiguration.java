@@ -43,7 +43,6 @@ public class MGXConfiguration extends DispatcherConfigBase {
         try {
             in = new FileInputStream(cfgFile);
             config.load(in);
-            in.close();
         } catch (Exception ex) {
             throw new MGXException(ex);
         } finally {
@@ -121,13 +120,18 @@ public class MGXConfiguration extends DispatcherConfigBase {
         }
 
         Properties p = new Properties();
-        FileInputStream in;
+        FileInputStream in = null;
         try {
             in = new FileInputStream(f);
             p.load(in);
-            in.close();
         } catch (Exception ex) {
             throw new MGXDispatcherException(ex);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException ex) {
+                Logger.getLogger(MGXConfiguration.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
 
         return p.getProperty("mgx_dispatcherhost");

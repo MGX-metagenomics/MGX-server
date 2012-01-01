@@ -9,7 +9,6 @@ import java.io.File;
  */
 public class JobDAO<T extends Job> extends DAO<T> {
 
-    // FIXME: really remove the xml file?
     private static String[] suffices = {"", ".xml", ".stdout", ".stderr"};
 
     @Override
@@ -30,12 +29,13 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 .append(File.separator)
                 .append(id);
 
+        boolean all_deleted = true;
         for (String suffix : suffices) {
             File f = new File(sb.toString() + suffix);
             if (f.exists())  {
-                f.delete();
+                boolean deleted = f.delete();
+                all_deleted = all_deleted && deleted;
             }
         }
-
     }
 }

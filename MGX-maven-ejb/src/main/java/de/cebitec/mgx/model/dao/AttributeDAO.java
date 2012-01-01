@@ -29,12 +29,12 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
     }
 
     public Set<String> listTypes() {
-        
+
         Set<String> types = new HashSet<String>();
-        
+
         final String sql = "SELECT DISTINCT type FROM attribute WHERE id IN (SELECT DISTINCT attributeid "
                 + "FROM job RIGHT JOIN observation ON (observation.jobid = job.id) WHERE job.job_state=?)";
-        
+
         Connection c = getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -50,7 +50,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         } finally {
             close(c, stmt, rs);
         }
-        
+
         return types;
     }
 
@@ -85,16 +85,42 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
+    // FIXME - this currently returns byJob()...
+    public Set<String> listTypesBySeqRun(Long seqrunId) {
+
+        Set<String> ret = new HashSet<String>();
+
+        final String sql = "SELECT DISTINCT type FROM attribute a "
+                + "RIGHT JOIN observation o ON (o.attributeid = a.id) "
+                + "RIGHT JOIN job j ON (o.jobid = j.id) where o.jobid=? AND j.job_state=?";
+
+        Connection c = getConnection();
+        PreparedStatement stmt = null;
+        ResultSet res = null;
+        try {
+            stmt = c.prepareStatement(sql);
+            stmt.setLong(1, seqrunId);
+            stmt.setInt(2, JobState.FINISHED.getValue());
+            res = stmt.executeQuery();
+            while (res.next()) {
+                ret.add(res.getString(1));
+            }
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+        } finally {
+            close(c, stmt, res);
+        }
+
+        return ret;
+    }
+
     public Map<Triple<Long, String, Long>, Long> getDistribution(String attrName, Long job_id, List<Long> seqrun_ids) throws MGXException {
 
         if (attrName == null) {
             throw new MGXException("Missing attribute name");
         }
 
-        StringBuilder sql = new StringBuilder("SELECT attribute.id, attribute.value, attribute.parent_id, count(attribute.value) FROM observation ")
-                .append("LEFT JOIN attribute ON (observation.attributeid = attribute.id) ")
-                .append("LEFT JOIN read ON (observation.seqid = read.id) ")
-                .append("WHERE attribute.type=?");
+        StringBuilder sql = new StringBuilder("SELECT attribute.id, attribute.value, attribute.parent_id, count(attribute.value) FROM observation ").append("LEFT JOIN attribute ON (observation.attributeid = attribute.id) ").append("LEFT JOIN read ON (observation.seqid = read.id) ").append("WHERE attribute.type=?");
 
         // process the seqrun_id's ..
         if (!seqrun_ids.isEmpty()) {
@@ -114,7 +140,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet res = null;
-        
+
         try {
             stmt = conn.prepareStatement(sql.toString());
             stmt.setString(param_pos++, attrName);

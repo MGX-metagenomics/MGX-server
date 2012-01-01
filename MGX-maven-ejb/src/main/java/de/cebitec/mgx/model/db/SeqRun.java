@@ -148,14 +148,5 @@ public class SeqRun implements Serializable, Identifiable {
                 dbf.delete();
             }
         }
-//        try {
-//            GPMSLocal gpms = InitialContext.doLookup("java:global/JavaGPMS/JavaGPMS-EJB/GPMSBean");
-//            Connection conn = new MGXControllerImpl(gpms.getEntityManagerFactory()).getConnection();
-//            System.out.println("deleting sequences for run id "+this.getId());
-//            conn.createStatement().execute("DELETE FROM read WHERE seqrun_id="+this.getId());
-//            conn.close();
-//        } catch (Exception ex) {
-//            //throw new MGXException(ex.getMessage());
-//        }
     }
 }

@@ -34,7 +34,9 @@ public class CSFReader implements SeqReaderI {
             validateMagic(csffile, FourBitEncoder.CSF_MAGIC);
             seqin = new ByteStreamTokenizer(csffile, FourBitEncoder.RECORD_SEPARATOR, FourBitEncoder.CSF_MAGIC.length);
             namein = new BufferedInputStream(new FileInputStream(namefile));
-            namein.skip(FourBitEncoder.CSF_MAGIC.length);
+            if (namein.skip(FourBitEncoder.CSF_MAGIC.length) < FourBitEncoder.CSF_MAGIC.length) {
+                throw new SeqStoreException("Corrupted file "+csffile);
+            }
         } catch (Exception ex) {
             throw new SeqStoreException(ex.getMessage());
         }
@@ -91,18 +93,26 @@ public class CSFReader implements SeqReaderI {
         }
     }
 
-    private void validateMagic(String filename, byte[] magic) throws SeqStoreException {
+    private void validateMagic(String filename, final byte[] magic) throws SeqStoreException {
         // validate magic
+        FileInputStream fis = null;
         try {
-            FileInputStream fis = new FileInputStream(filename);
-            byte[] tmp = new byte[4];
-            fis.read(tmp, 0, 4);
+            fis = new FileInputStream(filename);
+            byte[] tmp = new byte[magic.length];
+            if (fis.read(tmp, 0, magic.length) < magic.length) {
+                throw new SeqStoreException("Truncated file " + filename + "?");
+            };
             if (!Arrays.equals(magic, tmp)) {
                 throw new SeqStoreException(filename + ": Invalid magic: " + new String(tmp));
             }
-            fis.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new SeqStoreException(filename + ": Invalid magic");
+        } finally {
+            try {
+                fis.close();
+            } catch (IOException ex) {
+                throw new SeqStoreException(ex.getMessage());
+            }
         }
     }
 
@@ -121,15 +131,15 @@ public class CSFReader implements SeqReaderI {
 
     @Override
     public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> res = new HashSet<DNASequenceI>(ids.size());
-        
+        Set<DNASequenceI> result = new HashSet<DNASequenceI>(ids.size());
+
         // FIXME: use the .nms index & sort offsets instead of iterating
         // over all sequences
-        
+
         while (hasMoreElements() && !ids.isEmpty()) {
             DNASequenceI elem = nextElement();
             if (ids.contains(elem.getId())) {
-                res.add(elem);
+                result.add(elem);
                 ids.remove(elem.getId());
             }
         }
@@ -137,6 +147,6 @@ public class CSFReader implements SeqReaderI {
         if (!ids.isEmpty()) {
             throw new SeqStoreException("Could not retrieve all sequences.");
         }
-        return res;
+        return result;
     }
 }

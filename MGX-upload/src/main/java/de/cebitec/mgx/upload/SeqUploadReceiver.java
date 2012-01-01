@@ -37,8 +37,8 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     protected List<DNASequenceI> seqholder;
     protected long lastAccessed;
     protected int bulksize;
-
-    public SeqUploadReceiver(String jdbcUrl, String projName, long run_id) throws MGXException {
+    
+    public SeqUploadReceiver(Connection pConn, String projName, long run_id) throws MGXException {
         projectName = projName;
         runId = run_id;
 
@@ -48,8 +48,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
             file = getStorageFile(run_id);
             writer = new CSFWriter(file);
-            // FIXME use connection from pool
-            conn = DriverManager.getConnection(jdbcUrl, mgxconfig.getMGXUser(), mgxconfig.getMGXPassword());
+            conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
         } catch (Exception ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -59,6 +58,28 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
         lastAccessed = System.currentTimeMillis();
     }
+
+//    public SeqUploadReceiver(String jdbcUrl, String projName, long run_id) throws MGXException {
+//        projectName = projName;
+//        runId = run_id;
+//
+//        seqholder = new ArrayList<DNASequenceI>();
+//
+//        try {
+//            mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
+//            file = getStorageFile(run_id);
+//            writer = new CSFWriter(file);
+//            // FIXME use connection from pool
+//            conn = DriverManager.getConnection(jdbcUrl, mgxconfig.getMGXUser(), mgxconfig.getMGXPassword());
+//            conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
+//        } catch (Exception ex) {
+//            throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
+//        }
+//
+//        bulksize = mgxconfig.getSQLBulkInsertSize();
+//
+//        lastAccessed = System.currentTimeMillis();
+//    }
 
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {

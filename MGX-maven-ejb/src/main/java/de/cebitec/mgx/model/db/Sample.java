@@ -22,7 +22,7 @@ public class Sample implements Serializable, Identifiable {
     @Basic
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "collectiondate")
-    protected Date collectiondate;
+    protected Date collectiondate = null;
     @Basic
     @NotNull
     @Column(name = "material")

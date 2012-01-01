@@ -163,7 +163,7 @@ public class JobSubmitterImpl implements JobSubmitter {
             mgx.log(ex.getMessage());
         }
 
-        if (exitCode.intValue() == 0) {
+        if (exitCode != null && exitCode.intValue() == 0) {
             return true;
         }
 

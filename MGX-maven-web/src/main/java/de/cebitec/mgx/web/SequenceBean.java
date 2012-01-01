@@ -42,13 +42,14 @@ public class SequenceBean {
         SeqUploadReceiver recv = null;
 
         try {
-            recv = new SeqUploadReceiver(mgx.getJDBCUrl(), mgx.getProjectName(), seqrun_id);
+            recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
+//            recv = new SeqUploadReceiver(mgx.getJDBCUrl(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
 
-        String uuid = sessions.registerUploadSession(recv).toString();
-        return MGXString.newBuilder().setValue(uuid).build();
+        UUID uuid = sessions.registerUploadSession(recv);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
     @GET
@@ -68,7 +69,6 @@ public class SequenceBean {
     public Response add(@PathParam("uuid") UUID session_id, SequenceDTOList seqList) {
         try {
             sessions.getSession(session_id).add(seqList);
-            //sessions.addData(session_id, seqList);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
