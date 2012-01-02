@@ -31,6 +31,9 @@ public class SeqRun implements Serializable, Identifiable {
     @Basic
     @NotNull
     protected String sequencing_method;
+    @Basic
+    @NotNull
+    protected Long num_sequences = Long.valueOf(0);
     //
     @OneToMany(mappedBy = "seqrun", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<Sequence> sequences;
@@ -114,6 +117,10 @@ public class SeqRun implements Serializable, Identifiable {
     public SeqRun setSubmittedToINSDC(Boolean submitted_to_insdc) {
         this.submitted_to_insdc = submitted_to_insdc;
         return this;
+    }
+
+    public Long getNumberOfSequences() {
+        return num_sequences;
     }
 
     @Override

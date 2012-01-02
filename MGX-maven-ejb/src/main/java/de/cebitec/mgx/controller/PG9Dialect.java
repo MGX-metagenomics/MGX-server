@@ -61,7 +61,7 @@ public class PG9Dialect extends PostgreSQLDialect {
                     // NOT NULL VIOLATION
                     case 23502:
                         return extractUsingTemplate("null value in column \"", "\" violates not-null constraint", sqle.getMessage());
-                    // TODO: RESTRICT VIOLATION
+                    // RESTRICT VIOLATION
                     case 23001:
                         return null;
                     // ALL OTHER
