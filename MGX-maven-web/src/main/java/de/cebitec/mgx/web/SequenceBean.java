@@ -77,11 +77,12 @@ public class SequenceBean {
     
     @GET
     @Path("cancel/{uuid}")
-    public void cancel(@PathParam("uuid") UUID session_id) {
+    public Response cancel(@PathParam("uuid") UUID session_id) {
         try {
             sessions.cancelSession(session_id);
          } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
+        return Response.ok().build();
     }
 }

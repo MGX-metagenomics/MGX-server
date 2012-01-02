@@ -52,8 +52,6 @@ public class FileBean {
         // underlying DAOs/datamodel don't know about the DTOs, i.e.
         // we would need to convert this twice.
         //
-        // FIXME: Move this to the DTOAdapter package?
-        //
         Builder list = FoDList.newBuilder();
         for (File f : base.listFiles()) {
             FileOrDirectory.Builder entryBuilder = de.cebitec.mgx.dto.dto.FileOrDirectory.newBuilder();

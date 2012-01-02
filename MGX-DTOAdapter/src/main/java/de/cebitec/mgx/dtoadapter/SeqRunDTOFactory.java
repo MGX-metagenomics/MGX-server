@@ -29,11 +29,13 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
                 .setExtractId(s.getExtract().getId())
                 .setSubmittedToInsdc(s.getSubmittedToINSDC())
                 .setSequencingMethod(s.getSequencingMethod())
-                .setSequencingTechnology(s.getSequencingTechnology());
+                .setSequencingTechnology(s.getSequencingTechnology())
+                .setNumSequences(s.getNumberOfSequences());
         
         if (s.getSubmittedToINSDC()) {
             b.setAccession(s.getAccession());
         }
+        
         return b.build();
     }
 

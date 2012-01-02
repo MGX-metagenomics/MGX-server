@@ -58,16 +58,26 @@ public class SeqRunBean {
     @Path("update")
     @Consumes("application/x-protobuf")
     public Response update(SeqRunDTO dto) {
-        DNAExtract extract = null;
+        /*
+         * since not all fields are exposed via the DTO, we need to fetch
+         * the original object from the backend and update it's fields
+         * 
+         */
+        SeqRun orig = null;
         try {
-            extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
+            orig = mgx.getSeqRunDAO().getById(dto.getId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        SeqRun s = SeqRunDTOFactory.getInstance().toDB(dto);
-        s.setExtract(extract);
+        orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
+            .setSequencingMethod(dto.getSequencingMethod())
+            .setSequencingTechnology(dto.getSequencingTechnology());
+        
+        if (dto.getSubmittedToInsdc())
+            orig.setAccession(dto.getAccession());
+        
         try {
-            mgx.getSeqRunDAO().update(s);
+            mgx.getSeqRunDAO().update(orig);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

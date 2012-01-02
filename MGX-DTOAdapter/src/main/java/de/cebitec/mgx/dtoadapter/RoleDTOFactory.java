@@ -37,7 +37,6 @@ public class RoleDTOFactory extends DTOConversionBase<RoleI, RoleDTO, RoleDTOLis
 
     @Override
     public RoleDTOList toDTOList(Iterable<RoleI> list) {
-        // FIXME
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }
