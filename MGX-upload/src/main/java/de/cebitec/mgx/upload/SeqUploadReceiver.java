@@ -35,6 +35,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     protected SeqWriterI writer;
     protected File file;
     protected List<DNASequenceI> seqholder;
+    protected long total_num_sequences = 0;
     protected long lastAccessed;
     protected int bulksize;
     
@@ -83,13 +84,12 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
-        //int cnt = 0;
         for (SequenceDTO s : seqs.getSeqList()) {
             DNASequenceI d = new DNASequence();
             d.setName(s.getName().getBytes());
             d.setSequence(s.getSequence().getBytes());
             seqholder.add(d);
-            //  cnt++;
+            total_num_sequences++;
         }
 
         while (seqholder.size() >= bulksize) {
@@ -162,10 +162,11 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             }
             writer.close();
 
-            String sql = "UPDATE seqrun SET dbfile=? WHERE id=?";
+            String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, file.getCanonicalPath().toString());
-            stmt.setLong(2, runId);
+            stmt.setLong(2, total_num_sequences);
+            stmt.setLong(3, runId);
             stmt.executeUpdate();
             //
             conn.setClientInfo("ApplicationName", "");
