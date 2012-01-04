@@ -35,11 +35,20 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
         b = b.setProtocolName(d.getProtocol());
 
         // optional fields
-        b = b.setFivePrimePrimer(d.getFivePrimer());
-        b = b.setThreePrimePrimer(d.getThreePrimer());
-        b = b.setTargetGene(d.getTargetGene());
-        b = b.setTargetFragment(d.getTargetFragment());
-        b = b.setDescription(d.getDescription());
+        if (d.getFivePrimer() != null)
+            b = b.setFivePrimePrimer(d.getFivePrimer());
+        
+        if (d.getThreePrimer() != null)
+            b = b.setThreePrimePrimer(d.getThreePrimer());
+        
+        if (d.getTargetGene() != null)
+            b = b.setTargetGene(d.getTargetGene());
+        
+        if (d.getTargetFragment() != null)
+            b = b.setTargetFragment(d.getTargetFragment());
+        
+        if (d.getDescription() != null)
+            b = b.setDescription(d.getDescription());
 
         return b.build();
     }

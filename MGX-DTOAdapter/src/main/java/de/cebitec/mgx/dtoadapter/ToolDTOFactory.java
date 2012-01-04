@@ -54,6 +54,10 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
 
     @Override
     public ToolDTOList toDTOList(Iterable<Tool> list) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        ToolDTOList.Builder b = ToolDTOList.newBuilder();
+        for (Tool o : list) {
+            b.addTool(toDTO(o));
+        }
+        return b.build();
     }
 }
