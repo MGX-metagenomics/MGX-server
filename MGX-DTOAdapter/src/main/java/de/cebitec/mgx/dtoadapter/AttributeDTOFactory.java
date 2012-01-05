@@ -18,7 +18,9 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
     
     @Override
     public final AttributeDTO toDTO(Attribute a) {
-        return AttributeDTO.newBuilder().setType(a.getType()).build();
+        return AttributeDTO.newBuilder()
+                .setType(a.getType())
+                .build();
     }
 
     @Override
