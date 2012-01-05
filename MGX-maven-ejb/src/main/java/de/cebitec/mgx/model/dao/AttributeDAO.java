@@ -2,15 +2,12 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.Triple;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -85,14 +82,13 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
-    // FIXME - this currently returns byJob()...
     public Set<String> listTypesBySeqRun(Long seqrunId) {
 
         Set<String> ret = new HashSet<String>();
 
         final String sql = "SELECT DISTINCT type FROM attribute a "
                 + "RIGHT JOIN observation o ON (o.attributeid = a.id) "
-                + "RIGHT JOIN job j ON (o.jobid = j.id) where o.jobid=? AND j.job_state=?";
+                + "RIGHT JOIN job j ON (o.jobid = j.id) where j.seqrun_id=? AND j.job_state=?";
 
         Connection c = getConnection();
         PreparedStatement stmt = null;
@@ -120,7 +116,10 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
             throw new MGXException("Missing attribute name");
         }
 
-        StringBuilder sql = new StringBuilder("SELECT attribute.id, attribute.value, attribute.parent_id, count(attribute.value) FROM observation ").append("LEFT JOIN attribute ON (observation.attributeid = attribute.id) ").append("LEFT JOIN read ON (observation.seqid = read.id) ").append("WHERE attribute.type=?");
+        StringBuilder sql = new StringBuilder("SELECT attribute.id, attribute.value, attribute.parent_id, count(attribute.value) FROM observation ")
+                .append("LEFT JOIN attribute ON (observation.attributeid = attribute.id) ")
+                .append("LEFT JOIN read ON (observation.seqid = read.id) ")
+                .append("WHERE attribute.type=?");
 
         // process the seqrun_id's ..
         if (!seqrun_ids.isEmpty()) {
