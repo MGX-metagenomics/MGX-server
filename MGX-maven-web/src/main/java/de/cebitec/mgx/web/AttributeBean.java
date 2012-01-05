@@ -8,6 +8,8 @@ import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.AttributeDTOList.Builder;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
+import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.MGXStringList;
 import de.cebitec.mgx.util.Triple;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -39,12 +41,12 @@ public class AttributeBean {
     @GET
     @Path("listTypes")
     @Produces("application/x-protobuf")
-    public AttributeDTOList listTypes() {
-        Builder ret = AttributeDTOList.newBuilder();
+    public MGXStringList listTypes() {
+        MGXStringList.Builder ret = MGXStringList.newBuilder();
         Set<String> types = mgx.getAttributeDAO().listTypes();
         for (String type : types) {
-            AttributeDTO dto = AttributeDTO.newBuilder().setType(type).build();
-            ret.addAttribute(dto);
+            MGXString dto = MGXString.newBuilder().setValue(type).build();
+            ret.addString(dto);
         }
 
         return ret.build();
@@ -53,13 +55,13 @@ public class AttributeBean {
     @GET
     @Path("listTypesByJob/{jobId}")
     @Produces("application/x-protobuf")
-    public AttributeDTOList listTypesByJob(@PathParam("jobId") Long jobId) {
+    public MGXStringList listTypesByJob(@PathParam("jobId") Long jobId) {
 
-        Builder ret = AttributeDTOList.newBuilder();
+        MGXStringList.Builder ret = MGXStringList.newBuilder();
         Set<String> listTypesByJob = mgx.getAttributeDAO().listTypesByJob(jobId);
-        for (String type :  listTypesByJob) {
-            AttributeDTO dto = AttributeDTO.newBuilder().setType(type).build();
-            ret.addAttribute(dto);
+        for (String type : listTypesByJob) {
+            MGXString dto = MGXString.newBuilder().setValue(type).build();
+            ret.addString(dto);
         }
 
         return ret.build();
@@ -68,13 +70,13 @@ public class AttributeBean {
     @GET
     @Path("listTypesBySeqRun/{seqrunId}")
     @Produces("application/x-protobuf")
-    public AttributeDTOList listTypesBySeqRun(@PathParam("seqrunId") Long seqrunId) {
+    public MGXStringList listTypesBySeqRun(@PathParam("seqrunId") Long seqrunId) {
 
-        Builder ret = AttributeDTOList.newBuilder();
+        MGXStringList.Builder ret = MGXStringList.newBuilder();
         Set<String> listTypesBySeqRun = mgx.getAttributeDAO().listTypesBySeqRun(seqrunId);
-        for (String type :  listTypesBySeqRun) {
-            AttributeDTO dto = AttributeDTO.newBuilder().setType(type).build();
-            ret.addAttribute(dto);
+        for (String type : listTypesBySeqRun) {
+            MGXString dto = MGXString.newBuilder().setValue(type).build();
+            ret.addString(dto);
         }
 
         return ret.build();

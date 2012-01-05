@@ -35,7 +35,7 @@ public class FileBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public FoDList fetchall() {
-        File basedir = new File(mgx.getProjectDirectory());
+        File basedir = new File(mgx.getProjectDirectory() + "files" + File.separatorChar);
         if (!basedir.exists()) {
             basedir.mkdirs();
         }
