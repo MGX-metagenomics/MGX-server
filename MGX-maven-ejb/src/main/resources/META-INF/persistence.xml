@@ -3,7 +3,6 @@
   <persistence-unit name="MGX-PU" transaction-type="JTA">
     <provider>org.hibernate.ejb.HibernatePersistence</provider>
     <!-- <jta-data-source>jdbc/MGX/project</jta-data-source> -->
-    <class>de.cebitec.mgx.model.db.Attribute</class>
     <class>de.cebitec.mgx.model.db.DNAExtract</class>
     <class>de.cebitec.mgx.model.db.Habitat</class>
     <class>de.cebitec.mgx.model.db.Job</class>
@@ -13,6 +12,8 @@
     <class>de.cebitec.mgx.model.db.Sequence</class>
     <class>de.cebitec.mgx.model.db.Tool</class>
     <class>de.cebitec.mgx.model.db.HierarchicalAttribute</class>
+    <class>de.cebitec.mgx.model.db.AttributeType</class>
+    <class>de.cebitec.mgx.model.db.Attribute</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>

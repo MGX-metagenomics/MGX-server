@@ -12,17 +12,12 @@ import javax.persistence.*;
 public class Observation implements Serializable {
 
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seqid", nullable = false)
     private Sequence seq;
     //
     @Id
-    @ManyToOne
-    @JoinColumn(name = "jobid", nullable = false)
-    private Job job;
-    //
-    @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "attributeid", nullable = false)
     private Attribute attribute;
     //
@@ -50,23 +45,41 @@ public class Observation implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        return (int) (seq.getId() + job.getId() + attribute.getId());
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Observation other = (Observation) obj;
+        if (this.seq != other.seq && (this.seq == null || !this.seq.equals(other.seq))) {
+            return false;
+        }
+        if (this.attribute != other.attribute && (this.attribute == null || !this.attribute.equals(other.attribute))) {
+            return false;
+        }
+        if (this.start != other.start) {
+            return false;
+        }
+        if (this.stop != other.stop) {
+            return false;
+        }
+        return true;
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (object instanceof Observation) {
-            Observation other = (Observation) object;
-            return (other.seq.getId().equals(this.seq.getId())) 
-                    && (other.job.getId().equals(this.job.getId())) 
-                    && (other.attribute.getId().equals(this.attribute.getId()));
-        }
-        return false;
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + (this.seq != null ? this.seq.hashCode() : 0);
+        hash = 89 * hash + (this.attribute != null ? this.attribute.hashCode() : 0);
+        hash = 89 * hash + this.start;
+        hash = 89 * hash + this.stop;
+        return hash;
     }
 
     @Override
     public String toString() {
-        return "de.cebitec.mgx.db.Observation";
+        return "de.cebitec.mgx.model.db.Observation";
     }
 }

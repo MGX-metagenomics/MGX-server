@@ -3,6 +3,7 @@ package de.cebitec.mgx.controller;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.AttributeDAO;
+import de.cebitec.mgx.model.dao.AttributeTypeDAO;
 import de.cebitec.mgx.model.dao.DNAExtractDAO;
 import de.cebitec.mgx.model.dao.HabitatDAO;
 import de.cebitec.mgx.model.dao.JobDAO;
@@ -11,6 +12,7 @@ import de.cebitec.mgx.model.dao.SeqRunDAO;
 import de.cebitec.mgx.model.dao.SequenceDAO;
 import de.cebitec.mgx.model.dao.ToolDAO;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Job;
@@ -33,6 +35,8 @@ public interface MGXController {
     public void log(String msg, Object... args);
 
     public HabitatDAO<Habitat> getHabitatDAO();
+    
+    public AttributeTypeDAO<AttributeType> getAttributeTypeDAO();
 
     public AttributeDAO<Attribute> getAttributeDAO();
 

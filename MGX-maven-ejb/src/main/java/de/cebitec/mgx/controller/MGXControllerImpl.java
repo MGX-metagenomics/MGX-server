@@ -5,6 +5,7 @@ import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Job;
@@ -131,6 +132,11 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public HabitatDAO<Habitat> getHabitatDAO() {
         return getDAO(HabitatDAO.class);
+    }
+    
+    @Override
+    public AttributeTypeDAO<AttributeType> getAttributeTypeDAO() {
+        return getDAO(AttributeTypeDAO.class);
     }
 
     @Override
