@@ -6,7 +6,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeCount;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
-import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;

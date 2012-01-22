@@ -88,7 +88,6 @@ public class SeqRunBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTO fetch(@PathParam("id") Long id) {
-        // FIXME add in number of sequences
         SeqRun seqrun;
         try {
             seqrun = mgx.getSeqRunDAO().getById(id);
@@ -102,7 +101,6 @@ public class SeqRunBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        // FIXME add in number of sequences
         return SeqRunDTOFactory.getInstance().toDTOList(mgx.getSeqRunDAO().getAll());
     }
 
