@@ -19,6 +19,8 @@ import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -187,5 +189,18 @@ public class JobBean {
         }
 
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("BySeqRun/{seqrun_id}")
+    @Produces("application/x-protobuf")
+    public JobDTOList BySeqRun(@PathParam("seqrun_id") Long seqrun_id) {
+        SeqRun run;
+        try {
+            run = mgx.getSeqRunDAO().getById(seqrun_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
     }
 }

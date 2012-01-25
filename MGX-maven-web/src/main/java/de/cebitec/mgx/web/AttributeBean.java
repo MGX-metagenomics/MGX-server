@@ -6,17 +6,13 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeCount;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
-import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
-import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -38,34 +34,6 @@ public class AttributeBean {
     MGXController mgx;
 
     @GET
-    @Path("listTypes")
-    @Produces("application/x-protobuf")
-    public AttributeTypeDTOList listTypes() {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().listTypes());
-    }
-
-    @GET
-    @Path("listTypesByJob/{jobId}")
-    @Produces("application/x-protobuf")
-    public AttributeTypeDTOList listTypesByJob(@PathParam("jobId") Long jobId) {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().listTypesByJob(jobId));
-    }
-
-    @GET
-    @Path("listTypesBySeqRun/{seqrunId}")
-    @Produces("application/x-protobuf")
-    public AttributeTypeDTOList listTypesBySeqRun(@PathParam("seqrunId") Long seqrunId) {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().listTypesBySeqRun(seqrunId));
-    }
-
-//    @GET
-//    @Path("getDistributionByRuns/{attrName}/{runIDs}")
-//    @Produces("application/x-protobuf")
-//    public AttributeDistribution getDistributionByRuns(@PathParam("attrName") String attrName, @PathParam("runIDs") String seqrun_id_list) {
-//        return getDistribution(attrName, null, seqrun_id_list);
-//    }
-//
-    @GET
     @Path("getDistribution/{attrTypeId}/{jobId}")
     @Produces("application/x-protobuf")
     public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
@@ -74,7 +42,8 @@ public class AttributeBean {
         Map<Attribute, Long> dist;
         try {
             AttributeType aType = mgx.getAttributeTypeDAO().getById(attrTypeId);
-            dist = mgx.getAttributeDAO().getDistribution(aType, jobId);
+            Job job = mgx.getJobDAO().getById(jobId);
+            dist = mgx.getAttributeDAO().getDistribution(aType, job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -91,9 +60,5 @@ public class AttributeBean {
         }
 
         return b.build();
-    }
-
-    private static List<String> split(String message, String separator) {
-        return new ArrayList<String>(Arrays.asList(message.split(separator)));
     }
 }

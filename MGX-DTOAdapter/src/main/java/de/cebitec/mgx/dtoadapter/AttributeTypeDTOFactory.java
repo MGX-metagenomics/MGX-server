@@ -35,7 +35,7 @@ public class AttributeTypeDTOFactory extends DTOConversionBase<AttributeType, At
     public AttributeTypeDTOList toDTOList(Iterable<AttributeType> list) {
         AttributeTypeDTOList.Builder b = AttributeTypeDTOList.newBuilder();
         for (AttributeType at : list) {
-            b.addAttribute(toDTO(at));
+            b.addAttributeType(toDTO(at));
         }
         return b.build();
     }

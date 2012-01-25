@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -22,7 +23,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return Attribute.class;
     }
 
-    public Map<Attribute, Long> getDistribution(AttributeType aType, Long job_id) throws MGXException {
+    public Map<Attribute, Long> getDistribution(AttributeType aType, Job job) throws MGXException {
 
         final String sql = "SELECT attr.id as attr_id, attr.value, count(attr.value) "
                 + "FROM observation obs "
@@ -45,12 +46,13 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         try {
             stmt = conn.prepareStatement(sql);
             stmt.setLong(1, aType.getId());
-            stmt.setLong(2, job_id);
+            stmt.setLong(2, job.getId());
             stmt.setInt(3, JobState.FINISHED.getValue());
             rs = stmt.executeQuery();
             while (rs.next()) {
                 Attribute attr = new Attribute();
-                attr.setAttrType(aType);
+                attr.setAttributeType(aType);
+                attr.setJob(job);
                 //
                 attr.setId(rs.getLong(1));
                 attr.setValue(rs.getString(2));

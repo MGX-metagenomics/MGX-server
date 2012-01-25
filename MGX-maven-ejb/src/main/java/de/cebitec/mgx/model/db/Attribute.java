@@ -66,11 +66,11 @@ public class Attribute implements Serializable, Identifiable {
         return this;
     }
 
-    public AttributeType getAttrType() {
+    public AttributeType getAttributeType() {
         return attrtype;
     }
 
-    public void setAttrType(AttributeType attrtype) {
+    public void setAttributeType(AttributeType attrtype) {
         this.attrtype = attrtype;
     }
 
