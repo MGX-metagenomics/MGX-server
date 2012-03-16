@@ -41,9 +41,9 @@ public class AttributeBean {
 
         Map<Attribute, Long> dist;
         try {
-            AttributeType aType = mgx.getAttributeTypeDAO().getById(attrTypeId);
+            AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
             Job job = mgx.getJobDAO().getById(jobId);
-            dist = mgx.getAttributeDAO().getDistribution(aType, job);
+            dist = mgx.getAttributeDAO().getDistribution(attrType, job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -61,4 +61,34 @@ public class AttributeBean {
 
         return b.build();
     }
+    
+    
+    @GET
+    @Path("getHierarchy/{attrTypeId}/{jobId}")
+    @Produces("application/x-protobuf")
+    public AttributeDistribution getHierarchy(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
+
+        Map<Attribute, Long> dist;
+        try {
+            //AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
+            Job job = mgx.getJobDAO().getById(jobId);
+            dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+
+        AttributeDistribution.Builder b = AttributeDistribution.newBuilder();
+        Iterator<Attribute> it = dist.keySet().iterator();
+        while (it.hasNext()) {
+            Attribute attr = it.next();
+            AttributeDTO attrDTO = AttributeDTOFactory.getInstance().toDTO(attr);
+            Long count = dist.get(attr);
+            AttributeCount attrcnt = AttributeCount.newBuilder().setAttribute(attrDTO).setCount(count).build();
+            //
+            b.addAttributecount(attrcnt);
+        }
+
+        return b.build();
+    }
+    
 }

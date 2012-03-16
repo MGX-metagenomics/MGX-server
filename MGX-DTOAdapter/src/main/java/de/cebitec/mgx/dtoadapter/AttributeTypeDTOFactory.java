@@ -22,7 +22,12 @@ public class AttributeTypeDTOFactory extends DTOConversionBase<AttributeType, At
 
     @Override
     public final AttributeTypeDTO toDTO(AttributeType a) {
-        Builder b = AttributeTypeDTO.newBuilder().setId(a.getId()).setName(a.getName()).setValueType(a.getValueType());
+        String valueType = String.valueOf(a.getValueType());
+        Builder b = AttributeTypeDTO.newBuilder()
+                .setId(a.getId())
+                .setName(a.getName())
+                .setStructure(String.valueOf(a.getStructure()))
+                .setValueType(valueType);
         return b.build();
     }
 
