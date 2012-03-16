@@ -11,7 +11,6 @@
     <class>de.cebitec.mgx.model.db.SeqRun</class>
     <class>de.cebitec.mgx.model.db.Sequence</class>
     <class>de.cebitec.mgx.model.db.Tool</class>
-    <class>de.cebitec.mgx.model.db.HierarchicalAttribute</class>
     <class>de.cebitec.mgx.model.db.AttributeType</class>
     <class>de.cebitec.mgx.model.db.Attribute</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>

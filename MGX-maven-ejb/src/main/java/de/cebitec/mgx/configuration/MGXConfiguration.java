@@ -68,13 +68,9 @@ public class MGXConfiguration extends DispatcherConfigBase {
         return config.getProperty("mgxglobal_pass");
     }
 
-    public String getMGXGlobalURL() {
+    public String getMGXGlobalJDBCURL() {
         return config.getProperty("mgxglobal_jdbc_url");
     }
-
-//    public String getMGXGlobalDriverClass() {
-//        return config.getProperty("mgxglobal_driverclass");
-//    }
 
     public String getMGXGlobalStorageDir() {
         return config.getProperty("mgxglobal_persistent_dir");
@@ -105,6 +101,16 @@ public class MGXConfiguration extends DispatcherConfigBase {
 
     public String getValidatorExecutable() {
         return config.getProperty("mgx_graphvalidate");
+    }
+    
+    public File getPluginDump() {
+        StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
+        if (!getMGXGlobalStorageDir().endsWith(File.separator)) 
+            sb.append(File.separatorChar);
+        
+        File ret = new File(sb.append("plugins.xml").toString());
+        assert ret.exists();
+        return ret;
     }
 
     public String getDispatcherHost() throws MGXDispatcherException {

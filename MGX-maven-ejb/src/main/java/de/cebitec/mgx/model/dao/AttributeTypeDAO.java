@@ -62,12 +62,12 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
 
         List<AttributeType> ret = new ArrayList<AttributeType>();
 
-        final String sql = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type "
+        final String sql = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
                 + "FROM attributetype atype "
                 + "LEFT JOIN attribute attr ON (atype.id = attr.attrtype_id) "
                 + "LEFT JOIN job ON (attr.job_id = job.id) "
                 + "WHERE job.id=? AND job.job_state=? "
-                + "GROUP BY atype.id, atype.name, atype.value_type "
+                + "GROUP BY atype.id, atype.name, atype.value_type, atype.structure "
                 + "ORDER BY atype.name ASC";
 
         Connection c = getConnection();
@@ -82,7 +82,8 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
                 AttributeType aType = new AttributeType();
                 aType.setId(rs.getLong(1));
                 aType.setName(rs.getString(2));
-                aType.setValueType(rs.getString(3));
+                aType.setValueType(rs.getString(3).charAt(0));
+                aType.setStructure(rs.getString(4).charAt(0));
                 ret.add(aType);
             }
         } catch (SQLException ex) {
@@ -98,7 +99,7 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
 
         List<AttributeType> ret = new ArrayList<AttributeType>();
 
-        final String sql = "SELECT DISTINCT atype.id, atype.name, atype.value_type "
+        final String sql = "SELECT DISTINCT atype.id, atype.name, atype.value_type, atype.structure "
                 + "FROM job "
                 + "LEFT JOIN attribute attr ON (job.id = attr.job_id) "
                 + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
@@ -116,7 +117,8 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
                 AttributeType aType = new AttributeType();
                 aType.setId(rs.getLong(1));
                 aType.setName(rs.getString(2));
-                aType.setValueType(rs.getString(3));
+                aType.setValueType(rs.getString(3).charAt(0));
+                aType.setStructure(rs.getString(4).charAt(0));
                 ret.add(aType);
             }
         } catch (SQLException ex) {

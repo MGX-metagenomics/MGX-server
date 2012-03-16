@@ -3,16 +3,7 @@ package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
 import java.util.Collection;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -22,6 +13,14 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "AttributeType")
 public class AttributeType implements Serializable, Identifiable {
+    
+    public static final char VALUE_NUMERIC = 'N';
+    public static final char VALUE_DISCRETE = 'D';
+    //
+    public static final char STRUCTURE_BASIC = 'B';
+    public static final char STRUCTURE_HIERARCHICAL = 'H';
+    
+            
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +33,13 @@ public class AttributeType implements Serializable, Identifiable {
     
     @Basic
     @NotNull
-    @Column(name="value_type")
+    @Column(name="value_type", length=1, columnDefinition="CHARACTER")
     protected String value_type;
+    
+    @Basic
+    @NotNull
+    @Column(name="structure", length=1, columnDefinition="CHARACTER")
+    protected String structure;
     
     @OneToMany(mappedBy = "attrtype", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<Attribute> attributes;
@@ -50,12 +54,21 @@ public class AttributeType implements Serializable, Identifiable {
         return this;
     }
 
-    public String getValueType() {
-        return value_type;
+    public char getValueType() {
+        return value_type.charAt(0);
     }
 
-    public AttributeType setValueType(String value_type) {
-        this.value_type = value_type;
+    public AttributeType setValueType(char value_type) {
+        this.value_type = String.valueOf(value_type);
+        return this;
+    }
+
+    public char getStructure() {
+        return structure.charAt(0);
+    }
+
+    public AttributeType setStructure(char structure) {
+        this.structure = String.valueOf(structure);
         return this;
     }
 
@@ -89,6 +102,6 @@ public class AttributeType implements Serializable, Identifiable {
 
     @Override
     public String toString() {
-        return "de.cebitec.mgx.model.db.Attribute[id=" + id + "]";
+        return "de.cebitec.mgx.model.db.AttributeType[id=" + id + "]";
     }
 }

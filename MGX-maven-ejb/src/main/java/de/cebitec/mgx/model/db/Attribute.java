@@ -1,21 +1,8 @@
 package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import java.util.Collection;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -24,9 +11,9 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "Attribute")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name="attr_class", length=1, discriminatorType= DiscriminatorType.CHAR)
-@DiscriminatorValue("B")
+//@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+//@DiscriminatorColumn(name="attr_class", length=1, discriminatorType= DiscriminatorType.CHAR)
+//@DiscriminatorValue("B")
 public class Attribute implements Serializable, Identifiable {
 
     private static final long serialVersionUID = 1L;
@@ -46,6 +33,27 @@ public class Attribute implements Serializable, Identifiable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_id", nullable = false)
     protected Job job;
+    
+    @ManyToOne
+    private Attribute parent;
+    @OneToMany(mappedBy = "parent")
+    private Collection<Attribute> children;
+
+    public Collection<Attribute> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Collection<Attribute> children) {
+        this.children = children;
+    }
+
+    public Attribute getParent() {
+        return parent;
+    }
+
+    public void setParent(Attribute parent) {
+        this.parent = parent;
+    }
 
     @Override
     public Long getId() {

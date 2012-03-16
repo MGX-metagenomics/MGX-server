@@ -1,17 +1,8 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.SeqRun;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *

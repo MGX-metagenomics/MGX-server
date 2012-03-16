@@ -90,7 +90,7 @@ public class MGXGlobal {
             bcfg.setMaxConnectionsPerPartition(5);
             bcfg.setMinConnectionsPerPartition(1);
             bcfg.setPartitionCount(1);
-            bcfg.setJdbcUrl(cfg.getMGXGlobalURL());
+            bcfg.setJdbcUrl(cfg.getMGXGlobalJDBCURL());
             bcfg.setUsername(cfg.getMGXGlobalUser());
             bcfg.setPassword(cfg.getMGXGlobalPassword());
             bcfg.setPoolName("MGX-Global");

@@ -22,7 +22,7 @@ public class Tool implements Serializable, Identifiable {
     protected String name;
     @Basic
     @NotNull
-    @Column(name = "description")
+    @Column(name = "description", length=1024)
     protected String description;
     @Basic
     @NotNull
