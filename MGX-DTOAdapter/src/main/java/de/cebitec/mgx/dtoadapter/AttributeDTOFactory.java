@@ -34,7 +34,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
     }
 
     @Override
-    public Attribute toDB(AttributeDTO dto) {
+    public final Attribute toDB(AttributeDTO dto) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
