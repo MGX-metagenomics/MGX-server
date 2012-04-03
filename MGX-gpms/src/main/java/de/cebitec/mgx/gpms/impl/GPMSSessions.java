@@ -3,8 +3,7 @@ package de.cebitec.mgx.gpms.impl;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.data.DBMembershipI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -26,7 +25,7 @@ public class GPMSSessions {
 
     @PostConstruct
     public void startup() {
-        sessions = new HashMap<DBMembershipI, GPMSMaster>();
+        sessions = Collections.synchronizedMap(new HashMap<DBMembershipI, GPMSMaster>());
     }
 
     public DBMasterI getMaster(DBMembershipI m) {
@@ -46,20 +45,26 @@ public class GPMSSessions {
 
     @Schedule(hour = "*", minute = "0", second = "0", persistent = false)
     public void timeout(Timer timer) {
+        Set<DBMembershipI> remove = new HashSet<DBMembershipI>();
+
         for (DBMembershipI m : sessions.keySet()) {
             GPMSMaster master = sessions.get(m);
 
             long IdleTime = (System.currentTimeMillis() - master.lastObtained()) / 1000;
             if (IdleTime > 60) {
-                log("Removing session for " + master.getProject().getName() + " due to timeout ("+IdleTime+")");
-                sessions.remove(m);
-                master.close();
+                log("Removing session for " + master.getProject().getName() + " due to timeout (" + IdleTime + ")");
+                remove.add(m);
             }
+        }
+
+        for (DBMembershipI m : remove) {
+            GPMSMaster master = sessions.get(m);
+            sessions.remove(m);
+            master.close();
         }
     }
 
     private void log(String msg) {
         logger.log(Level.INFO, msg);
     }
-
 }
