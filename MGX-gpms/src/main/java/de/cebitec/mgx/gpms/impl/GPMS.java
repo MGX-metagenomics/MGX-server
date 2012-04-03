@@ -2,10 +2,10 @@ package de.cebitec.mgx.gpms.impl;
 
 import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.UserI;
-import de.cebitec.gpms.util.EMFNameResolver;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
+import de.cebitec.gpms.util.EMFNameResolver;
 import de.cebitec.mgx.gpms.impl.data.ProjectClass;
 import de.cebitec.mgx.gpms.impl.data.User;
 import java.sql.Connection;
@@ -15,12 +15,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
-import javax.ejb.EJB;
-import javax.ejb.EJBContext;
-import javax.ejb.Schedule;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.Timer;
+import javax.ejb.*;
 import javax.sql.DataSource;
 
 /**
@@ -91,7 +86,7 @@ public class GPMS implements DBGPMSI {
         EMFNameResolver.unregisterResolver(enr);
     }
 
-    @Schedule(hour = "*", minute = "0", second = "0", persistent = false)
+    @Schedule(hour = "*", minute = "*/5", second = "0", persistent = false)
     public void cleanupMembershipCache(Timer timer) {
         User.clearMembershipCache();
     }

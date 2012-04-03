@@ -11,9 +11,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,7 +24,7 @@ public class User implements UserI {
     private final String login;
     private final GPMS gpms;
     //
-    private final static HashMap<UserI, List<MembershipI>> membership_cache = new HashMap<UserI, List<MembershipI>>();
+    private final static Map<UserI, List<MembershipI>> membership_cache = Collections.synchronizedMap(new HashMap<UserI, List<MembershipI>>());
     //
     private final static String sql = new StringBuilder("SELECT Project.name, Role.name from User ")
             .append("LEFT JOIN Member on (User._id = Member.user_id) ")
