@@ -26,7 +26,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         b.setId(attr.getId())
                 .setValue(attr.getValue())
                 .setJobid(attr.getJob().getId())
-                .setAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(attr.getAttributeType()));
+                .setAttributeTypeId(attr.getAttributeType().getId());
         if (attr.getParent() != null) {
             b.setParentId(attr.getParent().getId());
         }
