@@ -4,6 +4,8 @@ package de.cebitec.mgx.controller;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.util.EMFNameResolver;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
@@ -15,10 +17,7 @@ public class MGXPUResolver extends EMFNameResolver {
 
     @Override
     public boolean handles(MembershipI pm) {
-        if (pm.getProject().getProjectClass().getName().equals("MGX")) {
-            return true;
-        }
-        return false;
+        return pm.getProject().getProjectClass().getName().equals("MGX");
     }
 
     @Override
@@ -28,7 +27,7 @@ public class MGXPUResolver extends EMFNameResolver {
 
     @Override
     public EntityManagerFactory create(String pu, Properties config) {
-        System.out.println("Creating EntityManagerFactory for "+ pu);
+        Logger.getLogger(MGXPUResolver.class.getPackage().getName()).log(Level.INFO, "Creating EntityManagerFactory for {0}", pu);
         return Persistence.createEntityManagerFactory(pu, config);
     }
 }

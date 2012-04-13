@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -88,6 +89,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
+    @Asynchronous
     public void delete(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
 

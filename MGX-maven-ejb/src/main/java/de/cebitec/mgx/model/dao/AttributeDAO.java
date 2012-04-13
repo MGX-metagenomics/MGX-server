@@ -9,11 +9,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  *
@@ -66,6 +63,8 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         } finally {
             close(conn, stmt, rs);
         }
+        
+        //System.err.println("DAO returning distribution with "+ret.keySet().size()+" entries");
 
         return ret;
     }
@@ -75,7 +74,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         final String sql = "WITH RECURSIVE subattributes AS "
                 + "( "
                 + "WITH attributecount AS ( "
-                + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, atype.structure as atype_structure, atype.value_type as attrtype_valtype, attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, count(attr.value) as count FROM observation obs"
+                + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, atype.structure as atype_structure, atype.value_type as attrtype_valtype, attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, count(attr.value) as count FROM observation obs "
                 + "LEFT JOIN attribute attr ON (obs.attributeid = attr.id) "
                 + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
                 + "WHERE attr.job_id=? "
@@ -117,7 +116,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
-
+        
         try {
             stmt = conn.prepareStatement(sql);
             stmt.setLong(1, job.getId());
@@ -164,6 +163,8 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 a.setParent(parent);
             }
         }
+        
+        //System.err.println("DAO returning hierarchy with "+ret.keySet().size()+" entries");
 
         return ret;
     }

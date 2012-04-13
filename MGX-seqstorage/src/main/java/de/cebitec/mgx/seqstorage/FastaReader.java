@@ -53,6 +53,18 @@ public class FastaReader implements SeqReaderI {
         byte[] seqname = new byte[buf.length - 1];
         System.arraycopy(buf, 1, seqname, 0, buf.length - 1);
         
+        // check sequence name for whitespaces and trim
+        int trimPos = 0;
+        for (int i=0; i< seqname.length; i++) {
+            if (seqname[i] == ' ') {
+                trimPos = i;
+                break;
+            }
+        }
+        if (trimPos > 0) {
+            System.arraycopy(seqname, 0, seqname, 0, trimPos);
+        }
+        
         seq = new DNASequence();
         seq.setName(seqname);
 

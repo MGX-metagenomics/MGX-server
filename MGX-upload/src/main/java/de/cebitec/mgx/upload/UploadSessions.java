@@ -2,13 +2,12 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.ejb.Asynchronous;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -55,11 +54,13 @@ public class UploadSessions {
         return sessions.get(uuid);
     }
 
+    @Asynchronous
     public void closeSession(UUID uuid) throws MGXException {
         sessions.get(uuid).close();
         sessions.remove(uuid);
     }
 
+    @Asynchronous
     public void cancelSession(UUID uuid) throws MGXException {
         sessions.get(uuid).cancel();
         sessions.remove(uuid);
@@ -67,14 +68,20 @@ public class UploadSessions {
 
     @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
     public void timeout(Timer timer) {
+        Set<UUID> toRemove = new HashSet<UUID>();
         for (UUID uuid : sessions.keySet()) {
             UploadReceiverI s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
             if (sessionIdleTime > uploadTimeout) {
                 Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
+                toRemove.add(uuid);
                 s.cancel();
-                sessions.remove(uuid);
+                
             }
+        }
+        
+        for (UUID uuid : toRemove) {
+            sessions.remove(uuid);
         }
     }
 }
