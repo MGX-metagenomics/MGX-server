@@ -3,15 +3,22 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList.Builder;
+import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
+import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
+import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.HashMap;
+import java.util.Map;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -126,5 +133,35 @@ public class SeqRunBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return Response.ok().build();
+    }
+    
+    
+    @GET
+    @Path("JobsAndAttributeTypes/{seqrun_id}")
+    @Produces("application/x-protobuf")
+    public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
+        SeqRun run;
+        try {
+            run = mgx.getSeqRunDAO().getById(seqrun_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        Map<Job, Iterable<AttributeType>> result = new HashMap<Job, Iterable<AttributeType>>();
+        for (Job job : mgx.getJobDAO().BySeqRun(run)) {
+            result.put(job, mgx.getAttributeTypeDAO().ByJob(job.getId()));
+        }
+        
+        // convert to DTO - FIXME: move to correct package
+        dto.JobsAndAttributeTypesDTO.Builder b = dto.JobsAndAttributeTypesDTO.newBuilder();
+        for (Map.Entry<Job, Iterable<AttributeType>> entry : result.entrySet()) {
+            dto.JobDTO toDTO = JobDTOFactory.getInstance().toDTO(entry.getKey());
+            dto.AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(entry.getValue());
+            dto.JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder()
+                    .setJob(toDTO)
+                    .setAttributeTypes(dtoList)
+                    .build();
+            b.addEntry(jat);
+        }
+        return b.build();
     }
 }
