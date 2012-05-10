@@ -60,17 +60,7 @@ public class MGXGlobal {
             T instance = c.newInstance();
             instance.setEntityManager(em);
             return instance;
-        } catch (InstantiationException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (IllegalArgumentException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (InvocationTargetException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (NoSuchMethodException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (SecurityException ex) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
         throw new UnsupportedOperationException("Could not create DAO " + clazz);
@@ -115,7 +105,7 @@ public class MGXGlobal {
         emf = Persistence.createEntityManagerFactory("MGX-global", globalCfg);
         em = emf.createEntityManager();
 
-        daos = new HashMap<Class, DAO>();
+        daos = new HashMap<>();
 
         log("MGX global zone ready.");
     }

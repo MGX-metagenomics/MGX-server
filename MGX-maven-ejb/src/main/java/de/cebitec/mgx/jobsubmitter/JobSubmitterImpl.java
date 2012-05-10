@@ -8,12 +8,7 @@ import de.cebitec.mgx.dispatcher.common.JobReceiverI;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -109,7 +104,7 @@ public class JobSubmitterImpl implements JobSubmitter {
         JobReceiverI r = null;
         try {
             r = (JobReceiverI) getDispatcherContext(mgx).lookup("java:global/MGX-dispatcher-ear/MGX-dispatcher-ejb/JobReceiver");
-        } catch (Exception ex) {
+        } catch (NamingException | MGXDispatcherException ex) {
         }
 
         return r;
@@ -131,7 +126,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     private boolean validateParameters(MGXController mgx, Job j) throws MGXInsufficientJobConfigurationException, MGXException {
 
         // build up command string
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
         commands.add(mgx.getConfiguration().getValidatorExecutable());
         commands.add(j.getTool().getXMLFile());
         commands.add(createJobConfigFile(mgx, j));

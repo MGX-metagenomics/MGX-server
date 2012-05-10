@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import java.sql.Connection;
@@ -28,17 +29,47 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
         if (dBFile != null) {
             SeqReaderFactory.delete(dBFile);
         }
-        
+
         // FIXME move remainder to background thread
+        Connection conn = null;
+        PreparedStatement stmt = null;
 
         /*
          * JPA CascadeType.DELETE fetches and delete all entities individually;
-         * we can do better by manually deleting all associated reads ..
+         * we can do better by manually deleting all referring objects ..
          */
-        Connection conn = null;
-        PreparedStatement stmt = null;
+        
         try {
             conn = getConnection();
+
+            // delete observations
+            stmt = conn.prepareStatement("DELETE FROM observation WHERE seqid IN (SELECT id FROM read WHERE seqrun_id=?)");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+            // delete attributecounts
+            stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+                    + "(SELECT id FROM attribute WHERE job_id IN "
+                    + "(SELECT id from job WHERE seqrun_id=?)"
+                    + ")");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+            // delete attributes
+            stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id IN "
+                    + "(SELECT id from job WHERE seqrun_id=?)");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+            // delete jobs
+//            stmt = conn.prepareStatement("DELETE FROM job WHERE seqrun_id=?");
+//            stmt.setLong(1, id);
+//            stmt.execute();
+            for (Job j : getController().getJobDAO().BySeqRun(sr)) {
+                getController().getJobDAO().delete(j.getId());
+            }
+
+            // delete reads
             stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?");
             stmt.setLong(1, id);
             stmt.execute();
