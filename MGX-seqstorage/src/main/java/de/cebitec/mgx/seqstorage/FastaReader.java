@@ -1,7 +1,7 @@
 package de.cebitec.mgx.seqstorage;
 
-import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.File;
@@ -56,13 +56,15 @@ public class FastaReader implements SeqReaderI {
         // check sequence name for whitespaces and trim
         int trimPos = 0;
         for (int i=0; i< seqname.length; i++) {
-            if (seqname[i] == ' ') {
+            if (seqname[i] == ' ' || seqname[i] == '\t') {
                 trimPos = i;
                 break;
             }
         }
         if (trimPos > 0) {
-            System.arraycopy(seqname, 0, seqname, 0, trimPos);
+            byte[] tmp = new byte[trimPos];
+            System.arraycopy(seqname, 0, tmp, 0, trimPos);
+            seqname = tmp;
         }
         
         seq = new DNASequence();

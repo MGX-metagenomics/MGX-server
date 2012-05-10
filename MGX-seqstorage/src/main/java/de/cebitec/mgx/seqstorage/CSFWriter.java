@@ -1,15 +1,11 @@
 package de.cebitec.mgx.seqstorage;
 
-import de.cebitec.mgx.sequence.SeqWriterI;
-import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.seqstorage.encoding.FourBitEncoder;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import de.cebitec.mgx.sequence.SeqWriterI;
+import java.io.*;
 
 /**
  *
