@@ -6,18 +6,25 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
+import de.cebitec.mgx.dto.dto.JobParameterDTO;
+import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXBoolean;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
+import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
+import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.util.JobParameter;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -37,6 +44,8 @@ public class JobBean {
     MGXController mgx;
     @EJB
     JobSubmitter js;
+    @EJB
+    JobParameterHelper paramHelper;
 
     @PUT
     @Path("create")
@@ -95,6 +104,44 @@ public class JobBean {
     }
 
     @GET
+    @Path("getParameters/{id}")
+    @Produces("application/x-protobuf")
+    public JobParameterListDTO getParameters(@PathParam("id") Long id) {
+        String tool = null;
+        try {
+            tool = mgx.getJobDAO().getById(id).getTool().getXMLFile();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        String plugins = mgx.getConfiguration().getPluginDump();
+        List<JobParameter> params = paramHelper.getParameters(tool, plugins);
+        
+        return JobParameterDTOFactory.getInstance().toDTOList(params);
+    }
+
+    @POST
+    @Path("setParameters/{id}")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
+        List<JobParameter> params = new ArrayList<>();
+        for (JobParameterDTO dto : paramdtos.getParameterList()) {
+            params.add(JobParameterDTOFactory.getInstance().toDB(dto));
+        }
+        
+        // FIXME
+
+        Job job;
+        try {
+            job = mgx.getJobDAO().getById(id);
+            job.setParameters("");
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
+
+    @GET
     @Path("verify/{id}")
     @Produces("application/x-protobuf")
     public MGXBoolean verify(@PathParam("id") Long id) {
@@ -141,10 +188,7 @@ public class JobBean {
         boolean ret = false;
         try {
             ret = js.cancel(mgx, id);
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        } catch (MGXDispatcherException ex) {
+        } catch (MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -173,7 +217,7 @@ public class JobBean {
         // notify dispatcher to delete observations
         try {
             js.delete(mgx, id);
-        } catch (Exception ex) {
+        } catch (MGXDispatcherException | MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

@@ -12,6 +12,7 @@ import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.HashSet;
@@ -44,9 +45,10 @@ public class AttributeBean {
 
         Map<Attribute, Long> dist;
         try {
-            AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
+            //AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
             Job job = mgx.getJobDAO().getById(jobId);
-            dist = mgx.getAttributeDAO().getDistribution(attrType, job);
+            assert(job != null && job.getStatus() == JobState.FINISHED);
+            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -62,6 +64,7 @@ public class AttributeBean {
         Map<Attribute, Long> dist;
         try {
             Job job = mgx.getJobDAO().getById(jobId);
+            assert(job != null && job.getStatus() == JobState.FINISHED);
             dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -72,7 +75,7 @@ public class AttributeBean {
 
     private AttributeDistribution convert(Map<Attribute, Long> dist) {
         
-        Set<AttributeType> aTypes = new HashSet<AttributeType>();
+        Set<AttributeType> aTypes = new HashSet<>();
         
         AttributeDistribution.Builder b = AttributeDistribution.newBuilder();
         Iterator<Attribute> it = dist.keySet().iterator();
