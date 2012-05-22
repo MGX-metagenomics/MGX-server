@@ -8,13 +8,11 @@ package de.cebitec.mgx.jobsubmitter.parser.impl;
 //~--- non-JDK imports --------------------------------------------------------
 
 
+import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.PluginDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.ToolDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.interf.Parser;
-
-import org.openide.util.lookup.ServiceProvider;
-
 import org.xml.sax.SAXException;
 
 //~--- JDK imports ------------------------------------------------------------
@@ -26,7 +24,6 @@ import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import org.openide.util.Lookup;
 
 /**
  * Hier werden die Parser für die Tool XML Datei als auch die Plugin XMl datei
@@ -35,7 +32,6 @@ import org.openide.util.Lookup;
  *
  * @author belmann
  */
-@ServiceProvider(service = Parser.class)
 public class SaxParser implements Parser {
 
    private final static Logger LOGGER =
@@ -56,7 +52,7 @@ public class SaxParser implements Parser {
    /**
     * Store für die einzelnen Knoten.
     */
-   private NodeStore store;
+   private Store store;
    /**
     * Tool Datei, die vom User erstellt wurde.
     */
@@ -74,7 +70,7 @@ public class SaxParser implements Parser {
     * @param pluginsXml Die Plugins Datei mit allen möglichen Knoten.
     */
    public SaxParser() {
-	store = Lookup.getDefault().lookup(NodeStore.class);
+	store = new Store();
 
 	try {
 	   parser = SAXParserFactory.newInstance().newSAXParser();

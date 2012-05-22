@@ -9,7 +9,6 @@ package de.cebitec.mgx.jobsubmitter.data.impl;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
 import java.util.*;
-import org.openide.util.lookup.ServiceProvider;
 
 /**
  * Verwaltet die Nodes einer vom User möglichen Auswahl an Tools.
@@ -17,7 +16,6 @@ import org.openide.util.lookup.ServiceProvider;
  *
  * @author belmann
  */
-@ServiceProvider(service = NodeStore.class)
 public class Store implements NodeStore {
 
    /**
