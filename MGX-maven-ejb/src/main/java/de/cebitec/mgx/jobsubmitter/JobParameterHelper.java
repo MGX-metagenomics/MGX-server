@@ -22,19 +22,14 @@ public class JobParameterHelper {
     
     public List<JobParameter> getParameters(String tool, String plugins) {   
         SaxParser parser = new SaxParser();
-        Store store =parser.getNodesConfigurations(tool, plugins);   
+        Store store = parser.getNodesConfigurations(tool, plugins);   
         
-        LOGGER.info("StoreSize: "+store.storeSize()+"");
-        
+        LOGGER.info("StoreSize: "+store.storeSize()+"");   
         
         List<JobParameter> parameters = Transform.getFromNodeStoreJobParameter(store);
         
         LOGGER.info("ParameterSize: "+parameters.size()+"");
         
         return parameters;
-        
-        
-        
-        
     } 
 }

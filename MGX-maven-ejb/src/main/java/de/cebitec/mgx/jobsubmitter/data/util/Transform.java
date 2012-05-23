@@ -25,23 +25,18 @@ public class Transform {
 
    public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
 	List<JobParameter> parameters = new ArrayList<JobParameter>();
-
 	Iterator nodeIterator = store.getIterator();
 	Map.Entry nodeME;
 	String nodeId;
 	Iterator configItemIterator;
 	while (nodeIterator.hasNext()) {
-
 	   nodeME = (Map.Entry) nodeIterator.next();
 	   nodeId = (String) nodeME.getKey();
            Node node = (Node) nodeME.getValue();
 	   configItemIterator = (node).getIterator();
-	   Map.Entry configItemME;
-
-	 
+	   Map.Entry configItemME;	 
 	   String configItemName;
-
-
+           
 	   while (configItemIterator.hasNext()) {
 
 		configItemME = (Map.Entry) configItemIterator.next();
@@ -60,7 +55,7 @@ public class Transform {
 		jobParameter.setUserDescription(configItem.getUserDescription());
 		jobParameter.setUserName(configItem.getUserName());
                 jobParameter.setChoices(configItem.getChoice().getChoices());
-                
+               
 		parameters.add(jobParameter);
 	   }
 	}
@@ -83,7 +78,6 @@ public class Transform {
            } else {
 		node = store.getNode(Long.toString(parameter.getNodeId()));
 	   }
-
 	   node.setDisplayName(parameter.getDisplayName());
            
 	   ConfigItem configItem;

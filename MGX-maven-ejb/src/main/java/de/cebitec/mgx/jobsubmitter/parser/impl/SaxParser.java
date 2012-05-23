@@ -17,11 +17,13 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.InputSource;
 
 /**
  * Hier werden die Parser für die Tool XML Datei als auch die Plugin XMl datei
@@ -41,7 +43,7 @@ public class SaxParser {
    /**
     * Die Plugin Datei, wo alle möglichen Knoten aufgelistet sind
     */
-   private File pluginFile;
+   private String pluginFile;
    /**
     * EventHandler für die Plugin Datei.
     *
@@ -54,7 +56,7 @@ public class SaxParser {
    /**
     * Tool Datei, die vom User erstellt wurde.
     */
-   private File toolFile;
+   private String toolFile;
    /**
     * Handler, der die Events, die beim Parsen der Tool Datei entstehen abfängt.
     */
@@ -93,9 +95,8 @@ public class SaxParser {
 	 String pluginsXml) {
 	
 	store.removeAllNodes();
-	
-	toolFile = new File(toolXml);
-	pluginFile = new File(pluginsXml);
+	toolFile = toolXml;
+	pluginFile = pluginsXml;
 	parse();
 
 
@@ -110,7 +111,8 @@ public class SaxParser {
 	toolHandler = new ToolDocumentHandler(store);
 
 	try {
-	   parser.parse(toolFile, toolHandler);
+           
+	   parser.parse(new InputSource( new StringReader(toolFile)), toolHandler);
 	} catch (SAXException ex) {
 	   Logger.getLogger(SAXParser.class.getName()).log(
 		 Level.SEVERE,
@@ -124,7 +126,7 @@ public class SaxParser {
 	    new PluginDocumentHandler(toolHandler.getFilledStore());
 
 	try {
-	   parser.parse(pluginFile, pluginHandler);
+	   parser.parse(new InputSource( new StringReader(pluginFile)), pluginHandler);
 	} catch (SAXException ex) {
 	   Logger.getLogger(SAXParser.class.getName()).log(
 		 Level.SEVERE,

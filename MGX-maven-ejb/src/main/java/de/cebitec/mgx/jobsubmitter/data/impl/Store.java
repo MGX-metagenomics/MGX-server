@@ -47,9 +47,7 @@ public class Store  {
     * @return Node
     */
    public final Node getNode(String lId) {
-
 	return nodes.get(lId);
-
    }
 
    /**
