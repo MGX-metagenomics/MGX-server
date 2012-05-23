@@ -54,7 +54,7 @@ public class Transform {
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
 		jobParameter.setDefaultValue(configItem.getDefaultValue());
-		jobParameter.setNodeId(Integer.getInteger(nodeId));
+		jobParameter.setNodeId(Long.getLong(nodeId));
 		jobParameter.setOptional(configItem.isOptional());
 		jobParameter.setType(configItem.getConfigType());
 		jobParameter.setUserDescription(configItem.getUserDescription());
@@ -75,7 +75,8 @@ public class Transform {
 
 	   if (store.getNode(Long.toString(
 		 parameter.getNodeId())) == null) {
-		node = new Node(parameter.getClassName(), Long.toString(parameter.getNodeId()));
+		node = new Node(parameter.getClassName(), 
+                        Long.toString(parameter.getNodeId()));
 		store.addNode(node);
 	   } else {
 		node = store.getNode(Long.toString(parameter.getNodeId()));
@@ -88,7 +89,8 @@ public class Transform {
 	   if (node.getConfigItem(parameter.getConfigItemName()) == null) {
 
 
-		configItem = new ConfigItem(parameter.getUserName(), parameter.getUserDescription(), parameter.getConfigItemName());
+		configItem = new ConfigItem(parameter.getUserName(), 
+                        parameter.getUserDescription(), parameter.getConfigItemName());
 
 	   } else {
 
