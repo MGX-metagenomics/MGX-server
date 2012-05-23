@@ -69,16 +69,18 @@ public class Transform {
 
    public static Store getFromJobParameterNodeStore(List<JobParameter> parameters) {
 	Store store = new Store();
-
+        
 	for (JobParameter parameter : parameters) {
+        boolean newNode = false;
+        boolean newConfig = false;
 	   Node node;
 
 	   if (store.getNode(Long.toString(
 		 parameter.getNodeId())) == null) {
 		node = new Node(parameter.getClassName(), 
                         Long.toString(parameter.getNodeId()));
-		store.addNode(node);
-	   } else {
+                newNode=true;
+           } else {
 		node = store.getNode(Long.toString(parameter.getNodeId()));
 	   }
 
@@ -91,7 +93,8 @@ public class Transform {
 
 		configItem = new ConfigItem(parameter.getUserName(), 
                         parameter.getUserDescription(), parameter.getConfigItemName());
-
+                newConfig = true;
+                
 	   } else {
 
 		configItem = node.getConfigItem(parameter.getConfigItemName());
@@ -103,6 +106,15 @@ public class Transform {
 	   configItem.setOptional(parameter.isOptional());
 	   configItem.setUserDescription(parameter.getUserDescription());
 
+           if(newConfig){
+           node.addConfigItem(configItem);
+           }
+           
+           if(newNode){
+           store.addNode(node);
+           }
+           
+           
 	}
 	return store;
    }
