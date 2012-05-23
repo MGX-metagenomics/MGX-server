@@ -96,10 +96,9 @@ public class Transform {
                 newConfig = true;
                 
 	   } else {
-
 		configItem = node.getConfigItem(parameter.getConfigItemName());
-
 	   }    
+           
 	   configItem.setChoice(new Choices(parameter.getChoices()));
 	   configItem.setConfigType(parameter.getType());
 	   configItem.setDefaultValue(parameter.getDefaultValue());
