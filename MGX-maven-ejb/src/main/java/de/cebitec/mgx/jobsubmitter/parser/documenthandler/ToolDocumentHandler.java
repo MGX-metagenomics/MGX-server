@@ -3,8 +3,7 @@ package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 //~--- non-JDK imports --------------------------------------------------------
 import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
-
-import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
+import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
 import java.util.logging.Logger;
 import org.xml.sax.Attributes;
@@ -52,7 +51,7 @@ public class ToolDocumentHandler extends DefaultHandler {
    /**
     * Der Store speichert die gefundenen Nodes und ConfigItems.
     */
-   private NodeStore store;
+   private Store store;
 
    /**
     * Setzt save und firstConfigTag Flag solange nichts gefunden wurde auf false
@@ -60,7 +59,7 @@ public class ToolDocumentHandler extends DefaultHandler {
     *
     * @param lStore Store für die Nodes.
     */
-   public ToolDocumentHandler(NodeStore lStore) {
+   public ToolDocumentHandler(Store lStore) {
 	save = false;
 	store = lStore;
 	firstConfigFlag = false;
@@ -71,7 +70,7 @@ public class ToolDocumentHandler extends DefaultHandler {
     *
     * @return the nodesId
     */
-   public NodeStore getFilledStore() {
+   public Store getFilledStore() {
 	return store;
    }
 

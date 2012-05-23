@@ -10,7 +10,6 @@ import de.cebitec.mgx.jobsubmitter.data.impl.Choices;
 import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
-import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
 import de.cebitec.mgx.util.JobParameter;
 
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ import java.util.Map;
  */
 public class Transform {
 
-   public static List<JobParameter> getFromNodeStoreJobParameter(NodeStore store) {
+   public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
 	List<JobParameter> parameters = new ArrayList<JobParameter>();
 
 	Iterator nodeIterator = store.getIterator();
@@ -68,7 +67,7 @@ public class Transform {
 	return parameters;
    }
 
-   public static NodeStore getFromJobParameterNodeStore(List<JobParameter> parameters) {
+   public static Store getFromJobParameterNodeStore(List<JobParameter> parameters) {
 	Store store = new Store();
 
 	for (JobParameter parameter : parameters) {

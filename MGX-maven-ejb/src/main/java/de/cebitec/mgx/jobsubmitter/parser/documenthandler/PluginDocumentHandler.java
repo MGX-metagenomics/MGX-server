@@ -1,7 +1,7 @@
 package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
 //~--- non-JDK imports --------------------------------------------------------
-import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
+import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
 
 import java.util.*;
@@ -41,7 +41,7 @@ public class PluginDocumentHandler extends DefaultHandler {
     * In dem Store werden die Nodes abgespeichert, die in dieser Klasse
     * bearbeitet werden.
     */
-   private NodeStore store;
+   private Store store;
 
    /**
     *
@@ -51,7 +51,7 @@ public class PluginDocumentHandler extends DefaultHandler {
     *
     * @param lNodeTypes Store mit konfigurierbaren Knoten
     */
-   public PluginDocumentHandler(NodeStore lStore) {
+   public PluginDocumentHandler(Store lStore) {
 	searchItemConfig = false;
 	store = lStore;
 	idsAndConfigItems = new HashMap<String, String>();
@@ -242,7 +242,7 @@ public class PluginDocumentHandler extends DefaultHandler {
     *
     * @return the nodesConfigurations
     */
-   public NodeStore getFilledStore() {
+   public Store getFilledStore() {
 	return store;
    }
 }

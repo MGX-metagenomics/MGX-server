@@ -7,7 +7,6 @@ package de.cebitec.mgx.jobsubmitter.data.impl;
 
 //~--- non-JDK imports --------------------------------------------------------
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
-import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
 import java.util.*;
 
 /**
@@ -16,7 +15,7 @@ import java.util.*;
  *
  * @author belmann
  */
-public class Store implements NodeStore {
+public class Store  {
 
    /**
     * Speichert die Nodes bzw. Tools in einer HashMap. Dabei stellen die id den
@@ -36,7 +35,6 @@ public class Store implements NodeStore {
     * Gibt einen Iterator wieder, um über alle Nodes iterieren zu können.
     * @return Iterator
     */
-   @Override
    public Iterator getIterator() {
 	Set set = nodes.entrySet();
 	return set.iterator();
@@ -48,7 +46,6 @@ public class Store implements NodeStore {
     * @param lId Id des Nodes.
     * @return Node
     */
-   @Override
    public final Node getNode(String lId) {
 
 	return nodes.get(lId);
@@ -60,7 +57,6 @@ public class Store implements NodeStore {
     *
     * @param node
     */
-   @Override
    public final void addNode(Node node) {
 	nodes.put(node.getId(), node);
    }
@@ -70,7 +66,6 @@ public class Store implements NodeStore {
     *
     * @return Anzahl Knoten.
     */
-   @Override
    public int storeSize() {
 	return nodes.size();
    }
@@ -78,7 +73,6 @@ public class Store implements NodeStore {
    /**
     * Entfernt alle Knoten, bei denen keine Antwort gesetzt wurde.
     */
-   @Override
    public void deleteEmptyNodes() {
 
 	for (String id : new ArrayList<String>(nodes.keySet())) {
@@ -94,7 +88,6 @@ public class Store implements NodeStore {
     *
     * @param id
     */
-   @Override
    public void removeNode(String id) {
 	nodes.remove(id);
    }
@@ -102,7 +95,6 @@ public class Store implements NodeStore {
    /**
     * Entfernt alle Nodes aus dem Store.
     */
-   @Override
    public void removeAllNodes() {
 
 	nodes.clear();
@@ -114,7 +106,6 @@ public class Store implements NodeStore {
     * Als Key, dient der Name des ConfigItems.
     * @return ConfigItem
     */
-   @Override
    public HashMap<String, HashMap<String, String>> getAllAnswers() {
 	deleteEmptyNodes();
 

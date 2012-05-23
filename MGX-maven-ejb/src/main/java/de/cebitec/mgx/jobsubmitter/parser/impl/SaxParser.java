@@ -9,10 +9,8 @@ package de.cebitec.mgx.jobsubmitter.parser.impl;
 
 
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
-import de.cebitec.mgx.jobsubmitter.data.interf.NodeStore;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.PluginDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.ToolDocumentHandler;
-import de.cebitec.mgx.jobsubmitter.parser.interf.Parser;
 import org.xml.sax.SAXException;
 
 //~--- JDK imports ------------------------------------------------------------
@@ -32,7 +30,7 @@ import javax.xml.parsers.SAXParserFactory;
  *
  * @author belmann
  */
-public class SaxParser implements Parser {
+public class SaxParser {
 
    private final static Logger LOGGER =
 	 Logger.getLogger(SaxParser.class.getName());
@@ -91,8 +89,7 @@ public class SaxParser implements Parser {
     * @param pluginsXml Beinhaltet alle möglichen Nodes.
     * @return NodeStore mit allen konfigurierbaren Knoten.
     */
-   @Override
-   public NodeStore getNodesConfigurations(String toolXml,
+   public Store getNodesConfigurations(String toolXml,
 	 String pluginsXml) {
 	
 	store.removeAllNodes();
@@ -109,7 +106,7 @@ public class SaxParser implements Parser {
     * In der Methode wird die Tool-Datei als auch die Plugin-Datei geparst.
     *
     */
-   private NodeStore parse() {
+   private Store parse() {
 	toolHandler = new ToolDocumentHandler(store);
 
 	try {
