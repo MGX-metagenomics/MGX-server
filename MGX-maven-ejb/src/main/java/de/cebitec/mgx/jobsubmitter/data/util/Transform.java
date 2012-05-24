@@ -52,17 +52,9 @@ private final static Logger LOGGER =
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
 		jobParameter.setDefaultValue(configItem.getDefaultValue());
-		
-                LOGGER.info("NodeId: "+nodeId);
-                int i = 0;
-                long lon = 0; 
-                if(Long.getLong(nodeId)==null){
-                    LOGGER.info("NodeId as Integer");
-		jobParameter.setNodeId(Integer.getInteger(nodeId));
-                } else {
-                    LOGGER.info("NodeId as Long");
-                jobParameter.setNodeId(Long.getLong(nodeId));
-                }
+                 
+               jobParameter.setNodeId(Long.parseLong(nodeId));
+            
                 
                 jobParameter.setOptional(configItem.isOptional());
 		jobParameter.setType(configItem.getConfigType());
