@@ -88,7 +88,9 @@ public class PluginDocumentHandler extends DefaultHandler {
 		String optional =
 		    lAttributes.getValue(TagsAndAttributes.optional);
 		String defaultValue = lAttributes.getValue(TagsAndAttributes.def);
-
+                if(defaultValue==null){
+                defaultValue="";
+                }
 		setConfigAttributes(optional, configType,
 		    defaultValue);
 	   }
