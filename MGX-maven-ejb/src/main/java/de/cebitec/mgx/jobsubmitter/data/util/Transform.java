@@ -6,6 +6,7 @@ package de.cebitec.mgx.jobsubmitter.data.util;
 
 
 
+import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.data.impl.Choices;
 import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
@@ -16,13 +17,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  *
  * @author belmann
  */
 public class Transform {
-
+private final static Logger LOGGER =
+	 Logger.getLogger(JobParameterHelper.class.getName());
    public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
 	List<JobParameter> parameters = new ArrayList<JobParameter>();
 	Iterator nodeIterator = store.getIterator();
@@ -49,8 +52,19 @@ public class Transform {
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
 		jobParameter.setDefaultValue(configItem.getDefaultValue());
-		jobParameter.setNodeId(Long.getLong(nodeId));
-		jobParameter.setOptional(configItem.isOptional());
+		
+                LOGGER.info("NodeId: "+nodeId);
+                int i = 0;
+                long lon = 0; 
+                if(Long.getLong(nodeId)==null){
+                    LOGGER.info("NodeId as Integer");
+		jobParameter.setNodeId(Integer.getInteger(nodeId));
+                } else {
+                    LOGGER.info("NodeId as Long");
+                jobParameter.setNodeId(Long.getLong(nodeId));
+                }
+                
+                jobParameter.setOptional(configItem.isOptional());
 		jobParameter.setType(configItem.getConfigType());
 		jobParameter.setUserDescription(configItem.getUserDescription());
 		jobParameter.setUserName(configItem.getUserName());
