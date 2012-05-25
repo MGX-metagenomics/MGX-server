@@ -6,20 +6,13 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.dto.dto.ToolDTOList;
-import de.cebitec.mgx.dto.dto.ToolDTOList.Builder;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 /**
@@ -38,13 +31,15 @@ public class ToolBean {
     @Path("create")
     @Produces("application/x-protobuf")
     public MGXLong create(ToolDTO dto) {
-        Tool h = ToolDTOFactory.getInstance().toDB(dto, false);
+        Tool t = ToolDTOFactory.getInstance().toDB(dto, false);
         Long id = null;
+        
         try {
-            id = mgx.getToolDAO().create(h);
+            id = mgx.getToolDAO().create(t);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+        
         return MGXLong.newBuilder().setValue(id).build();
     }
 
@@ -86,6 +81,12 @@ public class ToolBean {
             globalTool = (Tool) mgx.getGlobal().getToolDAO().getById(global_id.getValue());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        
+        // make sure name of the tool doesn't already exist in this project
+        for (Tool pTool : mgx.getToolDAO().getAll()) {
+            if (globalTool.getName().equals(pTool.getName()))
+                throw new MGXWebException("Duplicate tool name");
         }
 
         long id;
