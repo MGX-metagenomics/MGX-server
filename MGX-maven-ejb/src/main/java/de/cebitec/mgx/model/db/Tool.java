@@ -18,7 +18,7 @@ public class Tool implements Serializable, Identifiable {
     private Long id;
     @Basic
     @NotNull
-    @Column(name = "name")
+    @Column(name = "name", unique=true)
     protected String name;
     @Basic
     @NotNull

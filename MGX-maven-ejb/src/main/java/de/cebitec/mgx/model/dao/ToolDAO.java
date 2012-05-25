@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Tool;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -16,15 +17,37 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         return Tool.class;
     }
 
+    @Override
+    public Long create(T obj) throws MGXException {
+        // extract xml data
+        String xmldata = obj.getXMLFile();
+        obj.setXMLFile(null);
+
+        Long id = super.create(obj);
+
+        String fname = getController().getProjectDirectory() + id.toString() + ".xml";
+
+        try {
+            FileWriter fw = new FileWriter(fname);
+            fw.write(xmldata);
+            fw.flush();
+            fw.close();
+        } catch (Exception ex) {
+            delete(id); // remove from database, aka rollback
+            throw new MGXException(ex.getMessage());
+        }
+        return id;
+    }
+
     public <U extends T> long installGlobalTool(Tool global, Class<U> clazz, String projectDir) throws MGXException {
-        
+
         U t;
         try {
             t = clazz.newInstance();
-        } catch (Exception ex) {
+        } catch (InstantiationException | IllegalAccessException ex) {
             throw new MGXException(ex.getMessage());
         }
-        
+
         t.setName(global.getName());
         t.setDescription(global.getDescription());
         t.setVersion(global.getVersion());
@@ -34,21 +57,17 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         // persist to create the id
         long id = create(t);
-        
+
         /*
          * copy over the graph description file in order to maintain a
-         * consistent project state even if the global tool is updated;
-         * the project directory is created on demand
+         * consistent project state even if the global tool is updated; the
+         * project directory is created on demand
          */
-        StringBuilder targetName = new StringBuilder(projectDir)
-                .append(File.separator)
-                .append("jobs");
+        StringBuilder targetName = new StringBuilder(projectDir).append(File.separator).append("jobs");
         new File(targetName.toString()).mkdirs();
-        
-        targetName.append(File.separator)
-                .append(id)
-                .append(".xml");
-        
+
+        targetName.append(File.separator).append(id).append(".xml");
+
         try {
             File src = new File(global.getXMLFile());
             File dest = new File(targetName.toString());
@@ -56,22 +75,23 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
         }
-        
+
         // update graph description
         t.setXMLFile(targetName.toString());
         update(t);
 
         return id;
     }
-    
+
     @Override
     public void delete(Long id) throws MGXException {
         // remove the local copy of the graph definition before
         // deleting the instance in the database
         T t = getById(id);
         File graph = new File(t.getXMLFile());
-        if (graph.exists())
+        if (graph.exists()) {
             graph.delete();
+        }
         super.delete(id);
     }
 }
