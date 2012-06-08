@@ -18,15 +18,16 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
     }
 
     @Override
-    public Long create(T obj) throws MGXException {
+    public long create(T obj) throws MGXException {
         // extract xml data
         String xmldata = obj.getXMLFile();
+        System.err.println("xml data: "+ xmldata);
         obj.setXMLFile(null);
 
         Long id = super.create(obj);
 
-        String fname = getController().getProjectDirectory() + id.toString() + ".xml";
-
+        String fname = getController().getProjectDirectory() + "jobs" + File.separatorChar + id.toString() + ".xml";
+        System.err.println("writing to "+fname);
         try {
             FileWriter fw = new FileWriter(fname);
             fw.write(xmldata);
@@ -36,6 +37,10 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
             delete(id); // remove from database, aka rollback
             throw new MGXException(ex.getMessage());
         }
+        
+        obj.setXMLFile(fname);
+        super.update(obj);
+        
         return id;
     }
 
@@ -56,14 +61,14 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         t.setXMLFile(global.getXMLFile());
 
         // persist to create the id
-        long id = create(t);
+        long id = super.create(t);
 
         /*
          * copy over the graph description file in order to maintain a
          * consistent project state even if the global tool is updated; the
          * project directory is created on demand
          */
-        StringBuilder targetName = new StringBuilder(projectDir).append(File.separator).append("jobs");
+        StringBuilder targetName = new StringBuilder(projectDir).append("jobs");
         new File(targetName.toString()).mkdirs();
 
         targetName.append(File.separator).append(id).append(".xml");
@@ -84,7 +89,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
     }
 
     @Override
-    public void delete(Long id) throws MGXException {
+    public void delete(long id) throws MGXException {
         // remove the local copy of the graph definition before
         // deleting the instance in the database
         T t = getById(id);
@@ -94,4 +99,10 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         }
         super.delete(id);
     }
+
+//    public Tool byJob(Job job) {
+//        return job.getTool();
+//        //return (Tool) getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.job = :job").
+//        //        setParameter("job", job).getSingleResult();
+//    }
 }

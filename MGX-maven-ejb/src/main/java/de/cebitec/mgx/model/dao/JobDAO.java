@@ -18,7 +18,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(long id) {
 
         /*
          * here, we only delete the persistent files that might have been

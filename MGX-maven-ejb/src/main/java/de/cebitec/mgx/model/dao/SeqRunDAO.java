@@ -22,7 +22,7 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
     }
 
     @Override
-    public void delete(Long id) throws MGXException {
+    public void delete(long id) throws MGXException {
         final SeqRun sr = getById(id);
         // remove persistent storage file
         String dBFile = sr.getDBFile();

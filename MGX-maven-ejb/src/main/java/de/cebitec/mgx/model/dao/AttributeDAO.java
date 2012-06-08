@@ -4,11 +4,12 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.util.Pair;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,70 +19,61 @@ import java.util.Map;
  */
 public class AttributeDAO<T extends Attribute> extends DAO<T> {
 
-    private final static String FETCH_DIST = "SELECT attr.id as attr_id, attr.value, attrcount.cnt "      
-                + "FROM attribute attr "
-                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-                + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
-                + "WHERE attr.attrtype_id=? "
-                + "AND attr.job_id=?";
-    
+    // FIXME move to function
+    private final static String FETCH_DISTRIBUTION = "SELECT attr.id as attr_id, attr.value, attrcount.cnt "
+            + "FROM attribute attr "
+            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
+            + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
+            + "WHERE attr.attrtype_id=? "
+            + "AND attr.job_id=?";
+    // FIXME move to function
     private final static String FETCH_HIERARCHY = "WITH RECURSIVE subattributes AS "
-                + "( "
-                + "WITH attributecounts AS ( "
-                + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, atype.structure as atype_structure, atype.value_type as attrtype_valtype, attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, attrcount.cnt as count "
-                + "FROM attribute attr "
-                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-                + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
-                + "WHERE attr.job_id=? "
-                + ") "
-                + "SELECT * FROM attributecounts WHERE attr_id=( "
-                + "WITH RECURSIVE findroot AS ( "
-                + "WITH hierarchy AS ( "
-                + "SELECT attr.attrtype_id as attrtype_id, attr.id as attr_id, attr.parent_id as parent_id "
-                + "FROM attribute attr "
-                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-                + "WHERE attr.job_id=? "
-                + ") "
-                + "SELECT * FROM hierarchy WHERE attrtype_id=? "
-                + "UNION "
-                + "SELECT parent.* FROM hierarchy AS parent "
-                + "JOIN "
-                + "findroot AS fr "
-                + "ON (fr.parent_id = parent.attr_id) "
-                + ") "
-                + "SELECT attr_id from findroot WHERE parent_id IS NULL "
-                + ") "
-                + "UNION "
-                + "SELECT temp.* "
-                + "FROM "
-                + "attributecounts AS temp "
-                + "JOIN "
-                + "subattributes AS sa "
-                + "ON (sa.attr_id = temp.parent_id) "
-                + ") "
-                + "SELECT attrtype_id, attrtype_name, atype_structure, attrtype_valtype, attr_id, attr_value, parent_id, count FROM subattributes";
-            
+            + "( "
+            + "WITH attributecounts AS ( "
+            + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, "
+            + "atype.structure as atype_structure, atype.value_type as attrtype_valtype, "
+            + "attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, attrcount.cnt as count "
+            + "FROM attribute attr "
+            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
+            + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
+            + "WHERE attr.job_id=? "
+            + ") "
+            + "SELECT * FROM attributecounts WHERE attr_id=( "
+            + "WITH RECURSIVE findroot AS ( "
+            + "WITH hierarchy AS ( "
+            + "SELECT attr.attrtype_id as attrtype_id, attr.id as attr_id, attr.parent_id as parent_id "
+            + "FROM attribute attr "
+            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
+            + "WHERE attr.job_id=? "
+            + ") "
+            + "SELECT * FROM hierarchy WHERE attrtype_id=? "
+            + "UNION "
+            + "SELECT parent.* FROM hierarchy AS parent "
+            + "JOIN "
+            + "findroot AS fr "
+            + "ON (fr.parent_id = parent.attr_id) "
+            + ") "
+            + "SELECT attr_id from findroot WHERE parent_id IS NULL "
+            + ") "
+            + "UNION "
+            + "SELECT temp.* "
+            + "FROM "
+            + "attributecounts AS temp "
+            + "JOIN "
+            + "subattributes AS sa "
+            + "ON (sa.attr_id = temp.parent_id) "
+            + ") "
+            + "SELECT attrtype_id, attrtype_name, atype_structure, attrtype_valtype, "
+            + "attr_id, attr_value, parent_id, count FROM subattributes";
+
     @Override
     Class getType() {
         return Attribute.class;
     }
 
-    public Map<Attribute, Long> getDistribution(Long attrTypeId, Job job) throws MGXException {
-        
+    public Map<Attribute, Long> getDistribution(long attrTypeId, Job job) throws MGXException {
+
         AttributeType attrType = getController().getAttributeTypeDAO().getById(attrTypeId);
-
-//        final String sql = "SELECT attr.id as attr_id, attr.value, count(attr.value) "
-//                + "FROM observation obs "
-//                + "LEFT JOIN attribute attr ON (obs.attributeid = attr.id) "
-//                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-//                + "LEFT JOIN read ON (obs.seqid = read.id) "
-//                + "LEFT JOIN job ON (attr.job_id = job.id) "
-//                + "WHERE attr.attrtype_id=? "
-//                + "AND attr.job_id=? "
-//                + "AND job.seqrun_id=read.seqrun_id "
-//                + "AND job.job_state=? "
-//                + "GROUP BY attr.id, attr.attrtype_id, attr.value ORDER BY attr.value";
-
 
         Map<Attribute, Long> ret = new HashMap<>();
         Connection conn = getController().getConnection();
@@ -89,10 +81,9 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         ResultSet rs = null;
 
         try {
-            stmt = conn.prepareStatement(FETCH_DIST);
+            stmt = conn.prepareStatement(FETCH_DISTRIBUTION);
             stmt.setLong(1, attrTypeId);
             stmt.setLong(2, job.getId());
-            //stmt.setInt(3, JobState.FINISHED.getValue());
             rs = stmt.executeQuery();
             while (rs.next()) {
                 Attribute attr = new Attribute();
@@ -108,49 +99,11 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         } finally {
             close(conn, stmt, rs);
         }
-        
+
         return ret;
     }
 
-    public Map<Attribute, Long> getHierarchy(Long attrTypeId, Job job) throws MGXException {
-
-//        final String sql = "WITH RECURSIVE subattributes AS "
-//                + "( "
-//                + "WITH attributecount AS ( "
-//                + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, atype.structure as atype_structure, atype.value_type as attrtype_valtype, attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, count(attr.value) as count FROM observation obs "
-//                + "LEFT JOIN attribute attr ON (obs.attributeid = attr.id) "
-//                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-//                + "WHERE attr.job_id=? "
-//                + "GROUP BY attrtype_id, attrtype_name, atype_structure, attrtype_valtype, attr_id, attr_value, parent_id "
-//                + "ORDER BY attr_value "
-//                + ") "
-//                + "SELECT * FROM attributecount WHERE attr_id=( "
-//                + "WITH RECURSIVE findroot AS ( "
-//                + "WITH hierarchy AS ( "
-//                + "SELECT attr.attrtype_id as attrtype_id, attr.id as attr_id, attr.parent_id as parent_id "
-//                + "FROM attribute attr "
-//                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-//                + "WHERE attr.job_id=? "
-//                + ") "
-//                + "SELECT * FROM hierarchy WHERE attrtype_id=? "
-//                + "UNION "
-//                + "SELECT parent.* FROM hierarchy AS parent "
-//                + "JOIN "
-//                + "findroot AS fr "
-//                + "ON (fr.parent_id = parent.attr_id) "
-//                + ") "
-//                + "SELECT attr_id from findroot WHERE parent_id IS NULL "
-//                + ") "
-//                + "UNION "
-//                + "SELECT temp.* "
-//                + "FROM "
-//                + "attributecount AS temp "
-//                + "JOIN "
-//                + "subattributes AS sa "
-//                + "ON (sa.attr_id = temp.parent_id) "
-//                + ") "
-//                + "SELECT attrtype_id, attrtype_name, atype_structure, attrtype_valtype, attr_id, attr_value, parent_id, count FROM subattributes "
-//                + "ORDER BY attr_value";
+    public Map<Attribute, Long> getHierarchy(long attrTypeId, Job job) throws MGXException {
 
         Map<Attribute, Long> ret = new HashMap<>();
         Map<Long, AttributeType> aTypeCache = new HashMap<>();
@@ -159,7 +112,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
-        
+
         try {
             stmt = conn.prepareStatement(FETCH_HIERARCHY);
             stmt.setLong(1, job.getId());
@@ -206,9 +159,56 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 a.setParent(parent);
             }
         }
-        
-        //System.err.println("DAO returning hierarchy with "+ret.keySet().size()+" entries");
 
+        return ret;
+    }
+
+    public Map<Pair<Attribute, Attribute>, Long> getCorrelation(long attrTypeId, Job job, long attrType2Id, Job job2) throws MGXException {
+
+        AttributeType attrType = getController().getAttributeTypeDAO().getById(attrTypeId);
+        AttributeType attrType2 = getController().getAttributeTypeDAO().getById(attrType2Id);
+
+        // test code - bulk retrieval
+        for (AttributeType at : getController().getAttributeTypeDAO().getByIds(Arrays.asList(attrTypeId, attrType2Id))) {
+            System.err.println("got AT: " + at.getName());
+        }
+
+        Map<Pair<Attribute, Attribute>, Long> ret = new HashMap<>();
+        Connection conn = getController().getConnection();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            stmt = conn.prepareStatement("SELECT * FROM getCorrelation(?,?,?,?)");
+            stmt.setLong(1, job.getId());
+            stmt.setLong(2, attrTypeId);
+            stmt.setLong(3, job2.getId());
+            stmt.setLong(4, attrType2Id);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                Attribute attr = new Attribute();
+                attr.setAttributeType(attrType);
+                attr.setJob(job);
+                //
+                attr.setId(rs.getLong(1));
+                attr.setValue(rs.getString(2));
+
+                Attribute attr2 = new Attribute();
+                attr2.setAttributeType(attrType2);
+                attr2.setJob(job2);
+                //
+                attr2.setId(rs.getLong(3));
+                attr2.setValue(rs.getString(4));
+
+                long cnt = rs.getLong(5);
+
+                ret.put(new Pair<>(attr, attr2), cnt);
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex.getMessage());
+        } finally {
+            close(conn, stmt, rs);
+        }
         return ret;
     }
 }

@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import javax.persistence.EntityManager;
@@ -72,13 +73,20 @@ public abstract class DAO<T extends Identifiable> {
             throw new MGXException("No object of type "+getType()+" for ID "+id+".");
         return ret;
     }
+    
+    public Iterable<T> getByIds(Collection<Long> ids) {
+        return (Iterable<T>) getEntityManager()
+                .createQuery("SELECT DISTINCT o FROM " + getClassName() + " o WHERE o.id IN :ids", getType())
+                .setParameter("ids", ids)
+                .getResultList();
+    }
 
     public Iterable<T> getAll() {
         return (Iterable<T>) getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType()).getResultList();
         //return getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o").getResultList();
     }
 
-    public Long create(T obj) throws MGXException {
+    public long create(T obj) throws MGXException {
         EntityManager e = getEntityManager();
         try {
             e.persist(obj);
@@ -99,7 +107,7 @@ public abstract class DAO<T extends Identifiable> {
         }
     }
 
-    public void delete(Long id) throws MGXException {
+    public void delete(long id) throws MGXException {
         T obj = getById(id);
         if (obj != null) {
             EntityManager e = getEntityManager();
