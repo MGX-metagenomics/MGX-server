@@ -96,40 +96,38 @@ public class SaxParser {
 
         store.removeAllNodes();
         toolFile = new File(toolXml);
-        LOGGER.info("TOOL "+toolXml);
+        LOGGER.info("TOOL " + toolXml);
         loadData(toolXml);
         pluginFile = new File(pluginsXml);
-        LOGGER.info("Plugin "+pluginsXml);
+        LOGGER.info("Plugin " + pluginsXml);
         parse();
 
         return store;
     }
 
-      private static void loadData(String datName) {
+    private static void loadData(String datName) {
 
         File file = new File(datName);
 
-        if (!file.canRead() || !file.isFile())
-            System.exit(0);
+        if (!file.canRead() || !file.isFile()) {
+        } else {
 
-        FileReader fr = null;
-        int c;
-        StringBuffer buff = new StringBuffer();
-        try {
-            fr = new FileReader(file);
-            while ((c = fr.read()) != -1) {
-                buff.append((char) c);
+            FileReader fr = null;
+            int c;
+            StringBuffer buff = new StringBuffer();
+            try {
+                fr = new FileReader(file);
+                while ((c = fr.read()) != -1) {
+                    buff.append((char) c);
+                }
+                fr.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            fr.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+    }
 
-        System.out.println(buff.toString());
-    } 
-    
-    
     /**
      * In der Methode wird die Tool-Datei als auch die Plugin-Datei geparst.
      *

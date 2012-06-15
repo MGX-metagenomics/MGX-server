@@ -20,12 +20,20 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
+ * Sorgt fuer die Umwandlung zwischne Store und JobParameter.
  *
  * @author belmann
  */
 public class Transform {
 private final static Logger LOGGER =
 	 Logger.getLogger(JobParameterHelper.class.getName());
+
+ /**
+     * Giibt von einem Stoer die JobParameter zurueck.
+     *
+     * @param store
+     * @return Liste von JobParametern
+     */
    public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
 	List<JobParameter> parameters = new ArrayList<JobParameter>();
 	Iterator nodeIterator = store.getIterator();
@@ -51,10 +59,8 @@ private final static Logger LOGGER =
 		jobParameter.setConfigItemValue(configItem.getAnswer());
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
-		jobParameter.setDefaultValue(configItem.getDefaultValue());
-                 
-               jobParameter.setNodeId(Long.parseLong(nodeId));
-            
+		jobParameter.setDefaultValue(configItem.getDefaultValue());      
+                jobParameter.setNodeId(Long.parseLong(nodeId));
                 
                 jobParameter.setOptional(configItem.isOptional());
 		jobParameter.setType(configItem.getConfigType());
@@ -67,7 +73,12 @@ private final static Logger LOGGER =
 	}
 	return parameters;
    }
-
+  /**
+     * Gibt von einer Liste von JobParametern einen NodeStore zurueck.
+     *
+     * @param parameters
+     * @return NodeStore.
+     */
    public static Store getFromJobParameterNodeStore(List<JobParameter> parameters) {
 	Store store = new Store();
         
