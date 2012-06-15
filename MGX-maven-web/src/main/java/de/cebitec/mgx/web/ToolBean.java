@@ -7,9 +7,12 @@ import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -33,14 +36,27 @@ public class ToolBean {
     public MGXLong create(ToolDTO dto) {
         Tool t = ToolDTOFactory.getInstance().toDB(dto, false);
         Long id = null;
-        
+
         try {
             id = mgx.getToolDAO().create(t);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
+
         return MGXLong.newBuilder().setValue(id).build();
+    }
+
+    @GET
+    @Path("byJob/{id}")
+    @Produces("application/x-protobuf")
+    public ToolDTO byJob(@PathParam("id") Long job_id) {
+        Job job;
+        try {
+            job = mgx.getJobDAO().getById(job_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return ToolDTOFactory.getInstance().toDTO(job.getTool());
     }
 
     @GET
@@ -82,12 +98,6 @@ public class ToolBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
-        // make sure name of the tool doesn't already exist in this project
-        for (Tool pTool : mgx.getToolDAO().getAll()) {
-            if (globalTool.getName().equals(pTool.getName()))
-                throw new MGXWebException("Duplicate tool name");
-        }
 
         long id;
         try {
@@ -95,6 +105,8 @@ public class ToolBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+
+        System.err.println("installed global tool to project with id " + id);
 
         return MGXLong.newBuilder().setValue(id).build();
     }

@@ -20,10 +20,14 @@ public class MGXWebException extends WebApplicationException {
 //    }
     public MGXWebException(String message) {
         super(Response.status(Status.BAD_REQUEST).entity(message).type(MediaType.TEXT_PLAIN).build());
+        assert message != null;
+        assert !"".equals(message);
     }
 
     public MGXWebException(Status status, String message) {
         super(Response.status(status).entity(message).type(MediaType.TEXT_PLAIN).build());
+        assert message != null;
+        assert !"".equals(message);
         http_status = status;
     }
 
