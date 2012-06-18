@@ -4,6 +4,7 @@ package de.cebitec.mgx.jobsubmitter.data.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
@@ -122,22 +123,18 @@ public class Node {
     * Gibt einen Iterator wieder, um über alle ConfigItems iterieren zu können.
     * @return Iterator
     */
-   public Iterator getIterator() {
-	Set set = configItems.entrySet();
-	return set.iterator();
+   public Iterator<Entry<String, ConfigItem>> getIterator() {
+	return configItems.entrySet().iterator();
    }
 
    /**
     * Entfernt alle ConfigItems, die noch keine Antwort gesetzt bekommen haben.
     */
    protected void deleteEmptyConfigItems() {
-ArrayList<String> list = new ArrayList<String>(configItems.keySet());
-	for (String configName : list) {
-	   if (!configItems.get(configName).isAnswerSet()) {
-		configItems.remove(configName);
-	   
-	   }
-	}
+        for (Entry<String, ConfigItem> e : configItems.entrySet()) {
+            if (e.getValue().isAnswerSet())
+                configItems.remove(e.getKey());
+        }
    }
 
  

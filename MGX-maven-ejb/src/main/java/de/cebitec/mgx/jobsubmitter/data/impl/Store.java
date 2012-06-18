@@ -8,6 +8,7 @@ package de.cebitec.mgx.jobsubmitter.data.impl;
 //~--- non-JDK imports --------------------------------------------------------
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Verwaltet die Nodes einer vom User möglichen Auswahl an Tools.
@@ -35,9 +36,8 @@ public class Store  {
     * Gibt einen Iterator wieder, um über alle Nodes iterieren zu können.
     * @return Iterator
     */
-   public Iterator getIterator() {
-	Set set = nodes.entrySet();
-	return set.iterator();
+   public Iterator<Entry<String, Node>> getIterator() {
+        return nodes.entrySet().iterator();
    }
 
    /**
@@ -72,13 +72,11 @@ public class Store  {
     * Entfernt alle Knoten, bei denen keine Antwort gesetzt wurde.
     */
    public void deleteEmptyNodes() {
-
-	for (String id : new ArrayList<String>(nodes.keySet())) {
-	   nodes.get(id).deleteEmptyConfigItems();
-	   if (nodes.get(id).getNumberOfConfigItems() == 0) {
-		nodes.remove(id);
-	   }
-	}
+       for (Entry<String, Node> e : nodes.entrySet()) {
+           e.getValue().deleteEmptyConfigItems();
+           if (e.getValue().getNumberOfConfigItems() == 0)
+               nodes.remove(e.getKey());
+       }
    }
 
    /**

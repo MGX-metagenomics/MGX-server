@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 /**
@@ -36,23 +37,23 @@ private final static Logger LOGGER =
      */
    public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
 	List<JobParameter> parameters = new ArrayList<JobParameter>();
-	Iterator nodeIterator = store.getIterator();
-	Map.Entry nodeME;
+        Iterator<Entry<String, Node>> nodeIterator = store.getIterator();
+	Map.Entry<String, Node> nodeME;
 	String nodeId;
-	Iterator configItemIterator;
+	Iterator<Entry<String, ConfigItem>> configItemIterator;
 	while (nodeIterator.hasNext()) {
-	   nodeME = (Map.Entry) nodeIterator.next();
-	   nodeId = (String) nodeME.getKey();
-           Node node = (Node) nodeME.getValue();
-	   configItemIterator = (node).getIterator();
-	   Map.Entry configItemME;	 
+	   nodeME = nodeIterator.next();
+	   nodeId = nodeME.getKey();
+           Node node = nodeME.getValue();
+	   configItemIterator = node.getIterator();
+	   Entry<String, ConfigItem> configItemME;	 
 	   String configItemName;
            
 	   while (configItemIterator.hasNext()) {
 
-		configItemME = (Map.Entry) configItemIterator.next();
-		ConfigItem configItem = (ConfigItem) configItemME.getValue();
-		configItemName = (String) configItemME.getKey();
+		configItemME = configItemIterator.next();
+		ConfigItem configItem = configItemME.getValue();
+		configItemName = configItemME.getKey();
 
 		JobParameter jobParameter = new JobParameter();
 		jobParameter.setConfigItemName(configItemName);
