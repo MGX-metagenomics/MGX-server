@@ -1,10 +1,12 @@
 package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
 //~--- non-JDK imports --------------------------------------------------------
+import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -121,12 +123,11 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @return Ob ein Node gefunden wurde oder nicht
      */
     private boolean searchNodes(Attributes lAttributes) {
-        Iterator iterator = store.getIterator();
+        Iterator<Entry<String, Node>> iterator = store.getIterator();
 
         while (iterator.hasNext()) {
-
-            Map.Entry me = (Map.Entry) iterator.next();
-            String id = (String) me.getKey();
+            Entry<String, Node> me = iterator.next();
+            String id = me.getKey();
 
             if (lAttributes.getValue(
                     TagsAndAttributes.classname).equals(
@@ -166,21 +167,20 @@ public class PluginDocumentHandler extends DefaultHandler {
         } else {
             optionalBoolean = false;
         }
-
-        Set set = idsAndConfigItems.entrySet();
-        Iterator iterator = set.iterator();
-        Map.Entry me;
+        Set<Entry<String, String>> set = idsAndConfigItems.entrySet();
+        Iterator<Entry<String, String>> iterator = set.iterator();
+        Map.Entry<String, String> me;
         String id;
         String configName;
 
         while (iterator.hasNext()) {
 
-            me = (Map.Entry) iterator.next();
+            me = iterator.next();
 
-            configName = (String) me.getValue();
+            configName = me.getValue();
 
             if (!(configName).isEmpty()) {
-                id = (String) me.getKey();
+                id = me.getKey();
 
                 store.getNode(id).getConfigItem(configName).setConfigType(lConfigType);
                 store.getNode(id).getConfigItem(configName).setOptional(optionalBoolean);
