@@ -26,6 +26,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
     public final SeqRunDTO toDTO(SeqRun s) {
         Builder b = SeqRunDTO.newBuilder()
                 .setId(s.getId())
+                .setName(s.getName())
                 .setExtractId(s.getExtract().getId())
                 .setSubmittedToInsdc(s.getSubmittedToINSDC())
                 .setSequencingMethod(s.getSequencingMethod())
@@ -42,6 +43,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
     @Override
     public final SeqRun toDB(SeqRunDTO dto) {
         SeqRun s = new SeqRun()
+                .setName(dto.getName())
                 .setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(dto.getSequencingMethod())
                 .setSequencingTechnology(dto.getSequencingTechnology());
