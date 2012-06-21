@@ -4,6 +4,7 @@ import com.jolbox.bonecp.BoneCPConfig;
 import com.jolbox.bonecp.BoneCPDataSource;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.model.dao.DAO;
+import de.cebitec.mgx.model.dao.TermDAO;
 import de.cebitec.mgx.model.dao.ToolDAO;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -45,6 +46,15 @@ public class MGXGlobal {
 
     public ToolDAO getToolDAO() {
         return getDAO(ToolDAO.class);
+    }
+
+    public TermDAO getTermDAO() {
+        if (!daos.containsKey(TermDAO.class)) {
+            TermDAO dao = new TermDAO(ds);
+            dao.setEntityManager(em);
+            daos.put(TermDAO.class, dao);
+        }
+        return (TermDAO) daos.get(TermDAO.class);
     }
 
     private <T extends DAO> T getDAO(Class<T> clazz) {
@@ -99,7 +109,7 @@ public class MGXGlobal {
             log("Re-using old datasource for global zone.");
         }
 
-        Map<String, String> globalCfg = new HashMap<String, String>();
+        Map<String, String> globalCfg = new HashMap<>();
         globalCfg.put("javax.persistence.jtaDataSource", DS_JNDI_NAME);
 
         emf = Persistence.createEntityManagerFactory("MGX-global", globalCfg);

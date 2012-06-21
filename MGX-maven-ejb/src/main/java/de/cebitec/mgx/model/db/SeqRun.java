@@ -19,6 +19,9 @@ public class SeqRun implements Serializable, Identifiable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Basic
+    @NotNull
+    protected String name;
+    @Basic
     protected String DBFile;
     @Basic
     protected String database_accession;
@@ -73,6 +76,15 @@ public class SeqRun implements Serializable, Identifiable {
         return this;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public SeqRun setName(String name) {
+        this.name = name;
+        return this;
+    }
+
     public String getAccession() {
         return database_accession;
     }
@@ -90,7 +102,6 @@ public class SeqRun implements Serializable, Identifiable {
         this.sequences = sequences;
         return this;
     }
-
 
     public String getSequencingMethod() {
         return sequencing_method;
