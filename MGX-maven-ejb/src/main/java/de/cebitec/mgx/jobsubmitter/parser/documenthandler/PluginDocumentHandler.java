@@ -1,20 +1,16 @@
 package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
-//~--- non-JDK imports --------------------------------------------------------
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
-
+import java.util.Set;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-//~--- JDK imports ------------------------------------------------------------
-
-import java.util.logging.Logger;
 
 /**
  * Für die in der Tool Datei gefundenen Knoten, findet diese Klasse die nötigen
@@ -24,8 +20,6 @@ import java.util.logging.Logger;
  */
 public class PluginDocumentHandler extends DefaultHandler {
 
-    private final static Logger LOGGER =
-            Logger.getLogger(PluginDocumentHandler.class.getName());
     /**
      * Hier werden die Ids der Nodes aus dem Store abgespeichert, die den
      * gleichen ClassName haben wie der derzeitig geparste Node in der XML. Zu
@@ -33,12 +27,12 @@ public class PluginDocumentHandler extends DefaultHandler {
      * Namen abgespeichert.
      *
      */
-    private HashMap<String, String> idsAndConfigItems;
+    private HashMap<String, String> idsAndConfigItems = new HashMap<>();
     /**
      * Sobald ein Node in der Plugin XML gefunden wurde, wird dieser Flag
      * gesetzt um dann nach den dazugehörigen configItems zu suchen.
      */
-    private boolean searchItemConfig;
+    private boolean searchItemConfig = false;
     /**
      * In dem Store werden die Nodes abgespeichert, die in dieser Klasse
      * bearbeitet werden.
@@ -54,9 +48,7 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @param lNodeTypes Store mit konfigurierbaren Knoten
      */
     public PluginDocumentHandler(Store lStore) {
-        searchItemConfig = false;
         store = lStore;
-        idsAndConfigItems = new HashMap<String, String>();
     }
 
     /**
@@ -77,7 +69,7 @@ public class PluginDocumentHandler extends DefaultHandler {
 
         if (!searchItemConfig) {
             if (lQName.equals(TagsAndAttributes.nodetype)) {
-                idsAndConfigItems = new HashMap<String, String>();
+                idsAndConfigItems = new HashMap<>();
                 searchItemConfig = searchNodes(lAttributes);
             }
         } else {
@@ -158,15 +150,10 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @param lDefaultValue Ob und welchen default Wert dieses ConfigItem
      * besitzt.
      */
-    private void setConfigAttributes(String lOptional, String lConfigType,
-            String lDefaultValue) {
-        Boolean optionalBoolean;
+    private void setConfigAttributes(String lOptional, String lConfigType, String lDefaultValue) {
 
-        if (lOptional.equals("1")) {
-            optionalBoolean = true;
-        } else {
-            optionalBoolean = false;
-        }
+        boolean optionalBoolean = lOptional.equals("1");
+
         Set<Entry<String, String>> set = idsAndConfigItems.entrySet();
         Iterator<Entry<String, String>> iterator = set.iterator();
         Map.Entry<String, String> me;
@@ -179,9 +166,8 @@ public class PluginDocumentHandler extends DefaultHandler {
 
             configName = me.getValue();
 
-            if (!(configName).isEmpty()) {
+            if (!configName.isEmpty()) {
                 id = me.getKey();
-
                 store.getNode(id).getConfigItem(configName).setConfigType(lConfigType);
                 store.getNode(id).getConfigItem(configName).setOptional(optionalBoolean);
                 store.getNode(id).getConfigItem(configName).setDefaultValue(lDefaultValue);
@@ -248,6 +234,3 @@ public class PluginDocumentHandler extends DefaultHandler {
         return store;
     }
 }
-
-
-//~ Formatted by Jindent --- http://www.jindent.com

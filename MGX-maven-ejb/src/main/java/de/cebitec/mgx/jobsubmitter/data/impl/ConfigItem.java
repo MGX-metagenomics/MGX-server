@@ -1,12 +1,6 @@
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.jobsubmitter.data.impl;
 
 import java.util.Comparator;
-import java.util.logging.Logger;
 
 /**
  * Ein ConfigItem repräsentiert ein Feld, in dem ein Benutzer eine Auswahl
@@ -52,7 +46,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
     /**
      * Speichert, ob das ConfigItem optional ist oder nicht.
      */
-    private Boolean optional;
+    private boolean optional;
     /**
      * Speichert den vom User vergebenen Namen des ConfigItems.
      */
@@ -110,7 +104,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @return Optional
      */
-    public Boolean isOptional() {
+    public boolean isOptional() {
         return optional;
     }
 
@@ -140,11 +134,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @return Antwort gesetzt oder nicht.
      */
     public boolean isAnswerSet() {
-        if (answer == null || answer.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
+        return answer != null && !answer.isEmpty();
     }
 
     /**
@@ -187,11 +177,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @return
      */
     public boolean hasChoices() {
-        if (choice.isChoiceEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
+        return !choice.isChoiceEmpty();
     }
 
     /**
@@ -209,7 +195,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @param lUserDescription
      */
     public void setUserDescription(String lUserDescription) {
-        this.userDescription = lUserDescription;
+        userDescription = lUserDescription;
     }
 
     /**
@@ -217,13 +203,13 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lOptional optional
      */
-    public void setOptional(Boolean lOptional) {
+    public void setOptional(boolean lOptional) {
         this.optional = lOptional;
     }
 
     /**
-     * Getter für den default wert. Gibt leeren String wieder, wenn dieser nicht gesetzt
-     * ist.
+     * Getter für den default wert. Gibt leeren String wieder, wenn dieser nicht
+     * gesetzt ist.
      *
      * @return defaultValue
      */
@@ -237,11 +223,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @return Default Wert gesetzt oder nicht.
      */
     public boolean hasDefaultValue() {
-        if (defaultValue.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
+        return !defaultValue.isEmpty();
     }
 
     /**
@@ -263,20 +245,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      */
     @Override
     public int compare(ConfigItem o1, ConfigItem o2) {
-
-        if (o1.optional == o2.optional) {
-
-            return 0;
-        } else if (o1.optional == true) {
-
-            return -1;
-        } else {
-
-            return 1;
-
-        }
-
-
+        return Boolean.compare(o1.optional, o2.optional);
     }
 
     /**
@@ -287,11 +256,6 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      */
     @Override
     public int compareTo(ConfigItem o) {
-
-        return optional.compareTo(o.optional);
-
+        return Boolean.compare(optional, o.optional);
     }
 }
-
-
-//~ Formatted by Jindent --- http://www.jindent.com

@@ -1,10 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.jobsubmitter.data.util;
-
-
 
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.data.impl.Choices;
@@ -12,7 +6,6 @@ import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.util.JobParameter;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,107 +19,106 @@ import java.util.logging.Logger;
  * @author belmann
  */
 public class Transform {
-private final static Logger LOGGER =
-	 Logger.getLogger(JobParameterHelper.class.getName());
 
- /**
+    /**
      * Giibt von einem Stoer die JobParameter zurueck.
      *
      * @param store
      * @return Liste von JobParametern
      */
-   public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
-	List<JobParameter> parameters = new ArrayList<JobParameter>();
+    public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
+        List<JobParameter> parameters = new ArrayList<>();
         Iterator<Entry<String, Node>> nodeIterator = store.getIterator();
-	Map.Entry<String, Node> nodeME;
-	String nodeId;
-	Iterator<Entry<String, ConfigItem>> configItemIterator;
-	while (nodeIterator.hasNext()) {
-	   nodeME = nodeIterator.next();
-	   nodeId = nodeME.getKey();
-           Node node = nodeME.getValue();
-	   configItemIterator = node.getIterator();
-	   Entry<String, ConfigItem> configItemME;	 
-	   String configItemName;
-           
-	   while (configItemIterator.hasNext()) {
+        Map.Entry<String, Node> nodeME;
+        String nodeId;
+        Iterator<Entry<String, ConfigItem>> configItemIterator;
+        while (nodeIterator.hasNext()) {
+            nodeME = nodeIterator.next();
+            nodeId = nodeME.getKey();
+            Node node = nodeME.getValue();
+            configItemIterator = node.getIterator();
+            Entry<String, ConfigItem> configItemME;
+            String configItemName;
 
-		configItemME = configItemIterator.next();
-		ConfigItem configItem = configItemME.getValue();
-		configItemName = configItemME.getKey();
+            while (configItemIterator.hasNext()) {
 
-		JobParameter jobParameter = new JobParameter();
-		jobParameter.setConfigItemName(configItemName);
-		jobParameter.setConfigItemValue(configItem.getAnswer());
+                configItemME = configItemIterator.next();
+                ConfigItem configItem = configItemME.getValue();
+                configItemName = configItemME.getKey();
+
+                JobParameter jobParameter = new JobParameter();
+                jobParameter.setConfigItemName(configItemName);
+                jobParameter.setConfigItemValue(configItem.getAnswer());
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
-		jobParameter.setDefaultValue(configItem.getDefaultValue());      
+                jobParameter.setDefaultValue(configItem.getDefaultValue());
                 jobParameter.setNodeId(Long.parseLong(nodeId));
-                
+
                 jobParameter.setOptional(configItem.isOptional());
-		jobParameter.setType(configItem.getConfigType());
-		jobParameter.setUserDescription(configItem.getUserDescription());
-		jobParameter.setUserName(configItem.getUserName());
+                jobParameter.setType(configItem.getConfigType());
+                jobParameter.setUserDescription(configItem.getUserDescription());
+                jobParameter.setUserName(configItem.getUserName());
                 jobParameter.setChoices(configItem.getChoice().getChoices());
-               
-		parameters.add(jobParameter);
-	   }
-	}
-	return parameters;
-   }
-  /**
+
+                parameters.add(jobParameter);
+            }
+        }
+        return parameters;
+    }
+
+    /**
      * Gibt von einer Liste von JobParametern einen NodeStore zurueck.
      *
      * @param parameters
      * @return NodeStore.
      */
-   public static Store getFromJobParameterNodeStore(List<JobParameter> parameters) {
-	Store store = new Store();
-        
-	for (JobParameter parameter : parameters) {
-        boolean newNode = false;
-        boolean newConfig = false;
-	   Node node;
+    public static Store getFromJobParameterNodeStore(List<JobParameter> parameters) {
+        Store store = new Store();
 
-	   if (store.getNode(Long.toString(
-		 parameter.getNodeId())) == null) {
-		node = new Node(parameter.getClassName(), 
+        for (JobParameter parameter : parameters) {
+            boolean newNode = false;
+            boolean newConfig = false;
+            Node node;
+
+            if (store.getNode(Long.toString(
+                    parameter.getNodeId())) == null) {
+                node = new Node(parameter.getClassName(),
                         Long.toString(parameter.getNodeId()));
-                newNode=true;
-           } else {
-		node = store.getNode(Long.toString(parameter.getNodeId()));
-	   }
-	   node.setDisplayName(parameter.getDisplayName());
-           
-	   ConfigItem configItem;
+                newNode = true;
+            } else {
+                node = store.getNode(Long.toString(parameter.getNodeId()));
+            }
+            node.setDisplayName(parameter.getDisplayName());
 
-	   if (node.getConfigItem(parameter.getConfigItemName()) == null) {
+            ConfigItem configItem;
+
+            if (node.getConfigItem(parameter.getConfigItemName()) == null) {
 
 
-		configItem = new ConfigItem(parameter.getUserName(), 
+                configItem = new ConfigItem(parameter.getUserName(),
                         parameter.getUserDescription(), parameter.getConfigItemName());
                 newConfig = true;
-                
-	   } else {
-		configItem = node.getConfigItem(parameter.getConfigItemName());
-	   }    
-           
-	   configItem.setChoice(new Choices(parameter.getChoices()));
-	   configItem.setConfigType(parameter.getType());
-	   configItem.setDefaultValue(parameter.getDefaultValue());
-	   configItem.setOptional(parameter.isOptional());
-	   configItem.setUserDescription(parameter.getUserDescription());
 
-           if(newConfig){
-           node.addConfigItem(configItem);
-           }
-           
-           if(newNode){
-           store.addNode(node);
-           }
-           
-           
-	}
-	return store;
-   }
+            } else {
+                configItem = node.getConfigItem(parameter.getConfigItemName());
+            }
+
+            configItem.setChoice(new Choices(parameter.getChoices()));
+            configItem.setConfigType(parameter.getType());
+            configItem.setDefaultValue(parameter.getDefaultValue());
+            configItem.setOptional(parameter.isOptional());
+            configItem.setUserDescription(parameter.getUserDescription());
+
+            if (newConfig) {
+                node.addConfigItem(configItem);
+            }
+
+            if (newNode) {
+                store.addNode(node);
+            }
+
+
+        }
+        return store;
+    }
 }

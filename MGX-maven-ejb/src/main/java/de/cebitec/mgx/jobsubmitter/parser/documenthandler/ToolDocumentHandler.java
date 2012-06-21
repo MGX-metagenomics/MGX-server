@@ -1,11 +1,9 @@
 package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
-//~--- non-JDK imports --------------------------------------------------------
 import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
-import java.util.logging.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -22,13 +20,11 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class ToolDocumentHandler extends DefaultHandler {
 
-   private final static Logger LOGGER =
-	 Logger.getLogger(ToolDocumentHandler.class.getName());
    /**
     * Sobald eine neue Node gefunden wird, muss diese angelegt werden, was durch
     * diesen boolean markiert wird.
     */
-   private boolean firstConfigFlag;
+   private boolean firstConfigFlag = false;
    /**
     * CurrentNode speichert den aktuell zu bearbeitenden Knoten.
     *
@@ -47,7 +43,7 @@ public class ToolDocumentHandler extends DefaultHandler {
     * Sobald ein endElement String von configuration_item erreicht wird, wird
     * durch den Flag angegeben, dass der Node gespeichert werden soll.
     */
-   private boolean save;
+   private boolean save = false;
    /**
     * Der Store speichert die gefundenen Nodes und ConfigItems.
     */
@@ -60,9 +56,7 @@ public class ToolDocumentHandler extends DefaultHandler {
     * @param lStore Store für die Nodes.
     */
    public ToolDocumentHandler(Store lStore) {
-	save = false;
 	store = lStore;
-	firstConfigFlag = false;
    }
 
    /**
@@ -134,7 +128,7 @@ public class ToolDocumentHandler extends DefaultHandler {
 	 throws SAXException {
 	super.endElement(lUri, lLocalName, lQName);
 
-	if (lQName.equals(TagsAndAttributes.configuration_items) && save) {
+	if (save && lQName.equals(TagsAndAttributes.configuration_items)) {
 	   store.addNode(currentNode);
 	   save = false;
 	}
