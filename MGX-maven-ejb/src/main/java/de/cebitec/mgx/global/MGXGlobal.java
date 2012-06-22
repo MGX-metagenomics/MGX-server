@@ -6,6 +6,7 @@ import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.model.dao.DAO;
 import de.cebitec.mgx.model.dao.TermDAO;
 import de.cebitec.mgx.model.dao.ToolDAO;
+import de.cebitec.mgx.model.db.Term;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class MGXGlobal {
         return getDAO(ToolDAO.class);
     }
 
-    public TermDAO getTermDAO() {
+    public TermDAO<Term> getTermDAO() {
         if (!daos.containsKey(TermDAO.class)) {
             TermDAO dao = new TermDAO(ds);
             dao.setEntityManager(em);

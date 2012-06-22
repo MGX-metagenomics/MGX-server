@@ -26,7 +26,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         Long id = super.create(obj);
 
-        String fname = getController().getProjectDirectory() + "jobs" + File.separatorChar + id.toString() + ".xml";
+        String fname = getController().getProjectDirectory() + "jobs" + File.separator + id.toString() + ".xml";
         System.err.println("writing to "+fname);
         try {
             FileWriter fw = new FileWriter(fname);

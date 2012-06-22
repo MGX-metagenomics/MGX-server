@@ -131,11 +131,11 @@ public class JobSubmitterImpl implements JobSubmitter {
         commands.add(j.getTool().getXMLFile());
         commands.add(createJobConfigFile(mgx, j));
 
-        StringBuilder cmd = new StringBuilder();
-        for (String s : commands) {
-            cmd.append(s);
-            cmd.append(" ");
-        }
+//        StringBuilder cmd = new StringBuilder();
+//        for (String s : commands) {
+//            cmd.append(s);
+//            cmd.append(" ");
+//        }
 
         String[] argv = commands.toArray(new String[0]);
 

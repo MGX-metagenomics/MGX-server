@@ -30,10 +30,10 @@ public class SeqRun implements Serializable, Identifiable {
     protected Boolean submitted_to_insdc;
     @Basic
     @NotNull
-    protected String sequencing_technology;
+    protected Long sequencing_technology;
     @Basic
     @NotNull
-    protected String sequencing_method;
+    protected Long sequencing_method;
     @Basic
     @NotNull
     protected Long num_sequences = Long.valueOf(0);
@@ -103,20 +103,20 @@ public class SeqRun implements Serializable, Identifiable {
         return this;
     }
 
-    public String getSequencingMethod() {
+    public Long getSequencingMethod() {
         return sequencing_method;
     }
 
-    public SeqRun setSequencingMethod(String sequencing_method) {
+    public SeqRun setSequencingMethod(Long sequencing_method) {
         this.sequencing_method = sequencing_method;
         return this;
     }
 
-    public String getSequencingTechnology() {
+    public Long getSequencingTechnology() {
         return sequencing_technology;
     }
 
-    public SeqRun setSequencingTechnology(String sequencing_technology) {
+    public SeqRun setSequencingTechnology(Long sequencing_technology) {
         this.sequencing_technology = sequencing_technology;
         return this;
     }
