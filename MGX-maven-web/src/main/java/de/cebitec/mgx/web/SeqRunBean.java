@@ -7,28 +7,19 @@ import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
-import de.cebitec.mgx.dto.dto.SeqRunDTOList.Builder;
+import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
-import de.cebitec.mgx.model.db.AttributeType;
-import de.cebitec.mgx.model.db.DNAExtract;
-import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.dtoadapter.TermDTOFactory;
+import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.HashMap;
 import java.util.Map;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 
 /**
@@ -48,17 +39,17 @@ public class SeqRunBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public MGXLong create(SeqRunDTO dto) {
-        DNAExtract extract = null;
-        Long SeqRun_id = null;
+        DNAExtract extract;
+        long run_id;
         try {
             extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
-            SeqRun seqrun = SeqRunDTOFactory.getInstance().toDB(dto);
+            SeqRun seqrun = SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDB(dto);
             seqrun.setExtract(extract);
-            SeqRun_id = mgx.getSeqRunDAO().create(seqrun);
+            run_id = mgx.getSeqRunDAO().create(seqrun);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return MGXLong.newBuilder().setValue(SeqRun_id).build();
+        return MGXLong.newBuilder().setValue(run_id).build();
     }
 
     @POST
@@ -66,23 +57,28 @@ public class SeqRunBean {
     @Consumes("application/x-protobuf")
     public Response update(SeqRunDTO dto) {
         /*
-         * since not all fields are exposed via the DTO, we need to fetch
-         * the original object from the backend and update it's fields
-         * 
+         * since not all fields are exposed via the DTO, we need to fetch the
+         * original object from the backend and update it's fields
+         *
          */
         SeqRun orig = null;
+        Term seqMethod = null;
+        Term seqTech = null;
         try {
             orig = mgx.getSeqRunDAO().getById(dto.getId());
+            seqMethod = mgx.getGlobal().getTermDAO().getById(dto.getSequencingMethod().getId());
+            seqTech = mgx.getGlobal().getTermDAO().getById(dto.getSequencingTechnology().getId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
-            .setSequencingMethod(dto.getSequencingMethod())
-            .setSequencingTechnology(dto.getSequencingTechnology());
-        
-        if (dto.getSubmittedToInsdc())
+                .setSequencingMethod(seqMethod.getId())
+                .setSequencingTechnology(seqTech.getId());
+
+        if (dto.getSubmittedToInsdc()) {
             orig.setAccession(dto.getAccession());
-        
+        }
+
         try {
             mgx.getSeqRunDAO().update(orig);
         } catch (MGXException ex) {
@@ -96,19 +92,22 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     public SeqRunDTO fetch(@PathParam("id") Long id) {
         SeqRun seqrun;
+    
         try {
             seqrun = mgx.getSeqRunDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SeqRunDTOFactory.getInstance().toDTO(seqrun);
+        
+
+        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTO(seqrun);
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        return SeqRunDTOFactory.getInstance().toDTOList(mgx.getSeqRunDAO().getAll());
+        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().getAll());
     }
 
     @GET
@@ -121,7 +120,7 @@ public class SeqRunBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SeqRunDTOFactory.getInstance().toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
+        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
     }
 
     @DELETE
@@ -134,8 +133,7 @@ public class SeqRunBean {
         }
         return Response.ok().build();
     }
-    
-    
+
     @GET
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
@@ -146,20 +144,17 @@ public class SeqRunBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Map<Job, Iterable<AttributeType>> result = new HashMap<Job, Iterable<AttributeType>>();
+        Map<Job, Iterable<AttributeType>> result = new HashMap<>();
         for (Job job : mgx.getJobDAO().BySeqRun(run)) {
             result.put(job, mgx.getAttributeTypeDAO().ByJob(job.getId()));
         }
-        
+
         // convert to DTO - FIXME: move to correct package
         dto.JobsAndAttributeTypesDTO.Builder b = dto.JobsAndAttributeTypesDTO.newBuilder();
         for (Map.Entry<Job, Iterable<AttributeType>> entry : result.entrySet()) {
             dto.JobDTO toDTO = JobDTOFactory.getInstance().toDTO(entry.getKey());
             dto.AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(entry.getValue());
-            dto.JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder()
-                    .setJob(toDTO)
-                    .setAttributeTypes(dtoList)
-                    .build();
+            dto.JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder().setJob(toDTO).setAttributeTypes(dtoList).build();
             b.addEntry(jat);
         }
         return b.build();
