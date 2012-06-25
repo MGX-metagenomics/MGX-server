@@ -3,6 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTO.Builder;
 import de.cebitec.mgx.dto.dto.TermDTOList;
+import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Term;
 
 /**
@@ -28,7 +29,7 @@ public class TermDTOFactory extends DTOConversionBase<Term, TermDTO, TermDTOList
         Builder b = TermDTO.newBuilder()
                                  .setId(a.getId())
                                  .setName(a.getName());
-        if (a.getParentId() != -1)
+        if (a.getParentId() != null)
             b = b.setParentId(a.getParentId());
         if (a.getDescription() != null) 
             b = b.setDescription(a.getDescription());
