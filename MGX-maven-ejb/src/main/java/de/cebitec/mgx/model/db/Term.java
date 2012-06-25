@@ -1,16 +1,16 @@
 package de.cebitec.mgx.model.db;
 
-import javax.persistence.Basic;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import java.io.Serializable;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-public class Term implements Identifiable {
+@Entity
+@Table(name = "Term")
+public class Term implements Identifiable, Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -52,11 +52,11 @@ public class Term implements Identifiable {
         return this;
     }
 
-    public long getParentId() {
+    public Long getParentId() {
         return parent_id;
     }
 
-    public Term setParentId(long parent_id) {
+    public Term setParentId(Long parent_id) {
         this.parent_id = parent_id;
         return this;
     }

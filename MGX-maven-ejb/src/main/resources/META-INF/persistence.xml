@@ -25,6 +25,7 @@
   <persistence-unit name="MGX-global" transaction-type="JTA">
     <provider>org.hibernate.ejb.HibernatePersistence</provider>
     <class>de.cebitec.mgx.model.db.Tool</class>
+    <class>de.cebitec.mgx.model.db.Term</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
