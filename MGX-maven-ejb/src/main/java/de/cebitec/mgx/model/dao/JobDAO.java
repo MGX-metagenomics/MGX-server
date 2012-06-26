@@ -1,7 +1,9 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.util.JobParameter;
 import java.io.File;
 
 /**
@@ -36,6 +38,16 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 all_deleted = all_deleted && deleted;
             }
         }
+    }
+
+    public void setParameters(long job_id, Iterable<JobParameter> params) throws MGXException {
+        Job job = getController().getJobDAO().getById(job_id);
+        
+        // FIXME
+        job.setParameters("");
+        
+        // ..and save
+        getController().getJobDAO().update(job);
     }
 
     public Iterable<Job> BySeqRun(SeqRun sr) {
