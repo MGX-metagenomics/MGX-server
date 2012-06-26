@@ -124,18 +124,8 @@ public class JobBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
-        List<JobParameter> params = new ArrayList<>();
-        for (JobParameterDTO dto : paramdtos.getParameterList()) {
-            params.add(JobParameterDTOFactory.getInstance().toDB(dto));
-        }
-        
-        // FIXME
-
-        Job job;
         try {
-            job = mgx.getJobDAO().getById(id);
-            job.setParameters("");
-            mgx.getJobDAO().update(job);
+            mgx.getJobDAO().setParameters(id, JobParameterDTOFactory.getInstance().toDBList(paramdtos));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
