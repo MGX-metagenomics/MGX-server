@@ -5,6 +5,8 @@ import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.JobParameter;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -48,6 +50,16 @@ public class JobDAO<T extends Job> extends DAO<T> {
         
         // ..and save
         getController().getJobDAO().update(job);
+    }
+    
+    public Iterable<JobParameter> getParameters(long job_id) throws MGXException {
+        Job job = getController().getJobDAO().getById(job_id);
+        String s = job.getParameters();
+        List<JobParameter> ret = new ArrayList<>();
+        
+        // FIXME 
+        
+        return ret;
     }
 
     public Iterable<Job> BySeqRun(SeqRun sr) {
