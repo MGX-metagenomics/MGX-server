@@ -27,15 +27,14 @@ public class TermDTOFactory extends DTOConversionBase<Term, TermDTO, TermDTOList
     @Override
     public TermDTO toDTO(Term a) {
         Builder b = TermDTO.newBuilder()
-                                 .setId(a.getId())
-                                 .setName(a.getName());
+                .setId(a.getId())
+                .setName(a.getName());
         if (a.getParentId() != null)
             b = b.setParentId(a.getParentId());
         if (a.getDescription() != null) 
             b = b.setDescription(a.getDescription());
         
         return b.build();
-                
     }
 
     @Override

@@ -7,7 +7,9 @@ import de.cebitec.mgx.dto.dto.JobParameterDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.KVPair;
 import de.cebitec.mgx.util.JobParameter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 /**
@@ -30,33 +32,22 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
 
     @Override
     public JobParameterDTO toDTO(JobParameter p) {
-        Builder b = JobParameterDTO.newBuilder()
-                .setNodeId(p.getNodeId())
-                .setUserName(p.getUserName())
-                .setUserDesc(p.getUserDescription())
-                .setDisplayName(p.getDisplayName())
-                .setClassName(p.getClassName())
-                .setConfigitemName(p.getConfigItemName())
-                .setType(p.getType())
-                .setIsOptional(p.isOptional());
-        
+        Builder b = JobParameterDTO.newBuilder().setNodeId(p.getNodeId()).setUserName(p.getUserName()).setUserDesc(p.getUserDescription()).setDisplayName(p.getDisplayName()).setClassName(p.getClassName()).setConfigitemName(p.getConfigItemName()).setType(p.getType()).setIsOptional(p.isOptional());
+
         // choices
         if (p.getChoices() != null) {
             ChoicesDTO.Builder choices = ChoicesDTO.newBuilder();
             for (Entry<String, String> e : p.getChoices().entrySet()) {
-                KVPair kv = KVPair.newBuilder()
-                        .setKey(e.getKey())
-                        .setValue(e.getValue())
-                        .build();
+                KVPair kv = KVPair.newBuilder().setKey(e.getKey()).setValue(e.getValue()).build();
                 choices.addEntry(kv);
             }
             b.setChoices(choices.build());
         }
-        
+
         if (p.getConfigItemValue() != null) {
             b.setConfigitemValue(p.getConfigItemValue());
         }
-                
+
         if (p.getDefaultValue() != null) {
             b.setDefaultValue(p.getDefaultValue());
         }
@@ -74,22 +65,22 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         jp.setConfigItemName(dto.getConfigitemName());
         jp.setType(dto.getType());
         jp.setOptional(dto.getIsOptional());
-        
+
         if (dto.hasChoices()) {
             jp.setChoices(new HashMap<String, String>());
             for (KVPair kv : dto.getChoices().getEntryList()) {
                 jp.getChoices().put(kv.getKey(), kv.getValue());
             }
         }
-        
+
         if (dto.hasConfigitemValue()) {
             jp.setConfigItemValue(dto.getConfigitemValue());
         }
-        
+
         if (dto.hasDefaultValue()) {
             jp.setDefaultValue(dto.getDefaultValue());
         }
-        
+
         return jp;
     }
 
@@ -100,5 +91,13 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
             b.addParameter(toDTO(jp));
         }
         return b.build();
+    }
+
+    public Iterable<JobParameter> toDBList(JobParameterListDTO paramdtos) {
+        List<JobParameter> params = new ArrayList<>();
+        for (JobParameterDTO dto : paramdtos.getParameterList()) {
+            params.add(toDB(dto));
+        }
+        return params;
     }
 }
