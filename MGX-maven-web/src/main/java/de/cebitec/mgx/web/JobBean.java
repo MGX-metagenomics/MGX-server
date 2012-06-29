@@ -6,7 +6,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
-import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXBoolean;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -15,6 +14,7 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
+import de.cebitec.mgx.model.dao.JobDAO;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -23,7 +23,6 @@ import de.cebitec.mgx.util.JobParameter;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -71,6 +70,10 @@ public class JobBean {
         j.setTool(tool);
         j.setSeqrun(seqrun);
         j.setParameters("");
+        if (dto.hasParameters()) {
+            Iterable<JobParameter> params = JobParameterDTOFactory.getInstance().toDBList(dto.getParameters());
+            j.setParameters(JobDAO.toParameterString(params));
+        }
         j.setCreator(mgx.getCurrentUser());
 
         Long job_id = null;
@@ -125,7 +128,10 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
         try {
-            mgx.getJobDAO().setParameters(id, JobParameterDTOFactory.getInstance().toDBList(paramdtos));
+            Job job = mgx.getJobDAO().getById(id);
+            Iterable<JobParameter> params = JobParameterDTOFactory.getInstance().toDBList(paramdtos);
+            job.setParameters(JobDAO.toParameterString(params));
+            mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
