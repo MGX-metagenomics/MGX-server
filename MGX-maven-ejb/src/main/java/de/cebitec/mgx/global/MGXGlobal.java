@@ -7,6 +7,7 @@ import de.cebitec.mgx.model.dao.DAO;
 import de.cebitec.mgx.model.dao.TermDAO;
 import de.cebitec.mgx.model.dao.ToolDAO;
 import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.model.db.Tool;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ public class MGXGlobal {
     //
     private final static String DS_JNDI_NAME = "jdbc/MGXGlobal";
 
-    public ToolDAO getToolDAO() {
+    public ToolDAO<Tool> getToolDAO() {
         return getDAO(ToolDAO.class);
     }
 

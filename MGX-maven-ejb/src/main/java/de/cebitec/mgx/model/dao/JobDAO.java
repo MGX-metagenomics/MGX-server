@@ -42,19 +42,13 @@ public class JobDAO<T extends Job> extends DAO<T> {
         }
     }
 
-    public void setParameters(long job_id, Iterable<JobParameter> params) throws MGXException {
-        Job job = getController().getJobDAO().getById(job_id);
+    public static String toParameterString(Iterable<JobParameter> params) {
         
         // FIXME
-        job.setParameters("");
-        
-        // ..and save
-        getController().getJobDAO().update(job);
+        return "";
     }
     
-    public Iterable<JobParameter> getParameters(long job_id) throws MGXException {
-        Job job = getController().getJobDAO().getById(job_id);
-        String s = job.getParameters();
+    public static Iterable<JobParameter> getParameters(String in) {
         List<JobParameter> ret = new ArrayList<>();
         
         // FIXME 
