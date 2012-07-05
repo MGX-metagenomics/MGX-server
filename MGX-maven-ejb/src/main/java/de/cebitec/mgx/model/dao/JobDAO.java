@@ -72,34 +72,21 @@ public class JobDAO<T extends Job> extends DAO<T> {
             if (i == 0) {
 
                 nodeId = Long.parseLong(tempString);
-                
+
             } else {
 
                 tempString = tempSplit[i];
                 String[] splitString = tempString.split("\"");
-                int splitLength = splitString.length;
                 String configName = splitString[0];
                 String value = splitString[1];
 
-                if (i != tempSplit.length - 1) {
-
-                    parameter = new JobParameter();
-                    parameter.setConfigItemName(configName);
-                    parameter.setConfigItemValue(value);
-                    parameter.setNodeId(nodeId);
-
-                } else {
-
-                    parameter = new JobParameter();
-                    parameter.setConfigItemValue(value);
-                    parameter.setConfigItemName(configName);
-                    parameter.setNodeId(nodeId);
-
-                }
-
+                parameter = new JobParameter();
+                parameter.setConfigItemName(configName);
+                parameter.setConfigItemValue(value);
+                parameter.setNodeId(nodeId);
                 ret.add(parameter);
 
-                if (splitLength == 3) {
+                if (splitString.length == 3) {
                     nodeId = Long.parseLong(splitString[2]);
                 }
             }
