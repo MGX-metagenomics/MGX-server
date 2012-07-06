@@ -59,7 +59,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
     public static Iterable<JobParameter> getParameters(String in) {
         List<JobParameter> ret = new ArrayList<>();
         // muster: nodeid.configname "wert"    
-
+        System.out.println("GetParameters: " + in);
         String[] tempSplit = in.split("\\.");
         JobParameter parameter;
         String tempString = "";
