@@ -5,8 +5,8 @@ import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobDTOList;
 import de.cebitec.mgx.model.dao.JobDAO;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
-import de.cebitec.mgx.util.JobParameter;
 
 /**
  *
@@ -41,8 +41,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
             b.setFinishDate(toUnixTimeStamp(j.getFinishDate()));
         
         if (j.getParameters() != null) {
-            Iterable<JobParameter> parameters = JobDAO.getParameters(j.getParameters());
-            b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(parameters));
+            b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(j.getParameters()));
         }
 
         return b.build();
@@ -57,8 +56,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setFinishDate(toDate(dto.getFinishDate()));
         
         if (dto.hasParameters()) {
-            Iterable<JobParameter> params = JobParameterDTOFactory.getInstance().toDBList(dto.getParameters());
-            j.setParameters(JobDAO.toParameterString(params));
+            j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         }
 
         if (dto.hasId())

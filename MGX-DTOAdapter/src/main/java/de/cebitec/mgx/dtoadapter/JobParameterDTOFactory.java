@@ -6,7 +6,7 @@ import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.KVPair;
-import de.cebitec.mgx.util.JobParameter;
+import de.cebitec.mgx.model.db.JobParameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +32,16 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
 
     @Override
     public JobParameterDTO toDTO(JobParameter p) {
-        Builder b = JobParameterDTO.newBuilder().setNodeId(p.getNodeId()).setUserName(p.getUserName()).setUserDesc(p.getUserDescription()).setDisplayName(p.getDisplayName()).setClassName(p.getClassName()).setConfigitemName(p.getConfigItemName()).setType(p.getType()).setIsOptional(p.isOptional());
+        Builder b = JobParameterDTO.newBuilder()
+                .setId(p.getId())
+                .setNodeId(p.getNodeId())
+                .setUserName(p.getUserName())
+                .setUserDesc(p.getUserDescription())
+                .setDisplayName(p.getDisplayName())
+                .setClassName(p.getClassName())
+                .setConfigitemName(p.getConfigItemName())
+                .setType(p.getType())
+                .setIsOptional(p.isOptional());
 
         // choices
         if (p.getChoices() != null) {
@@ -57,6 +66,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     @Override
     public JobParameter toDB(JobParameterDTO dto) {
         JobParameter jp = new JobParameter();
+        jp.setId(dto.getId());
         jp.setNodeId(dto.getNodeId());
         jp.setUserName(dto.getUserName());
         jp.setUserDescription(dto.getUserDesc());
@@ -93,7 +103,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         return b.build();
     }
 
-    public Iterable<JobParameter> toDBList(JobParameterListDTO paramdtos) {
+    public List<JobParameter> toDBList(JobParameterListDTO paramdtos) {
         List<JobParameter> params = new ArrayList<>();
         for (JobParameterDTO dto : paramdtos.getParameterList()) {
             params.add(toDB(dto));
