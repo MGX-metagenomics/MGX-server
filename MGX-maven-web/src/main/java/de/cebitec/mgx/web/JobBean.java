@@ -14,12 +14,7 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
-import de.cebitec.mgx.model.dao.JobDAO;
-import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.JobState;
-import de.cebitec.mgx.model.db.SeqRun;
-import de.cebitec.mgx.model.db.Tool;
-import de.cebitec.mgx.util.JobParameter;
+import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -69,10 +64,8 @@ public class JobBean {
         j.setStatus(JobState.CREATED);
         j.setTool(tool);
         j.setSeqrun(seqrun);
-        j.setParameters("");
         if (dto.hasParameters()) {
-            Iterable<JobParameter> params = JobParameterDTOFactory.getInstance().toDBList(dto.getParameters());
-            j.setParameters(JobDAO.toParameterString(params));
+            j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         }
         j.setCreator(mgx.getCurrentUser());
 
@@ -129,8 +122,7 @@ public class JobBean {
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
         try {
             Job job = mgx.getJobDAO().getById(id);
-            Iterable<JobParameter> params = JobParameterDTOFactory.getInstance().toDBList(paramdtos);
-            job.setParameters(JobDAO.toParameterString(params));
+            job.setParameters(JobParameterDTOFactory.getInstance().toDBList(paramdtos));
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
