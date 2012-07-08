@@ -18,7 +18,7 @@ public class Observation implements Serializable {
     //
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attributeid", nullable = false)
+    @JoinColumn(name = "attr_id", nullable = false)
     private Attribute attribute;
     //
     @Basic

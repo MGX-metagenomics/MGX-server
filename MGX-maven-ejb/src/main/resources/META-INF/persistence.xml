@@ -6,6 +6,7 @@
     <class>de.cebitec.mgx.model.db.DNAExtract</class>
     <class>de.cebitec.mgx.model.db.Habitat</class>
     <class>de.cebitec.mgx.model.db.Job</class>
+    <class>de.cebitec.mgx.model.db.JobParameter</class>
     <class>de.cebitec.mgx.model.db.Observation</class>
     <class>de.cebitec.mgx.model.db.Sample</class>
     <class>de.cebitec.mgx.model.db.SeqRun</class>

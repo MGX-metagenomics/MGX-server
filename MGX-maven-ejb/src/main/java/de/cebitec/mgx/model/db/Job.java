@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import javax.persistence.*;
 
@@ -35,12 +36,13 @@ public class Job implements Serializable, Identifiable {
     @Temporal(TemporalType.TIMESTAMP)
     protected Date finishDate = null;
     //
-    @Basic
-    @Column(name = "parameters")
-    protected String parameters;
+    @OneToMany(mappedBy = "job", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    protected Collection<JobParameter> params;
+    
     @Basic
     @Column(name = "job_state")
     private int jobstate;
+    
 //    // not persistent, mapped by its integer value
 //    @Transient
 //    protected JobState status;
@@ -85,13 +87,12 @@ public class Job implements Serializable, Identifiable {
         return this;
     }
 
-    public String getParameters() {
-        return parameters;
+    public Collection<JobParameter> getParameters() {
+        return params;
     }
 
-    public Job setParameters(String parameters) {
-        this.parameters = parameters;
-        return this;
+    public void setParameters(Collection<JobParameter> params) {
+        this.params = params;
     }
 
     public Date getFinishDate() {
