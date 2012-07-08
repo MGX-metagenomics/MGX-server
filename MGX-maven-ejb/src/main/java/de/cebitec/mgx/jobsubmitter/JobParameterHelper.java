@@ -3,7 +3,7 @@ package de.cebitec.mgx.jobsubmitter;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.data.util.Transform;
 import de.cebitec.mgx.jobsubmitter.parser.impl.SaxParser;
-import de.cebitec.mgx.util.JobParameter;
+import de.cebitec.mgx.model.db.JobParameter;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;

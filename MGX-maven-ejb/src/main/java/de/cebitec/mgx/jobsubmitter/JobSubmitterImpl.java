@@ -7,9 +7,11 @@ import de.cebitec.mgx.dispatcher.common.DispatcherCommand;
 import de.cebitec.mgx.dispatcher.common.JobReceiverI;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import javax.ejb.Asynchronous;
@@ -180,7 +182,7 @@ public class JobSubmitterImpl implements JobSubmitter {
 
         MGXConfiguration mgxcfg = mgx.getConfiguration();
 
-        String[] params = j.getParameters().split("\\s+");
+        Collection<JobParameter> params = j.getParameters();
 
         FileWriter fw = null;
         BufferedWriter cfgFile = null;
@@ -199,8 +201,8 @@ public class JobSubmitterImpl implements JobSubmitter {
             cfgFile.write("mgx.job_id=" + j.getId());
             cfgFile.newLine();
 
-            for (String s : params) {
-                cfgFile.write(s);
+            for (JobParameter jp : params) {
+                cfgFile.write(jp.getNodeId() + "." + jp.getParameterName() + "=" + jp.getParameterValue());
                 cfgFile.newLine();
             }
 
