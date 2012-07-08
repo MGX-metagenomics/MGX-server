@@ -1,17 +1,15 @@
 package de.cebitec.mgx.jobsubmitter.data.util;
 
-import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.data.impl.Choices;
 import de.cebitec.mgx.jobsubmitter.data.impl.ConfigItem;
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
-import de.cebitec.mgx.util.JobParameter;
+import de.cebitec.mgx.model.db.JobParameter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 /**
  * Sorgt fuer die Umwandlung zwischne Store und JobParameter.
@@ -28,9 +26,9 @@ public class Transform {
      */
     public static List<JobParameter> getFromNodeStoreJobParameter(Store store) {
         List<JobParameter> parameters = new ArrayList<>();
-        Iterator<Entry<String, Node>> nodeIterator = store.getIterator();
         Map.Entry<String, Node> nodeME;
         String nodeId;
+        Iterator<Entry<String, Node>> nodeIterator = store.getIterator();
         Iterator<Entry<String, ConfigItem>> configItemIterator;
         while (nodeIterator.hasNext()) {
             nodeME = nodeIterator.next();
