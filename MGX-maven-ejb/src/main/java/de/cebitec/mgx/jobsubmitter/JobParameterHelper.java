@@ -23,7 +23,7 @@ public class JobParameterHelper {
             Logger.getLogger(JobParameterHelper.class.getName());
 
     public List<JobParameter> getParameters(String tool, String plugins) {
-        Store store = null;
+        Store store = new Store();
         try {
             store = SaxParser.getNodesConfigurations(tool, plugins);
         } catch (ParserConfigurationException | SAXException | IOException ex) {
