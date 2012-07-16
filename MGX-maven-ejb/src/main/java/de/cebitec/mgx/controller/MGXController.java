@@ -35,6 +35,8 @@ public interface MGXController {
     public ToolDAO<Tool> getToolDAO();
 
     public JobDAO<Job> getJobDAO();
+    
+    public JobParameterDAO<JobParameter> getJobParameterDAO();
 
     public String getProjectName();
 

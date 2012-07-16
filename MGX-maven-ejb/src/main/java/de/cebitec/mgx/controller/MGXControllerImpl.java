@@ -4,15 +4,7 @@ import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
-import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.AttributeType;
-import de.cebitec.mgx.model.db.DNAExtract;
-import de.cebitec.mgx.model.db.Habitat;
-import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.Sample;
-import de.cebitec.mgx.model.db.SeqRun;
-import de.cebitec.mgx.model.db.Sequence;
-import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.model.db.*;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -84,11 +76,7 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getProjectDirectory() {
-        String ret = new StringBuilder(getConfiguration().getPersistentDirectory())
-                .append(File.separator)
-                .append(getProjectName())
-                .append(File.separator)
-                .toString();
+        String ret = new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
         while (ret.contains(File.separator + File.separator)) {
             ret = ret.replaceAll(File.separator + File.separator, "/");
         }
@@ -133,7 +121,7 @@ public class MGXControllerImpl implements MGXController {
     public HabitatDAO<Habitat> getHabitatDAO() {
         return getDAO(HabitatDAO.class);
     }
-    
+
     @Override
     public AttributeTypeDAO<AttributeType> getAttributeTypeDAO() {
         return getDAO(AttributeTypeDAO.class);
@@ -172,6 +160,11 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public JobDAO<Job> getJobDAO() {
         return getDAO(JobDAO.class);
+    }
+
+    @Override
+    public JobParameterDAO<JobParameter> getJobParameterDAO() {
+        return getDAO(JobParameterDAO.class);
     }
 
     @Override

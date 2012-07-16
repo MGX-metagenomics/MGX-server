@@ -3,8 +3,9 @@ package de.cebitec.mgx.jobsubmitter.parser.impl;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.PluginDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.ToolDocumentHandler;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -31,23 +32,20 @@ public final class SaxParser {
      * @param pluginsXml Beinhaltet alle möglichen Nodes.
      * @return NodeStore mit allen konfigurierbaren Knoten.
      */
-    
-    
-    public static Store getNodesConfigurations(String toolXml, String pluginsXml) throws ParserConfigurationException, SAXException, IOException {
+    public static Store getNodesConfigurations(String toolXMLData, File pluginXMLFile) throws ParserConfigurationException, SAXException, IOException {
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        ToolDocumentHandler toolHandler = new ToolDocumentHandler(new Store());
 
-        Store store = new Store();
-
-        File toolFile = new File(toolXml);
-        File pluginFile = new File(pluginsXml);
-
-        ToolDocumentHandler toolHandler = new ToolDocumentHandler(store);
-
-        parser.parse(toolFile, toolHandler);
+        parser.parse(toolXMLData, toolHandler);
 
         PluginDocumentHandler pluginHandler = new PluginDocumentHandler(toolHandler.getFilledStore());
-
-        parser.parse(pluginFile, pluginHandler);
+        parser.parse(pluginXMLFile, pluginHandler);
         return pluginHandler.getFilledStore();
     }
+
+//    public static Store getNodesConfigurations(File toolXMLFile, File pluginXMLFile) throws ParserConfigurationException, SAXException, IOException {
+//        String XMLData = readFile(toolXMLFile);
+//        return getNodesConfigurations(XMLData, pluginXMLFile);
+//    }
+
 }

@@ -21,13 +21,11 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
     public long create(T obj) throws MGXException {
         // extract xml data
         String xmldata = obj.getXMLFile();
-        System.err.println("xml data: "+ xmldata);
         obj.setXMLFile(null);
 
         Long id = super.create(obj);
 
         String fname = getController().getProjectDirectory() + "jobs" + File.separator + id.toString() + ".xml";
-        System.err.println("writing to "+fname);
         try {
             FileWriter fw = new FileWriter(fname);
             fw.write(xmldata);
@@ -53,6 +51,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
             throw new MGXException(ex.getMessage());
         }
 
+        // clone
         t.setName(global.getName());
         t.setDescription(global.getDescription());
         t.setVersion(global.getVersion());

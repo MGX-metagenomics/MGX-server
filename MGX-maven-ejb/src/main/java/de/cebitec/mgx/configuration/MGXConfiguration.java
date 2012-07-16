@@ -103,7 +103,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         return config.getProperty("mgx_graphvalidate");
     }
     
-    public String getPluginDump() {
+    public File getPluginDump() {
         StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
         if (!getMGXGlobalStorageDir().endsWith(File.separator)) 
             sb.append(File.separatorChar);
@@ -112,7 +112,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         File ret = new File(sb.toString());
         assert ret.exists();
         
-        return sb.toString();
+        return ret;
     }
 
     public String getDispatcherHost() throws MGXDispatcherException {
