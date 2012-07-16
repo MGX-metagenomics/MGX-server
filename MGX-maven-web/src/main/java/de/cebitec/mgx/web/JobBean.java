@@ -18,7 +18,6 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -64,9 +63,7 @@ public class JobBean {
         j.setStatus(JobState.CREATED);
         j.setTool(tool);
         j.setSeqrun(seqrun);
-        if (dto.hasParameters()) {
-            j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
-        }
+        j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         j.setCreator(mgx.getCurrentUser());
 
         Long job_id = null;
@@ -89,7 +86,6 @@ public class JobBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
     }
 
     @GET
@@ -103,16 +99,13 @@ public class JobBean {
     @Path("getParameters/{id}")
     @Produces("application/x-protobuf")
     public JobParameterListDTO getParameters(@PathParam("id") Long id) {
-        String tool = null;
         try {
-            tool = mgx.getJobDAO().getById(id).getTool().getXMLFile();
+            Job job = mgx.getJobDAO().getById(id);
+            Iterable<JobParameter> params = mgx.getJobParameterDAO().ByJob(job);
+            return JobParameterDTOFactory.getInstance().toDTOList(params);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        String plugins = mgx.getConfiguration().getPluginDump();
-        List<JobParameter> params = paramHelper.getParameters(tool, plugins);
-        
-        return JobParameterDTOFactory.getInstance().toDTOList(params);
     }
 
     @POST
