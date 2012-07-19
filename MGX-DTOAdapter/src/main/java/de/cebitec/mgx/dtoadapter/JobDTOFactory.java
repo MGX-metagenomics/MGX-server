@@ -3,9 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobDTOList;
-import de.cebitec.mgx.model.dao.JobDAO;
 import de.cebitec.mgx.model.db.Job;
-import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
 
 /**
@@ -32,17 +30,14 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setSeqrunId(j.getSeqrun().getId())
                 .setToolId(j.getTool().getId())
                 .setCreator(j.getCreator())
-                .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()));
+                .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()))
+                .setParameters(JobParameterDTOFactory.getInstance().toDTOList(j.getParameters()));
 
         if (j.getStartDate() != null)
             b.setStartDate(toUnixTimeStamp(j.getStartDate()));
 
         if (j.getFinishDate() != null)
             b.setFinishDate(toUnixTimeStamp(j.getFinishDate()));
-        
-        if (j.getParameters() != null) {
-            b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(j.getParameters()));
-        }
 
         return b.build();
     }
@@ -53,12 +48,9 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setStatus(JobState.values()[dto.getState().ordinal()])
                 .setCreator(dto.getCreator())
                 .setStartDate(toDate(dto.getStartDate()))
-                .setFinishDate(toDate(dto.getFinishDate()));
+                .setFinishDate(toDate(dto.getFinishDate()))
+                .setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         
-        if (dto.hasParameters()) {
-            j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
-        }
-
         if (dto.hasId())
             j.setId(dto.getId());
 

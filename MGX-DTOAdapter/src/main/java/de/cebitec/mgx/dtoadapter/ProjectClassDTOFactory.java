@@ -4,8 +4,8 @@ import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.dto.dto.ProjectClassDTO;
 import de.cebitec.mgx.dto.dto.ProjectClassDTOList;
-import de.cebitec.mgx.dto.dto.RoleDTOList.Builder;
 import de.cebitec.mgx.dto.dto.RoleDTOList;
+import de.cebitec.mgx.dto.dto.RoleDTOList.Builder;
 
 /**
  *
