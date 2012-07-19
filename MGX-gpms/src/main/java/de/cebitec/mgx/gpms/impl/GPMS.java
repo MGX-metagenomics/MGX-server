@@ -35,9 +35,9 @@ public class GPMS implements DBGPMSI {
     @Resource
     private EJBContext ejbCtx;
     //
-    private ThreadLocal<DBMasterI> currentMaster = new ThreadLocal<DBMasterI>();
+    private ThreadLocal<DBMasterI> currentMaster = new ThreadLocal<>();
     //
-    private static Set<ProjectClassI> supportedPClasses = new HashSet<ProjectClassI>();
+    private static Set<ProjectClassI> supportedPClasses = new HashSet<>();
     //
     private final static Logger logger = Logger.getLogger(GPMS.class.getPackage().getName());
     //
@@ -102,7 +102,7 @@ public class GPMS implements DBGPMSI {
     @Override
     public Set<ProjectClassI> getProjectClasses() {
         // FIXME - return all available GPMS project classes
-        Set<ProjectClassI> ret = new HashSet<ProjectClassI>();
+        Set<ProjectClassI> ret = new HashSet<>();
         ret.add(new ProjectClass(this, "MGX"));
         return ret;
     }
