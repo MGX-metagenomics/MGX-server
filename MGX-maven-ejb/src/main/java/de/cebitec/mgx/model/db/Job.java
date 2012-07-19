@@ -91,8 +91,9 @@ public class Job implements Serializable, Identifiable {
         return params;
     }
 
-    public void setParameters(Collection<JobParameter> params) {
+    public Job setParameters(Collection<JobParameter> params) {
         this.params = params;
+        return this;
     }
 
     public Date getFinishDate() {

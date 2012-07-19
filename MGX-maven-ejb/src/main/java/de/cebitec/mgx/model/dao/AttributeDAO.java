@@ -19,53 +19,6 @@ import java.util.Map;
  */
 public class AttributeDAO<T extends Attribute> extends DAO<T> {
 
-    // FIXME move to function
-    private final static String FETCH_DISTRIBUTION = "SELECT attr.id as attr_id, attr.value, attrcount.cnt "
-            + "FROM attribute attr "
-            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-            + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
-            + "WHERE attr.attrtype_id=? "
-            + "AND attr.job_id=?";
-    // FIXME move to function
-    private final static String FETCH_HIERARCHY = "WITH RECURSIVE subattributes AS "
-            + "( "
-            + "WITH attributecounts AS ( "
-            + "SELECT attr.attrtype_id as attrtype_id, atype.name as attrtype_name, "
-            + "atype.structure as atype_structure, atype.value_type as attrtype_valtype, "
-            + "attr.id as attr_id, attr.value as attr_value, attr.parent_id as parent_id, attrcount.cnt as count "
-            + "FROM attribute attr "
-            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-            + "LEFT JOIN attributecount attrcount ON (attr.id = attrcount.attr_id) "
-            + "WHERE attr.job_id=? "
-            + ") "
-            + "SELECT * FROM attributecounts WHERE attr_id=( "
-            + "WITH RECURSIVE findroot AS ( "
-            + "WITH hierarchy AS ( "
-            + "SELECT attr.attrtype_id as attrtype_id, attr.id as attr_id, attr.parent_id as parent_id "
-            + "FROM attribute attr "
-            + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-            + "WHERE attr.job_id=? "
-            + ") "
-            + "SELECT * FROM hierarchy WHERE attrtype_id=? "
-            + "UNION "
-            + "SELECT parent.* FROM hierarchy AS parent "
-            + "JOIN "
-            + "findroot AS fr "
-            + "ON (fr.parent_id = parent.attr_id) "
-            + ") "
-            + "SELECT attr_id from findroot WHERE parent_id IS NULL "
-            + ") "
-            + "UNION "
-            + "SELECT temp.* "
-            + "FROM "
-            + "attributecounts AS temp "
-            + "JOIN "
-            + "subattributes AS sa "
-            + "ON (sa.attr_id = temp.parent_id) "
-            + ") "
-            + "SELECT attrtype_id, attrtype_name, atype_structure, attrtype_valtype, "
-            + "attr_id, attr_value, parent_id, count FROM subattributes";
-
     @Override
     Class getType() {
         return Attribute.class;
@@ -81,7 +34,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         ResultSet rs = null;
 
         try {
-            stmt = conn.prepareStatement(FETCH_DISTRIBUTION);
+            stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?)");
             stmt.setLong(1, attrTypeId);
             stmt.setLong(2, job.getId());
             rs = stmt.executeQuery();
@@ -114,10 +67,9 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         ResultSet rs = null;
 
         try {
-            stmt = conn.prepareStatement(FETCH_HIERARCHY);
-            stmt.setLong(1, job.getId());
+            stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?)");
+            stmt.setLong(1, attrTypeId);
             stmt.setLong(2, job.getId());
-            stmt.setLong(3, attrTypeId);
             rs = stmt.executeQuery();
             while (rs.next()) {
                 //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count

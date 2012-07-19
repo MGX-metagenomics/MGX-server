@@ -43,7 +43,7 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
             conn = getConnection();
 
             // delete observations
-            stmt = conn.prepareStatement("DELETE FROM observation WHERE seqid IN (SELECT id FROM read WHERE seqrun_id=?)");
+            stmt = conn.prepareStatement("DELETE FROM observation WHERE seq_id IN (SELECT id FROM read WHERE seqrun_id=?)");
             stmt.setLong(1, id);
             stmt.execute();
 

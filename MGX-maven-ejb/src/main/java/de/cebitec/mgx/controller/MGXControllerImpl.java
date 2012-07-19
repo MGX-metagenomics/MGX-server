@@ -38,7 +38,7 @@ public class MGXControllerImpl implements MGXController {
         this.config = cfg;
         this.emf = gpms.getEntityManagerFactory();
         this.em = emf.createEntityManager();
-        daos = new HashMap<Class, DAO>();
+        daos = new HashMap<>();
     }
 
     @Override

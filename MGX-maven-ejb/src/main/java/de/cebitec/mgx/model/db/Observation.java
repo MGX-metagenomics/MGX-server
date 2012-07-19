@@ -13,7 +13,7 @@ public class Observation implements Serializable {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seqid", nullable = false)
+    @JoinColumn(name = "seq_id", nullable = false)
     private Sequence seq;
     //
     @Id
