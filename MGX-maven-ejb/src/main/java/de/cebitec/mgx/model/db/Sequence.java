@@ -24,6 +24,10 @@ public class Sequence implements Serializable, Identifiable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "seqrun_id", nullable = false)
     protected SeqRun seqrun;
+    
+    @Basic
+    @Column(name = "discard", nullable=false)
+    protected boolean discard = false;
 
     public String getName() {
         return name;
@@ -33,6 +37,7 @@ public class Sequence implements Serializable, Identifiable {
         this.name = name;
     }
 
+    @Override
     public Long getId() {
         return id;
     }
