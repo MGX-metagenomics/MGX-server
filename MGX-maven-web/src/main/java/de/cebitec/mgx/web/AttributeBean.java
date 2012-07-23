@@ -10,6 +10,8 @@ import de.cebitec.mgx.dto.dto.AttributeCount;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
 import de.cebitec.mgx.dto.dto.CorrelatedAttributeCount;
+import de.cebitec.mgx.dto.dto.SearchRequestDTO;
+import de.cebitec.mgx.dto.dto.SearchResultDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
@@ -17,19 +19,16 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.Pair;
+import de.cebitec.mgx.util.SearchResult;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 
 /**
  *
@@ -96,6 +95,19 @@ public class AttributeBean {
         }
 
         return convertCorrelation(ret);
+    }
+    
+    @PUT
+    @Path("search")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public SearchResultDTOList search(SearchRequestDTO req) {
+        try {
+            Collection<SearchResult> search = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunIdList());
+        } catch (MGXException ex) {
+            Logger.getLogger(AttributeBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     private AttributeDistribution convert(Map<Attribute, Long> dist) {
