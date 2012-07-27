@@ -1,9 +1,9 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO.Builder;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
+import de.cebitec.mgx.model.db.DNAExtract;
 
 /**
  *
@@ -30,25 +30,30 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
             b.setId(d.getId());
         }
         b = b.setSampleId(d.getSample().getId());
-
+        b = b.setName(d.getName());
         b = b.setMethod(d.getMethod());
         b = b.setProtocolName(d.getProtocol());
 
         // optional fields
-        if (d.getFivePrimer() != null)
+        if (d.getFivePrimer() != null) {
             b = b.setFivePrimePrimer(d.getFivePrimer());
+        }
         
-        if (d.getThreePrimer() != null)
+        if (d.getThreePrimer() != null) {
             b = b.setThreePrimePrimer(d.getThreePrimer());
+        }
         
-        if (d.getTargetGene() != null)
+        if (d.getTargetGene() != null) {
             b = b.setTargetGene(d.getTargetGene());
+        }
         
-        if (d.getTargetFragment() != null)
+        if (d.getTargetFragment() != null) {
             b = b.setTargetFragment(d.getTargetFragment());
+        }
         
-        if (d.getDescription() != null)
+        if (d.getDescription() != null) {
             b = b.setDescription(d.getDescription());
+        }
 
         return b.build();
     }
@@ -61,6 +66,7 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
             d.setId(dto.getId());
         }
 
+        d.setName(dto.getName());
         d.setMethod(dto.getMethod());
         d.setProtocol(dto.getProtocolName());
 
@@ -83,7 +89,6 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
         }
 
         return d;
-
     }
 
     @Override

@@ -1,11 +1,9 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTO.Builder;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
-import de.cebitec.mgx.dto.dto.SeqRunDTOOrBuilder;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.SeqRun;
