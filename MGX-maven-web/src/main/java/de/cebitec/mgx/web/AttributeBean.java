@@ -3,7 +3,6 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
@@ -11,15 +10,16 @@ import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
 import de.cebitec.mgx.dto.dto.CorrelatedAttributeCount;
 import de.cebitec.mgx.dto.dto.SearchRequestDTO;
-import de.cebitec.mgx.dto.dto.SearchResultDTOList;
+import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
+import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.Pair;
-import de.cebitec.mgx.util.SearchResult;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.*;
@@ -101,13 +101,14 @@ public class AttributeBean {
     @Path("search")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public SearchResultDTOList search(SearchRequestDTO req) {
+    public SequenceDTOList search(SearchRequestDTO req) {
+        Collection<Sequence> ret = null;
         try {
-            Collection<SearchResult> search = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunIdList());
+            ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunIdList());
         } catch (MGXException ex) {
-            Logger.getLogger(AttributeBean.class.getName()).log(Level.SEVERE, null, ex);
+            mgx.log(ex.getMessage());
         }
-        return null;
+        return SequenceDTOFactory.getInstance().toDTOList(ret);
     }
 
     private AttributeDistribution convert(Map<Attribute, Long> dist) {
