@@ -5,6 +5,7 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Observation;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.util.SearchResult;
 import java.sql.Connection;
@@ -164,45 +165,31 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
-    public Collection<SearchResult> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
+    public Collection<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
-        Map<String, SearchResult> resultBySeqName = new HashMap<>();
+        Collection<Sequence> ret = new ArrayList<>();
 
         try {
-            stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?)");
+            stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?,?)");
             stmt.setString(1, term);
-            stmt.setArray(2, conn.createArrayOf("BIGINT", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
+            stmt.setBoolean(2, exact);
+            stmt.setArray(3, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
             rs = stmt.executeQuery();
             while (rs.next()) {
-                long seqId = rs.getLong(1);
-                String seqName = rs.getString(2);
-                int seqLength = rs.getInt(3);
+                Sequence s = new Sequence();
+                s.setId(rs.getLong(1));
+                s.setName(rs.getString(2));
+                s.setLength(rs.getInt(3));
                 
-                SearchResult sr;
-                if (resultBySeqName.containsKey(seqName)) {
-                    sr = resultBySeqName.get(seqName);
-                } else {
-                    sr = new SearchResult();
-                    sr.setSequenceName(seqName);
-                    sr.setSequenceLength(seqLength);
-                    resultBySeqName.put(seqName, new SearchResult());
-                }
-                
-                Observation obs = new Observation();
-                obs.setStart(rs.getInt(4));
-                obs.setStop(rs.getInt(5));
-                
-
-                sr.addObservation(obs);
+                ret.add(s);
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
         } finally {
             close(conn, stmt, rs);
         }
-        
-        return resultBySeqName.values();
+        return ret;
     }
 }

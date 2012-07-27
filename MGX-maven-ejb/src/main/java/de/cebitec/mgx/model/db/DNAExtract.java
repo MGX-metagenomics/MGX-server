@@ -17,6 +17,9 @@ public class DNAExtract implements Serializable, Identifiable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Basic
+    @Column(nullable=false)
+    private String name;
+    @Basic
     protected String method;
     @Basic
     protected String protocol;
@@ -48,6 +51,14 @@ public class DNAExtract implements Serializable, Identifiable {
         this.id = id;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
     public String getFivePrimer() {
         return fivePrimer;
     }

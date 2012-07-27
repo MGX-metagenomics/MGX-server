@@ -26,8 +26,15 @@ public class Sequence implements Serializable, Identifiable {
     protected SeqRun seqrun;
     
     @Basic
+    @Column(name="length", nullable= false)
+    protected int len = -1;
+    
+    @Basic
     @Column(name = "discard", nullable=false)
     protected boolean discard = false;
+    
+    @Transient
+    protected String sequence;
 
     public String getName() {
         return name;
@@ -44,6 +51,22 @@ public class Sequence implements Serializable, Identifiable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getLength() {
+        return len;
+    }
+
+    public void setLength(int len) {
+        this.len = len;
+    }
+
+    public String getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(String sequence) {
+        this.sequence = sequence;
     }
 
     @Override
