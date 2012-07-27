@@ -38,7 +38,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     protected long total_num_sequences = 0;
     protected long lastAccessed;
     protected int bulksize;
-    
+
     public SeqUploadReceiver(Connection pConn, String projName, long run_id) throws MGXException {
         projectName = projName;
         runId = run_id;
@@ -81,7 +81,6 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 //
 //        lastAccessed = System.currentTimeMillis();
 //    }
-
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
         for (SequenceDTO s : seqs.getSeqList()) {
@@ -122,7 +121,8 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             for (DNASequenceI s : commitList) {
                 stmt.setLong(i, runId);
                 stmt.setString(i + 1, new String(s.getName()));
-                i += 2;
+                stmt.setInt(i + 2, s.getSequence().length);
+                i += 3;
             }
 
             res = stmt.executeQuery();
@@ -237,9 +237,9 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     private String createSQLBulkStatement(int elements) {
         // build sql bulk insert statement
-        StringBuilder sql = new StringBuilder("INSERT INTO read (seqrun_id, name) VALUES ");
+        StringBuilder sql = new StringBuilder("INSERT INTO read (seqrun_id, name, length) VALUES ");
         for (int cnt = 1; cnt <= elements; cnt++) {
-            sql.append("(?,?),");
+            sql.append("(?,?,?),");
         }
         sql.deleteCharAt(sql.toString().length() - 1); // remove trailing ","
 
