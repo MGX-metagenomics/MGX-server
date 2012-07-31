@@ -44,6 +44,22 @@ public class Observation implements Serializable {
         this.stop = stop;
     }
 
+    public Sequence getSeq() {
+        return seq;
+    }
+
+    public void setSeq(Sequence seq) {
+        this.seq = seq;
+    }
+
+    public Attribute getAttribute() {
+        return attribute;
+    }
+
+    public void setAttribute(Attribute attribute) {
+        this.attribute = attribute;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

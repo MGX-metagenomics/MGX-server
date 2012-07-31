@@ -62,11 +62,13 @@ public abstract class DAO<T extends Identifiable> {
     abstract Class getType();
 
     public T getById(Long id) throws MGXException {
-        if (id == null)
+        if (id == null) {
             throw new MGXException("No ID supplied.");
+        }
         T ret = (T) getEntityManager().find(getType(), id);
-        if (ret == null)
+        if (ret == null) {
             throw new MGXException("No object of type "+getType()+" for ID "+id+".");
+        }
         return ret;
     }
     
@@ -177,7 +179,7 @@ public abstract class DAO<T extends Identifiable> {
     }
 
     protected static List<String> split(String message, String separator) {
-        return new ArrayList<String>(Arrays.asList(message.split(separator)));
+        return new ArrayList<>(Arrays.asList(message.split(separator)));
     }
 
     public void copyFile(File in, File out) throws IOException {
