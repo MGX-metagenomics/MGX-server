@@ -168,6 +168,13 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public ObservationDAO getObservationDAO() {
+        ObservationDAO dao = new ObservationDAO();
+        dao.setController(this);
+        return dao;
+    }
+
+    @Override
     public String getProjectName() {
         return gpmsmaster.getProject().getName();
     }
