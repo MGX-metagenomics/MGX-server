@@ -5,8 +5,8 @@ package de.cebitec.mgx.util;
  * @author sjaenick
  */
 public class SequenceObservation {
-    int start;
-    int stop;
+    private int start;
+    private int stop;
     private String attributeName;
     private String attributeTypeName;
 
