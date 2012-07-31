@@ -4,11 +4,10 @@ import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.PluginDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.ToolDocumentHandler;
 import java.io.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
@@ -36,16 +35,12 @@ public final class SaxParser {
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
         ToolDocumentHandler toolHandler = new ToolDocumentHandler(new Store());
 
-        parser.parse(toolXMLData, toolHandler);
-
+        Reader r = new StringReader(toolXMLData);
+        parser.parse(new InputSource(r), toolHandler);
+        r.close();
+        
         PluginDocumentHandler pluginHandler = new PluginDocumentHandler(toolHandler.getFilledStore());
         parser.parse(pluginXMLFile, pluginHandler);
         return pluginHandler.getFilledStore();
     }
-
-//    public static Store getNodesConfigurations(File toolXMLFile, File pluginXMLFile) throws ParserConfigurationException, SAXException, IOException {
-//        String XMLData = readFile(toolXMLFile);
-//        return getNodesConfigurations(XMLData, pluginXMLFile);
-//    }
-
 }
