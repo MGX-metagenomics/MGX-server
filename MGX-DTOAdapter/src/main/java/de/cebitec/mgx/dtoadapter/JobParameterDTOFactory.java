@@ -33,7 +33,6 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     @Override
     public JobParameterDTO toDTO(JobParameter p) {
         Builder b = JobParameterDTO.newBuilder()
-                .setId(p.getId())
                 .setNodeId(p.getNodeId())
                 .setUserName(p.getUserName())
                 .setUserDesc(p.getUserDescription())
@@ -42,7 +41,9 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
                 .setConfigitemName(p.getConfigItemName())
                 .setType(p.getType())
                 .setIsOptional(p.isOptional());
-
+        if (p.getId() != null) {
+            b = b.setId(p.getId()); 
+        }
         // choices
         if (p.getChoices() != null) {
             ChoicesDTO.Builder choices = ChoicesDTO.newBuilder();
@@ -66,7 +67,9 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     @Override
     public JobParameter toDB(JobParameterDTO dto) {
         JobParameter jp = new JobParameter();
-        jp.setId(dto.getId());
+        if (dto.hasId()) {
+            jp.setId(dto.getId());
+        }
         jp.setNodeId(dto.getNodeId());
         jp.setUserName(dto.getUserName());
         jp.setUserDescription(dto.getUserDesc());
