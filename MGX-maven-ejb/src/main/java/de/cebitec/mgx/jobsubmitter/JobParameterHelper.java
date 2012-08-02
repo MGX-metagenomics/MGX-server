@@ -39,7 +39,7 @@ public class JobParameterHelper {
 
         for(JobParameter parameter :  parameters){
         
-            LOGGER.info("ID: "+parameter.getNodeId());
+            LOGGER.info("node ID: "+parameter.getNodeId());
             LOGGER.info("UserName: "+parameter.getUserName());
             LOGGER.info("UserDescription: "+parameter.getUserDescription());
             LOGGER.info("DisplayName: "+parameter.getDisplayName());
