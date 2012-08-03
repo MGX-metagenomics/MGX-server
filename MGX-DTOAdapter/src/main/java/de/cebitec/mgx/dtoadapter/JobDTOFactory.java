@@ -33,11 +33,13 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()))
                 .setParameters(JobParameterDTOFactory.getInstance().toDTOList(j.getParameters()));
 
-        if (j.getStartDate() != null)
+        if (j.getStartDate() != null) {
             b.setStartDate(toUnixTimeStamp(j.getStartDate()));
+        }
 
-        if (j.getFinishDate() != null)
+        if (j.getFinishDate() != null) {
             b.setFinishDate(toUnixTimeStamp(j.getFinishDate()));
+        }
 
         return b.build();
     }
@@ -51,8 +53,9 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setFinishDate(toDate(dto.getFinishDate()))
                 .setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         
-        if (dto.hasId())
+        if (dto.hasId()) {
             j.setId(dto.getId());
+        }
 
         return j;
     }
