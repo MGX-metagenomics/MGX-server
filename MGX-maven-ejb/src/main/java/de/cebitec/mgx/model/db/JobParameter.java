@@ -39,7 +39,7 @@ public class JobParameter implements Serializable, Identifiable {
         return id;
     }
     
-    public void setId(long jp_id) {
+    public void setId(Long jp_id) {
         id = jp_id;
     }
 
