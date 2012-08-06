@@ -1,6 +1,5 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.ChoicesDTO;
 import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterDTO.Builder;
@@ -16,7 +15,7 @@ import java.util.Map.Entry;
  *
  * @author sjaenick
  */
-public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobParameterDTO, dto.JobParameterListDTO> {
+public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobParameterDTO, JobParameterListDTO> {
 
     static {
         instance = new JobParameterDTOFactory();
@@ -38,7 +37,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
                 .setUserDesc(p.getUserDescription())
                 .setDisplayName(p.getDisplayName())
                 .setClassName(p.getClassName())
-                .setConfigitemName(p.getConfigItemName())
+                .setParameterName(p.getParameterName())
                 .setType(p.getType())
                 .setIsOptional(p.isOptional());
         if (p.getId() != null) {
@@ -54,8 +53,8 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
             b.setChoices(choices.build());
         }
 
-        if (p.getConfigItemValue() != null) {
-            b.setConfigitemValue(p.getConfigItemValue());
+        if (p.getParameterValue() != null) {
+            b.setParameterValue(p.getParameterValue());
         }
 
         if (p.getDefaultValue() != null) {
@@ -75,9 +74,12 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         jp.setUserDescription(dto.getUserDesc());
         jp.setDisplayName(dto.getDisplayName());
         jp.setClassName(dto.getClassName());
-        jp.setConfigItemName(dto.getConfigitemName());
+        //jp.setConfigItemName(dto.getConfigitemName());
         jp.setType(dto.getType());
         jp.setOptional(dto.getIsOptional());
+        
+        jp.setParameterName(dto.getParameterName());
+        jp.setParameterValue(dto.getParameterValue());
 
         if (dto.hasChoices()) {
             jp.setChoices(new HashMap<String, String>());
@@ -86,12 +88,12 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
             }
         }
 
-        if (dto.hasConfigitemValue()) {
-            jp.setConfigItemValue(dto.getConfigitemValue());
-        }
+//        if (dto.hasConfigitemValue()) {
+//            jp.setConfigItemValue(dto.getConfigitemValue());
+//        }
 
         if (dto.hasDefaultValue()) {
-            jp.setDefaultValue(dto.getDefaultValue());
+            jp.setDefaultValue(dto.getDefaultValue());;
         }
 
         return jp;
