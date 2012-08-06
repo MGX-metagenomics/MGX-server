@@ -18,6 +18,8 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.ArrayList;
+import java.util.HashSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -63,15 +65,30 @@ public class JobBean {
         j.setStatus(JobState.CREATED);
         j.setTool(tool);
         j.setSeqrun(seqrun);
-        j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
+        //j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
+        j.setParameters(null);
         j.setCreator(mgx.getCurrentUser());
 
         Long job_id = null;
         try {
             job_id = mgx.getJobDAO().create(j);
+            j = mgx.getJobDAO().getById(job_id); // refetch
+            for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(dto.getParameters())) {
+                jp.setId(null);
+                if (j.getParameters() == null) {
+                    j.setParameters(new HashSet<JobParameter>());
+                }
+                j.getParameters().add(jp);
+                jp.setJob(j);
+                mgx.getJobParameterDAO().create(jp);
+            }
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+
+        //j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
+
+
 
         return MGXLong.newBuilder().setValue(job_id).build();
     }
