@@ -86,10 +86,10 @@ public class JobParameter implements Serializable, Identifiable {
     String className;
     @Transient
     Map<String, String> choices;
-    @Transient
-    String configitem_name;
-    @Transient
-    String configitem_value;
+//    @Transient
+//    String configitem_name;
+//    @Transient
+//    String configitem_value;
     @Transient
     String type;
     @Transient
@@ -113,13 +113,13 @@ public class JobParameter implements Serializable, Identifiable {
         this.user_name = user_name;
     }
 
-    public String getConfigItemName() {
-        return configitem_name;
-    }
-
-    public void setConfigItemName(String configitem_name) {
-        this.configitem_name = configitem_name;
-    }
+//    public String getConfigItemName() {
+//        return configitem_name;
+//    }
+//
+//    public void setConfigItemName(String configitem_name) {
+//        this.configitem_name = configitem_name;
+//    }
 
     public void setDisplayName(String lDisplayName) {
         displayName = lDisplayName;
@@ -145,13 +145,13 @@ public class JobParameter implements Serializable, Identifiable {
         return choices;
     }
 
-    public String getConfigItemValue() {
-        return configitem_value;
-    }
-
-    public void setConfigItemValue(String configitem_value) {
-        this.configitem_value = configitem_value;
-    }
+//    public String getConfigItemValue() {
+//        return configitem_value;
+//    }
+//
+//    public void setConfigItemValue(String configitem_value) {
+//        this.configitem_value = configitem_value;
+//    }
 
     public String getDefaultValue() {
         return default_value;

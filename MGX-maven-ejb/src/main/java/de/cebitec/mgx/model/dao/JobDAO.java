@@ -45,11 +45,11 @@ public class JobDAO<T extends Job> extends DAO<T> {
         String parameter = "";
 
         for (JobParameter jobParameter : params) {
-            String answer = jobParameter.getConfigItemValue().replaceAll("\n", " ");
+            String answer = jobParameter.getParameterValue().replaceAll("\n", " ");
             answer = answer.replaceAll("\r\n", " ");
 
             parameter = parameter + jobParameter.getNodeId() + "."
-                    + jobParameter.getConfigItemName() + "\""
+                    + jobParameter.getParameterName() + "\""
                     + answer + "\"";
         }
         System.out.println("toParameterString: "+parameter);
@@ -81,8 +81,8 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 String value = splitString[1];
 
                 parameter = new JobParameter();
-                parameter.setConfigItemName(configName);
-                parameter.setConfigItemValue(value);
+                parameter.setParameterName(configName);
+                parameter.setParameterValue(value);
                 parameter.setNodeId(nodeId);
                 ret.add(parameter);
 

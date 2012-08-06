@@ -45,8 +45,8 @@ public class Transform {
                 configItemName = configItemME.getKey();
 
                 JobParameter jobParameter = new JobParameter();
-                jobParameter.setConfigItemName(configItemName);
-                jobParameter.setConfigItemValue(configItem.getAnswer());
+                jobParameter.setParameterName(configItemName);
+                jobParameter.setParameterValue(configItem.getAnswer());
                 jobParameter.setClassName(node.getClassName());
                 jobParameter.setDisplayName(node.getDisplayName());
                 jobParameter.setDefaultValue(configItem.getDefaultValue());
@@ -90,15 +90,15 @@ public class Transform {
 
             ConfigItem configItem;
 
-            if (node.getConfigItem(parameter.getConfigItemName()) == null) {
+            if (node.getConfigItem(parameter.getParameterName()) == null) {
 
 
                 configItem = new ConfigItem(parameter.getUserName(),
-                        parameter.getUserDescription(), parameter.getConfigItemName());
+                        parameter.getUserDescription(), parameter.getParameterName());
                 newConfig = true;
 
             } else {
-                configItem = node.getConfigItem(parameter.getConfigItemName());
+                configItem = node.getConfigItem(parameter.getParameterName());
             }
 
             configItem.setChoice(new Choices(parameter.getChoices()));

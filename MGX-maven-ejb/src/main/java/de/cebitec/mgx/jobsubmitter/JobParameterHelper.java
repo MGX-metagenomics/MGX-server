@@ -44,7 +44,7 @@ public class JobParameterHelper {
             LOGGER.info("UserDescription: "+parameter.getUserDescription());
             LOGGER.info("DisplayName: "+parameter.getDisplayName());
             LOGGER.info("ClassName: "+parameter.getClassName());
-            LOGGER.info("ConfigItemName: "+parameter.getConfigItemName());
+            LOGGER.info("ConfigItemName: "+parameter.getParameterName());
             LOGGER.info("Type: "+parameter.getType());
             LOGGER.info("Optional: "+parameter.isOptional());
        
