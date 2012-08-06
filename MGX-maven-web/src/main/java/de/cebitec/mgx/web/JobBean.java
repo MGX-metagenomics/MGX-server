@@ -80,6 +80,13 @@ public class JobBean {
                 }
                 j.getParameters().add(jp);
                 jp.setJob(j);
+                
+                mgx.log("JP: jobid "+jp.getJob().getId());
+                mgx.log("JP: nodeid "+jp.getNodeId());
+                mgx.log("JP: paramname "+jp.getParameterName());
+                mgx.log("JP: paramvalue "+jp.getParameterValue());
+                
+                
                 mgx.getJobParameterDAO().create(jp);
             }
         } catch (MGXException ex) {
