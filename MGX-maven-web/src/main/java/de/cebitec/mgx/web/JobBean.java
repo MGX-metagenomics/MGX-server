@@ -139,7 +139,10 @@ public class JobBean {
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
         try {
             Job job = mgx.getJobDAO().getById(id);
-            job.setParameters(JobParameterDTOFactory.getInstance().toDBList(paramdtos));
+            for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(paramdtos)) {
+                jp.setJob(job);
+                job.getParameters().add(jp);
+            }
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
