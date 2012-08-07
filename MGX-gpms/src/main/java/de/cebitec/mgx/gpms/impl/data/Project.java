@@ -16,9 +16,9 @@ import java.sql.SQLException;
  */
 public class Project implements DBProjectI {
 
-    private String name;
-    private GPMS gpms;
-    private ProjectClassI pclass;
+    private final String name;
+    private final GPMS gpms;
+    private final ProjectClassI pclass;
     private DBConfigI dbcfg;
     private String jdbcUrl;
     private String host;

@@ -12,10 +12,10 @@ import java.util.List;
  */
 public class Role implements DBRoleI {
 
-    private String rolename;
-    private String dbuser;
-    private String dbpass;
-    private DBGPMSI gpms;
+    private final String rolename;
+    private final String dbuser;
+    private final String dbpass;
+    private final DBGPMSI gpms;
 
     public Role(DBGPMSI gpms, String name, String user, String pass) {
         this.gpms = gpms;
@@ -69,6 +69,6 @@ public class Role implements DBRoleI {
 
     @Override
     public List<RightI> getRights() {
-        return new ArrayList<RightI>();
+        return new ArrayList<>();
     }
 }

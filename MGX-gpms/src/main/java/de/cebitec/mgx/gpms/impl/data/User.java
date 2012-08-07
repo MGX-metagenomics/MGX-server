@@ -57,8 +57,7 @@ public class User implements UserI {
 
         // no cache entry, have to do the lookup
         //
-        System.err.println("SQL: getMemberships()");
-        List<MembershipI> ret = new ArrayList<MembershipI>();
+        List<MembershipI> ret = new ArrayList<>();
         List<DBRoleI> allroles = (List<DBRoleI>)projClass.getRoles();
 
         Connection conn = null;

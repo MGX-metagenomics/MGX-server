@@ -11,9 +11,9 @@ import de.cebitec.gpms.data.DBRoleI;
  */
 public class Membership implements DBMembershipI {
 
-    private DBProjectI project;
-    private DBRoleI role;
-    private DBGPMSI gpms;
+    private final DBProjectI project;
+    private final DBRoleI role;
+    private final DBGPMSI gpms;
 
     public Membership(DBGPMSI gpms, DBProjectI project, DBRoleI role) {
         this.gpms = gpms;
