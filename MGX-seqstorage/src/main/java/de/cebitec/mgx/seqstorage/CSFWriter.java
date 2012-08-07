@@ -11,7 +11,7 @@ import java.io.*;
  *
  * @author sjaenick
  */
-public class CSFWriter implements SeqWriterI {
+public class CSFWriter implements SeqWriterI<DNASequenceI> {
 
     private OutputStream seqout;
     private OutputStream nameout;

@@ -1,8 +1,8 @@
 package de.cebitec.mgx.seqstorage;
 
-import de.cebitec.mgx.sequence.SeqWriterI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
+import de.cebitec.mgx.sequence.SeqWriterI;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,7 +12,7 @@ import java.io.IOException;
  *
  * @author sjaenick
  */
-public class FastaWriter implements SeqWriterI {
+public class FastaWriter implements SeqWriterI<DNASequenceI> {
 
     private BufferedWriter seqout;
 

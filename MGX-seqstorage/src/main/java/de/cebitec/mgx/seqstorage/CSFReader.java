@@ -1,8 +1,8 @@
 package de.cebitec.mgx.seqstorage;
 
-import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.seqstorage.encoding.FourBitEncoder;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.BufferedInputStream;
@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public class CSFReader implements SeqReaderI {
+public class CSFReader implements SeqReaderI<DNASequenceI> {
 
     private ByteStreamTokenizer seqin;
     private InputStream namein;
@@ -37,7 +37,7 @@ public class CSFReader implements SeqReaderI {
             if (namein.skip(FourBitEncoder.CSF_MAGIC.length) < FourBitEncoder.CSF_MAGIC.length) {
                 throw new SeqStoreException("Corrupted file "+csffile);
             }
-        } catch (Exception ex) {
+        } catch (SeqStoreException | IOException ex) {
             throw new SeqStoreException(ex.getMessage());
         }
     }
@@ -131,7 +131,7 @@ public class CSFReader implements SeqReaderI {
 
     @Override
     public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> result = new HashSet<DNASequenceI>(ids.size());
+        Set<DNASequenceI> result = new HashSet<>(ids.size());
 
         // FIXME: use the .nms index & sort offsets instead of iterating
         // over all sequences

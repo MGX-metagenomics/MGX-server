@@ -1,5 +1,6 @@
 package de.cebitec.mgx.seqstorage;
 
+import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -11,7 +12,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public class FASTQReader implements SeqReaderI {
+public class FASTQReader implements SeqReaderI<DNAQualitySequenceI> {
 
     private QualityDNASequence seq = null;
     private ByteStreamTokenizer stream = null;
@@ -79,8 +80,8 @@ public class FASTQReader implements SeqReaderI {
     }
 
     @Override
-    public Set<? extends DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> res = new HashSet<>(ids.size());
+    public Set<DNAQualitySequenceI> fetch(Set<Long> ids) throws SeqStoreException {
+        Set<DNAQualitySequenceI> res = new HashSet<>(ids.size());
         while (hasMoreElements() && !ids.isEmpty()) {
             QualityDNASequence elem = nextElement();
             if (ids.contains(elem.getId())) {

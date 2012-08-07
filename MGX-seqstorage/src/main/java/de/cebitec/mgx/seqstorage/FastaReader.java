@@ -12,7 +12,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public class FastaReader implements SeqReaderI {
+public class FastaReader implements SeqReaderI<DNASequenceI> {
 
     private ByteStreamTokenizer stream = null;
     private byte[] buf = null;
