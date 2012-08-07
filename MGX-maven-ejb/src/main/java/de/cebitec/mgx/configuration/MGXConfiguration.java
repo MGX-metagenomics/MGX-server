@@ -27,7 +27,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
     }
 
     @PostConstruct
-    public void create() throws MGXException {
+    public void create() {
         String cfgFile = new StringBuilder(System.getProperty("user.dir"))
                 .append(File.separator)
                 .append("mgx_server.properties")
@@ -35,7 +35,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
 
         File f = new File(cfgFile);
         if (!f.exists()) {
-            throw new MGXException("MGX configuration failed, " + cfgFile.toString() + " missing");
+            throw new RuntimeException("MGX configuration failed, " + cfgFile.toString() + " missing");
         }
 
         FileInputStream in = null;
@@ -44,7 +44,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
             in = new FileInputStream(cfgFile);
             config.load(in);
         } catch (Exception ex) {
-            throw new MGXException(ex);
+            throw new RuntimeException(ex);
         } finally {
             if (in != null) {
                 try {
@@ -54,7 +54,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
                 }
             }
         }
-        System.out.println("MGX server configuration done.");
+        Logger.getLogger(MGXConfiguration.class.getName()).log(Level.INFO, "MGX server configuration done.");
     }
 
     /*
@@ -105,8 +105,9 @@ public class MGXConfiguration extends DispatcherConfigBase {
     
     public File getPluginDump() {
         StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
-        if (!getMGXGlobalStorageDir().endsWith(File.separator)) 
+        if (!getMGXGlobalStorageDir().endsWith(File.separator)) {
             sb.append(File.separatorChar);
+        }
         sb.append("plugins.xml");
         
         File ret = new File(sb.toString());
@@ -146,7 +147,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
     }
 
     /*
-     * internal stuff
+     * internal conversion
      */
     private int getInt(String key) {
         return Integer.parseInt(config.getProperty(key));
