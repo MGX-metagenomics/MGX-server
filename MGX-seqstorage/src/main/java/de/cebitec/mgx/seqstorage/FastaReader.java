@@ -116,7 +116,7 @@ public class FastaReader implements SeqReaderI {
 
     @Override
     public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> res = new HashSet<DNASequenceI>(ids.size());
+        Set<DNASequenceI> res = new HashSet<>(ids.size());
         while (hasMoreElements() && !ids.isEmpty()) {
             DNASequenceI elem = nextElement();
             if (ids.contains(elem.getId())) {

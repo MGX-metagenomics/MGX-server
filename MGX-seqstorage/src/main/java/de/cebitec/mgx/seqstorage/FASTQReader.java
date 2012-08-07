@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class FASTQReader implements SeqReaderI {
 
-    private DNASequenceI seq = null;
+    private QualityDNASequence seq = null;
     private ByteStreamTokenizer stream = null;
     private String fastqfile = null;
     public static final byte LINEBREAK = '\n';
@@ -49,15 +49,16 @@ public class FASTQReader implements SeqReaderI {
         byte[] seqname = new byte[l1.length - 1];
         System.arraycopy(l1, 1, seqname, 0, l1.length - 1);
 
-        seq = new DNASequence();
+        seq = new QualityDNASequence();
         seq.setName(seqname);
         seq.setSequence(l2);
+        seq.setQuality(convertQuality(l4));
 
         return true;
     }
 
     @Override
-    public DNASequenceI nextElement() {
+    public QualityDNASequence nextElement() {
         return seq;
     }
 
@@ -78,10 +79,10 @@ public class FASTQReader implements SeqReaderI {
     }
 
     @Override
-    public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> res = new HashSet<DNASequenceI>(ids.size());
+    public Set<? extends DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
+        Set<DNASequenceI> res = new HashSet<>(ids.size());
         while (hasMoreElements() && !ids.isEmpty()) {
-            DNASequenceI elem = nextElement();
+            QualityDNASequence elem = nextElement();
             if (ids.contains(elem.getId())) {
                 res.add(elem);
                 ids.remove(elem.getId());
@@ -92,5 +93,10 @@ public class FASTQReader implements SeqReaderI {
             throw new SeqStoreException("Could not retrieve all sequences.");
         }
         return res;
+    }
+    
+    private byte[] convertQuality(byte[] in) {
+        // FIXME convert to transport encoding
+        return in;
     }
 }
