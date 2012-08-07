@@ -8,10 +8,10 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public interface SeqReaderI extends Enumeration<DNASequenceI> {
+public interface SeqReaderI<T extends DNASequenceI> extends Enumeration<T> {
     
     public void close();
     public void delete();
-    public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException;
+    public Set<T> fetch(Set<Long> ids) throws SeqStoreException;
     
 }

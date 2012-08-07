@@ -6,9 +6,9 @@ import java.io.IOException;
  *
  * @author sjaenick
  */
-public interface SeqWriterI {
+public interface SeqWriterI<T extends DNASequenceI> {
     
-    void addSequence(DNASequenceI seq) throws IOException;
+    void addSequence(T seq) throws IOException;
 
     void close() throws IOException;
 }
