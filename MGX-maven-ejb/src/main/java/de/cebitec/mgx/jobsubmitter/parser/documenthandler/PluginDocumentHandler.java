@@ -190,7 +190,6 @@ public class PluginDocumentHandler extends DefaultHandler {
 
             containsConfigItem = store.getNode(id).containsConfigItem(lConfigName);
 
-
             if (containsConfigItem) {
                 configName = store.getNode(id).getConfigItem(lConfigName).getConfigName();
             }

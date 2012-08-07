@@ -63,7 +63,7 @@ public abstract class DAO<T extends Identifiable> {
 
     public T getById(Long id) throws MGXException {
         if (id == null) {
-            throw new MGXException("No ID supplied.");
+            throw new MGXException("No/Invalid ID supplied.");
         }
         T ret = (T) getEntityManager().find(getType(), id);
         if (ret == null) {
@@ -81,7 +81,6 @@ public abstract class DAO<T extends Identifiable> {
 
     public Iterable<T> getAll() {
         return (Iterable<T>) getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType()).getResultList();
-        //return getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o").getResultList();
     }
 
     public long create(T obj) throws MGXException {

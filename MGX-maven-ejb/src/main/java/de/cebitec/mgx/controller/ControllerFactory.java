@@ -26,29 +26,11 @@ public class ControllerFactory {
     @MGX
     @RequestScoped
     MGXController getController() {
-        //try {
-            DBMasterI currentMaster = gpms.getCurrentMaster();
-            return new MGXControllerImpl(currentMaster, global, mgxconfig);
-       // } catch (GPMSException ex) {
-        //    Logger.getLogger(ControllerFactory.class.getName()).log(Level.SEVERE, null, ex);
-        //}
-        //return null;
+        DBMasterI currentMaster = gpms.getCurrentMaster();
+        return new MGXControllerImpl(currentMaster, global, mgxconfig);
     }
 
     public void dispose(@Disposes MGXController c) {
         c.close();
     }
-//    @Produces
-//    @MGX
-//    @RequestScoped
-//    EntityManager getEntityManager() {
-//        return gpms.getEntityManager();
-//    }
-//
-//    @Produces
-//    @MGX
-//    @RequestScoped
-//    EntityManagerFactory getEntityManagerFactory() {
-//        return gpms.getEntityManagerFactory();
-//    }
 }

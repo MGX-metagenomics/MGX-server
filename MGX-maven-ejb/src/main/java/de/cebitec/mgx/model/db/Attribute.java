@@ -11,9 +11,6 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "Attribute")
-//@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-//@DiscriminatorColumn(name="attr_class", length=1, discriminatorType= DiscriminatorType.CHAR)
-//@DiscriminatorValue("B")
 public class Attribute implements Serializable, Identifiable {
 
     private static final long serialVersionUID = 1L;

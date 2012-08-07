@@ -24,13 +24,13 @@ import javax.persistence.EntityManagerFactory;
 public class MGXControllerImpl implements MGXController {
 
     private final static Logger logger = Logger.getLogger(MGXControllerImpl.class.getPackage().getName());
-    private DBMasterI gpmsmaster;
-    private EntityManagerFactory emf;
+    private final DBMasterI gpmsmaster;
+    private final EntityManagerFactory emf;
     private EntityManager em;
-    private Map<Class, DAO> daos;
+    private Map<Class, DAO> daos = new HashMap<>();
     //
-    private MGXConfiguration config;
-    private MGXGlobal global;
+    private final MGXConfiguration config;
+    private final MGXGlobal global;
 
     public MGXControllerImpl(DBMasterI gpms, MGXGlobal global, MGXConfiguration cfg) {
         this.gpmsmaster = gpms;
@@ -38,7 +38,6 @@ public class MGXControllerImpl implements MGXController {
         this.config = cfg;
         this.emf = gpms.getEntityManagerFactory();
         this.em = emf.createEntityManager();
-        daos = new HashMap<>();
     }
 
     @Override

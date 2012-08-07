@@ -79,7 +79,7 @@ public class MGXGlobal {
     }
 
     @PostConstruct
-    public void start() throws ClassNotFoundException {
+    public void start() {
 
         try {
             ds = InitialContext.<DataSource>doLookup(DS_JNDI_NAME);
