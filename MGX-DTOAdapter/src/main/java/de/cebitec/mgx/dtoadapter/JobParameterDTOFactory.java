@@ -33,15 +33,29 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     public JobParameterDTO toDTO(JobParameter p) {
         Builder b = JobParameterDTO.newBuilder()
                 .setNodeId(p.getNodeId())
-                .setUserName(p.getUserName())
-                .setUserDesc(p.getUserDescription())
-                .setDisplayName(p.getDisplayName())
-                .setClassName(p.getClassName())
-                .setParameterName(p.getParameterName())
-                .setType(p.getType())
-                .setIsOptional(p.isOptional());
+                .setParameterName(p.getParameterName());
+               
         if (p.getId() != null) {
             b = b.setId(p.getId()); 
+        }
+        
+        if (p.getUserName() != null) {
+            b.setUserName(p.getUserName());
+        }
+        if (p.getUserDescription() != null) {
+            b.setUserDesc(p.getUserDescription());
+        }
+        if (p.getClassName() != null) {
+            b.setClassName(p.getClassName());
+        }
+        if (p.getType() != null) {
+            b.setType(p.getType());
+        }
+        if (p.getDisplayName() != null) {
+            b.setDisplayName(p.getDisplayName());
+        }
+        if (p.isOptional() != null) {
+            b.setIsOptional(p.isOptional());
         }
         // choices
         if (p.getChoices() != null) {
