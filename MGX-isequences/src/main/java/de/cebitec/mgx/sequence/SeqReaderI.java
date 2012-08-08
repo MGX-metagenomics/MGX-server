@@ -8,7 +8,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public interface SeqReaderI<T extends DNASequenceI> extends Enumeration<T> {
+public interface SeqReaderI<T> extends Enumeration<T> {
     
     public void close();
     public void delete();
