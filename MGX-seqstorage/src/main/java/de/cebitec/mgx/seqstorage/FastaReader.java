@@ -1,5 +1,7 @@
 package de.cebitec.mgx.seqstorage;
 
+import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.seqholder.ReadSequenceI;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
@@ -12,7 +14,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public class FastaReader implements SeqReaderI<DNASequenceI> {
+public class FastaReader implements SeqReaderI<DNASequenceHolder> {
 
     private ByteStreamTokenizer stream = null;
     private byte[] buf = null;
@@ -94,8 +96,8 @@ public class FastaReader implements SeqReaderI<DNASequenceI> {
     }
 
     @Override
-    public DNASequenceI nextElement() {
-        return seq;
+    public DNASequenceHolder nextElement() {
+        return new DNASequenceHolder(seq);
     }
 
     @Override
@@ -115,13 +117,13 @@ public class FastaReader implements SeqReaderI<DNASequenceI> {
     }
 
     @Override
-    public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> res = new HashSet<>(ids.size());
+    public Set<DNASequenceHolder> fetch(Set<Long> ids) throws SeqStoreException {
+        Set<DNASequenceHolder> res = new HashSet<>(ids.size());
         while (hasMoreElements() && !ids.isEmpty()) {
-            DNASequenceI elem = nextElement();
-            if (ids.contains(elem.getId())) {
+            DNASequenceHolder elem = nextElement();
+            if (ids.contains(elem.getSequence().getId())) {
                 res.add(elem);
-                ids.remove(elem.getId());
+                ids.remove(elem.getSequence().getId());
             }
         }
         

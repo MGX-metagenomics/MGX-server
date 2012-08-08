@@ -1,5 +1,6 @@
 package de.cebitec.mgx.seqstorage;
 
+import de.cebitec.mgx.seqholder.DNASequenceHolder;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.seqstorage.encoding.FourBitEncoder;
 import de.cebitec.mgx.sequence.DNASequenceI;
@@ -18,7 +19,7 @@ import java.util.Set;
  *
  * @author sjaenick
  */
-public class CSFReader implements SeqReaderI<DNASequenceI> {
+public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
     private ByteStreamTokenizer seqin;
     private InputStream namein;
@@ -76,8 +77,8 @@ public class CSFReader implements SeqReaderI<DNASequenceI> {
     }
 
     @Override
-    public DNASequenceI nextElement() {
-        return seq;
+    public DNASequenceHolder nextElement() {
+        return new DNASequenceHolder(seq);
     }
 
     @Override
@@ -130,17 +131,17 @@ public class CSFReader implements SeqReaderI<DNASequenceI> {
     }
 
     @Override
-    public Set<DNASequenceI> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceI> result = new HashSet<>(ids.size());
+    public Set<DNASequenceHolder> fetch(Set<Long> ids) throws SeqStoreException {
+        Set<DNASequenceHolder> result = new HashSet<>(ids.size());
 
         // FIXME: use the .nms index & sort offsets instead of iterating
         // over all sequences
 
         while (hasMoreElements() && !ids.isEmpty()) {
-            DNASequenceI elem = nextElement();
-            if (ids.contains(elem.getId())) {
+            DNASequenceHolder elem = nextElement();
+            if (ids.contains(elem.getSequence().getId())) {
                 result.add(elem);
-                ids.remove(elem.getId());
+                ids.remove(elem.getSequence().getId());
             }
         }
 

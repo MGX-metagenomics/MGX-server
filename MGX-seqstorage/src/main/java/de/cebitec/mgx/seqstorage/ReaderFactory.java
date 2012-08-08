@@ -1,5 +1,8 @@
+
 package de.cebitec.mgx.seqstorage;
 
+import de.cebitec.mgx.seqholder.ReadSequenceI;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.FactoryI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -18,7 +21,7 @@ public class ReaderFactory implements FactoryI {
     }
 
     @Override
-    public SeqReaderI getReader(String uri) throws SeqStoreException {
+    public SeqReaderI<? extends ReadSequenceI> getReader(String uri) throws SeqStoreException {
         /*
          * try to open the file and read the first byte to determine
          * the file type and create the correct reader object
@@ -40,7 +43,7 @@ public class ReaderFactory implements FactoryI {
             throw new SeqStoreException("Could not read sequence file");
         }
 
-        SeqReaderI ret = null;
+        SeqReaderI<? extends ReadSequenceI> ret = null;
         switch (cbuf[0]) {
             case '>':
                 ret = new FastaReader(uri);
