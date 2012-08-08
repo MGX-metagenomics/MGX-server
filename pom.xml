@@ -28,7 +28,8 @@
         <module>MGX-seqstorage</module>
         <module>MGX-DTOAdapter</module>
         <module>MGX-gpms</module>
-    </modules>
+    <module>MGX-seqholder</module>
+  </modules>
 
     <distributionManagement>
         <repository>
