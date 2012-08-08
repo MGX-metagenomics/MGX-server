@@ -86,14 +86,10 @@ public class JobParameter implements Serializable, Identifiable {
     String className;
     @Transient
     Map<String, String> choices;
-//    @Transient
-//    String configitem_name;
-//    @Transient
-//    String configitem_value;
     @Transient
     String type;
     @Transient
-    boolean optional;
+    Boolean optional;
     @Transient
     String default_value = "";
 
@@ -112,14 +108,6 @@ public class JobParameter implements Serializable, Identifiable {
     public void setUserName(String user_name) {
         this.user_name = user_name;
     }
-
-//    public String getConfigItemName() {
-//        return configitem_name;
-//    }
-//
-//    public void setConfigItemName(String configitem_name) {
-//        this.configitem_name = configitem_name;
-//    }
 
     public void setDisplayName(String lDisplayName) {
         displayName = lDisplayName;
@@ -161,7 +149,7 @@ public class JobParameter implements Serializable, Identifiable {
         this.default_value = default_value;
     }
 
-    public boolean isOptional() {
+    public Boolean isOptional() {
         return optional;
     }
 
