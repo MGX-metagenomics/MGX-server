@@ -88,7 +88,6 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         jp.setUserDescription(dto.getUserDesc());
         jp.setDisplayName(dto.getDisplayName());
         jp.setClassName(dto.getClassName());
-        //jp.setConfigItemName(dto.getConfigitemName());
         jp.setType(dto.getType());
         jp.setOptional(dto.getIsOptional());
         
@@ -101,10 +100,6 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
                 jp.getChoices().put(kv.getKey(), kv.getValue());
             }
         }
-
-//        if (dto.hasConfigitemValue()) {
-//            jp.setConfigItemValue(dto.getConfigitemValue());
-//        }
 
         if (dto.hasDefaultValue()) {
             jp.setDefaultValue(dto.getDefaultValue());;
