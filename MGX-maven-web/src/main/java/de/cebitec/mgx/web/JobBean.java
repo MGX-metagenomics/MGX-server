@@ -65,7 +65,6 @@ public class JobBean {
         j.setStatus(JobState.CREATED);
         j.setTool(tool);
         j.setSeqrun(seqrun);
-        //j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
         j.setParameters(null);
         j.setCreator(mgx.getCurrentUser());
 
@@ -85,8 +84,8 @@ public class JobBean {
                 mgx.log("JP: nodeid "+jp.getNodeId());
                 mgx.log("JP: paramname "+jp.getParameterName());
                 mgx.log("JP: paramvalue "+jp.getParameterValue());
-                
-                
+                mgx.log("JP: username "+jp.getUserName());
+                mgx.log("JP: userdesc "+jp.getUserDescription());
                 mgx.getJobParameterDAO().create(jp);
             }
         } catch (MGXException ex) {
