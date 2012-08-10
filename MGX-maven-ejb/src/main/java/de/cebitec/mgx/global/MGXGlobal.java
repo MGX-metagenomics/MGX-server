@@ -133,17 +133,7 @@ public class MGXGlobal {
             emf = null;
         }
 
-        // unpublish the datasource
-//        Context ctx;
-//        try {
-//            ctx = new InitialContext();
-//            ctx.unbind(DS_JNDI_NAME);
-//        } catch (NamingException ex) {
-//            log(ex.getMessage());
-//        }
         log("MGX global zone exiting..");
-
-        //ds = null;
     }
 
     public void log(String msg) {

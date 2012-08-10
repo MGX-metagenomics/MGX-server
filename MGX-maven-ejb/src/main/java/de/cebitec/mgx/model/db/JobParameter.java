@@ -33,12 +33,20 @@ public class JobParameter implements Serializable, Identifiable {
     @NotNull
     @Column(name = "param_value")
     protected String param_value;
+    @Basic
+    @NotNull
+    @Column(name = "user_name")
+    private String user_name;
+    @Basic
+    @NotNull
+    @Column(name = "user_desc")
+    private String user_desc;
 
     @Override
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long jp_id) {
         id = jp_id;
     }
@@ -74,12 +82,6 @@ public class JobParameter implements Serializable, Identifiable {
     public void setParameterValue(String param_value) {
         this.param_value = param_value;
     }
-    
-    
-    @Transient
-    private String user_name;
-    @Transient
-    private String user_desc;
     @Transient
     String displayName;
     @Transient
@@ -140,7 +142,6 @@ public class JobParameter implements Serializable, Identifiable {
 //    public void setConfigItemValue(String configitem_value) {
 //        this.configitem_value = configitem_value;
 //    }
-
     public String getDefaultValue() {
         return default_value;
     }
