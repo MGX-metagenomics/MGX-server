@@ -39,12 +39,12 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
             b = b.setId(p.getId()); 
         }
         
-        if (p.getUserName() != null) {
+        //if (p.getUserName() != null) {
             b.setUserName(p.getUserName());
-        }
-        if (p.getUserDescription() != null) {
+        //}
+        //if (p.getUserDescription() != null) {
             b.setUserDesc(p.getUserDescription());
-        }
+        //}
         if (p.getClassName() != null) {
             b.setClassName(p.getClassName());
         }
@@ -102,7 +102,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         }
 
         if (dto.hasDefaultValue()) {
-            jp.setDefaultValue(dto.getDefaultValue());;
+            jp.setDefaultValue(dto.getDefaultValue());
         }
 
         return jp;
