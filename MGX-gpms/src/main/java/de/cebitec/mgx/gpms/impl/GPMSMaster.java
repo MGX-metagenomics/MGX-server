@@ -24,12 +24,12 @@ public class GPMSMaster implements DBMasterI {
 
     private final static Logger logger = Logger.getLogger(GPMSMaster.class.getPackage().getName());
     private long lastUsed;
-    private DBMembershipI membership;
+    private final DBMembershipI membership;
     private EntityManagerFactory emf = null;
-    private DataSource ds = null;
-    private String jndiname = null;
+    private DataSource ds;
+    private final String jndiname;
     private String login = null;
-    private String PUName = null;
+    private final String PUName;
 
     public GPMSMaster(DBMembershipI m, String PUName) {
 
@@ -52,9 +52,7 @@ public class GPMSMaster implements DBMasterI {
 
                 ctx = new InitialContext();
                 ctx.bind(jndiname, ds);
-            } catch (NamingException ex) {
-                log(ex.getMessage());
-            }  catch (GPMSException ex) {
+            } catch (NamingException | GPMSException ex) {
                 log(ex.getMessage());
             }
         } else {
@@ -62,7 +60,6 @@ public class GPMSMaster implements DBMasterI {
         }
 
         lastUsed = System.currentTimeMillis();
-
     }
 
     @Override
