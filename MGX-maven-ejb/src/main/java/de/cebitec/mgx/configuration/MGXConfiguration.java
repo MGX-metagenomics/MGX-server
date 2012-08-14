@@ -60,17 +60,17 @@ public class MGXConfiguration extends DispatcherConfigBase {
     /*
      * settings for the MGX global zone
      */
-    public String getMGXGlobalUser() {
-        return config.getProperty("mgxglobal_user");
-    }
-
-    public String getMGXGlobalPassword() {
-        return config.getProperty("mgxglobal_pass");
-    }
-
-    public String getMGXGlobalJDBCURL() {
-        return config.getProperty("mgxglobal_jdbc_url");
-    }
+//    public String getMGXGlobalUser() {
+//        return config.getProperty("mgxglobal_user");
+//    }
+//
+//    public String getMGXGlobalPassword() {
+//        return config.getProperty("mgxglobal_pass");
+//    }
+//
+//    public String getMGXGlobalJDBCURL() {
+//        return config.getProperty("mgxglobal_jdbc_url");
+//    }
 
     public String getMGXGlobalStorageDir() {
         return config.getProperty("mgxglobal_persistent_dir");
