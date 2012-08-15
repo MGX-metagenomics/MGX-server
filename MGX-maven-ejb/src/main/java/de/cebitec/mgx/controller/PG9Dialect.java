@@ -4,10 +4,14 @@ import java.sql.SQLException;
 import java.sql.Types;
 import javax.persistence.PersistenceException;
 import org.hibernate.dialect.PostgreSQLDialect;
-import org.hibernate.exception.JDBCExceptionHelper;
-import org.hibernate.exception.TemplatedViolatedConstraintNameExtracter;
-import org.hibernate.exception.ViolatedConstraintNameExtracter;
+import org.hibernate.exception.spi.TemplatedViolatedConstraintNameExtracter;
+import org.hibernate.exception.spi.ViolatedConstraintNameExtracter;
 import org.hibernate.id.SequenceIdentityGenerator;
+//import org.hibernate.dialect.PostgreSQLDialect;
+import org.hibernate.internal.util.JdbcExceptionHelper;
+//import org.hibernate.exception.TemplatedViolatedConstraintNameExtracter;
+//import org.hibernate.exception.ViolatedConstraintNameExtracter;
+//import org.hibernate.id.SequenceIdentityGenerator;
 
 /**
  *
@@ -42,7 +46,7 @@ public class PG9Dialect extends PostgreSQLDialect {
         public String extractConstraintName(SQLException sqle) {
 
             try {
-                int sqlState = Integer.valueOf(JDBCExceptionHelper.extractSqlState(sqle)).intValue();
+                int sqlState = Integer.valueOf(JdbcExceptionHelper.extractSqlState(sqle)).intValue();
                 switch (sqlState) {
                     // CHECK VIOLATION
                     case 23514:

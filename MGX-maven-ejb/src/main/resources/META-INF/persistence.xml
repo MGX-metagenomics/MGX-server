@@ -17,7 +17,8 @@
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
-      <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/>
+      <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
+      <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
       <property name="hibernate.id.new_generator_mappings" value="true"/>
       <property name="hibernate.connection.release_mode" value="after_statement"/>
       <!-- <property name="hibernate.hbm2ddl.auto" value="create"/> -->
@@ -30,7 +31,8 @@
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
-      <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/>
+      <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
+      <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
       <property name="hibernate.id.new_generator_mappings" value="true"/>
       <property name="hibernate.connection.release_mode" value="after_statement"/>
     </properties>

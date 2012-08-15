@@ -14,9 +14,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import org.hibernate.Session;
+import org.hibernate.internal.SessionFactoryImpl;
 
 /**
  *
@@ -55,7 +58,18 @@ public abstract class DAO<T extends Identifiable> {
         } else {
             // MGX global
             // FIXME find better way to obtain connection
-            return getEntityManager().unwrap(Session.class).connection();
+            
+            // hibernate 3
+            //return getEntityManager().unwrap(Session.class).connection();
+            
+            // hibernate 4
+            SessionFactoryImpl impl = (SessionFactoryImpl) getEntityManager().unwrap(Session.class).getSessionFactory();
+            try {
+                return impl.getConnectionProvider().getConnection();
+            } catch (SQLException ex) {
+                Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            return null;
         }
     }
 
