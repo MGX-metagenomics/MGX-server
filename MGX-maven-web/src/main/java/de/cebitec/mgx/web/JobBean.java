@@ -18,7 +18,6 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.ArrayList;
 import java.util.HashSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
