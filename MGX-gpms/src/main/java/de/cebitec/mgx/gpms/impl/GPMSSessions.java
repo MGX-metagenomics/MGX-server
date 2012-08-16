@@ -45,7 +45,7 @@ public class GPMSSessions {
 
     @Schedule(hour = "*", minute = "0", second = "0", persistent = false)
     public void timeout(Timer timer) {
-        Set<DBMembershipI> remove = new HashSet<DBMembershipI>();
+        Set<DBMembershipI> remove = new HashSet<>();
 
         for (DBMembershipI m : sessions.keySet()) {
             GPMSMaster master = sessions.get(m);
