@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import javax.ejb.Asynchronous;
 import javax.ejb.Stateless;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -28,7 +27,7 @@ import javax.naming.NamingException;
 public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
-    public boolean verify(MGXController mgx, Long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
+    public boolean verify(MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
 
         Job job = mgx.getJobDAO().getById(jobId);
 
@@ -46,7 +45,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public boolean submit(MGXController mgx, Long jobId) throws MGXException, MGXDispatcherException {
+    public boolean submit(MGXController mgx, long jobId) throws MGXException, MGXDispatcherException {
 
         Job job = mgx.getJobDAO().getById(jobId);
 
@@ -68,16 +67,11 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public boolean cancel(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException {
-        Job job = mgx.getJobDAO().getById(jobId);
-
-        if (job == null) {
-            throw new MGXException("No such job");
-        }
-
+    public boolean cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
+      
         JobReceiverI r = getJobReceiver(mgx);
         if (r != null) {
-            r.submit(DispatcherCommand.CANCEL, mgx.getProjectName(), job.getId());
+            r.submit(DispatcherCommand.CANCEL, mgx.getProjectName(), jobId);
             return true;
         } else {
             mgx.log("Job cancellation failed, could not contact dispatcher.");
@@ -86,17 +80,13 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    @Asynchronous
-    public void delete(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException {
-        Job job = mgx.getJobDAO().getById(jobId);
+    public void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
 
-        if (job == null) {
-            throw new MGXException("No such job");
-        }
-
+        // notify dispatcher about job delete, so it can be cancelled, 
+        // aborted or removed from the queue
         JobReceiverI r = getJobReceiver(mgx);
         if (r != null) {
-            r.submit(DispatcherCommand.CANCEL, mgx.getProjectName(), job.getId());
+            r.submit(DispatcherCommand.DELETE, mgx.getProjectName(), jobId);
         } else {
             mgx.log("Job deletion failed, could not contact dispatcher.");
         }

@@ -1,9 +1,12 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.SeqRun;
 import java.io.File;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,14 +24,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
     }
 
     @Override
-    public void delete(long id) {
-
-        /*
-         * here, we only delete the persistent files that might have been
-         * created by executing a job. The dispatcher will handle deletion of
-         * generated observations and orphan attributes
-         */
-
+    public void delete(long id) throws MGXException {
         StringBuilder sb = new StringBuilder(getController().getProjectDirectory()).append(File.separator).append(id);
 
         boolean all_deleted = true;
@@ -39,6 +35,34 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 all_deleted = all_deleted && deleted;
             }
         }
+
+        Connection conn = null;
+        PreparedStatement stmt = null;
+
+        try {
+            conn = getConnection();
+            
+            // delete observations
+            stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+            // delete attributecounts
+            stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+                    + "(SELECT id FROM attribute WHERE job_id=?)");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+            // delete attributes
+            stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?");
+            stmt.setLong(1, id);
+            stmt.execute();
+
+        } catch (Exception e) {
+        }
+
+        // remove job object
+        super.delete(id);
     }
 
     public static String toParameterString(Iterable<JobParameter> params) {
@@ -52,7 +76,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     + jobParameter.getParameterName() + "\""
                     + answer + "\"";
         }
-        System.out.println("toParameterString: "+parameter);
+        System.out.println("toParameterString: " + parameter);
         return parameter;
     }
 

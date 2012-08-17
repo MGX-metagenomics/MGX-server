@@ -11,12 +11,12 @@ import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
  */
 public interface JobSubmitter {
 
-    boolean cancel(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException;
+    boolean cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException;
 
-    void delete(MGXController mgx, Long jobId) throws MGXDispatcherException, MGXException;
+    void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException;
 
-    boolean submit(MGXController mgx, Long jobId) throws MGXException, MGXDispatcherException;
+    boolean submit(MGXController mgx, long jobId) throws MGXException, MGXDispatcherException;
 
-    boolean verify(MGXController mgx, Long jobId) throws MGXInsufficientJobConfigurationException, MGXException;
+    boolean verify(MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException;
     
 }
