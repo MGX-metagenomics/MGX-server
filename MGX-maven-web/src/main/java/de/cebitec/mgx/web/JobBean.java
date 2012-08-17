@@ -78,22 +78,18 @@ public class JobBean {
                 }
                 j.getParameters().add(jp);
                 jp.setJob(j);
-                
-                mgx.log("JP: jobid "+jp.getJob().getId());
-                mgx.log("JP: nodeid "+jp.getNodeId());
-                mgx.log("JP: paramname "+jp.getParameterName());
-                mgx.log("JP: paramvalue "+jp.getParameterValue());
-                mgx.log("JP: username "+jp.getUserName());
-                mgx.log("JP: userdesc "+jp.getUserDescription());
+
+                mgx.log("JP: jobid " + jp.getJob().getId());
+                mgx.log("JP: nodeid " + jp.getNodeId());
+                mgx.log("JP: paramname " + jp.getParameterName());
+                mgx.log("JP: paramvalue " + jp.getParameterValue());
+                mgx.log("JP: username " + jp.getUserName());
+                mgx.log("JP: userdesc " + jp.getUserDescription());
                 mgx.getJobParameterDAO().create(jp);
             }
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
-        //j.setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
-
-
 
         return MGXLong.newBuilder().setValue(job_id).build();
     }
@@ -217,12 +213,13 @@ public class JobBean {
     @Path("delete/{id}")
     public Response delete(@PathParam("id") Long id) {
 
-        // remove persistent files
-        mgx.getJobDAO().delete(id);
-
-        // notify dispatcher to delete observations
         try {
+            // notify dispatcher
             js.delete(mgx, id);
+            
+            // remove persistent files and job object
+            mgx.getJobDAO().delete(id);
+            
         } catch (MGXDispatcherException | MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
