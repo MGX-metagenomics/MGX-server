@@ -25,8 +25,9 @@ public class GPMSMaster implements DBMasterI {
     private final static Logger logger = Logger.getLogger(GPMSMaster.class.getPackage().getName());
     private long lastUsed;
     private final DBMembershipI membership;
-    private EntityManagerFactory emf = null;
+    private static EntityManagerFactory emf = null;
     private DataSource ds;
+    private GPMSProxyDataSource proxyDS = null;
     private final String jndiname;
     private String login = null;
     private final String PUName;
@@ -36,21 +37,23 @@ public class GPMSMaster implements DBMasterI {
         membership = m;
         this.PUName = PUName;
 
-        jndiname = new StringBuilder("jdbc/").append(m.getProject().getProjectClass().getName()).append("/").append(m.getProject().getName()).toString();
-
+        jndiname = new StringBuilder("jdbc/")
+                .append(m.getProject().getProjectClass().getName())
+                .append("/").append(m.getProject().getName())
+                .toString();
+        
+        
         try {
             ds = InitialContext.<DataSource>doLookup(jndiname);
+            proxyDS = InitialContext.<GPMSProxyDataSource>doLookup("FIXME");
         } catch (NamingException ex) {
         }
 
         if (ds == null) {
             try {
                 ds = createDataSource(membership);
-
                 // publish the datasource
-                Context ctx;
-
-                ctx = new InitialContext();
+                Context ctx = new InitialContext();
                 ctx.bind(jndiname, ds);
             } catch (NamingException | GPMSException ex) {
                 log(ex.getMessage());
@@ -58,6 +61,8 @@ public class GPMSMaster implements DBMasterI {
         } else {
             log("Re-using old datasource from JNDI " + jndiname);
         }
+        
+        proxyDS.setCurrentDataSource(ds);
 
         lastUsed = System.currentTimeMillis();
     }
@@ -66,15 +71,16 @@ public class GPMSMaster implements DBMasterI {
     public EntityManagerFactory getEntityManagerFactory() {
         lastUsed = System.currentTimeMillis();
         if (emf == null) {
-            emf = EMFNameResolver.createEMF(membership, jndiname, PUName);
+            //emf = EMFNameResolver.createEMF(membership, jndiname, PUName);
+            emf = EMFNameResolver.createEMF(membership, "FIXME", PUName);
         }
         return emf;
     }
 
     public void close() {
-        if (emf != null) {
-            emf.close();
-        }
+//        if (emf != null) {
+//            emf.close();
+//        }
 
         // unpublish the datasource
         Context ctx;
@@ -94,7 +100,7 @@ public class GPMSMaster implements DBMasterI {
     @Override
     public DataSource getDataSource() {
         lastUsed = System.currentTimeMillis();
-        return ds;
+        return proxyDS;
     }
 
     public void lastObtained(long curTime) {

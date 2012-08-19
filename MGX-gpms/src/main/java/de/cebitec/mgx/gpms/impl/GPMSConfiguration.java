@@ -1,6 +1,5 @@
 package de.cebitec.mgx.gpms.impl;
 
-import de.cebitec.mgx.gpms.GPMSException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class GPMSConfiguration {
     }
 
     @PostConstruct
-    public void startup() throws GPMSException {
+    public void startup() {
 
         String cfgFile = new StringBuilder(System.getProperty("user.dir"))
                 .append(File.separator)
@@ -55,7 +54,7 @@ public class GPMSConfiguration {
 
         File f = new File(cfgFile);
         if (!f.exists()) {
-            throw new GPMSException("GPMS configuration failed: " + cfgFile + " missing");
+            throw new RuntimeException("GPMS configuration failed: " + cfgFile + " missing");
         }
 
         config = new Properties();
@@ -66,7 +65,7 @@ public class GPMSConfiguration {
             config.load(in);
             in.close();
         } catch (Exception ex) {
-            throw new GPMSException(ex.getMessage());
+            throw new RuntimeException(ex.getMessage());
         } finally {
             if (in != null) {
                 try {

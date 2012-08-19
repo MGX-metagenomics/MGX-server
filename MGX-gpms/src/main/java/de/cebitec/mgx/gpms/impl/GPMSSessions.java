@@ -1,7 +1,6 @@
 package de.cebitec.mgx.gpms.impl;
 
 import de.cebitec.gpms.data.DBMasterI;
-import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.data.DBMembershipI;
 import java.util.*;
 import java.util.logging.Level;
