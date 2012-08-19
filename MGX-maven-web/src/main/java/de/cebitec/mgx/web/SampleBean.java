@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("Sample")
-public class SampleBean {
+public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
 
     @Inject
     @MGX
@@ -37,6 +37,7 @@ public class SampleBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
+    @Override
     public MGXLong create(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -57,6 +58,7 @@ public class SampleBean {
 
     @POST
     @Path("update")
+    @Override
     public Response update(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -77,6 +79,7 @@ public class SampleBean {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
+    @Override
     public SampleDTO fetch(@PathParam("id") Long id) {
         Sample obj;
         try {
@@ -90,6 +93,7 @@ public class SampleBean {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
+    @Override
     public SampleDTOList fetchall() {
         return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().getAll());
     }
@@ -109,6 +113,7 @@ public class SampleBean {
 
     @DELETE
     @Path("delete/{id}")
+    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getSampleDAO().delete(id);

@@ -7,11 +7,9 @@ import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
-import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
-import de.cebitec.mgx.dtoadapter.TermDTOFactory;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -28,7 +26,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("SeqRun")
-public class SeqRunBean {
+public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
 
     @Inject
     @MGX
@@ -38,6 +36,7 @@ public class SeqRunBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Override
     public MGXLong create(SeqRunDTO dto) {
         DNAExtract extract;
         long run_id;
@@ -55,6 +54,7 @@ public class SeqRunBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
+    @Override
     public Response update(SeqRunDTO dto) {
         /*
          * since not all fields are exposed via the DTO, we need to fetch the
@@ -90,6 +90,7 @@ public class SeqRunBean {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
+    @Override
     public SeqRunDTO fetch(@PathParam("id") Long id) {
         SeqRun seqrun;
     
@@ -106,6 +107,7 @@ public class SeqRunBean {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
+    @Override
     public SeqRunDTOList fetchall() {
         return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().getAll());
     }
@@ -125,6 +127,7 @@ public class SeqRunBean {
 
     @DELETE
     @Path("delete/{id}")
+    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getSeqRunDAO().delete(id);
@@ -138,6 +141,7 @@ public class SeqRunBean {
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
     public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
+        // FIXME - way too many DB queries here
         SeqRun run;
         try {
             run = mgx.getSeqRunDAO().getById(seqrun_id);

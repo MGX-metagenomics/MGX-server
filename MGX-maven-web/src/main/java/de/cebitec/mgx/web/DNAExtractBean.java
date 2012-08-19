@@ -29,7 +29,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("DNAExtract")
-public class DNAExtractBean {
+public class DNAExtractBean implements CRUD<DNAExtractDTO, DNAExtractDTOList> {
 
     @Inject
     @MGX
@@ -39,6 +39,7 @@ public class DNAExtractBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Override
     public MGXLong create(DNAExtractDTO dto) {
         Long DNAExtract_id = null;
         try {
@@ -55,6 +56,7 @@ public class DNAExtractBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
+    @Override
     public Response update(DNAExtractDTO dto) {
         Sample s = null;
         try {
@@ -75,6 +77,7 @@ public class DNAExtractBean {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
+    @Override
     public DNAExtractDTO fetch(@PathParam("id") Long id) {
         DNAExtract obj = null;
         try {
@@ -88,6 +91,7 @@ public class DNAExtractBean {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
+    @Override
     public DNAExtractDTOList fetchall() {
         return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().getAll());
     }
@@ -107,6 +111,7 @@ public class DNAExtractBean {
 
     @DELETE
     @Path("delete/{id}")
+    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getDNAExtractDAO().delete(id);

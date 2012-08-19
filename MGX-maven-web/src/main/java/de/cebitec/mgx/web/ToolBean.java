@@ -32,7 +32,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("Tool")
-public class ToolBean {
+public class ToolBean implements CRUD<ToolDTO, ToolDTOList> {
 
     @Inject
     @MGX
@@ -43,6 +43,7 @@ public class ToolBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
+    @Override
     public MGXLong create(ToolDTO dto) {
         Tool t = ToolDTOFactory.getInstance().toDB(dto, false);
         Long id = null;
@@ -79,12 +80,38 @@ public class ToolBean {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
+    @Override
     public ToolDTOList fetchall() {
         return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
+    }
+    
+    @GET
+    @Path("fetch/{id}")
+    @Produces("application/x-protobuf")
+    @Override
+    public ToolDTO fetch(Long id) {
+        Tool obj = null;
+        try {
+            obj = mgx.getToolDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return ToolDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @POST
+    @Path("update")
+    @Consumes("application/x-protobuf")
+    @Override
+    public Response update(ToolDTO dto) {
+        // not used
+        assert false; 
+        return null;
     }
 
     @DELETE
     @Path("delete/{id}")
+    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getToolDAO().delete(id);

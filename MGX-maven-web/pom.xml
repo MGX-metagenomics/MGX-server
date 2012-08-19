@@ -23,13 +23,12 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>1.13-b01</version>
+            <version>1.13</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>MGX-DTO</artifactId>
-            <!-- <scope>provided</scope> -->
             <version>${project.version}</version>
         </dependency>
         <dependency>
