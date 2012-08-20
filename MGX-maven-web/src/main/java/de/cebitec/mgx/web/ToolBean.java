@@ -89,7 +89,7 @@ public class ToolBean implements CRUD<ToolDTO, ToolDTOList> {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     @Override
-    public ToolDTO fetch(Long id) {
+    public ToolDTO fetch(@PathParam("id") Long id) {
         Tool obj = null;
         try {
             obj = mgx.getToolDAO().getById(id);
