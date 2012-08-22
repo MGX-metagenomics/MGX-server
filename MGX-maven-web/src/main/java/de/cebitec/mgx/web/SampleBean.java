@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("Sample")
-public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
+public class SampleBean {
 
     @Inject
     @MGX
@@ -37,7 +37,6 @@ public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
-    @Override
     public MGXLong create(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -58,7 +57,6 @@ public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
 
     @POST
     @Path("update")
-    @Override
     public Response update(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -79,7 +77,6 @@ public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    @Override
     public SampleDTO fetch(@PathParam("id") Long id) {
         Sample obj;
         try {
@@ -93,7 +90,6 @@ public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    @Override
     public SampleDTOList fetchall() {
         return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().getAll());
     }
@@ -105,15 +101,20 @@ public class SampleBean implements CRUD<SampleDTO, SampleDTOList> {
         Habitat habitat;
         try {
             habitat = mgx.getHabitatDAO().getById(hab_id);
+            System.err.println("Habitat: "+ habitat.getName());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().byHabitat(habitat));
+        Iterable<Sample> samples = mgx.getSampleDAO().byHabitat(habitat);
+        SampleDTOList ret = SampleDTOFactory.getInstance().toDTOList(samples);
+        for (SampleDTO s : ret.getSampleList()) {
+            System.err.println(mgx.getProjectName() + " " + s.getMaterial());
+        }
+        return ret;
     }
 
     @DELETE
     @Path("delete/{id}")
-    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getSampleDAO().delete(id);

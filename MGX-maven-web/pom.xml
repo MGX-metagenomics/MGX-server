@@ -52,6 +52,12 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>MGX-DTOAdapter</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>MGX-gpms</artifactId>
+                    <groupId>de.cebitec.mgx</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <artifactId>MGX-isequences</artifactId>
@@ -64,7 +70,7 @@
             <groupId>de.cebitec.gpms</groupId>
             <artifactId>GPMS-core-api</artifactId>
             <version>1.0-RELEASE</version>
-            <type>jar</type>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax</groupId>

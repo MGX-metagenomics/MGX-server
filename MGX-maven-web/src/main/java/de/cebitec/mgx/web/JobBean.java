@@ -31,7 +31,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("Job")
-public class JobBean implements CRUD<JobDTO, JobDTOList> {
+public class JobBean {
 
     @Inject
     @MGX
@@ -45,7 +45,6 @@ public class JobBean implements CRUD<JobDTO, JobDTOList> {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Override
     public MGXLong create(JobDTO dto) {
         Tool tool = null;
         SeqRun seqrun = null;
@@ -99,7 +98,6 @@ public class JobBean implements CRUD<JobDTO, JobDTOList> {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    @Override
     public JobDTO fetch(@PathParam("id") Long id) {
         try {
             Job job = mgx.getJobDAO().getById(id);
@@ -112,7 +110,6 @@ public class JobBean implements CRUD<JobDTO, JobDTOList> {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    @Override
     public JobDTOList fetchall() {
         return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().getAll());
     }
@@ -203,7 +200,6 @@ public class JobBean implements CRUD<JobDTO, JobDTOList> {
 
     @POST
     @Path("update")
-    @Override
     public Response update(JobDTO dto) {
         Job h = JobDTOFactory.getInstance().toDB(dto);
         try {
@@ -216,7 +212,6 @@ public class JobBean implements CRUD<JobDTO, JobDTOList> {
 
     @DELETE
     @Path("delete/{id}")
-    @Override
     public Response delete(@PathParam("id") Long id) {
 
         try {

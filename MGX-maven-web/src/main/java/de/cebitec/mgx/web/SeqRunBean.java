@@ -26,7 +26,7 @@ import javax.ws.rs.core.Response;
  */
 @Stateless
 @Path("SeqRun")
-public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
+public class SeqRunBean {
 
     @Inject
     @MGX
@@ -36,7 +36,6 @@ public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Override
     public MGXLong create(SeqRunDTO dto) {
         DNAExtract extract;
         long run_id;
@@ -54,7 +53,6 @@ public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    @Override
     public Response update(SeqRunDTO dto) {
         /*
          * since not all fields are exposed via the DTO, we need to fetch the
@@ -90,16 +88,15 @@ public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    @Override
     public SeqRunDTO fetch(@PathParam("id") Long id) {
         SeqRun seqrun;
-    
+
         try {
             seqrun = mgx.getSeqRunDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
+
 
         return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTO(seqrun);
     }
@@ -107,7 +104,6 @@ public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    @Override
     public SeqRunDTOList fetchall() {
         return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().getAll());
     }
@@ -127,7 +123,6 @@ public class SeqRunBean implements CRUD<SeqRunDTO, SeqRunDTOList> {
 
     @DELETE
     @Path("delete/{id}")
-    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getSeqRunDAO().delete(id);

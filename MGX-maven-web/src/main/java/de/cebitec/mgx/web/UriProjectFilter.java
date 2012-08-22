@@ -71,6 +71,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
                 if (m.getProject().getName().equals(project)) {
                     // will create a new master or re-use a cached one
                     gpms.createMaster((DBMembershipI)m);
+                    return cr;
                 }
             }
         }

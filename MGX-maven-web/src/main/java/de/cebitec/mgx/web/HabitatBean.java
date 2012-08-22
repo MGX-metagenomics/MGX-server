@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
  */
 @Path("Habitat")
 @Stateless
-public class HabitatBean implements CRUD<HabitatDTO, HabitatDTOList> {
+public class HabitatBean {
 
     @Inject
     @MGX
@@ -38,7 +38,6 @@ public class HabitatBean implements CRUD<HabitatDTO, HabitatDTOList> {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Override
     public MGXLong create(HabitatDTO dto) {
         Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
         try {
@@ -53,7 +52,6 @@ public class HabitatBean implements CRUD<HabitatDTO, HabitatDTOList> {
     @Path("update")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Override
     public Response update(HabitatDTO dto) {
         Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
         try {
@@ -67,7 +65,6 @@ public class HabitatBean implements CRUD<HabitatDTO, HabitatDTOList> {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    @Override
     public HabitatDTO fetch(@PathParam("id") Long id) {
         Habitat obj = null;
         try {
@@ -81,14 +78,12 @@ public class HabitatBean implements CRUD<HabitatDTO, HabitatDTOList> {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    @Override
     public HabitatDTOList fetchall() {
         return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
     }
 
     @DELETE
     @Path("delete/{id}")
-    @Override
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getHabitatDAO().delete(id);
