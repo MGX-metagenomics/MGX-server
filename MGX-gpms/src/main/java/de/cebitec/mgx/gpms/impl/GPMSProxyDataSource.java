@@ -1,70 +1,71 @@
 
 package de.cebitec.mgx.gpms.impl;
 
+import de.cebitec.gpms.data.ProxyDataSourceI;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.sql.DataSource;
 /**
  *
  * @author sj
  */
-@Singleton
-@Startup        
-public class GPMSProxyDataSource implements DataSource {
+public class GPMSProxyDataSource implements ProxyDataSourceI {
     
-    private DataSource currentDS = null;
-    
-    public void setCurrentDataSource(DataSource cur) {
-        currentDS = cur;
-    }
+    private final GPMS gpms;
 
+    public GPMSProxyDataSource(GPMS gpms) {
+        this.gpms = gpms;
+    }
+    
+    private DataSource getTarget() {
+        return gpms.getCurrentMaster().getDataSource();
+    }
+    
     @Override
     public Connection getConnection() throws SQLException {
-        return currentDS.getConnection();
+        return getTarget().getConnection();
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
-        return currentDS.getConnection(username, password);
+        return getTarget().getConnection(username, password);
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        return currentDS.unwrap(iface);
+        return getTarget().unwrap(iface);
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return currentDS.isWrapperFor(iface);
+        return getTarget().isWrapperFor(iface);
     }
 
     @Override
     public PrintWriter getLogWriter() throws SQLException {
-        return currentDS.getLogWriter();
+        return getTarget().getLogWriter();
     }
 
     @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
-        currentDS.setLogWriter(out);
+        getTarget().setLogWriter(out);
     }
 
     @Override
     public void setLoginTimeout(int seconds) throws SQLException {
-        currentDS.setLoginTimeout(seconds);
+        getTarget().setLoginTimeout(seconds);
     }
 
     @Override
     public int getLoginTimeout() throws SQLException {
-        return currentDS.getLoginTimeout();
+        return getTarget().getLoginTimeout();
     }
 
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-        return currentDS.getParentLogger();
+        return getTarget().getParentLogger();
     }
 }

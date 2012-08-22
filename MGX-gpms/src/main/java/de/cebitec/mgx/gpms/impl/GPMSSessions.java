@@ -1,7 +1,7 @@
 package de.cebitec.mgx.gpms.impl;
 
-import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
+import de.cebitec.mgx.gpms.util.DataSourceFactory;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,6 +10,7 @@ import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.Timer;
+import javax.sql.DataSource;
 
 /**
  *
@@ -27,14 +28,16 @@ public class GPMSSessions {
         sessions = Collections.synchronizedMap(new HashMap<DBMembershipI, GPMSMaster>());
     }
 
-    public DBMasterI getMaster(DBMembershipI m) {
+    public GPMSMaster getMaster(DBMembershipI m) {
 
         GPMSMaster master;
 
         if (!sessions.containsKey(m)) {
-            // create new gpmsmaster
-            master = new GPMSMaster(m, "MGX-PU");
+            DataSource ds = DataSourceFactory.createDataSource(m);
+            master = new GPMSMaster(m, ds);
             sessions.put(m, master);
+        } else {
+            System.err.println("using cached GPMSMaster, project "+ m.getProject().getName() + ", DS is "+ sessions.get(m).getDataSource().toString());
         }
 
         master = sessions.get(m);
