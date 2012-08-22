@@ -1,6 +1,5 @@
 package de.cebitec.mgx.configuration;
 
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dispatcher.common.DispatcherConfigBase;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import java.io.File;
@@ -37,7 +36,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         if (!f.exists()) {
             throw new RuntimeException("MGX configuration failed, " + cfgFile.toString() + " missing");
         }
-
+        
         FileInputStream in = null;
         config = new Properties();
         try {

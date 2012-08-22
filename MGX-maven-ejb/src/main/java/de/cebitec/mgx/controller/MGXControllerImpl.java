@@ -25,17 +25,17 @@ public class MGXControllerImpl implements MGXController {
 
     private final static Logger logger = Logger.getLogger(MGXControllerImpl.class.getPackage().getName());
     private final DBMasterI gpmsmaster;
-    private final EntityManagerFactory emf;
+    private final EntityManager em;
     private Map<Class, DAO> daos = new HashMap<>();
     //
     private final MGXConfiguration config;
     private final MGXGlobal global;
 
-    public MGXControllerImpl(DBMasterI gpms, MGXGlobal global, MGXConfiguration cfg) {
-        this.gpmsmaster = gpms;
+    public MGXControllerImpl(DBMasterI gpmsmaster, MGXGlobal global, MGXConfiguration cfg) {
+        this.gpmsmaster = gpmsmaster;
         this.global = global;
         this.config = cfg;
-        this.emf = gpms.getEntityManagerFactory();
+        this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
     }
 
     @Override
@@ -50,15 +50,12 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public EntityManagerFactory getEMF() {
-        return this.emf;
+        assert false;return null; //return this.emf;
     }
 
     @Override
     public EntityManager getEntityManager() {
-//        if (em == null || !em.isOpen()) {
-//            em = emf.createEntityManager();
-//        }
-        return emf.createEntityManager();
+        return em;
     }
 
     @Override
@@ -108,10 +105,9 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public void close() {
-//        if (em != null && em.isOpen()) {
-//            em.close();
-//            em = null;
-//        }
+        if (em.isOpen()) {
+            em.close();
+        }
     }
 
     @Override

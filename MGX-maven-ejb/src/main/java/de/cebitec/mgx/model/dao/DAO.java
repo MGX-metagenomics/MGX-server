@@ -58,10 +58,10 @@ public abstract class DAO<T extends Identifiable> {
         } else {
             // MGX global
             // FIXME find better way to obtain connection
-            
+
             // hibernate 3
             //return getEntityManager().unwrap(Session.class).connection();
-            
+
             // hibernate 4
             SessionFactoryImpl impl = (SessionFactoryImpl) getEntityManager().unwrap(Session.class).getSessionFactory();
             try {
@@ -81,11 +81,11 @@ public abstract class DAO<T extends Identifiable> {
         }
         T ret = (T) getEntityManager().find(getType(), id);
         if (ret == null) {
-            throw new MGXException("No object of type "+getType()+" for ID "+id+".");
+            throw new MGXException("No object of type " + getType() + " for ID " + id + ".");
         }
         return ret;
     }
-    
+
     public Iterable<T> getByIds(Collection<Long> ids) {
         return (Iterable<T>) getEntityManager()
                 .createQuery("SELECT DISTINCT o FROM " + getClassName() + " o WHERE o.id IN :ids", getType())
