@@ -101,16 +101,11 @@ public class SampleBean {
         Habitat habitat;
         try {
             habitat = mgx.getHabitatDAO().getById(hab_id);
-            System.err.println("Habitat: "+ habitat.getName());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         Iterable<Sample> samples = mgx.getSampleDAO().byHabitat(habitat);
-        SampleDTOList ret = SampleDTOFactory.getInstance().toDTOList(samples);
-        for (SampleDTO s : ret.getSampleList()) {
-            System.err.println(mgx.getProjectName() + " " + s.getMaterial());
-        }
-        return ret;
+        return SampleDTOFactory.getInstance().toDTOList(samples);
     }
 
     @DELETE
