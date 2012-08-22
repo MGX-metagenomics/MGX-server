@@ -36,8 +36,6 @@ public class GPMSSessions {
             DataSource ds = DataSourceFactory.createDataSource(m);
             master = new GPMSMaster(m, ds);
             sessions.put(m, master);
-        } else {
-            System.err.println("using cached GPMSMaster, project "+ m.getProject().getName() + ", DS is "+ sessions.get(m).getDataSource().toString());
         }
 
         master = sessions.get(m);
