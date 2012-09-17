@@ -43,8 +43,6 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         projectName = projName;
         runId = run_id;
 
-        seqholder = new ArrayList<DNASequenceI>();
-
         try {
             mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
             file = getStorageFile(run_id);
@@ -55,35 +53,15 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
         }
 
+        seqholder = new ArrayList<DNASequenceI>();
         bulksize = mgxconfig.getSQLBulkInsertSize();
-
         lastAccessed = System.currentTimeMillis();
     }
 
-//    public SeqUploadReceiver(String jdbcUrl, String projName, long run_id) throws MGXException {
-//        projectName = projName;
-//        runId = run_id;
-//
-//        seqholder = new ArrayList<DNASequenceI>();
-//
-//        try {
-//            mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
-//            file = getStorageFile(run_id);
-//            writer = new CSFWriter(file);
-//            // FIXME use connection from pool
-//            conn = DriverManager.getConnection(jdbcUrl, mgxconfig.getMGXUser(), mgxconfig.getMGXPassword());
-//            conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
-//        } catch (Exception ex) {
-//            throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
-//        }
-//
-//        bulksize = mgxconfig.getSQLBulkInsertSize();
-//
-//        lastAccessed = System.currentTimeMillis();
-//    }
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
-        for (SequenceDTO s : seqs.getSeqList()) {
+        for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext(); ) {
+            SequenceDTO s = iter.next();
             DNASequenceI d = new DNASequence();
             d.setName(s.getName().getBytes());
             d.setSequence(s.getSequence().getBytes());
@@ -111,7 +89,10 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
         String sql = createSQLBulkStatement(commitList.size());
         // insert sequence names and fetch list of generated ids
-        List<Long> generatedIDs = new ArrayList<Long>(commitList.size());
+        
+        int curPos=0;
+        long[] generatedIDs = new long[commitList.size()];
+        
         PreparedStatement stmt = null;
         ResultSet res = null;
         try {
@@ -127,7 +108,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
             res = stmt.executeQuery();
             while (res.next()) {
-                generatedIDs.add(res.getLong(1));
+                generatedIDs[curPos++] = res.getLong(1);
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
@@ -139,12 +120,16 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        // write sequences to persistent storage
-        ListIterator<Long> IDList = generatedIDs.listIterator();
+        
+        //
+        // write sequences to persistent storage using the generated ids
+        //
+        curPos = 0;
         try {
-            for (DNASequenceI s : commitList) {
-                // add the generated IDs for the persistent file
-                s.setId(IDList.next());
+            for (Iterator<DNASequenceI> iter = commitList.iterator(); iter.hasNext(); ) {
+                // add the generated IDs
+                DNASequenceI s = iter.next();
+                s.setId(generatedIDs[curPos++]);
                 writer.addSequence(s);
             }
         } catch (IOException ex) {
