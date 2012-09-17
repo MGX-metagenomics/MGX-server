@@ -226,7 +226,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         for (int cnt = 1; cnt <= elements; cnt++) {
             sql.append("(?,?,?),");
         }
-        sql.deleteCharAt(sql.toString().length() - 1); // remove trailing ","
+        sql.deleteCharAt(sql.length() - 1); // remove trailing ","
 
         /*
          * stmt.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
