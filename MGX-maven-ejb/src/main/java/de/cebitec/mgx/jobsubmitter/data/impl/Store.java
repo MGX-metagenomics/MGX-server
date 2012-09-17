@@ -1,9 +1,13 @@
 package de.cebitec.mgx.jobsubmitter.data.impl;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -12,93 +16,64 @@ import java.util.TreeMap;
  *
  * @author belmann
  */
-public class Store {
+public class Store implements Iterable<Entry<Long, Node>> {
 
     /**
      * Speichert die Nodes bzw. Tools in einer HashMap. Dabei stellen die id den
      * key dar.
      */
-    private Map<String, Node> nodes = new TreeMap<>();
+    private Map<Long, Node> nodes = new TreeMap<>();
 
-    /**
-     * Gibt einen Iterator wieder, um über alle Nodes iterieren zu können.
-     *
-     * @return Iterator
-     */
-    public Iterator<Entry<String, Node>> getIterator() {
-        return nodes.entrySet().iterator();
+    @Override
+    public AutoCloseableIterator<Entry<Long, Node>> iterator() {
+        return new ForwardingIterator<>(nodes.entrySet().iterator());
     }
 
-    /**
-     * Gibt ein Node wieder.
-     *
-     * @param lId Id des Nodes.
-     * @return Node
-     */
-    public final Node getNode(String lId) {
-        return nodes.get(lId);
+    public Set<Entry<Long, Node>> entrySet() {
+        return nodes.entrySet();
     }
 
-    /**
-     * Fügt einen weiteren Knoten hinzu.
-     *
-     * @param node
-     */
+    public final Node getNode(Long nodeId) {
+        return nodes.get(nodeId);
+    }
+
     public final void addNode(Node node) {
         nodes.put(node.getId(), node);
     }
 
     /**
-     * Gibt die Anzahl der bisherigen Knoten im Store wieder.
+     * extracts parameters from store
      *
-     * @return Anzahl Knoten.
+     * @param store
+     * @return parameter iterator
      */
-    public int storeSize() {
-        return nodes.size();
-    }
+    public final AutoCloseableIterator<JobParameter> extractJobParameters() {
+        List<JobParameter> parameters = new ArrayList<>();
+        
+        for (Entry<Long, Node> entry : nodes.entrySet()) {
+            
+            final Long nodeId = entry.getKey();
+            final Node node = entry.getValue();
+            
+            for (Entry<String, ConfigItem> configItementry : node.entrySet()) {
+                final ConfigItem configItem = configItementry.getValue();
 
-    /**
-     * Entfernt alle Knoten, bei denen keine Antwort gesetzt wurde.
-     */
-    public void deleteEmptyNodes() {
-        for (Entry<String, Node> e : nodes.entrySet()) {
-            e.getValue().deleteEmptyConfigItems();
-            if (e.getValue().getNumberOfConfigItems() == 0) {
-                nodes.remove(e.getKey());
+                JobParameter jobParameter = new JobParameter()
+                    .setParameterName(configItementry.getKey())
+                    .setParameterValue(configItem.getAnswer())
+                    .setClassName(node.getClassName())
+                    .setDisplayName(node.getDisplayName())
+                    .setDefaultValue(configItem.getDefaultValue())
+                    .setNodeId(nodeId)
+                    .setOptional(configItem.isOptional())
+                    .setType(configItem.getConfigType())
+                    .setUserDescription(configItem.getUserDescription())
+                    .setUserName(configItem.getUserName())
+                    .setChoices(configItem.getChoice().getChoices());
+
+                parameters.add(jobParameter);
             }
         }
-    }
-
-    /**
-     * Entfernt einen Knoten aus dem Store.
-     *
-     * @param id
-     */
-    public void removeNode(String id) {
-        nodes.remove(id);
-    }
-
-    /**
-     * Entfernt alle Nodes aus dem Store.
-     */
-    public void removeAllNodes() {
-        nodes.clear();
-    }
-
-    /**
-     * Gibt alle Antworten in einer HashMap wieder. Als Key, dient der Name des
-     * ConfigItems.
-     *
-     * @return ConfigItem
-     */
-    public HashMap<String, HashMap<String, String>> getAllAnswers() {
-        deleteEmptyNodes();
-
-        HashMap<String, HashMap<String, String>> map = new HashMap<>();
-
-        for (String key : nodes.keySet()) {
-            map.put(key, nodes.get(key).getAnswers());
-        }
-        return map;
+        return new ForwardingIterator<>(parameters.iterator());
     }
 }

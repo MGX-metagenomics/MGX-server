@@ -6,8 +6,10 @@ import de.cebitec.mgx.dto.dto.JobParameterDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.KVPair;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -34,16 +36,16 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         Builder b = JobParameterDTO.newBuilder()
                 .setNodeId(p.getNodeId())
                 .setParameterName(p.getParameterName());
-               
+
         if (p.getId() != null) {
-            b = b.setId(p.getId()); 
+            b = b.setId(p.getId());
         }
-        
+
         //if (p.getUserName() != null) {
-            b.setUserName(p.getUserName());
+        b.setUserName(p.getUserName());
         //}
         //if (p.getUserDescription() != null) {
-            b.setUserDesc(p.getUserDescription());
+        b.setUserDesc(p.getUserDescription());
         //}
         if (p.getClassName() != null) {
             b.setClassName(p.getClassName());
@@ -90,7 +92,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         jp.setClassName(dto.getClassName());
         jp.setType(dto.getType());
         jp.setOptional(dto.getIsOptional());
-        
+
         jp.setParameterName(dto.getParameterName());
         jp.setParameterValue(dto.getParameterValue());
 
@@ -109,10 +111,13 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     }
 
     @Override
-    public JobParameterListDTO toDTOList(Iterable<JobParameter> list) {
+    public JobParameterListDTO toDTOList(AutoCloseableIterator<JobParameter> acit) {
         JobParameterListDTO.Builder b = JobParameterListDTO.newBuilder();
-        for (JobParameter jp : list) {
-            b.addParameter(toDTO(jp));
+        try (AutoCloseableIterator<JobParameter> iter = acit) {
+            while (iter.hasNext()) {
+                b.addParameter(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

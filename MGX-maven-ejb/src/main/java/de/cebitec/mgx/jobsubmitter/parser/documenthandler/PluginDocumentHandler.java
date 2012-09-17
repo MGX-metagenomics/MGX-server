@@ -2,12 +2,9 @@ package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
 import de.cebitec.mgx.jobsubmitter.data.impl.Node;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
-import de.cebitec.mgx.jobsubmitter.parser.utilities.TagsAndAttributes;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -27,7 +24,7 @@ public class PluginDocumentHandler extends DefaultHandler {
      * Namen abgespeichert.
      *
      */
-    private HashMap<String, String> idsAndConfigItems = new HashMap<>();
+    private Map<Long, String> idsAndConfigItems = new HashMap<>();
     /**
      * Sobald ein Node in der Plugin XML gefunden wurde, wird dieser Flag
      * gesetzt um dann nach den dazugehörigen configItems zu suchen.
@@ -37,7 +34,7 @@ public class PluginDocumentHandler extends DefaultHandler {
      * In dem Store werden die Nodes abgespeichert, die in dieser Klasse
      * bearbeitet werden.
      */
-    private Store store;
+    private final Store store;
 
     /**
      *
@@ -68,39 +65,32 @@ public class PluginDocumentHandler extends DefaultHandler {
         super.startElement(lUri, lLocalName, lQName, lAttributes);
 
         if (!searchItemConfig) {
-            if (lQName.equals(TagsAndAttributes.nodetype)) {
+            if (TagsAndAttributes.nodetype.equals(lQName)) {
                 idsAndConfigItems = new HashMap<>();
                 searchItemConfig = searchNodes(lAttributes);
             }
         } else {
-            if (lQName.equals(TagsAndAttributes.config_item)
-                    && containsConfigName(
-                    lAttributes.getValue(TagsAndAttributes.name))) {
+            if (TagsAndAttributes.config_item.equals(lQName) && containsConfigName(lAttributes.getValue(TagsAndAttributes.name))) {
 
-                String configType =
-                        lAttributes.getValue(TagsAndAttributes.type);
-                String optional =
-                        lAttributes.getValue(TagsAndAttributes.optional);
+                String configType = lAttributes.getValue(TagsAndAttributes.type);
+                String optional = lAttributes.getValue(TagsAndAttributes.optional);
                 String defaultValue = lAttributes.getValue(TagsAndAttributes.def);
                 if (defaultValue == null) {
                     defaultValue = "";
                 }
-                setConfigAttributes(optional, configType,
-                        defaultValue);
+                setConfigAttributes(optional, configType, defaultValue);
             }
 
-            if (lQName.equals(TagsAndAttributes.choice)) {
-                String value =
-                        lAttributes.getValue(TagsAndAttributes.value);
-                String valueDescription =
-                        lAttributes.getValue(
-                        TagsAndAttributes.description);
+            if (TagsAndAttributes.choice.equals(lQName)) {
 
-                for (String id : idsAndConfigItems.keySet()) {
-                    if (!idsAndConfigItems.get(id).isEmpty()) {
+                String value = lAttributes.getValue(TagsAndAttributes.value);
+                String valueDescription = lAttributes.getValue(TagsAndAttributes.description);
 
-                        store.getNode(id).getConfigItem(idsAndConfigItems.get(id)).getChoice().addItem(value, valueDescription);
-
+                for (Entry<Long, String> entry : idsAndConfigItems.entrySet()) {
+                    Long id = entry.getKey();
+                    String val = entry.getValue();
+                    if (!val.isEmpty()) {
+                        store.getNode(id).getConfigItem(val).getChoice().addItem(value, valueDescription);
                     }
                 }
             }
@@ -115,30 +105,15 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @return Ob ein Node gefunden wurde oder nicht
      */
     private boolean searchNodes(Attributes lAttributes) {
-        Iterator<Entry<String, Node>> iterator = store.getIterator();
-
-        while (iterator.hasNext()) {
-            Entry<String, Node> me = iterator.next();
-            String id = me.getKey();
-
-            if (lAttributes.getValue(
-                    TagsAndAttributes.classname).equals(
-                    store.getNode(id).getClassName())) {
-
-                store.getNode(id).setDisplayName(
-                        lAttributes.getValue(
-                        TagsAndAttributes.displayname));
-
-                idsAndConfigItems.put(id, "");
+        for (Entry<Long, Node> entry : store.entrySet()) {
+            Node node = entry.getValue();
+            if (lAttributes.getValue(TagsAndAttributes.classname).equals(node.getClassName())) {
+                node.setDisplayName(lAttributes.getValue(TagsAndAttributes.displayname));
+                idsAndConfigItems.put(entry.getKey(), "");
             }
         }
 
-        if (idsAndConfigItems.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-
+        return !idsAndConfigItems.isEmpty();
     }
 
     /**
@@ -152,25 +127,13 @@ public class PluginDocumentHandler extends DefaultHandler {
      */
     private void setConfigAttributes(String lOptional, String lConfigType, String lDefaultValue) {
 
-        boolean optionalBoolean = lOptional.equals("1");
-
-        Set<Entry<String, String>> set = idsAndConfigItems.entrySet();
-        Iterator<Entry<String, String>> iterator = set.iterator();
-        Map.Entry<String, String> me;
-        String id;
-        String configName;
-
-        while (iterator.hasNext()) {
-
-            me = iterator.next();
-
-            configName = me.getValue();
-
-            if (!configName.isEmpty()) {
-                id = me.getKey();
-                store.getNode(id).getConfigItem(configName).setConfigType(lConfigType);
-                store.getNode(id).getConfigItem(configName).setOptional(optionalBoolean);
-                store.getNode(id).getConfigItem(configName).setDefaultValue(lDefaultValue);
+        for (Entry<Long, String> entry : idsAndConfigItems.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                Node node = store.getNode(entry.getKey());
+                node.getConfigItem(entry.getValue())
+                    .setConfigType(lConfigType)
+                    .setOptional("1".equals(lOptional))
+                    .setDefaultValue(lDefaultValue);
             }
         }
     }
@@ -181,14 +144,12 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @param lConfigName Name des ConfigItems.
      * @return Ob ein ConfigItem gefunden wurde oder nicht.
      */
-    private Boolean containsConfigName(String lConfigName) {
-        boolean containsConfigItem = false;
-        String configName = "";
+    private boolean containsConfigName(String lConfigName) {
 
-        for (String id : idsAndConfigItems.keySet()) {
-            configName = "";
+        for (Long id : idsAndConfigItems.keySet()) {
+            String configName = "";
 
-            containsConfigItem = store.getNode(id).containsConfigItem(lConfigName);
+            boolean containsConfigItem = store.getNode(id).containsConfigItem(lConfigName);
 
             if (containsConfigItem) {
                 configName = store.getNode(id).getConfigItem(lConfigName).getConfigName();
@@ -213,14 +174,11 @@ public class PluginDocumentHandler extends DefaultHandler {
      * @throws SAXException - Falls die xml nicht validiert werden kann.
      */
     @Override
-    public void endElement(String lUri, String lLocalName, String lQName)
-            throws SAXException {
+    public void endElement(String lUri, String lLocalName, String lQName) throws SAXException {
         super.endElement(lUri, lLocalName, lQName);
 
-        if (this.searchItemConfig == true) {
-            if (lQName.equals(TagsAndAttributes.configurations)) {
-                searchItemConfig = false;
-            }
+        if (searchItemConfig && TagsAndAttributes.configurations.equals(lQName)) {
+            searchItemConfig = false;
         }
     }
 

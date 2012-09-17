@@ -47,41 +47,47 @@ public class JobParameter implements Serializable, Identifiable {
         return id;
     }
 
-    public void setId(Long jp_id) {
+    public JobParameter setId(Long jp_id) {
         id = jp_id;
+        return this;
     }
 
     public Job getJob() {
         return job;
     }
 
-    public void setJob(Job job) {
+    public JobParameter setJob(Job job) {
         this.job = job;
+        return this;
     }
 
-    public Long getNodeId() {
+    public long getNodeId() {
         return node_id;
     }
 
-    public void setNodeId(Long node_id) {
+    public JobParameter setNodeId(long node_id) {
         this.node_id = node_id;
+        return this;
     }
 
     public String getParameterName() {
         return param_name;
     }
 
-    public void setParameterName(String param_name) {
+    public JobParameter setParameterName(String param_name) {
         this.param_name = param_name;
+        return this;
     }
 
     public String getParameterValue() {
         return param_value;
     }
 
-    public void setParameterValue(String param_value) {
+    public JobParameter setParameterValue(String param_value) {
         this.param_value = param_value;
+        return this;
     }
+    
     @Transient
     String displayName;
     @Transient
@@ -99,36 +105,41 @@ public class JobParameter implements Serializable, Identifiable {
         return user_desc;
     }
 
-    public void setUserDescription(String user_desc) {
+    public JobParameter setUserDescription(String user_desc) {
         this.user_desc = user_desc;
+        return this;
     }
 
     public String getUserName() {
         return user_name;
     }
 
-    public void setUserName(String user_name) {
+    public JobParameter setUserName(String user_name) {
         this.user_name = user_name;
+        return this;
     }
 
-    public void setDisplayName(String lDisplayName) {
+    public JobParameter setDisplayName(String lDisplayName) {
         displayName = lDisplayName;
+        return this;
     }
 
     public String getDisplayName() {
         return displayName;
     }
 
-    public void setClassName(String lClassName) {
+    public JobParameter setClassName(String lClassName) {
         className = lClassName;
+        return this;
     }
 
     public String getClassName() {
         return className;
     }
 
-    public void setChoices(Map<String, String> lChoices) {
+    public JobParameter setChoices(Map<String, String> lChoices) {
         choices = lChoices;
+        return this;
     }
 
     public Map<String, String> getChoices() {
@@ -146,23 +157,26 @@ public class JobParameter implements Serializable, Identifiable {
         return default_value;
     }
 
-    public void setDefaultValue(String default_value) {
+    public JobParameter setDefaultValue(String default_value) {
         this.default_value = default_value;
+        return this;
     }
 
     public Boolean isOptional() {
         return optional;
     }
 
-    public void setOptional(boolean optional) {
+    public JobParameter setOptional(boolean optional) {
         this.optional = optional;
+        return this;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public JobParameter setType(String type) {
         this.type = type;
+        return this;
     }
 }

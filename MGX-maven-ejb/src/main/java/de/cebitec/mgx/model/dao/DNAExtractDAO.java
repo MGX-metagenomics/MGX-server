@@ -3,6 +3,9 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -15,8 +18,9 @@ public class DNAExtractDAO<T extends DNAExtract> extends DAO<T> {
         return DNAExtract.class;
     }
 
-    public Iterable<DNAExtract> bySample(Sample s) {
-        return getEntityManager().createQuery("SELECT DISTINCT d FROM " + getClassName() + " d WHERE d.sample = :sample").
-                setParameter("sample", s).getResultList();
+    public AutoCloseableIterator<DNAExtract> bySample(Sample s) {
+        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT d FROM " + getClassName() + " d WHERE d.sample = :sample").
+                                    setParameter("sample", s).getResultList().iterator();
+        return new ForwardingIterator<>(iterator);
     }
 }

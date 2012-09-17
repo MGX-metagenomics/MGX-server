@@ -5,6 +5,7 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.Pair;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -120,9 +121,9 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         AttributeType attrType2 = getController().getAttributeTypeDAO().getById(attrType2Id);
 
         // test code - bulk retrieval
-        for (AttributeType at : getController().getAttributeTypeDAO().getByIds(Arrays.asList(attrTypeId, attrType2Id))) {
-            System.err.println("got AT: " + at.getName());
-        }
+//        for (AttributeType at : getController().getAttributeTypeDAO().getByIds(Arrays.asList(attrTypeId, attrType2Id))) {
+//            System.err.println("got AT: " + at.getName());
+//        }
 
         Map<Pair<Attribute, Attribute>, Long> ret = new HashMap<>();
         Connection conn = getController().getConnection();
@@ -163,31 +164,33 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
-    public Collection<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
+    public DBIterator<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
+        DBIterator<Sequence> iter = null;
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
-        ResultSet rs = null;
-        Collection<Sequence> ret = new ArrayList<>();
+        ResultSet rset = null;
 
         try {
             stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?,?)");
             stmt.setString(1, term);
             stmt.setBoolean(2, exact);
             stmt.setArray(3, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                Sequence s = new Sequence();
-                s.setId(rs.getLong(1));
-                s.setName(rs.getString(2));
-                s.setLength(rs.getInt(3));
-                
-                ret.add(s);
-            }
+            rset = stmt.executeQuery();
+            final ResultSet rs = rset;
+
+            iter = new DBIterator<Sequence>(rs, stmt, conn) {
+                @Override
+                public Sequence convert(ResultSet rs) throws SQLException {
+                    Sequence s = new Sequence();
+                    s.setId(rs.getLong(1));
+                    s.setName(rs.getString(2));
+                    s.setLength(rs.getInt(3));
+                    return s;
+                }
+            };
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            close(conn, stmt, rs);
         }
-        return ret;
+        return iter;
     }
 }

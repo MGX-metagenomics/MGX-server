@@ -4,6 +4,9 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto;
+import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
+import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
+import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
@@ -11,9 +14,11 @@ import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -143,17 +148,20 @@ public class SeqRunBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Map<Job, Iterable<AttributeType>> result = new HashMap<>();
-        for (Job job : mgx.getJobDAO().BySeqRun(run)) {
+        Map<Job, Iterator<AttributeType>> result = new HashMap<>();
+        Iterator<Job> iter = mgx.getJobDAO().BySeqRun(run);
+        while (iter.hasNext()) {
+            Job job = iter.next();
             result.put(job, mgx.getAttributeTypeDAO().ByJob(job.getId()));
         }
 
         // convert to DTO - FIXME: move to correct package
         dto.JobsAndAttributeTypesDTO.Builder b = dto.JobsAndAttributeTypesDTO.newBuilder();
-        for (Map.Entry<Job, Iterable<AttributeType>> entry : result.entrySet()) {
-            dto.JobDTO toDTO = JobDTOFactory.getInstance().toDTO(entry.getKey());
-            dto.AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(entry.getValue());
-            dto.JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder().setJob(toDTO).setAttributeTypes(dtoList).build();
+        for (Map.Entry<Job, Iterator<AttributeType>> entry : result.entrySet()) {
+            JobDTO toDTO = JobDTOFactory.getInstance().toDTO(entry.getKey());
+            ForwardingIterator<AttributeType> forwardingIterator = new ForwardingIterator<>(entry.getValue());
+            AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(forwardingIterator);
+            JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder().setJob(toDTO).setAttributeTypes(dtoList).build();
             b.addEntry(jat);
         }
         return b.build();

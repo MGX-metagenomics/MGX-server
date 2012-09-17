@@ -4,10 +4,13 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -41,7 +44,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
         try {
             conn = getConnection();
-            
+
             // delete observations
             stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)");
             stmt.setLong(1, id);
@@ -118,8 +121,9 @@ public class JobDAO<T extends Job> extends DAO<T> {
         return ret;
     }
 
-    public Iterable<Job> BySeqRun(SeqRun sr) {
-        return getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun").
-                setParameter("seqrun", sr).getResultList();
+    public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) {
+        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun").
+                setParameter("seqrun", sr).getResultList().iterator();
+        return new ForwardingIterator<>(iterator);
     }
 }

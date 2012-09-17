@@ -2,6 +2,9 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -14,8 +17,9 @@ public class JobParameterDAO<T extends JobParameter> extends DAO<T> {
         return JobParameter.class;
     }
 
-    public Iterable<JobParameter> ByJob(Job j) {
-        return getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.job = :job").
-                setParameter("job", j).getResultList();
+    public AutoCloseableIterator<JobParameter> ByJob(Job j) {
+        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.job = :job").
+                setParameter("job", j).getResultList().iterator();
+        return new ForwardingIterator<>(iterator);
     }
 }

@@ -4,6 +4,8 @@ import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTO.Builder;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -39,10 +41,13 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
     }
 
     @Override
-    public AttributeDTOList toDTOList(Iterable<Attribute> list) {
+    public AttributeDTOList toDTOList(AutoCloseableIterator<Attribute> acit) {
         AttributeDTOList.Builder b = AttributeDTOList.newBuilder();
-        for (Attribute attr : list) {
-            b.addAttribute(toDTO(attr));
+        try (AutoCloseableIterator<Attribute> iter = acit) {
+            while (iter.hasNext()) {
+                b.addAttribute(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

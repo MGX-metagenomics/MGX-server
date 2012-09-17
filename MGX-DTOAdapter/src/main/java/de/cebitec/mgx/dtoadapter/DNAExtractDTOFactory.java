@@ -4,6 +4,8 @@ import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO.Builder;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -38,19 +40,19 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
         if (d.getFivePrimer() != null) {
             b = b.setFivePrimePrimer(d.getFivePrimer());
         }
-        
+
         if (d.getThreePrimer() != null) {
             b = b.setThreePrimePrimer(d.getThreePrimer());
         }
-        
+
         if (d.getTargetGene() != null) {
             b = b.setTargetGene(d.getTargetGene());
         }
-        
+
         if (d.getTargetFragment() != null) {
             b = b.setTargetFragment(d.getTargetFragment());
         }
-        
+
         if (d.getDescription() != null) {
             b = b.setDescription(d.getDescription());
         }
@@ -92,10 +94,13 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
     }
 
     @Override
-    public DNAExtractDTOList toDTOList(Iterable<DNAExtract> list) {
+    public DNAExtractDTOList toDTOList(AutoCloseableIterator<DNAExtract> acit) {
         DNAExtractDTOList.Builder b = DNAExtractDTOList.newBuilder();
-        for (DNAExtract o : list) {
-            b.addExtract(toDTO(o));
+        try (AutoCloseableIterator<DNAExtract> iter = acit) {
+            while (iter.hasNext()) {
+                b.addExtract(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

@@ -1,5 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import java.util.Date;
 
 /**
@@ -12,7 +13,7 @@ public abstract class DTOConversionBase<T, U, V> {
 
     public abstract T toDB(U dto);
     
-    public abstract V toDTOList(Iterable<T> list);
+    public abstract V toDTOList(AutoCloseableIterator<T> list);
 
     protected static Long toUnixTimeStamp(Date date) {
         if (date == null) {

@@ -3,6 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.mgx.dto.dto.MembershipDTO;
 import de.cebitec.mgx.dto.dto.MembershipDTOList;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
  *
@@ -37,7 +38,7 @@ public class MembershipDTOFactory extends DTOConversionBase<MembershipI, Members
     }
 
     @Override
-    public MembershipDTOList toDTOList(Iterable<MembershipI> list) {
+    public MembershipDTOList toDTOList(AutoCloseableIterator<MembershipI> acit) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

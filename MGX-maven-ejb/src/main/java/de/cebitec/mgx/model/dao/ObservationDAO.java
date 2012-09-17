@@ -2,18 +2,14 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Observation;
-import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.SequenceObservation;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  *
@@ -21,32 +17,35 @@ import java.util.List;
  */
 public class ObservationDAO<T extends Observation> {
 
-    public List<SequenceObservation> byRead(long seqId) throws MGXException {
-        List<SequenceObservation> ret = new ArrayList<>();
+    private MGXController ctx;
+
+    public DBIterator<SequenceObservation> byRead(long seqId) throws MGXException {
+        DBIterator<SequenceObservation> iter = null;
         Connection conn = getConnection();
         PreparedStatement stmt = null;
-        ResultSet rs = null;
+        ResultSet rset = null;
         try {
             stmt = conn.prepareStatement("SELECT * from getObservations(?)");
             stmt.setLong(1, seqId);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                SequenceObservation obs = new SequenceObservation();
-                obs.setStart(rs.getInt(1));
-                obs.setStop(rs.getInt(2));
-                obs.setAttributeName(rs.getString(3));
-                obs.setAttributeTypeName(rs.getString(4));
-                ret.add(obs);
-            }
+            rset = stmt.executeQuery();
+
+            iter = new DBIterator<SequenceObservation>(rset, stmt, conn) {
+                @Override
+                public SequenceObservation convert(ResultSet rs) throws SQLException {
+                    SequenceObservation obs = new SequenceObservation();
+                    obs.setStart(rs.getInt(1));
+                    obs.setStop(rs.getInt(2));
+                    obs.setAttributeName(rs.getString(3));
+                    obs.setAttributeTypeName(rs.getString(4));
+                    return obs;
+                }
+            };
+
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            close(conn, stmt, rs);
         }
-        return ret;
+        return iter;
     }
-    
-    private MGXController ctx;
 
     public void setController(MGXController ctx) {
         this.ctx = ctx;
@@ -58,34 +57,5 @@ public class ObservationDAO<T extends Observation> {
 
     public Connection getConnection() {
         return ctx.getConnection();
-    }
-
-    protected void close(Connection c, Statement s, ResultSet r) {
-        try {
-            if (r != null) {
-                r.close();
-            }
-            if (s != null) {
-                s.close();
-            }
-            if (c != null) {
-                c.close();
-            }
-        } catch (SQLException ex) {
-            getController().log(ex.getMessage());
-        } finally {
-            try {
-                if (r != null) {
-                    r.close();
-                }
-                if (s != null) {
-                    s.close();
-                }
-                if (c != null) {
-                    c.close();
-                }
-            } catch (SQLException ex) {
-            }
-        }
     }
 }

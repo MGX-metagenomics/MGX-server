@@ -4,6 +4,8 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Identifiable;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -86,15 +88,19 @@ public abstract class DAO<T extends Identifiable> {
         return ret;
     }
 
-    public Iterable<T> getByIds(Collection<Long> ids) {
-        return (Iterable<T>) getEntityManager()
+    public Iterator<T> getByIds(Collection<Long> ids) {
+        return getEntityManager()
                 .createQuery("SELECT DISTINCT o FROM " + getClassName() + " o WHERE o.id IN :ids", getType())
                 .setParameter("ids", ids)
-                .getResultList();
+                .getResultList()
+                .iterator();
     }
 
-    public Iterable<T> getAll() {
-        return (Iterable<T>) getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType()).getResultList();
+    public AutoCloseableIterator<T> getAll() {
+        Iterator<T> iterator = getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType())
+                                    .getResultList()
+                                    .iterator();
+        return new ForwardingIterator<>(iterator);
     }
 
     public long create(T obj) throws MGXException {

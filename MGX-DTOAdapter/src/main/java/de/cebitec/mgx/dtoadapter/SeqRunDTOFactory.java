@@ -8,6 +8,8 @@ import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,17 +37,17 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
     public final SeqRunDTO toDTO(SeqRun s) {
         Term seqMethod = null;
         Term seqTech = null;
-        
+
         try {
             seqMethod = global.getTermDAO().getById(s.getSequencingMethod());
             seqTech = global.getTermDAO().getById(s.getSequencingTechnology());
         } catch (MGXException ex) {
             Logger.getLogger(SeqRunDTOFactory.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         TermDTO techDTO = TermDTOFactory.getInstance().toDTO(seqTech);
         TermDTO methDTO = TermDTOFactory.getInstance().toDTO(seqMethod);
-        
+
         Builder b = SeqRunDTO.newBuilder()
                 .setId(s.getId())
                 .setName(s.getName())
@@ -83,10 +85,13 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
     }
 
     @Override
-    public SeqRunDTOList toDTOList(Iterable<SeqRun> list) {
+    public SeqRunDTOList toDTOList(AutoCloseableIterator<SeqRun> acit) {
         SeqRunDTOList.Builder b = SeqRunDTOList.newBuilder();
-        for (SeqRun o : list) {
-            b.addSeqrun(toDTO(o));
+        try (AutoCloseableIterator<SeqRun> iter = acit) {
+            while (iter.hasNext()) {
+                b.addSeqrun(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

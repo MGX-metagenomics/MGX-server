@@ -3,6 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
  *
@@ -15,7 +16,8 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
     }
     protected final static ToolDTOFactory instance;
 
-    private ToolDTOFactory() {}
+    private ToolDTOFactory() {
+    }
 
     public static ToolDTOFactory getInstance() {
         return instance;
@@ -55,10 +57,13 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
     }
 
     @Override
-    public ToolDTOList toDTOList(Iterable<Tool> list) {
+    public ToolDTOList toDTOList(AutoCloseableIterator<Tool> acit) {
         ToolDTOList.Builder b = ToolDTOList.newBuilder();
-        for (Tool o : list) {
-            b.addTool(toDTO(o));
+        try (AutoCloseableIterator<Tool> iter = acit) {
+            while (iter.hasNext()) {
+                b.addTool(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

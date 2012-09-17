@@ -6,6 +6,7 @@ import de.cebitec.mgx.dto.dto.ProjectClassDTO;
 import de.cebitec.mgx.dto.dto.ProjectClassDTOList;
 import de.cebitec.mgx.dto.dto.RoleDTOList;
 import de.cebitec.mgx.dto.dto.RoleDTOList.Builder;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
  *
@@ -44,10 +45,13 @@ public class ProjectClassDTOFactory extends DTOConversionBase<ProjectClassI, Pro
     }
 
     @Override
-    public ProjectClassDTOList toDTOList(Iterable<ProjectClassI> list) {
+    public ProjectClassDTOList toDTOList(AutoCloseableIterator<ProjectClassI> acit) {
         ProjectClassDTOList.Builder ret = ProjectClassDTOList.newBuilder();
-        for (ProjectClassI pc : list) {
-            ret.addProjectclass(toDTO(pc));
+        try (AutoCloseableIterator<ProjectClassI> iter = acit) {
+            while (iter.hasNext()) {
+                ret.addProjectclass(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return ret.build();
     }

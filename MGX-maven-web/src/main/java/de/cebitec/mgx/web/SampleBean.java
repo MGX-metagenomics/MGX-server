@@ -9,6 +9,7 @@ import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.Stateless;
@@ -104,7 +105,7 @@ public class SampleBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Iterable<Sample> samples = mgx.getSampleDAO().byHabitat(habitat);
+        AutoCloseableIterator<Sample> samples = mgx.getSampleDAO().byHabitat(habitat);
         return SampleDTOFactory.getInstance().toDTOList(samples);
     }
 

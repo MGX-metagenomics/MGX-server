@@ -25,7 +25,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
     /**
      * Speichert den Namen des ConfigItems.
      */
-    private String configName;
+    private final String configName;
     /**
      * Speichert den Typ des ConfigItems. Der dem Namen in der plugin.xml
      * gleicht.
@@ -50,7 +50,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
     /**
      * Speichert den vom User vergebenen Namen des ConfigItems.
      */
-    private String userName;
+    private final String userName;
 
     /**
      * Der Konstruktor speichert den vom User vergebenen Namen, die Beschreibung
@@ -61,8 +61,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @param lUserDescription Die vom User vergebene Beschreibung.
      * @param lConfigName Der Name des ConfigItems.
      */
-    public ConfigItem(String lUserName, String lUserDescription,
-            String lConfigName) {
+    public ConfigItem(String lUserName, String lUserDescription, String lConfigName) {
         defaultValue = "";
         userName = lUserName;
         userDescription = lUserDescription;
@@ -143,12 +142,13 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lAnswer Die Antwort des Users.
      */
-    public void setAnswer(String lAnswer) {
+    public ConfigItem setAnswer(String lAnswer) {
         if (lAnswer.trim().isEmpty() || lAnswer == null) {
             answer = "";
         } else {
             this.answer = lAnswer;
         }
+        return this;
     }
 
     /**
@@ -166,8 +166,9 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param choice Liste an Auswahlobjekten.
      */
-    public void setChoice(Choices lChoice) {
+    public ConfigItem setChoice(Choices lChoice) {
         choice = lChoice;
+        return this;
     }
 
     /**
@@ -177,7 +178,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @return
      */
     public boolean hasChoices() {
-        return !choice.isChoiceEmpty();
+        return !choice.isEmpty();
     }
 
     /**
@@ -185,8 +186,9 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lConfigType Der Typ des ConfigItems.
      */
-    public void setConfigType(String lConfigType) {
+    public ConfigItem setConfigType(String lConfigType) {
         this.configType = lConfigType;
+        return this;
     }
 
     /**
@@ -194,8 +196,9 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lUserDescription
      */
-    public void setUserDescription(String lUserDescription) {
+    public ConfigItem setUserDescription(String lUserDescription) {
         userDescription = lUserDescription;
+        return this;
     }
 
     /**
@@ -203,8 +206,9 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lOptional optional
      */
-    public void setOptional(boolean lOptional) {
+    public ConfigItem setOptional(boolean lOptional) {
         this.optional = lOptional;
+        return this;
     }
 
     /**
@@ -231,8 +235,9 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      *
      * @param lDefaultValue the defaultValue to set
      */
-    public void setDefaultValue(String lDefaultValue) {
+    public ConfigItem setDefaultValue(String lDefaultValue) {
         this.defaultValue = lDefaultValue;
+        return this;
     }
 
     /**

@@ -2,6 +2,9 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -14,8 +17,9 @@ public class SampleDAO<T extends Sample> extends DAO<T> {
         return Sample.class;
     }
 
-    public Iterable<Sample> byHabitat(Habitat h) {
-        return getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.habitat = :hab").
-                setParameter("hab", h).getResultList();
+    public AutoCloseableIterator<Sample> byHabitat(Habitat h) {
+        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.habitat = :hab").
+                                    setParameter("hab", h).getResultList().iterator();
+        return new ForwardingIterator<>(iterator);
     }
 }

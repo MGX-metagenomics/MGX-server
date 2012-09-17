@@ -4,6 +4,8 @@ import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTO.Builder;
 import de.cebitec.mgx.dto.dto.TermDTOList;
 import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -28,11 +30,13 @@ public class TermDTOFactory extends DTOConversionBase<Term, TermDTO, TermDTOList
         Builder b = TermDTO.newBuilder()
                 .setId(a.getId())
                 .setName(a.getName());
-        if (a.getParentId() != null)
+        if (a.getParentId() != null) {
             b = b.setParentId(a.getParentId());
-        if (a.getDescription() != null) 
+        }
+        if (a.getDescription() != null) {
             b = b.setDescription(a.getDescription());
-        
+        }
+
         return b.build();
     }
 
@@ -41,21 +45,26 @@ public class TermDTOFactory extends DTOConversionBase<Term, TermDTO, TermDTOList
         Term t = new Term();
         t.setId(dto.getId())
                 .setName(dto.getName());
-        
-        if (dto.hasParentId())
+
+        if (dto.hasParentId()) {
             t.setParentId(dto.getParentId());
-        
-        if (dto.hasDescription())
+        }
+
+        if (dto.hasDescription()) {
             t.setDescription(dto.getDescription());
-        
+        }
+
         return t;
     }
 
     @Override
-    public TermDTOList toDTOList(Iterable<Term> list) {
+    public TermDTOList toDTOList(AutoCloseableIterator<Term> acit) {
         TermDTOList.Builder b = TermDTOList.newBuilder();
-        for (Term t: list) {
-            b.addTerm(toDTO(t));
+        try (AutoCloseableIterator<Term> iter = acit) {
+            while (iter.hasNext()) {
+                b.addTerm(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

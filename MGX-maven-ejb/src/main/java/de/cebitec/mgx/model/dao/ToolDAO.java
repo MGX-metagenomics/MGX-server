@@ -27,10 +27,10 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         String fname = getController().getProjectDirectory() + "jobs" + File.separator + id.toString() + ".xml";
         try {
-            FileWriter fw = new FileWriter(fname);
-            fw.write(xmldata);
-            fw.flush();
-            fw.close();
+            try (FileWriter fw = new FileWriter(fname)) {
+                fw.write(xmldata);
+                fw.flush();
+            }
         } catch (Exception ex) {
             delete(id); // remove from database, aka rollback
             throw new MGXException(ex.getMessage());
@@ -98,10 +98,4 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         }
         super.delete(id);
     }
-
-//    public Tool byJob(Job job) {
-//        return job.getTool();
-//        //return (Tool) getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.job = :job").
-//        //        setParameter("job", job).getSingleResult();
-//    }
 }

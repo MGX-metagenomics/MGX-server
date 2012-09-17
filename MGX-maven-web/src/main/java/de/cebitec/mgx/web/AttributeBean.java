@@ -19,6 +19,7 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -100,7 +101,7 @@ public class AttributeBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public SequenceDTOList search(SearchRequestDTO req) {
-        Collection<Sequence> ret = null;
+        AutoCloseableIterator<Sequence> ret = null;
         try {
             ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunIdList());
         } catch (MGXException ex) {

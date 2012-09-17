@@ -4,6 +4,8 @@ import de.cebitec.mgx.dto.dto.HabitatDTO;
 import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.HabitatDTOList.Builder;
 import de.cebitec.mgx.model.db.Habitat;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -55,12 +57,14 @@ public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO, Ha
     }
 
     @Override
-    public HabitatDTOList toDTOList(Iterable<Habitat> list) {
+    public HabitatDTOList toDTOList(AutoCloseableIterator<Habitat> acit) {
         Builder b = HabitatDTOList.newBuilder();
-        for (Habitat o : list) {
-            b.addHabitat(toDTO(o));
+        try (AutoCloseableIterator<Habitat> iter = acit) {
+            while (iter.hasNext()) {
+                b.addHabitat(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }
-
 }

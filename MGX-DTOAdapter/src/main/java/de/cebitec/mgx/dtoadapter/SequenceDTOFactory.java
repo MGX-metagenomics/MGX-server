@@ -5,6 +5,8 @@ import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -58,10 +60,13 @@ public class SequenceDTOFactory extends DTOConversionBase<Sequence, SequenceDTO,
     }
 
     @Override
-    public SequenceDTOList toDTOList(Iterable<Sequence> list) {
+    public SequenceDTOList toDTOList(AutoCloseableIterator<Sequence> acit) {
         Builder b = SequenceDTOList.newBuilder();
-        for (Sequence s : list) {
-            b.addSeq(toDTO(s));
+        try (AutoCloseableIterator<Sequence> iter = acit) {
+            while (iter.hasNext()) {
+                b.addSeq(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

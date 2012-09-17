@@ -15,10 +15,12 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.HashSet;
+import java.util.Iterator;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -120,7 +122,7 @@ public class JobBean {
     public JobParameterListDTO getParameters(@PathParam("id") Long id) {
         try {
             Job job = mgx.getJobDAO().getById(id);
-            Iterable<JobParameter> params = mgx.getJobParameterDAO().ByJob(job);
+            AutoCloseableIterator<JobParameter> params = mgx.getJobParameterDAO().ByJob(job);
             return JobParameterDTOFactory.getInstance().toDTOList(params);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));

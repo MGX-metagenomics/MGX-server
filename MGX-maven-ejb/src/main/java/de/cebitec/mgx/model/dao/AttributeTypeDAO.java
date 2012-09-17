@@ -2,12 +2,12 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  *
@@ -23,9 +23,9 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
     /*
      *  returns attribute types for a job, if it's in FINISHED state
      */
-    public Iterable<AttributeType> ByJob(Long jobId) {
+    public DBIterator<AttributeType> ByJob(long jobId) {
 
-        List<AttributeType> ret = new ArrayList<>();
+        DBIterator<AttributeType> iter = null;
 
         final String sql = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
                 + "FROM attributetype atype "
@@ -37,61 +37,66 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
 
         Connection c = getConnection();
         PreparedStatement stmt = null;
-        ResultSet rs = null;
+        ResultSet rset = null;
         try {
             stmt = c.prepareStatement(sql);
             stmt.setLong(1, jobId);
             stmt.setInt(2, JobState.FINISHED.getValue());
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                AttributeType aType = new AttributeType();
-                aType.setId(rs.getLong(1));
-                aType.setName(rs.getString(2));
-                aType.setValueType(rs.getString(3).charAt(0));
-                aType.setStructure(rs.getString(4).charAt(0));
-                ret.add(aType);
-            }
+            rset = stmt.executeQuery();
+
+            iter = new DBIterator<AttributeType>(rset, stmt, c) {
+                @Override
+                public AttributeType convert(ResultSet rs) throws SQLException {
+                    AttributeType aType = new AttributeType();
+                    aType.setId(rs.getLong(1));
+                    aType.setName(rs.getString(2));
+                    aType.setValueType(rs.getString(3).charAt(0));
+                    aType.setStructure(rs.getString(4).charAt(0));
+                    return aType;
+                }
+            };
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
-        } finally {
-            close(c, stmt, rs);
         }
 
-        return ret;
+        return iter;
     }
 
-    public List<AttributeType> BySeqRun(Long seqrunId) {
+    public DBIterator<AttributeType> BySeqRun(long seqrunId) {
 
-        List<AttributeType> ret = new ArrayList<>();
+        DBIterator<AttributeType> iter = null;
 
         final String sql = "SELECT DISTINCT atype.id, atype.name, atype.value_type, atype.structure "
                 + "FROM job "
                 + "LEFT JOIN attribute attr ON (job.id = attr.job_id) "
                 + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
                 + "WHERE job.job_state=? AND job.seqrun_id=?";
-        
+
         Connection c = getConnection();
         PreparedStatement stmt = null;
-        ResultSet rs = null;
+        ResultSet rset = null;
         try {
             stmt = c.prepareStatement(sql);
             stmt.setInt(1, JobState.FINISHED.getValue());
             stmt.setLong(2, seqrunId);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                AttributeType aType = new AttributeType();
-                aType.setId(rs.getLong(1));
-                aType.setName(rs.getString(2));
-                aType.setValueType(rs.getString(3).charAt(0));
-                aType.setStructure(rs.getString(4).charAt(0));
-                ret.add(aType);
-            }
+            rset = stmt.executeQuery();
+
+            iter = new DBIterator<AttributeType>(rset, stmt, c) {
+                @Override
+                public AttributeType convert(ResultSet rs) throws SQLException {
+                    AttributeType aType = new AttributeType();
+                    aType.setId(rs.getLong(1));
+                    aType.setName(rs.getString(2));
+                    aType.setValueType(rs.getString(3).charAt(0));
+                    aType.setStructure(rs.getString(4).charAt(0));
+                    return aType;
+                }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
-        } finally {
-            close(c, stmt, rs);
         }
 
-        return ret;
+        return iter;
     }
 }

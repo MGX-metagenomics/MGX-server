@@ -11,6 +11,7 @@ import de.cebitec.mgx.dto.dto.ProjectClassDTOList;
 import de.cebitec.mgx.dtoadapter.ProjectClassDTOFactory;
 import de.cebitec.mgx.dtoadapter.ProjectDTOFactory;
 import de.cebitec.mgx.dtoadapter.RoleDTOFactory;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -39,7 +40,8 @@ public class ProjectBean {
     @Path("listProjectClasses")
     @Produces("application/x-protobuf")
     public ProjectClassDTOList listProjectClasses() {
-        return ProjectClassDTOFactory.getInstance().toDTOList(gpms.getSupportedProjectClasses());
+        ForwardingIterator<ProjectClassI> forwardingIterator = new ForwardingIterator<>(gpms.getSupportedProjectClasses().iterator());
+        return ProjectClassDTOFactory.getInstance().toDTOList(forwardingIterator);
     }
 
     @GET

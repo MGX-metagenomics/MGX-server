@@ -2,13 +2,11 @@ package de.cebitec.mgx.jobsubmitter.data.impl;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
-/*
- * To change this template, choose Tools | Templates and open the template in
- * the editor.
- */
 /**
  * Ein Node repräsentiert eine sachliche Einheit, die ein oder mehrere Felder
  * (ConfigItems) beinhaltet, in denen der User eine Auswahl bzw Antwort geben
@@ -17,19 +15,19 @@ import java.util.TreeMap;
  *
  * @author belmann
  */
-public class Node {
+public class Node implements Iterable<Entry<String, ConfigItem>> {
 
     /**
      * Der Klassenname eines Knotens.
      *
      */
-    private String className;
+    private final String className;
     /**
      * Da die ConfigItems alle eindeutig sind für einen Node, werden diese in
      * einer Map abgespeichert. Der Schlüssel ist hierbei der ConfigName.
      *
      */
-    private TreeMap<String, ConfigItem> configItems;
+    private final Map<String, ConfigItem> configItems;
     /**
      * Speichert den Namen des Nodes, der Angezeigt werden soll.
      */
@@ -38,7 +36,7 @@ public class Node {
      * Speichert die Id des Knotens.
      *
      */
-    private String id;
+    private final long id;
 
     /**
      * Der Konstruktor teilt den Klassennamen als auch die Id des Knotens den
@@ -48,7 +46,7 @@ public class Node {
      * @param lClassName Der Klassenname des Nodes.
      * @param lId Die Id des Nodes.
      */
-    public Node(String lClassName, String lId) {
+    public Node(String lClassName, long lId) {
         id = lId;
         className = lClassName;
         configItems = new TreeMap<>();
@@ -80,7 +78,6 @@ public class Node {
      */
     public boolean containsConfigItem(String lConfigName) {
         return configItems.containsKey(lConfigName);
-
     }
 
     /**
@@ -98,21 +95,20 @@ public class Node {
      * eindeutige Name des ConfigItems. ConfigItems, dessen Antwort leer ist,
      * oder nicht gesetzt wurde, werden gelöscht.
      *
-     * @return HashMap<String,String> mit allen Antworten.
+     * @return Map<String,String> mit allen Antworten.
      *
      *
      */
-    public HashMap<String, String> getAnswers() {
+    public Map<String, String> getAnswers() {
 
-        deleteEmptyConfigItems();
-
-        HashMap<String, String> map = new HashMap<>();
-        for (String key : configItems.keySet()) {
-            map.put(key, configItems.get(key).getAnswer());
+        Map<String, String> map = new HashMap<>();
+        for (Entry<String, ConfigItem> entry : configItems.entrySet()) {
+            if (entry.getValue().isAnswerSet()) {
+                map.put(entry.getKey(), entry.getValue().getAnswer());
+            }
         }
 
         return map;
-
     }
 
     /**
@@ -120,20 +116,15 @@ public class Node {
      *
      * @return Iterator
      */
-    public Iterator<Entry<String, ConfigItem>> getIterator() {
+    @Override
+    public Iterator<Entry<String, ConfigItem>> iterator() {
         return configItems.entrySet().iterator();
     }
 
-    /**
-     * Entfernt alle ConfigItems, die noch keine Antwort gesetzt bekommen haben.
-     */
-    protected void deleteEmptyConfigItems() {
-        for (Entry<String, ConfigItem> e : configItems.entrySet()) {
-            if (e.getValue().isAnswerSet()) {
-                configItems.remove(e.getKey());
-            }
-        }
+    public Set<Entry<String, ConfigItem>> entrySet() {
+        return configItems.entrySet();
     }
+    
 
     /**
      * Fügt ein ConfigItem zu dem Node hinzu.
@@ -141,8 +132,9 @@ public class Node {
      *
      * @param lConfigItem
      */
-    public void addConfigItem(ConfigItem lConfigItem) {
+    public Node addConfigItem(ConfigItem lConfigItem) {
         configItems.put(lConfigItem.getConfigName(), lConfigItem);
+        return this;
     }
 
     /**
@@ -159,17 +151,9 @@ public class Node {
      *
      * @param lDisplayName displayName
      */
-    public void setDisplayName(String lDisplayName) {
+    public Node setDisplayName(String lDisplayName) {
         this.displayName = lDisplayName;
-    }
-
-    /**
-     * Entfernt ein ConfigItem vom Node.
-     *
-     * @param lConfigName
-     */
-    public void removeConfigItem(String lConfigName) {
-        configItems.remove(lConfigName);
+        return this;
     }
 
     /**
@@ -177,7 +161,7 @@ public class Node {
      *
      * @return the id
      */
-    public String getId() {
+    public long getId() {
         return id;
     }
 }

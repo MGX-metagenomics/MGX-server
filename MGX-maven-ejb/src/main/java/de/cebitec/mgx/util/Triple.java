@@ -6,9 +6,9 @@ package de.cebitec.mgx.util;
  */
 public class Triple<T, U, V> {
 
-    private T first;
-    private U second;
-    private V third;
+    private final T first;
+    private final U second;
+    private final V third;
 
     public Triple(T first, U second, V third) {
         this.first = first;

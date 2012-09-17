@@ -1,69 +1,59 @@
 
-/*
-* To change this template, choose Tools | Templates
-* and open the template in the editor.
- */
 package de.cebitec.mgx.jobsubmitter.data.impl;
-
-//~--- JDK imports ------------------------------------------------------------
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- *Bei Choices, kann der User die einzelnen Elemente über eine ComboBox auswählen.
- * 
- * 
+ * Bei Choices, kann der User die einzelnen Elemente über eine ComboBox
+ * auswählen.
+ *
+ *
  * @author belmann
  */
-public class Choices  {
-    
-   
-   /**
-    * Hier sind die einzelnen Elemente gespeichert,
-    * dabei dient der choice Name als key und die Beschreibung als value.
-    */
-   private LinkedHashMap<String,String> sample;
-   
+public class Choices {
 
-   /**
-    * Initialisiert die Datenstruktur für die Namen und Beschreibungen.
-    */
+    /**
+     * Hier sind die einzelnen Elemente gespeichert, dabei dient der choice Name
+     * als key und die Beschreibung als value.
+     */
+    private Map<String, String> sample;
+
     public Choices() {
-	 sample = new LinkedHashMap<String, String>();
-    }
-   /**
-    * Uebergibt dem konstruktor die Choices.
-    */
-    public Choices(Map<String, String> choices) {
-	 sample = (LinkedHashMap<String, String>) choices;
+        sample = new LinkedHashMap<>();
     }
 
- 
+    public Choices(Map<String, String> choices) {
+        sample = choices;
+    }
+
     /**
      * Fügt ein Element hinzu.
+     *
      * @param value Name
-     * @param description Beschreibung 
+     * @param description Beschreibung
      */
     public void addItem(String value, String description) {
-    	sample.put(value, description);
+        sample.put(value, description);
     }
 
     /**
      * Überprüft, ob eine Auswahl vorhanden ist oder nicht.
+     *
      * @return Auswahl vorhanden oder nicht
      */
-    public boolean isChoiceEmpty() {
+    public boolean isEmpty() {
         return sample.isEmpty();
     }
 
-   /**
-    * Gibt die Auswahl für das ConfigItem wieder.
-    * @return LinkedHashMap, wobei der Schlüssel, das Value darstellt.
-    */
-   public LinkedHashMap<String,String> getChoices() {
-	return sample;
-   }
+    /**
+     * Gibt die Auswahl für das ConfigItem wieder.
+     *
+     * @return LinkedHashMap, wobei der Schlüssel, das Value darstellt.
+     */
+    public Map<String, String> getChoices() {
+        return sample;
+    }
 }
 
 

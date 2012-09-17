@@ -13,13 +13,14 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
+import java.util.Iterator;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -164,7 +165,7 @@ public class ToolBean {
 
     private JobParameterListDTO getParams(String XMLData) {
         File plugins = mgx.getConfiguration().getPluginDump();
-        List<JobParameter> params = paramHelper.getParameters(XMLData, plugins);
+        AutoCloseableIterator<JobParameter> params = paramHelper.getParameters(XMLData, plugins);
         return JobParameterDTOFactory.getInstance().toDTOList(params);
     }
 

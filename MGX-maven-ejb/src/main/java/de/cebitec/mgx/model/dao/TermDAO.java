@@ -1,13 +1,12 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
@@ -32,29 +31,29 @@ public class TermDAO<T extends Term> extends DAO<T> {
         return Term.class;
     }
 
-    public Collection<Term> byCategory(String cat) {
-        List<Term> ret = new ArrayList<>();
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+    public DBIterator<Term> byCategory(String cat) {
+        DBIterator<Term> iter = null;
         try {
-            conn = globalDS.getConnection();
-            stmt = conn.prepareStatement(BY_CATNAME);
+            Connection conn = globalDS.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(BY_CATNAME);
             stmt.setString(1, cat);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                Term t = new Term();
-                t.setId(rs.getLong(1));
-                t.setParentId(rs.getLong(2));
-                t.setName(rs.getString(3));
-                t.setDescription(rs.getString(4));
-                ret.add(t);
-            }
+            ResultSet rset = stmt.executeQuery();
+
+            iter = new DBIterator<Term>(rset, stmt, conn) {
+                @Override
+                public Term convert(ResultSet rs) throws SQLException {
+                    Term t = new Term();
+                    t.setId(rs.getLong(1));
+                    t.setParentId(rs.getLong(2));
+                    t.setName(rs.getString(3));
+                    t.setDescription(rs.getString(4));
+                    return t;
+                }
+            };
+
         } catch (SQLException ex) {
             Logger.getLogger(TermDAO.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            close(conn, stmt, rs);
         }
-        return ret;
+        return iter;
     }
 }

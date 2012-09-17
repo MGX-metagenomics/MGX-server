@@ -4,6 +4,9 @@ import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dto.dto.SampleDTOList.Builder;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.DBIterator;
+import java.util.Iterator;
 
 /**
  *
@@ -16,7 +19,8 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, Sampl
     }
     protected final static SampleDTOFactory instance;
 
-    private SampleDTOFactory() {}
+    private SampleDTOFactory() {
+    }
 
     public static SampleDTOFactory getInstance() {
         return instance;
@@ -45,19 +49,24 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, Sampl
                 .setVolume(dto.getVolume())
                 .setVolumeUnit(dto.getVolumeUnit());
 
-        if (dto.hasId())
+        if (dto.hasId()) {
             s.setId(dto.getId());
+        }
 
         return s;
         // cannot set habitat here
     }
 
     @Override
-    public SampleDTOList toDTOList(Iterable<Sample> list) {
+    public SampleDTOList toDTOList(AutoCloseableIterator<Sample> acit) {
         Builder b = SampleDTOList.newBuilder();
-        for (Sample o : list) {
-            b.addSample(SampleDTOFactory.getInstance().toDTO(o));
+        try (AutoCloseableIterator<Sample> iter = acit) {
+            while (iter.hasNext()) {
+                b.addSample(SampleDTOFactory.getInstance().toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
+
     }
 }

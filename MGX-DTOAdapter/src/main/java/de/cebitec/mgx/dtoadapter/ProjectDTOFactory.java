@@ -3,6 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.mgx.dto.dto.ProjectDTO;
 import de.cebitec.mgx.dto.dto.ProjectDTOList;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
  *
@@ -37,7 +38,7 @@ public class ProjectDTOFactory extends DTOConversionBase<ProjectI, ProjectDTO, P
     }
 
     @Override
-    public ProjectDTOList toDTOList(Iterable<ProjectI> list) {
+    public ProjectDTOList toDTOList(AutoCloseableIterator<ProjectI> acit) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

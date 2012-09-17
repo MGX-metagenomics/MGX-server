@@ -23,13 +23,6 @@ public class AttributeTypeBean {
     @MGX
     MGXController mgx;
 
-//    @GET
-//    @Path("listTypes")
-//    @Produces("application/x-protobuf")
-//    public AttributeTypeDTOList listTypes() {
-//        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().listTypes());
-//    }
-//
     @GET
     @Path("ByJob/{jobId}")
     @Produces("application/x-protobuf")

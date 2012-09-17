@@ -4,7 +4,10 @@ import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobDTOList;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 
 /**
  *
@@ -17,7 +20,8 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
     }
     protected final static JobDTOFactory instance;
 
-    private JobDTOFactory() {}
+    private JobDTOFactory() {
+    }
 
     public static JobDTOFactory getInstance() {
         return instance;
@@ -30,8 +34,10 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setSeqrunId(j.getSeqrun().getId())
                 .setToolId(j.getTool().getId())
                 .setCreator(j.getCreator())
-                .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()))
-                .setParameters(JobParameterDTOFactory.getInstance().toDTOList(j.getParameters()));
+                .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()));
+        
+        AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
+        b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(acit));
 
         if (j.getStartDate() != null) {
             b.setStartDate(toUnixTimeStamp(j.getStartDate()));
@@ -52,7 +58,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setStartDate(toDate(dto.getStartDate()))
                 .setFinishDate(toDate(dto.getFinishDate()))
                 .setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
-        
+
         if (dto.hasId()) {
             j.setId(dto.getId());
         }
@@ -61,10 +67,13 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
     }
 
     @Override
-    public JobDTOList toDTOList(Iterable<Job> list) {
+    public JobDTOList toDTOList(AutoCloseableIterator<Job> acit) {
         JobDTOList.Builder b = JobDTOList.newBuilder();
-        for (Job job : list) {
-            b.addJob(toDTO(job));
+        try (AutoCloseableIterator<Job> iter = acit) {
+            while (iter.hasNext()) {
+                b.addJob(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
         }
         return b.build();
     }

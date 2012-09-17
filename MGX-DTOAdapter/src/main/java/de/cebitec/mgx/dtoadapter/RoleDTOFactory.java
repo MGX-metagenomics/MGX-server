@@ -3,6 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.dto.dto.RoleDTO;
 import de.cebitec.mgx.dto.dto.RoleDTOList;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
  *
@@ -36,7 +37,7 @@ public class RoleDTOFactory extends DTOConversionBase<RoleI, RoleDTO, RoleDTOLis
     }
 
     @Override
-    public RoleDTOList toDTOList(Iterable<RoleI> list) {
+    public RoleDTOList toDTOList(AutoCloseableIterator<RoleI> acit) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

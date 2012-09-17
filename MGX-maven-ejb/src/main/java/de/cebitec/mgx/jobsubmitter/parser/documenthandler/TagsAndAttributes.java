@@ -1,4 +1,4 @@
-package de.cebitec.mgx.jobsubmitter.parser.utilities;
+package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
 
 /**
  * Alle möglichen Elemente und Attribute die in den XML Dateien vewendet werden,
@@ -8,7 +8,7 @@ package de.cebitec.mgx.jobsubmitter.parser.utilities;
  *
  * @author belmann
  */
-public class TagsAndAttributes {
+public final class TagsAndAttributes {
 
     public static final String def = "default";
     public static final String nodetype = "nodetype";

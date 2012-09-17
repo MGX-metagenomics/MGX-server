@@ -5,9 +5,12 @@ import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Iterator;
 import javax.persistence.EntityManager;
 
 /**
@@ -60,13 +63,13 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
                     + "(SELECT id from job WHERE seqrun_id=?)");
             stmt.setLong(1, id);
             stmt.execute();
-
             // delete jobs
-//            stmt = conn.prepareStatement("DELETE FROM job WHERE seqrun_id=?");
-//            stmt.setLong(1, id);
-//            stmt.execute();
-            for (Job j : getController().getJobDAO().BySeqRun(sr)) {
-                getController().getJobDAO().delete(j.getId());
+            //            stmt = conn.prepareStatement("DELETE FROM job WHERE seqrun_id=?");
+            //            stmt.setLong(1, id);
+            //            stmt.execute();
+            Iterator<Job> iter = getController().getJobDAO().BySeqRun(sr);
+            while (iter.hasNext()) {
+                getController().getJobDAO().delete(iter.next().getId());
             }
 
             // delete reads
@@ -85,8 +88,9 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
         e.flush();
     }
 
-    public Iterable<SeqRun> byDNAExtract(DNAExtract extract) {
-        return getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract").
-                setParameter("extract", extract).getResultList();
+    public AutoCloseableIterator<SeqRun> byDNAExtract(DNAExtract extract) {
+        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract").
+                                    setParameter("extract", extract).getResultList().iterator();
+        return new ForwardingIterator<>(iterator);
     }
 }
