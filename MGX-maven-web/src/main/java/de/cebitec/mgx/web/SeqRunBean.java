@@ -7,6 +7,7 @@ import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
+import de.cebitec.mgx.dto.dto.JobsAndAttributeTypesDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
@@ -14,6 +15,7 @@ import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -141,28 +143,30 @@ public class SeqRunBean {
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
     public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
-        // FIXME - way too many DB queries here
         SeqRun run;
         try {
             run = mgx.getSeqRunDAO().getById(seqrun_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        Map<Job, Iterator<AttributeType>> result = new HashMap<>();
-        Iterator<Job> iter = mgx.getJobDAO().BySeqRun(run);
-        while (iter.hasNext()) {
-            Job job = iter.next();
-            result.put(job, mgx.getAttributeTypeDAO().ByJob(job.getId()));
-        }
 
-        // convert to DTO - FIXME: move to correct package
-        dto.JobsAndAttributeTypesDTO.Builder b = dto.JobsAndAttributeTypesDTO.newBuilder();
-        for (Map.Entry<Job, Iterator<AttributeType>> entry : result.entrySet()) {
-            JobDTO toDTO = JobDTOFactory.getInstance().toDTO(entry.getKey());
-            ForwardingIterator<AttributeType> forwardingIterator = new ForwardingIterator<>(entry.getValue());
-            AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(forwardingIterator);
-            JobAndAttributeTypes jat = dto.JobAndAttributeTypes.newBuilder().setJob(toDTO).setAttributeTypes(dtoList).build();
-            b.addEntry(jat);
+        JobsAndAttributeTypesDTO.Builder b = JobsAndAttributeTypesDTO.newBuilder();
+        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().BySeqRun(run)) {
+            while (iter.hasNext()) {
+                Job job = iter.next();
+                JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
+
+                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().ByJob(job.getId())) {
+                    AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
+                    JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
+                            .setJob(jobDTO).setAttributeTypes(dtoList)
+                            .build();
+                    b.addEntry(jat);
+                }
+
+            }
+        } catch (Exception ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return b.build();
     }
