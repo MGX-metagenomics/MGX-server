@@ -33,7 +33,6 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
             SeqReaderFactory.delete(dBFile);
         }
 
-        // FIXME move remainder to background thread
         Connection conn = null;
         PreparedStatement stmt = null;
 
