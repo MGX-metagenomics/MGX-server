@@ -26,6 +26,6 @@ public abstract class DTOConversionBase<T, U, V> {
         if (timestamp == null) {
             return null;
         }
-        return new Date(timestamp);
+        return new Date(1000L * timestamp);
     }
 }

@@ -5,8 +5,6 @@ import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dto.dto.SampleDTOList.Builder;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.DBIterator;
-import java.util.Iterator;
 
 /**
  *
