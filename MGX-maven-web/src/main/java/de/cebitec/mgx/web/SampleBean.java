@@ -47,7 +47,7 @@ public class SampleBean {
         }
         Sample s = SampleDTOFactory.getInstance().toDB(dto);
         h.addSample(s);
-        Long sample_id = null;
+        long sample_id;
         try {
             sample_id = mgx.getSampleDAO().create(s);
         } catch (MGXException ex) {
