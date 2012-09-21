@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.ejb.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameAlreadyBoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -59,7 +60,7 @@ public class GPMS implements DBGPMSI {
         proxyDS = new GPMSProxyDataSource(this);
         try {
             Context ctx = new InitialContext();
-            ctx.bind(ProxyDataSourceI.JNDI_NAME, proxyDS);
+            ctx.rebind(ProxyDataSourceI.JNDI_NAME, proxyDS);
         } catch (NamingException ex) {
             Logger.getLogger(GPMS.class.getName()).log(Level.SEVERE, null, ex);
         }
