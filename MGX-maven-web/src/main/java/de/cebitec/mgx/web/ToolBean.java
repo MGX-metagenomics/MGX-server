@@ -16,16 +16,21 @@ import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import de.cebitec.mgx.web.helper.XMLValidator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.ParserConfigurationException;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -83,7 +88,7 @@ public class ToolBean {
     public ToolDTOList fetchall() {
         return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
     }
-    
+
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
@@ -102,7 +107,7 @@ public class ToolBean {
     @Consumes("application/x-protobuf")
     public Response update(ToolDTO dto) {
         // not used
-        assert false; 
+        assert false;
         return null;
     }
 
@@ -160,6 +165,25 @@ public class ToolBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public JobParameterListDTO getAvailableParameters(ToolDTO dto) {
+
+        XMLValidator validator = new XMLValidator();
+        try {
+            if (!validator.isValid(dto.getXml())) {
+                throw new MGXWebException("XML is not Valid");
+            }
+            Logger.getLogger(ToolBean.class.getName()).info("NO Exception");
+        } catch (SAXException ex) {
+            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException("XML is not valid: " + ex.getMessage());
+        } catch (IOException ex) {
+            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException("XML is not valid: " + ex.getMessage());
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException("XML is not valid: " + ex.getMessage());
+        }
+
+
         return getParams(dto.getXml());
     }
 
