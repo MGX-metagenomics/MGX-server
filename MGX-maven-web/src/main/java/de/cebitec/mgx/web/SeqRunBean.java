@@ -78,7 +78,8 @@ public class SeqRunBean {
         }
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(seqMethod.getId())
-                .setSequencingTechnology(seqTech.getId());
+                .setSequencingTechnology(seqTech.getId())
+                .setName(dto.getName());
 
         if (dto.getSubmittedToInsdc()) {
             orig.setAccession(dto.getAccession());
