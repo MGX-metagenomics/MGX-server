@@ -51,7 +51,7 @@ public class JobBean {
         Tool tool = null;
         SeqRun seqrun = null;
         try {
-            tool = mgx.getToolDAO().getById(dto.getToolId());
+             tool = mgx.getToolDAO().getById(dto.getId());
             seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -151,16 +151,19 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public MGXBoolean verify(@PathParam("id") Long id) {
         boolean verified = false;
-
+            mgx.log("JobId:"+id);
+        
         try {
             verified = js.verify(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
+            mgx.log("MGXInsufficientJobConfigurationException ");
             throw new MGXJobException(ex.getMessage());
         } catch (MGXException ex) {
+            mgx.log("MGXException ");
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
+    
         return MGXBoolean.newBuilder().setValue(verified).build();
     }
 
