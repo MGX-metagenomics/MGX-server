@@ -2,21 +2,18 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.dto.dto;
-import de.cebitec.mgx.dto.dto.Directory;
-import de.cebitec.mgx.dto.dto.FileOrDirectory;
-import de.cebitec.mgx.dto.dto.FoDList;
-import de.cebitec.mgx.dto.dto.FoDList.Builder;
+import de.cebitec.mgx.dto.dto.FileDTO;
+import de.cebitec.mgx.dto.dto.FileDTOList;
+import de.cebitec.mgx.dto.dto.FileDTOList.Builder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 /**
@@ -32,61 +29,63 @@ public class FileBean {
     MGXController mgx;
 
     @GET
-    @Path("fetchall")
+    @Path("fetchall/{baseDir}")
     @Produces("application/x-protobuf")
-    public FoDList fetchall() {
-        File basedir = new File(mgx.getProjectDirectory() + "files" + File.separatorChar);
-        if (!basedir.exists()) {
-            basedir.mkdirs();
-        }
-        if (!basedir.isDirectory()) {
-            throw new MGXWebException("File storage subsystem corrupted. Contact server admin.");
-        }
-        return listDir(basedir);
+    public FileDTOList fetchall(@PathParam("baseDir") String baseDir) {
+        File currentDirectory = getCurrentDirectory(baseDir);
+        return listDir(currentDirectory);
     }
 
-    private FoDList listDir(File base) {
+    private FileDTOList listDir(File base) {
         //
         // This is ugly - application logic shouldn't exist on the
         // presentation (web/REST) layer. On the other hand, the 
         // underlying DAOs/datamodel don't know about the DTOs, i.e.
         // we would need to convert this twice.
         //
-        Builder list = FoDList.newBuilder();
+        Builder list = FileDTOList.newBuilder();
         for (File f : base.listFiles()) {
-            FileOrDirectory.Builder entryBuilder = de.cebitec.mgx.dto.dto.FileOrDirectory.newBuilder();
-            if (f.isFile()) {
-                dto.File.Builder fileBuilder = de.cebitec.mgx.dto.dto.File.newBuilder();
-                try {
-                    fileBuilder.setName(stripProjectDir(f.getCanonicalPath()));
-                } catch (IOException ex) {
-                    Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                fileBuilder.setSize(f.length());
-                entryBuilder.setFile(fileBuilder.build());
-            } else if (f.isDirectory()) {
-                Directory.Builder dirBuilder = de.cebitec.mgx.dto.dto.Directory.newBuilder();
-                try {
-                    dirBuilder.setName(stripProjectDir(f.getCanonicalPath()));
-                } catch (IOException ex) {
-                    Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                // recurse into subdirectory
-                List<FileOrDirectory> entryList = listDir(f.getAbsoluteFile()).getEntryList();
-                dirBuilder.addAllFile(entryList);
-                entryBuilder.setDirectory(dirBuilder.build());
-            }
-            list.addEntry(entryBuilder.build());
+            FileDTO.Builder entryBuilder = de.cebitec.mgx.dto.dto.FileDTO.newBuilder();
+            entryBuilder.setName(f.getName())
+                    .setIsDirectory(f.isDirectory())
+                    .setSize(f.isFile() ? f.length() : 0);
+
+            list.addFile(entryBuilder.build());
         }
         return list.build();
     }
     
+    private File getCurrentDirectory(String path) {
+        
+        path = path.replace("|", "/");
+
+        if (path.contains("..")) {
+            mgx.log(mgx.getCurrentUser() + " tried to access " + path);
+            throw new MGXWebException("Invalid path.");
+        }
+
+        // validate project directory
+        File basedir = new File(mgx.getProjectDirectory() + "files");
+        if (!basedir.exists()) {
+            basedir.mkdirs();
+        }
+        if (!basedir.isDirectory()) {
+            throw new MGXWebException("File storage subsystem corrupted. Contact server admin.");
+        }
+
+        basedir = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+        if (!basedir.isDirectory()) {
+            throw new MGXWebException(basedir.getAbsolutePath() + " is not a directory.");
+        }
+        return basedir;
+    }
+
     private String stripProjectDir(String input) {
         String projectDirectory = mgx.getProjectDirectory();
         if (input.startsWith(projectDirectory)) {
             input = input.substring(projectDirectory.length());
         } else {
-            Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, projectDirectory +" not found in "+ input);
+            Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, projectDirectory + " not found in " + input);
         }
         return input;
     }
