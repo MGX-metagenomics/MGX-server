@@ -54,8 +54,9 @@ public class Project implements DBProjectI {
     }
 
     public String getJDBCUrl() throws GPMSException {
-        if (dbcfg == null)
+        if (dbcfg == null) {
             load();
+        }
         return dbcfg.getURI();
     }
 
@@ -64,14 +65,16 @@ public class Project implements DBProjectI {
     }
 
     public String getDatabaseHost() throws GPMSException {
-        if (dbcfg == null)
+        if (dbcfg == null) {
             load();
+        }
         return host;
     }
 
     public String getDatabaseName() throws GPMSException {
-        if (dbcfg == null)
+        if (dbcfg == null) {
             load();
+        }
         return dbname;
     }
     @Override
@@ -103,9 +106,6 @@ public class Project implements DBProjectI {
     }
 
     private void load() throws GPMSException {
-
-        System.err.println("SQL: loadProject()");
-
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet res = null;
