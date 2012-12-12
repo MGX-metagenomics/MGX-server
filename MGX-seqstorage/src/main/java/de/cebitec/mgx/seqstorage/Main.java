@@ -1,37 +1,42 @@
-//package de.cebitec.mgx.seqstorage;
-//
-//import de.cebitec.mgx.sequence.DNASequenceI;
-//import de.cebitec.mgx.sequence.SeqReaderI;
-//import de.cebitec.mgx.sequence.SeqStoreException;
-//import java.io.IOException;
-//
-///**
-// *
-// * @author sjaenick
-// */
-//public class Main {
-//
-//    /**
-//     * @param args the command line arguments
-//     */
-//    public static void main(String[] args) throws SeqStoreException, IOException {
-//        SeqReaderI reader = new FastaReader("/tmp/test.fas");
-//        long cnt = 1;
-//        while (reader.hasMoreElements()) {
-//            DNASequenceI s = reader.nextElement();
-//            s.setId(cnt);
-//            cnt++;
-//        }
-//        reader.close();
-//
-////     
-////        
-////        for (long test=1; test <= 1260000; test++) {
-////            byte[] ret = ByteUtils.longToBytes(test);
-////            long foo = ByteUtils.bytesToLong(ret);
-////            if (test > 1259900) {
-////            System.out.println(test + " -> " + foo); }
-////        }
-//        
-//    }
-//}
+package de.cebitec.mgx.seqstorage;
+
+import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.sequence.DNASequenceI;
+import de.cebitec.mgx.sequence.SeqStoreException;
+import java.io.IOException;
+import java.util.Set;
+
+/**
+ *
+ * @author sjaenick
+ */
+public class Main {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) throws SeqStoreException, IOException {
+        FastaReader fr = new FastaReader("/homes/sjaenick/CSF/in.fas");
+        CSFWriter csf = new CSFWriter("/homes/sjaenick/CSF/1");
+        long curId = 1;
+        while (fr.hasMoreElements()) {
+            DNASequenceI seq = fr.nextElement().getSequence();
+            seq.setId(curId++);
+            csf.addSequence(seq);
+        }
+        csf.close();
+        fr.close();
+        
+        CSFReader reader = new CSFReader("/homes/sjaenick/CSF/1");
+        long ids[] = new long[]{400};
+        Set<DNASequenceHolder> reads = reader.fetch(ids);
+        for (DNASequenceHolder h : reads) {
+            DNASequenceI seq = h.getSequence();
+            System.out.println(">" + seq.getId());
+            System.out.println(new String(seq.getSequence()));
+        }
+        
+        reader.close();
+
+    }
+}

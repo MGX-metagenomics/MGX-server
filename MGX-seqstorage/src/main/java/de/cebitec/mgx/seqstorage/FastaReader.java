@@ -1,7 +1,6 @@
 package de.cebitec.mgx.seqstorage;
 
 import de.cebitec.mgx.seqholder.DNASequenceHolder;
-import de.cebitec.mgx.seqholder.ReadSequenceI;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
@@ -39,13 +38,13 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
         if (stream == null) {
             return false;
         }
-        
+
         if (buf.length == 0) {
             while (buf.length == 0 && stream.hasMoreElements()) {
                 buf = stream.nextElement();
             }
         }
-        
+
         // sequence header has to start with '>'
         if (buf.length == 0 || buf[0] != '>') {
             return false;
@@ -54,10 +53,10 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
         // process sequence header
         byte[] seqname = new byte[buf.length - 1];
         System.arraycopy(buf, 1, seqname, 0, buf.length - 1);
-        
+
         // check sequence name for whitespaces and trim
         int trimPos = 0;
-        for (int i=0; i< seqname.length; i++) {
+        for (int i = 0; i < seqname.length; i++) {
             if (seqname[i] == ' ' || seqname[i] == '\t') {
                 trimPos = i;
                 break;
@@ -68,7 +67,7 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
             System.arraycopy(seqname, 0, tmp, 0, trimPos);
             seqname = tmp;
         }
-        
+
         seq = new DNASequence();
         seq.setName(seqname);
 
@@ -76,7 +75,7 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
 
         while (stream.hasMoreElements()) {
             buf = stream.nextElement();
-            
+
             if (buf.length > 0 && buf[0] == '>') {
                 // we have reached the next sequence
                 seq.setSequence(dnasequence);
@@ -117,20 +116,23 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
     }
 
     @Override
-    public Set<DNASequenceHolder> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceHolder> res = new HashSet<>(ids.size());
-        while (hasMoreElements() && !ids.isEmpty()) {
+    public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
+        Set<DNASequenceHolder> res = new HashSet<>(ids.length);
+        Set<Long> idList = new HashSet<>(ids.length);
+        for (int i = 0; i < ids.length; i++) {
+            idList.add(ids[i]);
+        }
+        while (hasMoreElements() && !idList.isEmpty()) {
             DNASequenceHolder elem = nextElement();
-            if (ids.contains(elem.getSequence().getId())) {
+            if (idList.contains(elem.getSequence().getId())) {
                 res.add(elem);
-                ids.remove(elem.getSequence().getId());
+                idList.remove(elem.getSequence().getId());
             }
         }
-        
-        if (!ids.isEmpty()) {
+
+        if (!idList.isEmpty()) {
             throw new SeqStoreException("Could not retrieve all sequences.");
         }
         return res;
     }
-
 }

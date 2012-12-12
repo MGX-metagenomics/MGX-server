@@ -79,17 +79,21 @@ public class FASTQReader implements SeqReaderI<DNAQualitySequenceHolder> {
     }
 
     @Override
-    public Set<DNAQualitySequenceHolder> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNAQualitySequenceHolder> res = new HashSet<>(ids.size());
-        while (hasMoreElements() && !ids.isEmpty()) {
+    public Set<DNAQualitySequenceHolder> fetch(long[] ids) throws SeqStoreException {
+        Set<DNAQualitySequenceHolder> res = new HashSet<>(ids.length);
+        Set<Long> idList = new HashSet<>(ids.length);
+        for (int i =0; i< ids.length; i++) {
+            idList.add(ids[i]);
+        }
+        while (hasMoreElements() && !idList.isEmpty()) {
             DNAQualitySequenceHolder elem = nextElement();
-            if (ids.contains(elem.getSequence().getId())) {
+            if (idList.contains(elem.getSequence().getId())) {
                 res.add(elem);
-                ids.remove(elem.getSequence().getId());
+                idList.remove(elem.getSequence().getId());
             }
         }
 
-        if (!ids.isEmpty()) {
+        if (!idList.isEmpty()) {
             throw new SeqStoreException("Could not retrieve all sequences.");
         }
         return res;

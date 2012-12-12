@@ -63,6 +63,7 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
 
         // update offset
         seqout_offset += encoded.length;
+        seqout_offset++; // separator char
     }
 
     @Override

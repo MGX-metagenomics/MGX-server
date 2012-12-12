@@ -6,6 +6,8 @@ import de.cebitec.mgx.seqstorage.encoding.FourBitEncoder;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
+import gnu.trove.map.TLongLongMap;
+import gnu.trove.map.hash.TLongLongHashMap;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +38,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
             seqin = new ByteStreamTokenizer(csffile, FourBitEncoder.RECORD_SEPARATOR, FourBitEncoder.CSF_MAGIC.length);
             namein = new BufferedInputStream(new FileInputStream(namefile));
             if (namein.skip(FourBitEncoder.CSF_MAGIC.length) < FourBitEncoder.CSF_MAGIC.length) {
-                throw new SeqStoreException("Corrupted file "+csffile);
+                throw new SeqStoreException("Corrupted file " + csffile);
             }
         } catch (SeqStoreException | IOException ex) {
             throw new SeqStoreException(ex.getMessage());
@@ -131,23 +133,107 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
     }
 
     @Override
-    public Set<DNASequenceHolder> fetch(Set<Long> ids) throws SeqStoreException {
-        Set<DNASequenceHolder> result = new HashSet<>(ids.size());
+    public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
+        Set<DNASequenceHolder> result = new HashSet<>(ids.length);
+        Arrays.sort(ids);
 
-        // FIXME: use the .nms index & sort offsets instead of iterating
-        // over all sequences
-
-        while (hasMoreElements() && !ids.isEmpty()) {
-            DNASequenceHolder elem = nextElement();
-            if (ids.contains(elem.getSequence().getId())) {
-                result.add(elem);
-                ids.remove(elem.getSequence().getId());
-            }
+        NMSReader idx;
+        InputStream in;
+        try {
+            idx = new NMSReader(namein, ids);
+            in = new BufferedInputStream(new FileInputStream(csffile));
+            assert in.markSupported();
+            in.mark(Integer.MAX_VALUE);
+        } catch (IOException ex) {
+            throw new SeqStoreException("Could not parse index.");
         }
 
-        if (!ids.isEmpty()) {
+        try {
+            byte[] buf = new byte[200];
+            int bytesRead = 0;
+            for (long id : ids) {
+                long offset = idx.getOffset(id);
+                if (offset == -1) {
+                    throw new SeqStoreException("Sequence ID " + id + " not present in index.");
+                }
+                in.reset();
+                in.skip(offset);
+                bytesRead = in.read(buf);
+                while (-1 == getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR) && bytesRead != -1) {
+                    System.err.println("reading more..");
+                    byte newbuf[] = new byte[buf.length * 2];
+                    System.arraycopy(buf, 0, newbuf, 0, buf.length);
+                    bytesRead = in.read(newbuf, buf.length, buf.length);
+                    buf = newbuf;
+                }
+                int sepPos = getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR);
+                byte[] encoded = ByteUtils.substring(buf, 0, sepPos - 1);
+
+                seq = new DNASequence(id);
+                seq.setSequence(FourBitEncoder.decode(encoded));
+                DNASequenceHolder holder = new DNASequenceHolder(seq);
+                result.add(holder);
+            }
+        } catch (IOException ex) {
+            throw new SeqStoreException("Internal error.");
+        }
+
+        if (result.size() != ids.length) {
             throw new SeqStoreException("Could not retrieve all sequences.");
         }
         return result;
+    }
+
+    private int getSeparatorPos(byte[] in, byte separator) {
+        for (int i = 0; i <= in.length - 1; i++) {
+            if (in[i] == separator) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private class NMSReader {
+
+        final TLongLongMap idx;
+        final InputStream nmsStream;
+        final long[] ids;
+
+        public NMSReader(InputStream nmsStream, long[] ids) throws IOException {
+            this.idx = new TLongLongHashMap(ids.length, 1.0F, -1, -1);
+            this.nmsStream = nmsStream;
+            this.ids = ids;
+            readRequired();
+        }
+
+        public long getOffset(long id) {
+            return idx.get(id);
+        }
+
+        private void readRequired() throws IOException {
+            long max = max(ids);
+            byte[] buf = new byte[16];
+            while (16 == nmsStream.read(buf)) {
+                long id = ByteUtils.bytesToLong(ByteUtils.substring(buf, 0, 7));
+                long offset = ByteUtils.bytesToLong(ByteUtils.substring(buf, 8, 15));
+                idx.put(id, offset);
+
+                if (max == id) {
+                    nmsStream.close();
+                    return;
+                }
+            }
+            nmsStream.close();
+        }
+
+        private long max(long[] values) {
+            long max = values[0];
+            for (long value : values) {
+                if (value > max) {
+                    max = value;
+                }
+            }
+            return max;
+        }
     }
 }
