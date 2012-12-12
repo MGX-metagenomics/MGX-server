@@ -12,6 +12,6 @@ public interface SeqReaderI<T> extends Enumeration<T> {
     
     public void close();
     public void delete();
-    public Set<T> fetch(Set<Long> ids) throws SeqStoreException;
+    public Set<T> fetch(long[] ids) throws SeqStoreException;
     
 }
