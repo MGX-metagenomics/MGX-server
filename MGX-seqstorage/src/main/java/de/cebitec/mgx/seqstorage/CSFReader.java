@@ -23,11 +23,11 @@ import java.util.Set;
  */
 public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
-    private ByteStreamTokenizer seqin;
-    private InputStream namein;
-    private DNASequenceI seq = null;
-    private String csffile = null;
-    private String namefile = null;
+    private final ByteStreamTokenizer seqin;
+    private final InputStream namein;
+    private final String csffile;
+    private final String namefile;
+    private DNASequenceHolder holder = null;
 
     public CSFReader(String filename) throws SeqStoreException {
         csffile = filename + ".csf";
@@ -47,6 +47,16 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
     @Override
     public boolean hasMoreElements() {
+
+        if (holder != null) {
+            // element in holder not yet retrieved
+            return true;
+        }
+        
+        /*
+         * read new element
+         */
+
         // extract substring of element, removing last 8bytes (offset)
         byte[] record = new byte[16];
         byte[] seqId = new byte[8];
@@ -70,17 +80,21 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         byte[] dnasequence = seqin.nextElement();
 
         if ((seqId != null) && (dnasequence != null)) {
-            seq = new DNASequence(sequence_id);
+            DNASequenceI seq = new DNASequence(sequence_id);
             seq.setSequence(FourBitEncoder.decode(dnasequence));
+
+            holder = new DNASequenceHolder(seq);
             return true;
         }
         return false;
-
     }
 
     @Override
     public DNASequenceHolder nextElement() {
-        return new DNASequenceHolder(seq);
+        assert holder != null;
+        DNASequenceHolder ret = holder;
+        holder = null;
+        return ret;
     }
 
     @Override
@@ -169,10 +183,9 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 int sepPos = getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR);
                 byte[] encoded = ByteUtils.substring(buf, 0, sepPos - 1);
 
-                seq = new DNASequence(id);
+                DNASequenceI seq = new DNASequence(id);
                 seq.setSequence(FourBitEncoder.decode(encoded));
-                DNASequenceHolder holder = new DNASequenceHolder(seq);
-                result.add(holder);
+                result.add(new DNASequenceHolder(seq));
             }
         } catch (IOException ex) {
             throw new SeqStoreException("Internal error.");
