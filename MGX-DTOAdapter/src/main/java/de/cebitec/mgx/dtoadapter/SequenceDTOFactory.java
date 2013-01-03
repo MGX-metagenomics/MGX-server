@@ -6,7 +6,6 @@ import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 
 /**
  *
