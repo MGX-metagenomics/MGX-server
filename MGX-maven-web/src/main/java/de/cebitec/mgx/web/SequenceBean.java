@@ -3,6 +3,9 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.download.DownloadProviderI;
+import de.cebitec.mgx.download.DownloadSessions;
+import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
@@ -32,31 +35,38 @@ public class SequenceBean {
     @MGX
     MGXController mgx;
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
-    UploadSessions sessions;
+    UploadSessions upSessions;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/DownloadSessions")
+    DownloadSessions downSessions;
 
+    /*
+     * 
+     * Upload interface
+     * 
+     * 
+     */
     @GET
-    @Path("init/{id}")
+    @Path("initUpload/{id}")
     @Produces("application/x-protobuf")
-    public MGXString init(@PathParam("id") Long seqrun_id) {
+    public MGXString initUpload(@PathParam("id") Long seqrun_id) {
         mgx.log("Creating upload session for " + mgx.getProjectName());
         SeqUploadReceiver recv = null;
 
         try {
             recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
-//            recv = new SeqUploadReceiver(mgx.getJDBCUrl(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
 
-        UUID uuid = sessions.registerUploadSession(recv);
+        UUID uuid = upSessions.registerUploadSession(recv);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
     @GET
-    @Path("close/{uuid}")
-    public Response close(@PathParam("uuid") UUID session_id) {
+    @Path("closeUpload/{uuid}")
+    public Response closeUpload(@PathParam("uuid") UUID session_id) {
         try {
-            sessions.closeSession(session_id);
+            upSessions.closeSession(session_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
@@ -68,19 +78,77 @@ public class SequenceBean {
     @Consumes("application/x-protobuf")
     public Response add(@PathParam("uuid") UUID session_id, SequenceDTOList seqList) {
         try {
-            sessions.getSession(session_id).add(seqList);
+            upSessions.getSession(session_id).add(seqList);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
     }
-    
+
     @GET
-    @Path("cancel/{uuid}")
-    public Response cancel(@PathParam("uuid") UUID session_id) {
+    @Path("cancelUpload/{uuid}")
+    public Response cancelUpload(@PathParam("uuid") UUID session_id) {
         try {
-            sessions.cancelSession(session_id);
-         } catch (MGXException ex) {
+            upSessions.cancelSession(session_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    /*
+     * 
+     * Download interface
+     * 
+     * 
+     */
+    @GET
+    @Path("initDownload/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString initDownload(@PathParam("id") Long seqrun_id) {
+        SeqRunDownloadProvider provider = null;
+        try {
+            // make sure requested run exists
+            mgx.getSeqRunDAO().getById(seqrun_id);
+            mgx.log("Creating download session for " + mgx.getProjectName());
+            provider = new SeqRunDownloadProvider(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        UUID uuid = downSessions.registerDownloadSession(provider);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    @GET
+    @Path("closeDownload/{uuid}")
+    public Response closeDownload(@PathParam("uuid") UUID session_id) {
+        try {
+            downSessions.closeSession(session_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("fetchSequences/{uuid}")
+    @Consumes("application/x-protobuf")
+    public SequenceDTOList fetchSequences(@PathParam("uuid") UUID session_id) {
+        try {
+            DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
+            return session.fetch();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("cancelDownload/{uuid}")
+    public Response cancelDownload(@PathParam("uuid") UUID session_id) {
+        try {
+            downSessions.cancelSession(session_id);
+        } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();

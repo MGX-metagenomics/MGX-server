@@ -20,7 +20,6 @@ import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.HashSet;
-import java.util.Iterator;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -51,7 +50,7 @@ public class JobBean {
         Tool tool = null;
         SeqRun seqrun = null;
         try {
-             tool = mgx.getToolDAO().getById(dto.getId());
+             tool = mgx.getToolDAO().getById(dto.getToolId());
             seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -151,16 +150,12 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public MGXBoolean verify(@PathParam("id") Long id) {
         boolean verified = false;
-            mgx.log("JobId:"+id);
         
         try {
             verified = js.verify(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
-            mgx.log("MGXInsufficientJobConfigurationException ");
             throw new MGXJobException(ex.getMessage());
         } catch (MGXException ex) {
-            mgx.log("MGXException ");
-            mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     

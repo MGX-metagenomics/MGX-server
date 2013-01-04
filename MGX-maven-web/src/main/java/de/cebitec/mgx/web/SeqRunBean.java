@@ -105,7 +105,6 @@ public class SeqRunBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-
         return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTO(seqrun);
     }
 
