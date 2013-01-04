@@ -78,8 +78,8 @@ public class MGXConfiguration extends DispatcherConfigBase {
     /*
      * settings specific to project database
      */
-    public int getUploadTimeout() {
-        return getInt("mgx_upload_timeout");
+    public int getTransferTimeout() {
+        return getInt("mgx_transfer_timeout");
     }
 
     public int getSQLBulkInsertSize() {
@@ -98,9 +98,9 @@ public class MGXConfiguration extends DispatcherConfigBase {
         return config.getProperty("mgx_password");
     }
 
-    public String getValidatorExecutable() {
-        return config.getProperty("mgx_graphvalidate");
-    }
+//    public String getValidatorExecutable() {
+//        return config.getProperty("mgx_graphvalidate");
+//    }
     
     public File getPluginDump() {
         StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
