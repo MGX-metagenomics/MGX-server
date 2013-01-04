@@ -84,7 +84,6 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         int count = 0;
         while (count <= bulksize && reader.hasMoreElements()) {
             DNASequenceI seq = reader.nextElement().getSequence();
-            //System.err.println("id "+ seq.getId() + " is "+getSequenceName(seq.getId()));
             SequenceDTO dto = SequenceDTO.newBuilder()
                     .setId(seq.getId())
                     .setName(getSequenceName(seq.getId()))
