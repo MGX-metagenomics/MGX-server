@@ -1,7 +1,8 @@
-package de.cebitec.mgx.upload;
+package de.cebitec.mgx.download;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.upload.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,20 +21,20 @@ import javax.ejb.Timer;
  *
  * @author sjaenick
  */
-@Singleton(mappedName = "UploadSessions")
+@Singleton(mappedName = "DownloadSessions")
 @Startup
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
-public class UploadSessions {
+public class DownloadSessions {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
-    private Map<UUID, UploadReceiverI> sessions = null;
-    private int uploadTimeout;
+    private Map<UUID, DownloadProviderI> sessions = null;
+    private int timeout;
 
     @PostConstruct
     public void start() {
-        sessions = new HashMap<UUID, UploadReceiverI>();
-        uploadTimeout = mgxconfig.getTransferTimeout();
+        sessions = new HashMap<>();
+        timeout = mgxconfig.getTransferTimeout();
     }
 
     @PreDestroy
@@ -44,13 +45,13 @@ public class UploadSessions {
         }
     }
 
-    public UUID registerUploadSession(UploadReceiverI recv) {
+    public UUID registerDownloadSession(DownloadProviderI provider) {
         UUID uuid = UUID.randomUUID();
-        sessions.put(uuid, recv);
+        sessions.put(uuid, provider);
         return uuid;
     }
 
-    public UploadReceiverI getSession(UUID uuid) {
+    public DownloadProviderI getSession(UUID uuid) {
         return sessions.get(uuid);
     }
 
@@ -66,14 +67,14 @@ public class UploadSessions {
         sessions.remove(uuid);
     }
 
-    @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
+    @Schedule(hour = "*", minute = "*", second = "10", persistent = false)
     public void timeout(Timer timer) {
-        Set<UUID> toRemove = new HashSet<UUID>();
+        Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : sessions.keySet()) {
-            UploadReceiverI s = sessions.get(uuid);
+            DownloadProviderI s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
-            if (sessionIdleTime > uploadTimeout) {
-                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
+            if (sessionIdleTime > timeout) {
+                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
                 toRemove.add(uuid);
                 s.cancel();
                 

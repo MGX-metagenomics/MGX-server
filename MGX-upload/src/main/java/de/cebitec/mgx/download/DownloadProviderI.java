@@ -1,5 +1,4 @@
-
-package de.cebitec.mgx.upload;
+package de.cebitec.mgx.download;
 
 import de.cebitec.mgx.controller.MGXException;
 
@@ -7,16 +6,17 @@ import de.cebitec.mgx.controller.MGXException;
  *
  * @author sjaenick
  */
-public interface UploadReceiverI<T> {
+public interface DownloadProviderI<T> {
 
     public void cancel();
 
     public void close() throws MGXException;
 
-    public void add(T data) throws MGXException;
+    public T fetch() throws MGXException;
+    
+    public boolean isFinished();
 
     public String getProjectName();
 
     public long lastAccessed();
-
 }

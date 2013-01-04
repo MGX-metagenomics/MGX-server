@@ -8,6 +8,7 @@ import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.DNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 /**
  *
@@ -29,9 +31,9 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
-    protected String projectName;
-    protected long runId;
-    protected Connection conn;
+    protected final String projectName;
+    protected final long runId;
+    protected final Connection conn;
     protected SeqWriterI writer;
     protected File file;
     protected List<DNASequenceI> seqholder;
@@ -49,11 +51,11 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             writer = new CSFWriter(file);
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
-        } catch (Exception ex) {
+        } catch (NamingException | MGXException | IOException | SeqStoreException | SQLClientInfoException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
         }
 
-        seqholder = new ArrayList<DNASequenceI>();
+        seqholder = new ArrayList<>();
         bulksize = mgxconfig.getSQLBulkInsertSize();
         lastAccessed = System.currentTimeMillis();
     }
@@ -215,7 +217,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     private List<DNASequenceI> fetchChunk() {
         int chunk = seqholder.size() < bulksize ? seqholder.size() : bulksize;
         List<DNASequenceI> sub = seqholder.subList(0, chunk);
-        List<DNASequenceI> subList = new ArrayList<DNASequenceI>(sub);
+        List<DNASequenceI> subList = new ArrayList<>(sub);
         sub.clear(); // since sub is backed by seqholder, this removes all sub-list items from seqholder
         return subList;
     }
