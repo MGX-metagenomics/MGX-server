@@ -2,7 +2,6 @@ package de.cebitec.mgx.download;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
@@ -10,10 +9,12 @@ import de.cebitec.mgx.seqholder.DNASequenceHolder;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 
 /**
  *
@@ -48,7 +50,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             reader = SeqReaderFactory.getReader(file.getAbsolutePath());
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");
-        } catch (Exception ex) {
+        } catch (NamingException | MGXException | SeqStoreException | SQLClientInfoException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
 
@@ -58,22 +60,22 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void cancel() {
-        reader.close();
         try {
+            reader.close();
             conn.setClientInfo("ApplicationName", "");
             conn.close();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @Override
     public void close() throws MGXException {
-        reader.close();
         try {
+            reader.close();
             conn.setClientInfo("ApplicationName", "");
             conn.close();
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
