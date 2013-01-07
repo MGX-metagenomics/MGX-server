@@ -48,7 +48,7 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
     }
 
     @Override
-    public void addSequence(DNASequenceI seq) throws IOException {
+    public synchronized void addSequence(DNASequenceI seq) throws IOException {
 
         // save sequence id and offset
         byte[] id = ByteUtils.longToBytes(seq.getId());
