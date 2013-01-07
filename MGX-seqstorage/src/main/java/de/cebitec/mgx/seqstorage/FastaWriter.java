@@ -25,7 +25,7 @@ public class FastaWriter implements SeqWriterI<DNASequenceI> {
     }
 
     @Override
-    public void addSequence(DNASequenceI seq) throws IOException {
+    public synchronized void addSequence(DNASequenceI seq) throws IOException {
         StringBuilder sb = new StringBuilder(">");
         sb.append(new String(seq.getName()));
         sb.append("\n");
