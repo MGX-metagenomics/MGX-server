@@ -7,10 +7,14 @@ import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
+import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -152,5 +156,24 @@ public class SequenceBean {
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
+    }
+    
+    /*
+     * 
+     * retrieval of single sequences
+     * 
+     */
+
+    @GET
+    @Path("fetch/{id}")
+    @Produces("application/x-protobuf")
+    public SequenceDTO fetch(@PathParam("id") Long id) {
+        Sequence obj;
+        try {
+            obj = mgx.getSequenceDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return SequenceDTOFactory.getInstance().toDTO(obj);
     }
 }
