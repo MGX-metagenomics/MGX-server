@@ -23,8 +23,8 @@ import java.util.Set;
  */
 public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
-    private final ByteStreamTokenizer seqin;
-    private final InputStream namein;
+    private ByteStreamTokenizer seqin;
+    private InputStream namein;
     private final String csffile;
     private final String namefile;
     private DNASequenceHolder holder = null;
@@ -101,12 +101,14 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
     public void close() {
         if (seqin != null) {
             seqin.close();
+            seqin = null;
         }
         if (namein != null) {
             try {
                 namein.close();
             } catch (IOException ex) {
             }
+            namein = null;
         }
     }
 

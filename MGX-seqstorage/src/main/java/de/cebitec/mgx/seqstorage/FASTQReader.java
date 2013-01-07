@@ -66,6 +66,7 @@ public class FASTQReader implements SeqReaderI<DNAQualitySequenceHolder> {
     public void close() {
         if (stream != null) {
             stream.close();
+            stream = null;
         }
     }
 

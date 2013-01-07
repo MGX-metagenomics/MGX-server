@@ -103,6 +103,7 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
     public void close() {
         if (stream != null) {
             stream.close();
+            stream = null;
         }
     }
 
