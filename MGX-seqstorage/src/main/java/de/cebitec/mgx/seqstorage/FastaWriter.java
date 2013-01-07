@@ -4,7 +4,6 @@ import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -16,12 +15,12 @@ public class FastaWriter implements SeqWriterI<DNASequenceI> {
 
     private BufferedWriter seqout;
 
-    public FastaWriter(String filename) throws IOException, SeqStoreException {
-        File f = new File(filename);
-        if (f.exists()) {
-            throw new SeqStoreException("File "+filename+" already exists.");
+    public FastaWriter(String filename) throws SeqStoreException {
+        try {
+            seqout = new BufferedWriter(new FileWriter(filename));
+        } catch (IOException ex) {
+            throw new SeqStoreException("Cannot write to " + filename);
         }
-        seqout = new BufferedWriter(new FileWriter(filename)); 
     }
 
     @Override
