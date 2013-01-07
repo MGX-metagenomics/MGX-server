@@ -23,7 +23,7 @@ public class FASTQReader implements SeqReaderI<DNAQualitySequenceHolder> {
         try {
             stream = new ByteStreamTokenizer(fastqfile, LINEBREAK, 0);
         } catch (Exception ex) {
-            throw new SeqStoreException("File not found or unreadable: " + fastqfile);
+            throw new SeqStoreException("File not found or unreadable: " + fastqfile + "\n" + ex.getMessage());
         }
     }
 
