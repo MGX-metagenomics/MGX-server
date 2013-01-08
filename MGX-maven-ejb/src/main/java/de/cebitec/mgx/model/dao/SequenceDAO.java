@@ -5,7 +5,6 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.seqholder.DNASequenceHolder;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,7 +17,7 @@ import java.util.Iterator;
  */
 public class SequenceDAO<T extends Sequence> extends DAO<T> {
 
-    private static String GET_SEQRUN = "SELECT dbfile FROM seqrun RIGHT JOIN read r ON (seqrun.id = r.seqrun_id) WHERE r.id=?";
+    private static String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
 
     @Override
     Class getType() {
@@ -27,7 +26,8 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
 
     @Override
     public T getById(Long id) throws MGXException {
-        T seq = super.getById(id);
+        T seq = (T) new Sequence();
+        seq.setId(id);
 
         // find the storage file for this sequence
         String dbFile = null;
@@ -37,6 +37,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.next();
                     dbFile = rs.getString(1);
+                    seq.setName(rs.getString(2));
                 }
             }
         } catch (SQLException ex) {
