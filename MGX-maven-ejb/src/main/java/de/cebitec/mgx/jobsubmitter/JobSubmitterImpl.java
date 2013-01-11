@@ -10,9 +10,7 @@ import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
 import javax.ejb.Stateless;
 import javax.naming.Context;
@@ -27,21 +25,32 @@ import javax.naming.NamingException;
 public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
-    public boolean verify(MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
+    public boolean verify(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
 
         Job job = mgx.getJobDAO().getById(jobId);
+        createJobConfigFile(mgx, job);
+        
 
-        if (job.getStatus() != JobState.CREATED) {
-            throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
-        }
+//        JobReceiverI r = getJobReceiver(mgx);
+//        if (r != null) {
+//            try {
+//                r.submit(DispatcherCommand.VERIFY, mgx.getProjectName(), job.getId());
+//            } catch (MGXDispatcherException ex) {
+//                throw new MGXException(ex.getMessage());
+//            }
+//            return true;
+//        } else {
+//            mgx.log("Job verification failed, could not contact dispatcher.");
+//            return false;
+//        }
 
-        if (validateParameters(mgx, job)) {
+//        if (validateParameters(mgx, job)) {
             job.setStatus(JobState.VERIFIED);
             mgx.getJobDAO().update(job);
             return true;
-        }
-
-        return false;
+//        }
+//
+//        return false;
     }
 
     @Override
@@ -68,7 +77,7 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
     public boolean cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-      
+
         JobReceiverI r = getJobReceiver(mgx);
         if (r != null) {
             r.submit(DispatcherCommand.CANCEL, mgx.getProjectName(), jobId);
@@ -115,60 +124,16 @@ public class JobSubmitterImpl implements JobSubmitter {
         return new InitialContext(props);
     }
 
-    private boolean validateParameters(MGXController mgx, Job j) throws MGXInsufficientJobConfigurationException, MGXException {
-
-        // build up command string
-        List<String> commands = new ArrayList<>();
-        commands.add(mgx.getConfiguration().getValidatorExecutable());
-        commands.add(j.getTool().getXMLFile());
-        commands.add(createJobConfigFile(mgx, j));
-
-//        StringBuilder cmd = new StringBuilder();
-//        for (String s : commands) {
-//            cmd.append(s);
-//            cmd.append(" ");
-//        }
-
-        String[] argv = commands.toArray(new String[0]);
-
-        StringBuilder output = new StringBuilder();
-        Integer exitCode = null;
-        try {
-            Process p = Runtime.getRuntime().exec(argv);
-            BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String s = null;
-            while ((s = stdout.readLine()) != null) {
-                output.append(s);
-            }
-            stdout.close();
-
-            while (exitCode == null) {
-                try {
-                    exitCode = p.waitFor();
-                } catch (InterruptedException ex) {
-                }
-            }
-        } catch (IOException ex) {
-            mgx.log(ex.getMessage());
-        }
-
-        if (exitCode != null && exitCode.intValue() == 0) {
-            return true;
-        }
-
-        throw new MGXInsufficientJobConfigurationException(output.toString());
-    }
-
-    private String createJobConfigFile(MGXController mgx, Job j) throws MGXException {
-        StringBuilder jobconfig = new StringBuilder(mgx.getProjectDirectory());
-        jobconfig.append(File.separator);
-        jobconfig.append("jobs");
+    private void createJobConfigFile(MGXController mgx, Job j) throws MGXException {
+        StringBuilder jobconfig = new StringBuilder(mgx.getProjectDirectory())
+                .append(File.separator)
+                .append("jobs");
 
         File f = new File(jobconfig.toString());
         f.mkdirs();
 
         jobconfig.append(File.separator);
-        jobconfig.append(j.getId());
+        jobconfig.append(j.getId().toString());
 
         MGXConfiguration mgxcfg = mgx.getConfiguration();
 
@@ -208,7 +173,5 @@ public class JobSubmitterImpl implements JobSubmitter {
                 throw new MGXException(ex.getMessage());
             }
         }
-
-        return jobconfig.toString();
     }
 }

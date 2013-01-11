@@ -31,7 +31,7 @@ import javax.sql.DataSource;
 @Startup
 public class MGXGlobal {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB    //(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration cfg;
     //
     @Resource(mappedName = "jdbc/MGXGlobal")
