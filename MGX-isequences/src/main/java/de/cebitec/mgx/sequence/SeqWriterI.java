@@ -8,6 +8,6 @@ import java.io.IOException;
  */
 public interface SeqWriterI<T extends DNASequenceI> extends AutoCloseable {
     
-    void addSequence(T seq) throws IOException;
+    public void addSequence(T seq) throws IOException;
 
 }
