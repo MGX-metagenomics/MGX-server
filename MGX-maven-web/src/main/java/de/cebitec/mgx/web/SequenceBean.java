@@ -5,16 +5,27 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
+import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
+import de.cebitec.mgx.dto.dto;
+import de.cebitec.mgx.dto.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
+import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -124,6 +135,32 @@ public class SequenceBean {
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
+    @POST
+    @Path("initDownloadforAttributes/")
+    @Produces("application/x-protobuf")
+    public MGXString initDownloadforAttributes(AttributeDTOList attrdtos) {
+        SeqByAttributeDownloadProvider provider = null;
+        try {
+            Collection<Long> ids = new ArrayList<>();
+            for (AttributeDTO dto : attrdtos.getAttributeList()) {
+                ids.add(dto.getId());
+            }
+            Set<Attribute> attrs = new HashSet<>();
+            Iterator<Attribute> iter = mgx.getAttributeDAO().getByIds(ids);
+            while (iter.hasNext()) {
+                attrs.add(iter.next());
+            }
+            
+            mgx.log("Creating download session for " + mgx.getProjectName());
+            provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), attrs);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        UUID uuid = downSessions.registerDownloadSession(provider);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
     @GET
     @Path("closeDownload/{uuid}")
     public Response closeDownload(@PathParam("uuid") UUID session_id) {
@@ -157,13 +194,12 @@ public class SequenceBean {
         }
         return Response.ok().build();
     }
-    
+
     /*
      * 
      * retrieval of single sequences
      * 
      */
-
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
