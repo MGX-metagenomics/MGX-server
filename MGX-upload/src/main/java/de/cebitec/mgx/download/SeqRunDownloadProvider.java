@@ -34,23 +34,30 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
     protected final String projectName;
-    protected final long runId;
     protected final Connection conn;
     protected SeqReaderI<DNASequenceHolder> reader;
     protected long lastAccessed;
     protected int bulksize;
 
     public SeqRunDownloadProvider(Connection pConn, String projName, long run_id) throws MGXException {
+        this(pConn, projName);
+        File file = getStorageFile(run_id);
+        try {
+            reader = SeqReaderFactory.getReader(file.getAbsolutePath());
+        } catch (SeqStoreException ex) {
+            throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
+        }
+    }
+
+    protected SeqRunDownloadProvider(Connection pConn, String projName) throws MGXException {
         projectName = projName;
-        runId = run_id;
 
         try {
             mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
-            File file = getStorageFile(run_id);
-            reader = SeqReaderFactory.getReader(file.getAbsolutePath());
+
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");
-        } catch (NamingException | MGXException | SeqStoreException | SQLClientInfoException ex) {
+        } catch (NamingException | SQLClientInfoException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
 
@@ -61,7 +68,10 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     @Override
     public void cancel() {
         try {
-            reader.close();
+            if (reader != null) {
+                reader.close();
+                reader = null;
+            }
             conn.setClientInfo("ApplicationName", "");
             conn.close();
         } catch (Exception ex) {
@@ -72,7 +82,10 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     @Override
     public void close() throws MGXException {
         try {
-            reader.close();
+            if (reader != null) {
+                reader.close();
+                reader = null;
+            }
             conn.setClientInfo("ApplicationName", "");
             conn.close();
         } catch (Exception ex) {
