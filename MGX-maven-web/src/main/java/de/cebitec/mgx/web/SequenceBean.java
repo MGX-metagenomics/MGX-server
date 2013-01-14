@@ -7,13 +7,11 @@ import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
-import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
@@ -70,6 +68,7 @@ public class SequenceBean {
         try {
             recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
 
@@ -83,6 +82,7 @@ public class SequenceBean {
         try {
             upSessions.closeSession(session_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -95,6 +95,7 @@ public class SequenceBean {
         try {
             upSessions.getSession(session_id).add(seqList);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -106,6 +107,7 @@ public class SequenceBean {
         try {
             upSessions.cancelSession(session_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -128,6 +130,7 @@ public class SequenceBean {
             mgx.log("Creating download session for " + mgx.getProjectName());
             provider = new SeqRunDownloadProvider(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
 
@@ -154,6 +157,7 @@ public class SequenceBean {
             mgx.log("Creating download session for " + mgx.getProjectName());
             provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), attrs);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
 
@@ -167,6 +171,7 @@ public class SequenceBean {
         try {
             downSessions.closeSession(session_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -180,6 +185,7 @@ public class SequenceBean {
             DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
             return session.fetch();
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
     }
@@ -190,6 +196,7 @@ public class SequenceBean {
         try {
             downSessions.cancelSession(session_id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -208,6 +215,7 @@ public class SequenceBean {
         try {
             obj = mgx.getSequenceDAO().getById(id);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTO(obj);
