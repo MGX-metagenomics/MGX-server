@@ -42,6 +42,19 @@ public class AttributeBean {
     MGXController mgx;
 
     @GET
+    @Path("fetch/{id}")
+    @Produces("application/x-protobuf")
+    public AttributeDTO fetch(@PathParam("id") Long id) {
+        Attribute obj = null;
+        try {
+            obj = mgx.getAttributeDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return AttributeDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @GET
     @Path("getDistribution/{attrTypeId}/{jobId}")
     @Produces("application/x-protobuf")
     public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
@@ -87,7 +100,7 @@ public class AttributeBean {
             assert (job != null && job.getStatus() == JobState.FINISHED);
             Job job2 = mgx.getJobDAO().getById(job2Id);
             assert (job2 != null && job2.getStatus() == JobState.FINISHED);
-            
+
             ret = mgx.getAttributeDAO().getCorrelation(attrTypeId, job, attrType2Id, job2);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -95,7 +108,7 @@ public class AttributeBean {
 
         return convertCorrelation(ret);
     }
-    
+
     @PUT
     @Path("search")
     @Consumes("application/x-protobuf")
@@ -135,26 +148,26 @@ public class AttributeBean {
     }
 
     private AttributeCorrelation convertCorrelation(Map<Pair<Attribute, Attribute>, Long> ret) {
-        
+
         Set<AttributeType> aTypes = new HashSet<>();
         Builder ac = AttributeCorrelation.newBuilder();
-        
+
         for (Entry<Pair<Attribute, Attribute>, Long> e : ret.entrySet()) {
             Attribute first = e.getKey().getFirst();
             Attribute second = e.getKey().getSecond();
             Long count = e.getValue();
-            
+
             CorrelatedAttributeCount cac = CorrelatedAttributeCount.newBuilder()
-                .setRestrictedAttribute(AttributeDTOFactory.getInstance().toDTO(first))
-                .setAttribute(AttributeDTOFactory.getInstance().toDTO(second))
-                .setCount(count)
-                .build();
+                    .setRestrictedAttribute(AttributeDTOFactory.getInstance().toDTO(first))
+                    .setAttribute(AttributeDTOFactory.getInstance().toDTO(second))
+                    .setCount(count)
+                    .build();
             ac.addEntry(cac);
-            
+
             aTypes.add(first.getAttributeType());
             aTypes.add(second.getAttributeType());
         }
-        
+
         for (AttributeType at : aTypes) {
             ac.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(at));
         }
