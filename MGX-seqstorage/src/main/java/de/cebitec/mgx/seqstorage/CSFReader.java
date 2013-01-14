@@ -151,6 +151,9 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
     @Override
     public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
         Set<DNASequenceHolder> result = new HashSet<>(ids.length);
+        if (ids.length == 0) {
+            return result;
+        }
         Arrays.sort(ids);
 
         NMSReader idx;
@@ -226,6 +229,9 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
 
         private void readRequired() throws IOException {
+            if (ids.length == 0) {
+                return;
+            }
             long max = max(ids);
             byte[] buf = new byte[16];
             while (16 == nmsStream.read(buf)) {
