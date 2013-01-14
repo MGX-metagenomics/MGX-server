@@ -15,8 +15,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -44,6 +42,11 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         for (Attribute a : attrs) {
             if (fName == null) {
                 fName = a.getJob().getSeqrun().getDBFile();
+            } else {
+                String fName2 = a.getJob().getSeqrun().getDBFile();
+                if (!fName.equals(fName2)) {
+                    throw new MGXException("Selected attributes refer to different sequencing runs.");
+                }
             }
         }
         try {
@@ -56,6 +59,10 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
 
         try {
             stmt = conn.prepareStatement(buildSQLTemplate(attrs.size()));
+            int pos = 1;
+            for (Attribute a : attrs) {
+                stmt.setLong(pos++, a.getId());
+            }
             rs = stmt.executeQuery();
         } catch (SQLException ex) {
             throw new MGXException(ex);
@@ -82,7 +89,10 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         int i = 0;
         for (Long l : readnames.keySet()) {
             ids[i++] = l.longValue();
+            System.err.println("id: "+l);
         }
+        
+        System.err.print("will fetch "+ids.length+ " entries.");
 
         try {
             for (DNASequenceHolder holder : reader.fetch(ids)) {
