@@ -30,6 +30,9 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
     private DNASequenceHolder holder = null;
 
     public CSFReader(String filename) throws SeqStoreException {
+        if (filename == null) {
+            throw new SeqStoreException("No filename.");
+        }
         csffile = filename + ".csf";
         namefile = filename;
         try {
