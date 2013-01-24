@@ -58,7 +58,8 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         readnames = new HashMap<>(bulksize);
 
         try {
-            stmt = conn.prepareStatement(buildSQLTemplate(attrs.size()));
+            String sql = buildSQLTemplate(attrs.size());
+            stmt = conn.prepareStatement(sql);
             int pos = 1;
             for (Attribute a : attrs) {
                 stmt.setLong(pos++, a.getId());
@@ -74,7 +75,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     public SequenceDTOList fetch() throws MGXException {
         SequenceDTOList.Builder listBuilder = SequenceDTOList.newBuilder();
         readnames.clear();
-        int count = 0;
+        int count = 1;
         try {
             while (count <= bulksize && rs.next()) {
                 readnames.put(rs.getLong(1), rs.getString(2));
@@ -89,10 +90,9 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         int i = 0;
         for (Long l : readnames.keySet()) {
             ids[i++] = l.longValue();
-            System.err.println("id: "+l);
         }
         
-        System.err.print("will fetch "+ids.length+ " entries.");
+        //System.err.print("will fetch "+ids.length+ " entries for this chunk.");
 
         try {
             for (DNASequenceHolder holder : reader.fetch(ids)) {
