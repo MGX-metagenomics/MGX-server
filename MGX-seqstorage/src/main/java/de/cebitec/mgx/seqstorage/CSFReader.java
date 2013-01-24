@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -55,7 +57,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
             // element in holder not yet retrieved
             return true;
         }
-        
+
         /*
          * read new element
          */
@@ -150,6 +152,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
             g.delete();
         }
     }
+    private NMSReader idx = null;
 
     @Override
     public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
@@ -159,15 +162,16 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
         Arrays.sort(ids);
 
-        NMSReader idx;
         InputStream in;
         try {
-            idx = new NMSReader(namein, ids);
+            if (idx == null) {
+                idx = new NMSReader(namein);
+            }
             in = new BufferedInputStream(new FileInputStream(csffile));
             assert in.markSupported();
             in.mark(Integer.MAX_VALUE);
         } catch (IOException ex) {
-            throw new SeqStoreException("Could not parse index.");
+            throw new SeqStoreException("Could not parse index: " + ex);
         }
 
         try {
@@ -182,7 +186,6 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 in.skip(offset);
                 bytesRead = in.read(buf);
                 while (-1 == getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR) && bytesRead != -1) {
-                    System.err.println("reading more..");
                     byte newbuf[] = new byte[buf.length * 2];
                     System.arraycopy(buf, 0, newbuf, 0, buf.length);
                     bytesRead = in.read(newbuf, buf.length, buf.length);
@@ -218,46 +221,44 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
         final TLongLongMap idx;
         final InputStream nmsStream;
-        final long[] ids;
 
-        public NMSReader(InputStream nmsStream, long[] ids) throws IOException {
-            this.idx = new TLongLongHashMap(ids.length, 1.0F, -1, -1);
+        public NMSReader(InputStream nmsStream) throws IOException {
+            this.idx = new TLongLongHashMap(100, 1.0F, -1, -1);
             this.nmsStream = nmsStream;
-            this.ids = ids;
-            readRequired();
         }
 
-        public long getOffset(long id) {
+        public long getOffset(long id) throws SeqStoreException {
+            if (!idx.containsKey(id)) {
+                try {
+                    readRequired(id);
+                } catch (IOException ex) {
+                    throw new SeqStoreException(ex.getMessage());
+                }
+            }
             return idx.get(id);
         }
 
-        private void readRequired() throws IOException {
-            if (ids.length == 0) {
-                return;
-            }
-            long max = max(ids);
+        private void readRequired(long id) throws IOException {
             byte[] buf = new byte[16];
             while (16 == nmsStream.read(buf)) {
-                long id = ByteUtils.bytesToLong(ByteUtils.substring(buf, 0, 7));
+                long curId = ByteUtils.bytesToLong(ByteUtils.substring(buf, 0, 7));
                 long offset = ByteUtils.bytesToLong(ByteUtils.substring(buf, 8, 15));
-                idx.put(id, offset);
+                idx.put(curId, offset);
 
-                if (max == id) {
-                    nmsStream.close();
+                if (curId == id) {
                     return;
                 }
             }
-            nmsStream.close();
         }
 
-        private long max(long[] values) {
-            long max = values[0];
-            for (long value : values) {
-                if (value > max) {
-                    max = value;
+        public void close() {
+            if (nmsStream != null) {
+                try {
+                    nmsStream.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(CSFReader.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            return max;
         }
     }
 }
