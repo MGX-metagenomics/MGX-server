@@ -81,6 +81,7 @@ public class SequenceBean {
     public Response closeUpload(@PathParam("uuid") UUID session_id) {
         try {
             upSessions.closeSession(session_id);
+            mgx.log("Upload finished for " + mgx.getProjectName());
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
@@ -170,6 +171,7 @@ public class SequenceBean {
     public Response closeDownload(@PathParam("uuid") UUID session_id) {
         try {
             downSessions.closeSession(session_id);
+            mgx.log("Download finished for " + mgx.getProjectName());
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
