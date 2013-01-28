@@ -15,14 +15,14 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws SeqStoreException, IOException {
-        CSFReader csf = new CSFReader("/vol/mgx-data/MGX_Biofilter/seqruns/1");
-        Set<DNASequenceHolder> fetch = csf.fetch(new long[]{50,239});
+        CSFReader csf = new CSFReader("/vol/mgx-data/MGX_Vimac/seqruns/13");
+        Set<DNASequenceHolder> fetch = csf.fetch(new long[]{8504844});
         for (DNASequenceHolder h : fetch) {
             System.err.println(h.getSequence().getId());
         }
 
 
-        fetch = csf.fetch(new long[]{50});
+        fetch = csf.fetch(new long[]{8504844});
         for (DNASequenceHolder h : fetch) {
             System.err.println(h.getSequence().getId());
         }

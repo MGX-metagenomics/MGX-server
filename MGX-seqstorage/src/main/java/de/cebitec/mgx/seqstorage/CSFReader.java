@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -162,14 +163,12 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
         Arrays.sort(ids);
 
-        InputStream in;
+        RandomAccessFile raf;
         try {
             if (idx == null) {
                 idx = new NMSReader(namein);
             }
-            in = new BufferedInputStream(new FileInputStream(csffile));
-            assert in.markSupported();
-            in.mark(Integer.MAX_VALUE);
+            raf = new RandomAccessFile(csffile, "r");
         } catch (IOException ex) {
             throw new SeqStoreException("Could not parse index: " + ex);
         }
@@ -182,13 +181,12 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 if (offset == -1) {
                     throw new SeqStoreException("Sequence ID " + id + " not present in index.");
                 }
-                in.reset();
-                in.skip(offset);
-                bytesRead = in.read(buf);
+                raf.seek(offset);
+                bytesRead = raf.read(buf); 
                 while (-1 == getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR) && bytesRead != -1) {
                     byte newbuf[] = new byte[buf.length * 2];
                     System.arraycopy(buf, 0, newbuf, 0, buf.length);
-                    bytesRead = in.read(newbuf, buf.length, buf.length);
+                    bytesRead = raf.read(newbuf, buf.length, buf.length);
                     buf = newbuf;
                 }
                 int sepPos = getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR);
@@ -198,8 +196,9 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 seq.setSequence(FourBitEncoder.decode(encoded));
                 result.add(new DNASequenceHolder(seq));
             }
+            raf.close();
         } catch (IOException ex) {
-            throw new SeqStoreException("Internal error.");
+            throw new SeqStoreException("Internal error: "+ ex.getMessage());
         }
 
         if (result.size() != ids.length) {
