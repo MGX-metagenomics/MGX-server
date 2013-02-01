@@ -105,16 +105,24 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
 
     @Override
     public void close() {
-        if (seqin != null) {
-            seqin.close();
-            seqin = null;
-        }
-        if (namein != null) {
-            try {
-                namein.close();
-            } catch (IOException ex) {
+        try {
+            if (seqin != null) {
+                seqin.close();
+                seqin = null;
             }
-            namein = null;
+            if (namein != null) {
+                namein.close();
+                namein = null;
+            }
+            if (idx != null) {
+                idx.close();
+                idx = null;
+            }
+            if (raf != null) {
+                raf.close();
+                raf = null;
+            }
+        } catch (IOException ex) {
         }
     }
 
@@ -154,6 +162,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
     }
     private NMSReader idx = null;
+    private RandomAccessFile raf = null;
 
     @Override
     public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
@@ -163,12 +172,13 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
         Arrays.sort(ids);
 
-        RandomAccessFile raf;
         try {
             if (idx == null) {
                 idx = new NMSReader(namein);
             }
-            raf = new RandomAccessFile(csffile, "r");
+            if (raf == null) {
+                raf = new RandomAccessFile(csffile, "r");
+            }
         } catch (IOException ex) {
             throw new SeqStoreException("Could not parse index: " + ex);
         }
@@ -182,7 +192,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                     throw new SeqStoreException("Sequence ID " + id + " not present in index.");
                 }
                 raf.seek(offset);
-                bytesRead = raf.read(buf); 
+                bytesRead = raf.read(buf);
                 while (-1 == getSeparatorPos(buf, FourBitEncoder.RECORD_SEPARATOR) && bytesRead != -1) {
                     byte newbuf[] = new byte[buf.length * 2];
                     System.arraycopy(buf, 0, newbuf, 0, buf.length);
@@ -196,9 +206,8 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 seq.setSequence(FourBitEncoder.decode(encoded));
                 result.add(new DNASequenceHolder(seq));
             }
-            raf.close();
         } catch (IOException ex) {
-            throw new SeqStoreException("Internal error: "+ ex.getMessage());
+            throw new SeqStoreException("Internal error: " + ex.getMessage());
         }
 
         if (result.size() != ids.length) {
@@ -214,6 +223,8 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
             }
         }
         return -1;
+
+
     }
 
     private class NMSReader {
@@ -251,12 +262,15 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
 
         public void close() {
-            if (nmsStream != null) {
-                try {
+            try {
+                if (nmsStream != null) {
                     nmsStream.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(CSFReader.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                if (idx != null) {
+                    idx.clear();
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(CSFReader.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
