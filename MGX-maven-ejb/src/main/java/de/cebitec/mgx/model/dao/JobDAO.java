@@ -49,19 +49,24 @@ public class JobDAO<T extends Job> extends DAO<T> {
             stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)");
             stmt.setLong(1, id);
             stmt.execute();
+            stmt.close();
 
             // delete attributecounts
             stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
                     + "(SELECT id FROM attribute WHERE job_id=?)");
             stmt.setLong(1, id);
-            stmt.execute();
+            stmt.execute(); 
+            stmt.close();
 
             // delete attributes
             stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?");
             stmt.setLong(1, id);
             stmt.execute();
+            stmt.close();
 
         } catch (Exception e) {
+        } finally {
+            close(conn, stmt, null);
         }
 
         // remove job object
