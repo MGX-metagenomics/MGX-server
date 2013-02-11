@@ -50,7 +50,7 @@ public class JobBean {
         Tool tool = null;
         SeqRun seqrun = null;
         try {
-             tool = mgx.getToolDAO().getById(dto.getToolId());
+            tool = mgx.getToolDAO().getById(dto.getToolId());
             seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -150,7 +150,7 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public MGXBoolean verify(@PathParam("id") Long id) {
         boolean verified = false;
-        
+
         try {
             verified = js.verify(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
@@ -158,7 +158,7 @@ public class JobBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-    
+
         return MGXBoolean.newBuilder().setValue(verified).build();
     }
 
@@ -217,10 +217,10 @@ public class JobBean {
         try {
             // notify dispatcher
             js.delete(mgx, id);
-            
+
             // remove persistent files and job object
             mgx.getJobDAO().delete(id);
-            
+
         } catch (MGXDispatcherException | MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
