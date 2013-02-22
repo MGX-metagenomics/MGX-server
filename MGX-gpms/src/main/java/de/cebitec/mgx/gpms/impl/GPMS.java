@@ -21,7 +21,6 @@ import javax.annotation.Resource;
 import javax.ejb.*;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import javax.naming.NameAlreadyBoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
