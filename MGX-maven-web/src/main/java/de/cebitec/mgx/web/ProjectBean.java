@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.MembershipDTO;
 import de.cebitec.mgx.dto.dto.MembershipDTOList;
@@ -34,6 +35,12 @@ public class ProjectBean {
     @Path("login")
     public MGXString login() {
         return MGXString.newBuilder().setValue("MGX").build();
+    }
+
+    @GET
+    @Path("ping")
+    public MGXLong ping() {
+        return MGXLong.newBuilder().setValue(System.currentTimeMillis()).build();
     }
 
     @GET
