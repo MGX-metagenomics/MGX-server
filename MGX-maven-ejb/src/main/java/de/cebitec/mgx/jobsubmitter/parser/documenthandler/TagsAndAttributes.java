@@ -10,7 +10,7 @@ package de.cebitec.mgx.jobsubmitter.parser.documenthandler;
  */
 public final class TagsAndAttributes {
 
-    public static final String def = "default";
+    public static final String def = "value";
     public static final String nodetype = "nodetype";
     public static final String classname = "classname";
     public static final String node = "node";

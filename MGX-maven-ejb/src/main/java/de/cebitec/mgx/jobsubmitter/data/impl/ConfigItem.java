@@ -60,9 +60,10 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @param lUserName Der vom User vergebene Name.
      * @param lUserDescription Die vom User vergebene Beschreibung.
      * @param lConfigName Der Name des ConfigItems.
+     * @param lDefaultValue Default Wert.
      */
-    public ConfigItem(String lUserName, String lUserDescription, String lConfigName) {
-        defaultValue = "";
+    public ConfigItem(String lUserName, String lUserDescription, String lConfigName, String lDefaultValue) {
+        defaultValue = lDefaultValue;
         userName = lUserName;
         userDescription = lUserDescription;
         configName = lConfigName;

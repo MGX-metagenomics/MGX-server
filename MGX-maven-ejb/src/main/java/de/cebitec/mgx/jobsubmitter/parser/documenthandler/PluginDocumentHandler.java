@@ -74,11 +74,8 @@ public class PluginDocumentHandler extends DefaultHandler {
 
                 String configType = lAttributes.getValue(TagsAndAttributes.type);
                 String optional = lAttributes.getValue(TagsAndAttributes.optional);
-                String defaultValue = lAttributes.getValue(TagsAndAttributes.def);
-                if (defaultValue == null) {
-                    defaultValue = "";
-                }
-                setConfigAttributes(optional, configType, defaultValue);
+                
+                setConfigAttributes(optional, configType);
             }
 
             if (TagsAndAttributes.choice.equals(lQName)) {
@@ -122,18 +119,16 @@ public class PluginDocumentHandler extends DefaultHandler {
      *
      * @param lOptional Ob der ConfigItem optional ist.
      * @param lConfigType Welchen Typ dieses ConfigItem hat.
-     * @param lDefaultValue Ob und welchen default Wert dieses ConfigItem
      * besitzt.
      */
-    private void setConfigAttributes(String lOptional, String lConfigType, String lDefaultValue) {
+    private void setConfigAttributes(String lOptional, String lConfigType) {
 
         for (Entry<Long, String> entry : idsAndConfigItems.entrySet()) {
             if (!entry.getValue().isEmpty()) {
                 Node node = store.getNode(entry.getKey());
                 node.getConfigItem(entry.getValue())
                     .setConfigType(lConfigType)
-                    .setOptional("1".equals(lOptional))
-                    .setDefaultValue(lDefaultValue);
+                    .setOptional("1".equals(lOptional));
             }
         }
     }
