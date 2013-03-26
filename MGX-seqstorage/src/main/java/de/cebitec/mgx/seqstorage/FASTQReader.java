@@ -18,10 +18,10 @@ public class FASTQReader implements SeqReaderI<DNAQualitySequenceHolder> {
     private String fastqfile = null;
     public static final byte LINEBREAK = '\n';
 
-    public FASTQReader(String filename) throws SeqStoreException {
+    public FASTQReader(String filename, boolean gzipCompressed) throws SeqStoreException {
         fastqfile = filename;
         try {
-            stream = new ByteStreamTokenizer(fastqfile, LINEBREAK, 0);
+            stream = new ByteStreamTokenizer(fastqfile, gzipCompressed, LINEBREAK, 0);
         } catch (Exception ex) {
             throw new SeqStoreException("File not found or unreadable: " + fastqfile + "\n" + ex.getMessage());
         }

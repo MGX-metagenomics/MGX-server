@@ -21,10 +21,10 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
     private String fastafile = null;
     public static final byte LINEBREAK = '\n';
 
-    public FastaReader(String filename) throws SeqStoreException {
+    public FastaReader(String filename, boolean gzipCompressed) throws SeqStoreException {
         fastafile = filename;
         try {
-            stream = new ByteStreamTokenizer(fastafile, LINEBREAK, 0);
+            stream = new ByteStreamTokenizer(fastafile, gzipCompressed, LINEBREAK, 0);
         } catch (Exception ex) {
             throw new SeqStoreException("File not found or unreadable: " + fastafile);
         }

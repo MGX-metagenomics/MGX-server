@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 /**
  *
@@ -32,17 +33,26 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
     private final String namefile;
     private DNASequenceHolder holder = null;
 
-    public CSFReader(String filename) throws SeqStoreException {
+    public CSFReader(String filename, boolean gzipCompressed) throws SeqStoreException {
         if (filename == null) {
             throw new SeqStoreException("No filename.");
+        }
+
+        if (gzipCompressed) {
+            throw new SeqStoreException("Compressed CSF format unsupported.");
         }
         csffile = filename + ".csf";
         namefile = filename;
         try {
             validateMagic(namefile, FourBitEncoder.NMS_MAGIC);
             validateMagic(csffile, FourBitEncoder.CSF_MAGIC);
-            seqin = new ByteStreamTokenizer(csffile, FourBitEncoder.RECORD_SEPARATOR, FourBitEncoder.CSF_MAGIC.length);
-            namein = new BufferedInputStream(new FileInputStream(namefile));
+            seqin = new ByteStreamTokenizer(csffile, gzipCompressed, FourBitEncoder.RECORD_SEPARATOR, FourBitEncoder.CSF_MAGIC.length);
+            if (gzipCompressed) {
+                InputStream gzstream = new GZIPInputStream(new FileInputStream(namefile));
+                namein = new BufferedInputStream(gzstream);
+            } else {
+                namein = new BufferedInputStream(new FileInputStream(namefile));
+            }
             if (namein.skip(FourBitEncoder.CSF_MAGIC.length) < FourBitEncoder.CSF_MAGIC.length) {
                 throw new SeqStoreException("Corrupted file " + csffile);
             }
@@ -141,10 +151,12 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         } catch (IOException e) {
             throw new SeqStoreException(filename + ": Invalid magic");
         } finally {
-            try {
-                fis.close();
-            } catch (IOException ex) {
-                throw new SeqStoreException(ex.getMessage());
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException ex) {
+                    throw new SeqStoreException(ex.getMessage());
+                }
             }
         }
     }

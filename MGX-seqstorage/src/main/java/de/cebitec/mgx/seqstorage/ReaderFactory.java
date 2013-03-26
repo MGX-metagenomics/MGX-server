@@ -1,15 +1,16 @@
-
 package de.cebitec.mgx.seqstorage;
 
 import de.cebitec.mgx.seqholder.ReadSequenceI;
-import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.FactoryI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.zip.GZIPInputStream;
 
 /**
  *
@@ -42,17 +43,33 @@ public class ReaderFactory implements FactoryI {
         } catch (IOException ex) {
             throw new SeqStoreException("Could not read sequence file");
         }
+        
+        boolean is_compressed = false;
+
+        // check for gzip magic
+        if ((cbuf[0] == 0x1f) && (cbuf[1] == 0x8b)) {
+            try {
+                GZIPInputStream gzis = new GZIPInputStream(new FileInputStream(file));
+                InputStreamReader isr = new InputStreamReader(gzis);
+                isr.read(cbuf, 0, 4);
+                isr.close();
+                gzis.close();
+                is_compressed = true;
+            } catch (IOException ex) {
+                throw new SeqStoreException("Could not read sequence file: " + ex.getMessage());
+            }
+        }
 
         SeqReaderI<? extends ReadSequenceI> ret = null;
         switch (cbuf[0]) {
             case '>':
-                ret = new FastaReader(uri);
+                ret = new FastaReader(uri, is_compressed);
                 break;
             case '@':
-                ret = new FASTQReader(uri);
+                ret = new FASTQReader(uri, is_compressed);
                 break;
             case 'N':
-                ret = new CSFReader(uri);
+                ret = new CSFReader(uri, is_compressed);
                 break;
             default:
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");

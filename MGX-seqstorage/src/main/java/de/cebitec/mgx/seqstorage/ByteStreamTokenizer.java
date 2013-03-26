@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.zip.GZIPInputStream;
 
 public class ByteStreamTokenizer implements Enumeration {
 
@@ -18,17 +19,21 @@ public class ByteStreamTokenizer implements Enumeration {
     private byte separator;
     private int startpos = 0;
     private int endpos = 0;
-    
     private byte elem[] = null;
 
-    public ByteStreamTokenizer(String fname, byte separatorChar, int skipBytes) throws FileNotFoundException, IOException {
+    public ByteStreamTokenizer(String fname, boolean gzipCompressed, byte separatorChar, int skipBytes) throws FileNotFoundException, IOException {
         bufferSize = DEFAULT_BUFSIZE;
         buffer = new byte[bufferSize];
         separator = separatorChar;
         bufferRefillPosition = buffer.length * 8 / 10;
 
         // set up reader, skip over offset bytes, pre-fill buffer
-        in = new BufferedInputStream(new FileInputStream(fname));
+        if (gzipCompressed) {
+            InputStream gzstream = new GZIPInputStream(new FileInputStream(fname));
+            in = new BufferedInputStream(gzstream);
+        } else {
+            in = new BufferedInputStream(new FileInputStream(fname));
+        }
         in.skip(skipBytes);
         fillBuffer();
     }
@@ -67,7 +72,7 @@ public class ByteStreamTokenizer implements Enumeration {
             enlargeBuffer();
 
             if (fillBuffer()) {
-                break; 
+                break;
             }
         }
 

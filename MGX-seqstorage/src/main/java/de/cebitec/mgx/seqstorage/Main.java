@@ -15,7 +15,7 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws SeqStoreException, IOException {
-        CSFReader csf = new CSFReader("/vol/mgx-data/MGX_Vimac/seqruns/13");
+        CSFReader csf = new CSFReader("/vol/mgx-data/MGX_Vimac/seqruns/13", false);
         Set<DNASequenceHolder> fetch = csf.fetch(new long[]{8504844});
         for (DNASequenceHolder h : fetch) {
             System.err.println(h.getSequence().getId());
