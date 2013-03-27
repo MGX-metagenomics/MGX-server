@@ -71,6 +71,11 @@ public class ReaderFactory implements FactoryI {
             case 'N':
                 ret = new CSFReader(uri, is_compressed);
                 break;
+            case '.':
+                if (cbuf[1] == 's' && cbuf[2] == 'f' && cbuf[3] == 'f') {
+                    ret = new SFFReader(uri);
+                }
+                // no break; here
             default:
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");
         }
