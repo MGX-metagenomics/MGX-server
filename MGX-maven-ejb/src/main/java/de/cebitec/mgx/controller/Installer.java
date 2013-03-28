@@ -31,6 +31,7 @@ public class Installer {
     @PreDestroy
     public void stop() {
         System.out.println("Exiting MGX: " + gpms);
+        gpms.unregisterProjectClass("MGX");
         gpms.unregisterEMFResolver(resolver);
     }
 }
