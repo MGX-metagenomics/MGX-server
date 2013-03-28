@@ -7,6 +7,7 @@ import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
 import de.cebitec.gpms.data.ProxyDataSourceI;
 import de.cebitec.gpms.util.EMFNameResolver;
+import de.cebitec.mgx.gpms.GPMSException;
 import de.cebitec.mgx.gpms.impl.data.ProjectClass;
 import de.cebitec.mgx.gpms.impl.data.User;
 import java.sql.Connection;
@@ -138,9 +139,10 @@ public class GPMS implements DBGPMSI {
     @Override
     public Set<ProjectClassI> getProjectClasses() {
         // FIXME - return all available GPMS project classes
-        Set<ProjectClassI> ret = new HashSet<>();
-        ret.add(new ProjectClass(this, "MGX"));
-        return ret;
+//        Set<ProjectClassI> ret = new HashSet<>();
+//        ret.add(new ProjectClass(this, "MGX"));
+//        return ret;
+        return supportedPClasses;
     }
 
     @Override
@@ -150,15 +152,32 @@ public class GPMS implements DBGPMSI {
 
     @Override
     public void registerProjectClass(String pc) {
-        ProjectClassI projectClass = new ProjectClass(this, pc);
-        if (!supportedPClasses.contains(projectClass)) {
+        for (ProjectClassI pci : supportedPClasses) {
+            if (pc.equals(pci.getName())) {
+                log("Project class " + pc + " already registered.");
+                return;
+            }
+        }
+
+        ProjectClassI projectClass = null;
+        try {
+            projectClass = new ProjectClass(this, pc);
+        } catch (GPMSException ex) {
+            log(ex.getMessage());
+        }
+        if (projectClass != null && !supportedPClasses.contains(projectClass)) {
             supportedPClasses.add(projectClass);
+            log("Registered project class "+projectClass.getName());
         }
     }
 
     @Override
     public void unregisterProjectClass(String pc) {
-        ProjectClassI projectClass = new ProjectClass(this, pc);
-        supportedPClasses.remove(projectClass);
+        for (ProjectClassI pci : supportedPClasses) {
+            if (pc.equals(pci.getName())) {
+                supportedPClasses.remove(pci);
+                return;
+            }
+        }
     }
 }
