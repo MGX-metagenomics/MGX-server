@@ -1,21 +1,26 @@
 package de.cebitec.mgx.jobsubmitter;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.ClientResponse.Status;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dispatcher.common.DispatcherCommand;
-import de.cebitec.mgx.dispatcher.common.JobReceiverI;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.*;
+import java.net.URI;
 import java.util.Collection;
-import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.Stateless;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import javax.ws.rs.core.UriBuilder;
 
 /**
  *
@@ -25,32 +30,28 @@ import javax.naming.NamingException;
 public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
-    public boolean verify(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
+    public void shutdown(MGXController mgx) throws MGXDispatcherException {
+        String token = mgx.getConfiguration().getDispatcherToken();
+        boolean success = get(mgx, "shutdown/" + token, Boolean.class);
+        if (!success) {
+            throw new MGXDispatcherException("Could not shutdown dispatcher.");
+        }
+    }
 
+    @Override
+    public boolean validate(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
         createJobConfigFile(mgx, job);
-        
+        boolean ret = false;
+        try {
+            ret = get(mgx, "validate/" + mgx.getProjectName() + "/" + jobId, Boolean.class);
+        } catch (MGXDispatcherException ex) {
+            mgx.log(ex.getMessage());
+        }
 
-//        JobReceiverI r = getJobReceiver(mgx);
-//        if (r != null) {
-//            try {
-//                r.submit(DispatcherCommand.VERIFY, mgx.getProjectName(), job.getId());
-//            } catch (MGXDispatcherException ex) {
-//                throw new MGXException(ex.getMessage());
-//            }
-//            return true;
-//        } else {
-//            mgx.log("Job verification failed, could not contact dispatcher.");
-//            return false;
-//        }
-
-//        if (validateParameters(mgx, job)) {
-            job.setStatus(JobState.VERIFIED);
-            mgx.getJobDAO().update(job);
-            return true;
-//        }
-//
-//        return false;
+        job.setStatus(JobState.VERIFIED);
+        mgx.getJobDAO().update(job);
+        return ret;
     }
 
     @Override
@@ -61,76 +62,36 @@ public class JobSubmitterImpl implements JobSubmitter {
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
+        boolean ret = false;
 
+        // set job to submitted
         job.setStatus(JobState.SUBMITTED);
         mgx.getJobDAO().update(job);
 
-        JobReceiverI r = getJobReceiver(mgx);
-        if (r != null) {
-            r.submit(DispatcherCommand.EXECUTE, mgx.getProjectName(), job.getId());
-            return true;
-        } else {
-            mgx.log("Job submission failed, could not contact dispatcher.");
-            return false;
-        }
+        // and send to dispatcher
+        ret = get(mgx, "submit/" + mgx.getProjectName() + "/" + jobId, Boolean.class);
+        return ret;
     }
 
     @Override
-    public boolean cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-
-        JobReceiverI r = getJobReceiver(mgx);
-        if (r != null) {
-            r.submit(DispatcherCommand.CANCEL, mgx.getProjectName(), jobId);
-            return true;
-        } else {
-            mgx.log("Job cancellation failed, could not contact dispatcher.");
-            return false;
-        }
+    public void cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
+        delete(mgx, "cancel/" + mgx.getProjectName() + "/" + jobId);
     }
 
     @Override
     public void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-
-        // notify dispatcher about job delete, so it can be cancelled, 
-        // aborted or removed from the queue
-        JobReceiverI r = getJobReceiver(mgx);
-        if (r != null) {
-            r.submit(DispatcherCommand.DELETE, mgx.getProjectName(), jobId);
-        } else {
-            mgx.log("Job deletion failed, could not contact dispatcher.");
-        }
+        delete(mgx, "delete/" + mgx.getProjectName() + "/" + jobId);
     }
 
-    private JobReceiverI getJobReceiver(MGXController mgx) {
-        JobReceiverI r = null;
-        try {
-            r = (JobReceiverI) getDispatcherContext(mgx).lookup("java:global/MGX-dispatcher-ear/MGX-dispatcher-ejb/JobReceiver");
-        } catch (NamingException | MGXDispatcherException ex) {
-        }
-
-        return r;
-    }
-
-    private Context getDispatcherContext(MGXController mgx) throws NamingException, MGXDispatcherException {
-
-        String dispatcherHost = mgx.getConfiguration().getDispatcherHost();
-        Properties props = new Properties();
-        props.setProperty("java.naming.factory.initial", "com.sun.enterprise.naming.impl.SerialInitContextFactory");
-        props.setProperty("java.naming.factory.url.pkgs", "com.sun.enterprise.naming");
-        props.setProperty("java.naming.factory.state", "com.sun.corba.ee.impl.presentation.rmi.JNDIStateFactoryImpl");
-        props.put("org.omg.CORBA.ORBInitialHost", dispatcherHost);
-        props.put("org.omg.CORBA.ORBInitialPort", "3700");
-
-        return new InitialContext(props);
-    }
-
-    private void createJobConfigFile(MGXController mgx, Job j) throws MGXException {
+    private boolean createJobConfigFile(MGXController mgx, Job j) throws MGXException {
         StringBuilder jobconfig = new StringBuilder(mgx.getProjectDirectory())
                 .append(File.separator)
                 .append("jobs");
 
         File f = new File(jobconfig.toString());
-        f.mkdirs();
+        if (!f.exists()) {
+            UnixHelper.createDirectory(f);
+        }
 
         jobconfig.append(File.separator);
         jobconfig.append(j.getId().toString());
@@ -166,12 +127,83 @@ public class JobSubmitterImpl implements JobSubmitter {
             throw new MGXException(ex.getMessage());
         } finally {
             try {
-                cfgFile.close();
-                fw.close();
+                if (cfgFile != null) {
+                    cfgFile.close();
+                }
+                if (fw != null) {
+                    fw.close();
+                }
             } catch (IOException ex) {
                 mgx.log(ex.getMessage());
                 throw new MGXException(ex.getMessage());
             }
+        }
+        UnixHelper.makeFileGroupWritable(jobconfig.toString());
+        return true;
+    }
+
+    private WebResource getWebResource(final MGXController mgx) {
+        WebResource service = null;
+        try {
+            ClientConfig cc = new DefaultClientConfig();
+            cc.getClasses().add(TextPlainReader.class);
+            Client client = Client.create(cc);
+            service = client.resource(getBaseURI(mgx));
+        } catch (MGXDispatcherException ex) {
+            mgx.log(ex.getMessage());
+        }
+        return service;
+    }
+
+    private URI getBaseURI(final MGXController mgx) throws MGXDispatcherException {
+        String uri = new StringBuilder("http://")
+                .append(mgx.getConfiguration().getDispatcherHost())
+                .append(":4444/MGX-dispatcher-web/webresources/Job/")
+                .toString();
+        return UriBuilder.fromUri(uri).build();
+    }
+
+    protected final <U> U put(MGXController mgx, final String path, Object obj, Class<U> c) throws MGXDispatcherException {
+        //System.err.println("PUT uri: " + getWebResource().path(path).getURI().toASCIIString());
+        ClientResponse res = getWebResource(mgx).path(path).put(ClientResponse.class, obj);
+        catchException(res);
+        return res.<U>getEntity(c);
+    }
+
+    protected final <U> U get(MGXController mgx, final String path, Class<U> c) throws MGXDispatcherException {
+        //System.err.println("GET uri: " +getWebResource().path(path).getURI().toASCIIString());
+        ClientResponse res = getWebResource(mgx).path(path).get(ClientResponse.class);
+        catchException(res);
+        return res.<U>getEntity(c);
+    }
+
+    protected final void delete(MGXController mgx, final String path) throws MGXDispatcherException {
+        //System.err.println("DELETE uri: " +getWebResource().path(path).getURI().toASCIIString());
+        ClientResponse res = getWebResource(mgx).path(path).delete(ClientResponse.class);
+        catchException(res);
+    }
+
+    protected final <U> void post(MGXController mgx, final String path, U obj) throws MGXDispatcherException {
+        ClientResponse res = getWebResource(mgx).path(path).post(ClientResponse.class, obj);
+        catchException(res);
+    }
+
+    protected final void catchException(final ClientResponse res) throws MGXDispatcherException {
+        if (res.getClientResponseStatus() != Status.OK) {
+            InputStreamReader isr = new InputStreamReader(res.getEntityInputStream());
+            BufferedReader r = new BufferedReader(isr);
+            StringBuilder msg = new StringBuilder();
+            String buf;
+            try {
+                while ((buf = r.readLine()) != null) {
+                    msg.append(buf);
+                }
+                r.close();
+                isr.close();
+            } catch (IOException ex) {
+                Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            throw new MGXDispatcherException(msg.toString());
         }
     }
 }

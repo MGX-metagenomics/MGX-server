@@ -36,7 +36,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         if (!f.exists()) {
             throw new RuntimeException("MGX configuration failed, " + cfgFile.toString() + " missing");
         }
-        
+
         FileInputStream in = null;
         config = new Properties();
         try {
@@ -70,7 +70,6 @@ public class MGXConfiguration extends DispatcherConfigBase {
 //    public String getMGXGlobalJDBCURL() {
 //        return config.getProperty("mgxglobal_jdbc_url");
 //    }
-
     public String getMGXGlobalStorageDir() {
         return config.getProperty("mgxglobal_persistent_dir");
     }
@@ -101,17 +100,16 @@ public class MGXConfiguration extends DispatcherConfigBase {
 //    public String getValidatorExecutable() {
 //        return config.getProperty("mgx_graphvalidate");
 //    }
-    
     public File getPluginDump() {
         StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
         if (!getMGXGlobalStorageDir().endsWith(File.separator)) {
             sb.append(File.separatorChar);
         }
         sb.append("plugins.xml");
-        
+
         File ret = new File(sb.toString());
         assert ret.exists();
-        
+
         return ret;
     }
 
@@ -136,13 +134,47 @@ public class MGXConfiguration extends DispatcherConfigBase {
             throw new MGXDispatcherException(ex);
         } finally {
             try {
-                in.close();
+                if (in != null) {
+                    in.close();
+                }
             } catch (IOException ex) {
                 Logger.getLogger(MGXConfiguration.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         return p.getProperty("mgx_dispatcherhost");
+    }
+
+    public String getDispatcherToken() throws MGXDispatcherException {
+
+        /*
+         * dispatcher host might be changing, therefore we have to read
+         * this file every time
+         */
+
+        File f = new File(dispatcherHostFile);
+        if (!f.exists()) {
+            throw new MGXDispatcherException("Dispatcher host file missing, dispatcher not running?");
+        }
+
+        Properties p = new Properties();
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(f);
+            p.load(in);
+        } catch (Exception ex) {
+            throw new MGXDispatcherException(ex);
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(MGXConfiguration.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        return p.getProperty("mgx_dispatchertoken");
     }
 
     /*

@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -31,14 +32,15 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
                 fw.write(xmldata);
                 fw.flush();
             }
+            UnixHelper.makeFileGroupWritable(fname);
         } catch (Exception ex) {
             delete(id); // remove from database, aka rollback
             throw new MGXException(ex.getMessage());
         }
-        
+
         obj.setXMLFile(fname);
         super.update(obj);
-        
+
         return id;
     }
 
@@ -51,7 +53,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
             throw new MGXException(ex.getMessage());
         }
 
-        // clone
+        // manual clone
         t.setName(global.getName());
         t.setDescription(global.getDescription());
         t.setVersion(global.getVersion());
@@ -68,7 +70,10 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
          * project directory is created on demand
          */
         StringBuilder targetName = new StringBuilder(projectDir).append("jobs");
-        new File(targetName.toString()).mkdirs();
+        File targetDir = new File(targetName.toString());
+        if (!targetDir.exists()) {
+            UnixHelper.createDirectory(targetDir);
+        }
 
         targetName.append(File.separator).append(id).append(".xml");
 
@@ -76,6 +81,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
             File src = new File(global.getXMLFile());
             File dest = new File(targetName.toString());
             copyFile(src, dest);
+            UnixHelper.makeFileGroupWritable(dest.getAbsolutePath());
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
         }

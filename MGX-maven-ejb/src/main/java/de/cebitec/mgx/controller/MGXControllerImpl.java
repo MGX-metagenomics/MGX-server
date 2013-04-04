@@ -5,13 +5,22 @@ import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
@@ -50,7 +59,8 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public EntityManagerFactory getEMF() {
-        assert false;return null; //return this.emf;
+        assert false;
+        return null; //return this.emf;
     }
 
     @Override
@@ -73,6 +83,18 @@ public class MGXControllerImpl implements MGXController {
         String ret = new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
         while (ret.contains(File.separator + File.separator)) {
             ret = ret.replaceAll(File.separator + File.separator, "/");
+        }
+
+        // 
+        File targetDir = new File(ret);
+        if (!targetDir.exists()) {
+            // make group writable directory
+            UnixHelper.createDirectory(targetDir);
+        }
+        try {
+            Process exec = Runtime.getRuntime().exec("/usr/bin/chmod 02770 "+ret+"/*");
+        } catch (IOException ex) {
+            Logger.getLogger(MGXControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ret;
     }

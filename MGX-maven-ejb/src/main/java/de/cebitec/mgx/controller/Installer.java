@@ -1,6 +1,5 @@
 package de.cebitec.mgx.controller;
 
-
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.util.EMFNameResolver;
 import javax.annotation.PostConstruct;
