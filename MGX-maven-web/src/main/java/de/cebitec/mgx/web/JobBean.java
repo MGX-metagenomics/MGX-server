@@ -9,17 +9,26 @@ import de.cebitec.mgx.dto.dto.JobDTOList;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXBoolean;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.sessions.TaskI;
+import de.cebitec.mgx.sessions.Sessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -41,6 +50,8 @@ public class JobBean {
     JobSubmitter js;
     @EJB
     JobParameterHelper paramHelper;
+    @EJB
+    Sessions sessions;
 
     @PUT
     @Path("create")
@@ -152,7 +163,7 @@ public class JobBean {
         boolean verified = false;
 
         try {
-            verified = js.verify(mgx, id);
+            verified = js.validate(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
             throw new MGXJobException(ex.getMessage());
         } catch (MGXException ex) {
@@ -188,14 +199,13 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public MGXBoolean cancel(@PathParam("id") Long id) {
 
-        boolean ret = false;
         try {
-            ret = js.cancel(mgx, id);
+            js.cancel(mgx, id);
         } catch (MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return MGXBoolean.newBuilder().setValue(ret).build();
+        return MGXBoolean.newBuilder().setValue(true).build();
     }
 
     @POST
@@ -212,7 +222,7 @@ public class JobBean {
 
     @DELETE
     @Path("delete/{id}")
-    public Response delete(@PathParam("id") Long id) {
+    public MGXString delete(@PathParam("id") Long id) {
 
         try {
             // notify dispatcher
@@ -226,7 +236,10 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-        return Response.ok().build();
+        DeleteJob dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName());
+        UUID uuid = sessions.registerSession(dJob);
+
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
     @GET
@@ -240,5 +253,69 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
+    }
+
+    private final class DeleteJob extends TaskI {
+
+        private final Connection conn;
+        private final long id;
+
+        public DeleteJob(long id, Connection conn, String projName) {
+            super(projName);
+            this.conn = conn;
+            this.id = id;
+        }
+
+        @Override
+        public void cancel() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+
+                // delete observations
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+
+                // delete attributecounts
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+                        + "(SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+
+                // delete attributes
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+                conn.close();
+                state = State.FINISHED;
+            } catch (Exception e) {
+                state = State.FAILED;
+            }
+        }
     }
 }

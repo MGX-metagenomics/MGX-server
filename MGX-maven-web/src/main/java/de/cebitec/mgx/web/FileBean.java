@@ -11,6 +11,7 @@ import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.upload.FileUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
+import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
 import java.util.UUID;
@@ -70,7 +71,8 @@ public class FileBean {
         if (target.exists()) {
             throw new MGXWebException(dto.getName() + " already exists.");
         }
-        if (!target.mkdir()) {
+        UnixHelper.createDirectory(target);
+        if (!target.exists()) {
             throw new MGXWebException("Could not create " + dto.getName());
         }
         return MGXLong.newBuilder().setValue(1).build();
