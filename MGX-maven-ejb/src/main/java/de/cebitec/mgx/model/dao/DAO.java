@@ -88,12 +88,13 @@ public abstract class DAO<T extends Identifiable> {
         return ret;
     }
 
-    public Iterator<T> getByIds(Collection<Long> ids) {
-        return getEntityManager()
+    public AutoCloseableIterator<T> getByIds(Collection<Long> ids) throws MGXException {
+        Iterator<T> it = getEntityManager()
                 .createQuery("SELECT DISTINCT o FROM " + getClassName() + " o WHERE o.id IN :ids", getType())
                 .setParameter("ids", ids)
                 .getResultList()
                 .iterator();
+        return new ForwardingIterator<>(it);
     }
 
     public AutoCloseableIterator<T> getAll() {
