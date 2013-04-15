@@ -9,6 +9,8 @@ import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
+import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
@@ -17,6 +19,7 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.ArrayList;
@@ -31,6 +34,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -154,7 +158,7 @@ public class SequenceBean {
             while (iter.hasNext()) {
                 attrs.add(iter.next());
             }
-            
+
             mgx.log("Creating download session for " + mgx.getProjectName());
             provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), attrs);
         } catch (MGXException ex) {
@@ -206,7 +210,7 @@ public class SequenceBean {
 
     /*
      * 
-     * retrieval of single sequences
+     * retrieval of individual sequences
      * 
      */
     @GET
@@ -221,5 +225,23 @@ public class SequenceBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @PUT
+    @Path("fetchall/{ids}")
+    @Produces("application/x-protobuf")
+    public SequenceDTOList fetchall(MGXLongList ids) {
+        Set<Long> idlist = new HashSet<>();
+        for (MGXLong l : ids.getLongList()) {
+            idlist.add(l.getValue());
+        }
+        AutoCloseableIterator<Sequence> objs;
+        try {
+            objs = mgx.getSequenceDAO().getByIds(idlist);
+        } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return SequenceDTOFactory.getInstance().toDTOList(objs);
     }
 }
