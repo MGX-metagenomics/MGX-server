@@ -6,6 +6,8 @@ import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.LimitingIterator;
+import java.util.UUID;
 
 /**
  *
@@ -60,12 +62,43 @@ public class SequenceDTOFactory extends DTOConversionBase<Sequence, SequenceDTO,
 
     @Override
     public SequenceDTOList toDTOList(AutoCloseableIterator<Sequence> acit) {
+        if (acit instanceof LimitingIterator) {
+            return convertLimited((LimitingIterator) acit, UUID.randomUUID().toString());
+        } else {
+            return convert(acit);
+        }
+    }
+    
+    public SequenceDTOList toDTOList(LimitingIterator<Sequence> acit, String uuid) {
+        return convertLimited(acit, uuid);
+    }
+
+    private SequenceDTOList convert(AutoCloseableIterator<Sequence> acit) {
         Builder b = SequenceDTOList.newBuilder();
         try (AutoCloseableIterator<Sequence> iter = acit) {
             while (iter.hasNext()) {
                 b.addSeq(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+        }
+        b.setComplete(true);
+
+        return b.build();
+    }
+
+    private SequenceDTOList convertLimited(LimitingIterator<Sequence> acit, String uuid) {
+        Builder b = SequenceDTOList.newBuilder();
+
+        try (LimitingIterator<Sequence> iter = acit) {
+            while (iter.hasNext()) {
+                b.addSeq(toDTO(iter.next()));
+            }
+        } catch (Exception ex) {
+        }
+
+        b.setComplete(!acit.limitReached());
+        if (acit.limitReached()) {
+            b.setUuid(uuid);
         }
         return b.build();
     }
