@@ -166,7 +166,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
 
     public DBIterator<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
         DBIterator<Sequence> iter = null;
-        Connection conn = getController().getConnection();
+        final Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rset = null;
 

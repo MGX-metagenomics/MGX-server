@@ -2,6 +2,7 @@ package de.cebitec.mgx.sessions;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.util.LimitingIterator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,14 +24,14 @@ import javax.ejb.Startup;
  *
  * @author sjaenick
  */
-@Singleton(mappedName = "Sessions")
+@Singleton(mappedName = "ResultHolder")
 @Startup
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
-public class Sessions {
+public class ResultHolder {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
-    private Map<UUID, TaskI> sessions = null;
+    private Map<UUID, LimitingIterator> sessions = null;
     private int timeout;
 
     @PostConstruct
@@ -42,30 +43,41 @@ public class Sessions {
     @PreDestroy
     public void stop() {
         for (UUID uuid : sessions.keySet()) {
-            sessions.get(uuid).cancel();
+            try {
+                sessions.get(uuid).close();
+            } catch (Exception ex) {
+                Logger.getLogger(ResultHolder.class.getName()).log(Level.SEVERE, null, ex);
+            }
             sessions.remove(uuid);
         }
     }
 
-    public UUID registerSession(TaskI session) {
-        UUID uuid = UUID.randomUUID();
+    public UUID add(UUID uuid, LimitingIterator session) {
         sessions.put(uuid, session);
         return uuid;
     }
 
-    public TaskI getSession(UUID uuid) {
+    public LimitingIterator get(UUID uuid) {
         return sessions.get(uuid);
     }
 
     @Asynchronous
-    public void closeSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).close();
+    public void close(UUID uuid) throws MGXException {
+        try {
+            sessions.get(uuid).close();
+        } catch (Exception ex) {
+            Logger.getLogger(ResultHolder.class.getName()).log(Level.SEVERE, null, ex);
+        }
         sessions.remove(uuid);
     }
 
     @Asynchronous
-    public void cancelSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).cancel();
+    public void cancel(UUID uuid) throws MGXException {
+        try {
+            sessions.get(uuid).close();
+        } catch (Exception ex) {
+            Logger.getLogger(ResultHolder.class.getName()).log(Level.SEVERE, null, ex);
+        }
         sessions.remove(uuid);
     }
 
@@ -73,12 +85,15 @@ public class Sessions {
     public void timeout() {
         Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : sessions.keySet()) {
-            TaskI s = sessions.get(uuid);
+            LimitingIterator s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
             if (sessionIdleTime > timeout) {
-                Logger.getLogger(Sessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
                 toRemove.add(uuid);
-                s.cancel();
+                try {
+                    s.close();
+                } catch (Exception ex) {
+                    Logger.getLogger(ResultHolder.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
 
