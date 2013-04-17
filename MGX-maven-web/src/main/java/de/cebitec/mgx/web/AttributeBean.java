@@ -19,12 +19,17 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.sessions.ResultHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.LimitingIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -40,6 +45,9 @@ public class AttributeBean {
     @Inject
     @MGX
     MGXController mgx;
+    //
+    @EJB
+    ResultHolder resultHolder;
 
     @GET
     @Path("fetch/{id}")
@@ -120,7 +128,41 @@ public class AttributeBean {
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
         }
-        return SequenceDTOFactory.getInstance().toDTOList(ret);
+        LimitingIterator liter = new LimitingIterator(50000, ret);
+        SequenceDTOList dtos = SequenceDTOFactory.getInstance().toDTOList(liter);
+
+        if (!dtos.getComplete()) {
+            // save iterator for continuation
+            UUID uuid = UUID.fromString(dtos.getUuid());
+            resultHolder.add(uuid, liter);
+        }
+
+        mgx.log("search for " + req.getTerm() + " produced " + dtos.getSeqCount() + " results");
+        return dtos;
+    }
+
+    @GET
+    @Path("continueSearch/{uuid}")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public SequenceDTOList continueSearch(@PathParam("uuid") String uuid) {
+        UUID tmp = UUID.fromString(uuid);
+        LimitingIterator acit = resultHolder.get(tmp);
+        if (acit == null) {
+            throw new MGXWebException("Unknown UUID.");
+        }
+        acit.advanceOverLimit();
+        SequenceDTOList dtos = SequenceDTOFactory.getInstance().toDTOList(acit, uuid);
+        if (dtos.getComplete()) {
+            try {
+                resultHolder.close(tmp);
+            } catch (MGXException ex) {
+                mgx.log(ex.getMessage());
+                throw new MGXWebException(ex.getMessage());
+            }
+        }
+        mgx.log(dtos.getSeqCount() + " additional results");
+        return dtos;
     }
 
     private AttributeDistribution convert(Map<Attribute, Long> dist) {
