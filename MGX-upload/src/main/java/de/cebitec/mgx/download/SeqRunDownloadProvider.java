@@ -99,13 +99,16 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         int count = 0;
         while (count <= bulksize && reader.hasMoreElements()) {
             DNASequenceI seq = reader.nextElement().getSequence();
-            SequenceDTO dto = SequenceDTO.newBuilder()
-                    .setId(seq.getId())
-                    .setName(getSequenceName(seq.getId()))
-                    .setSequence(new String(seq.getSequence()))
-                    .build();
-            listBuilder.addSeq(dto);
-            count++;
+            String seqName = getSequenceName(seq.getId());
+            if (seqName != null) {
+                SequenceDTO dto = SequenceDTO.newBuilder()
+                        .setId(seq.getId())
+                        .setName(seqName)
+                        .setSequence(new String(seq.getSequence()))
+                        .build();
+                listBuilder.addSeq(dto);
+                count++;
+            }
         }
         lastAccessed = System.currentTimeMillis();
         return listBuilder.build();
@@ -151,6 +154,6 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         } catch (SQLException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
-        throw new MGXException("Could not obtain sequence name for id " + seqId);
+        return null;
     }
 }
