@@ -3,15 +3,22 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -19,7 +26,7 @@ import java.util.List;
  */
 public class JobDAO<T extends Job> extends DAO<T> {
 
-    private static String[] suffices = {"", ".xml", ".stdout", ".stderr"};
+    private static String[] suffices = {"", ".stdout", ".stderr"};
 
     @Override
     Class getType() {
@@ -132,5 +139,27 @@ public class JobDAO<T extends Job> extends DAO<T> {
         Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun").
                 setParameter("seqrun", sr).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
+    }
+
+    public String getError(Job job) {
+        if (job.getStatus() != JobState.FAILED) {
+            return "Job is not in FAILED state.";
+        }
+        String fname = new StringBuilder(getController().getProjectDirectory())
+                .append(File.separator).append("jobs")
+                .append(File.separator).append(job.getId())
+                .append(".stderr").toString();
+        StringBuilder ret = new StringBuilder();
+
+        try (FileReader fr = new FileReader(fname)) {
+            try (BufferedReader br = new BufferedReader(fr)) {
+                while (true) {
+                    ret.append(br.readLine());
+                }
+            } catch (IOException ex) {
+            }
+        } catch (IOException ex) {
+        }
+        return ret.toString();
     }
 }
