@@ -318,4 +318,16 @@ public class JobBean {
             }
         }
     }
+
+    @GET
+    @Path("GetError/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString getError(@PathParam("id") Long id) {
+        try {
+            Job job = mgx.getJobDAO().getById(id);
+            return MGXString.newBuilder().setValue(mgx.getJobDAO().getError(job)).build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
 }
