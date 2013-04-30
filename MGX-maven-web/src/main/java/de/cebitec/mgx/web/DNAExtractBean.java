@@ -6,11 +6,21 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -34,6 +44,8 @@ public class DNAExtractBean {
     @Inject
     @MGX
     MGXController mgx;
+    @EJB
+    TaskHolder taskHolder;
 
     @PUT
     @Path("create")
@@ -107,12 +119,55 @@ public class DNAExtractBean {
 
     @DELETE
     @Path("delete/{id}")
-    public Response delete(@PathParam("id") Long id) {
-        try {
-            mgx.getDNAExtractDAO().delete(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+    @Produces("application/x-protobuf")
+    public MGXString delete(@PathParam("id") Long id) {
+        UUID taskId = taskHolder.addTask(new DeleteExtract(mgx.getConnection(), id, mgx.getProjectName()));
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
+    }
+
+    private final class DeleteExtract extends TaskI {
+
+        private final Connection conn;
+        private final long id;
+
+        public DeleteExtract(Connection conn, long id, String projName) {
+            super(projName);
+            this.conn = conn;
+            this.id = id;
         }
-        return Response.ok().build();
+
+        @Override
+        public void cancel() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                setStatus(State.PROCESSING, "Deleting extract");
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+                conn.close();
+                state = State.FINISHED;
+            } catch (Exception e) {
+                setStatus(State.FAILED, e.getMessage());
+            }
+            setStatus(State.FINISHED, "Complete");
+        }
     }
 }

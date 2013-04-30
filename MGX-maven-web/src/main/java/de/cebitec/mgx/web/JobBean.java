@@ -222,6 +222,7 @@ public class JobBean {
 
     @DELETE
     @Path("delete/{id}")
+    @Produces("application/x-protobuf")
     public MGXString delete(@PathParam("id") Long id) {
 
         try {

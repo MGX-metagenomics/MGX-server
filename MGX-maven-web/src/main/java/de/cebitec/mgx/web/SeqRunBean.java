@@ -1,4 +1,4 @@
-    package de.cebitec.mgx.web;
+package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
@@ -9,15 +9,25 @@ import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobsAndAttributeTypesDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -34,6 +44,8 @@ public class SeqRunBean {
     @Inject
     @MGX
     MGXController mgx;
+    @EJB
+    TaskHolder taskHolder;
 
     @PUT
     @Path("create")
@@ -126,13 +138,10 @@ public class SeqRunBean {
 
     @DELETE
     @Path("delete/{id}")
-    public Response delete(@PathParam("id") Long id) {
-        try {
-            mgx.getSeqRunDAO().delete(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-        return Response.ok().build();
+    @Produces("application/x-protobuf")
+    public MGXString delete(@PathParam("id") Long id) {
+        UUID taskId = taskHolder.addTask(new DeleteSeqRun(mgx.getConnection(), id, mgx.getProjectName()));
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
     @GET
@@ -165,5 +174,51 @@ public class SeqRunBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return b.build();
+    }
+
+    private final class DeleteSeqRun extends TaskI {
+
+        private final Connection conn;
+        private final long id;
+
+        public DeleteSeqRun(Connection conn, long id, String projName) {
+            super(projName);
+            this.conn = conn;
+            this.id = id;
+        }
+
+        @Override
+        public void cancel() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                setStatus(TaskI.State.PROCESSING, "Deleting sequencing run");
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+                conn.close();
+                state = TaskI.State.FINISHED;
+            } catch (Exception e) {
+                setStatus(TaskI.State.FAILED, e.getMessage());
+            }
+            setStatus(TaskI.State.FINISHED, "Complete");
+        }
     }
 }
