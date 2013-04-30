@@ -35,7 +35,14 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
     @Override
     public void delete(long id) throws MGXException {
-        StringBuilder sb = new StringBuilder(getController().getProjectDirectory()).append(File.separator).append(id);
+        
+        getController().log("0");
+        
+        StringBuilder sb = new StringBuilder(getController().getProjectDirectory())
+                .append(File.separator)
+                .append("jobs")
+                .append(File.separator)
+                .append(id);
 
         boolean all_deleted = true;
         for (String suffix : suffices) {
@@ -45,6 +52,8 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 all_deleted = all_deleted && deleted;
             }
         }
+
+        getController().log("1");
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -57,6 +66,8 @@ public class JobDAO<T extends Job> extends DAO<T> {
             stmt.setLong(1, id);
             stmt.execute();
             stmt.close();
+            getController().log("2");
+
 
             // delete attributecounts
             stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
@@ -64,19 +75,26 @@ public class JobDAO<T extends Job> extends DAO<T> {
             stmt.setLong(1, id);
             stmt.execute();
             stmt.close();
+            getController().log("3");
+
 
             // delete attributes
             stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?");
             stmt.setLong(1, id);
             stmt.execute();
             stmt.close();
+            getController().log("4");
+
 
             stmt = conn.prepareStatement("DELETE FROM job WHERE id=?");
             stmt.setLong(1, id);
             stmt.execute();
             stmt.close();
+            getController().log("5");
+
 
         } catch (Exception e) {
+            getController().log(e.getMessage());
         } finally {
             close(conn, stmt, null);
         }
@@ -151,12 +169,10 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 .append(".stderr").toString();
         StringBuilder ret = new StringBuilder();
 
-        try (FileReader fr = new FileReader(fname)) {
-            try (BufferedReader br = new BufferedReader(fr)) {
-                while (true) {
-                    ret.append(br.readLine());
-                }
-            } catch (IOException ex) {
+        String line;
+        try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
+            while ((line = br.readLine()) != null) {
+                ret.append(line).append("\n");
             }
         } catch (IOException ex) {
         }
