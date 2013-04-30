@@ -17,7 +17,7 @@ import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskI;
-import de.cebitec.mgx.sessions.Sessions;
+import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -51,7 +51,7 @@ public class JobBean {
     @EJB
     JobParameterHelper paramHelper;
     @EJB
-    Sessions sessions;
+    TaskHolder taskHolder;
 
     @PUT
     @Path("create")
@@ -227,19 +227,19 @@ public class JobBean {
         try {
             // notify dispatcher
             js.delete(mgx, id);
+            mgx.log("web0");
 
             // remove persistent files and job object
             mgx.getJobDAO().delete(id);
+            mgx.log("web1");
 
         } catch (MGXDispatcherException | MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
         DeleteJob dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName());
-        UUID uuid = sessions.registerSession(dJob);
-
-        return MGXString.newBuilder().setValue(uuid.toString()).build();
+        UUID taskId = taskHolder.addTask(dJob);
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
     @GET
@@ -289,12 +289,14 @@ public class JobBean {
             try {
 
                 // delete observations
+                setStatus(State.PROCESSING, "Deleting observations");
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
                     stmt.execute();
                 }
 
                 // delete attributecounts
+                setStatus(State.PROCESSING, "Deleting attributes");
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
                         + "(SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
@@ -307,6 +309,7 @@ public class JobBean {
                     stmt.execute();
                 }
 
+                setStatus(State.PROCESSING, "Deleting job");
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
@@ -314,8 +317,9 @@ public class JobBean {
                 conn.close();
                 state = State.FINISHED;
             } catch (Exception e) {
-                state = State.FAILED;
+                setStatus(State.FAILED, e.getMessage());
             }
+            setStatus(State.FINISHED, "Complete");
         }
     }
 
