@@ -12,7 +12,11 @@ public class SeqReaderFactory {
     private static ServiceLoader<FactoryI> loader = ServiceLoader.load(FactoryI.class);
 
     public static SeqReaderI getReader(String filename) throws SeqStoreException {
-        return get().getReader(filename);
+        FactoryI fac = get();
+        if (fac == null) {
+            throw new SeqStoreException("No SeqReaderFactory found.");
+        }
+        return fac.getReader(filename);
     }
 
     public static void delete(String dBFile) {
