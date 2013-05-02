@@ -15,6 +15,7 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -228,11 +229,9 @@ public class JobBean {
         try {
             // notify dispatcher
             js.delete(mgx, id);
-            mgx.log("web0");
 
             // remove persistent files and job object
             mgx.getJobDAO().delete(id);
-            mgx.log("web1");
 
         } catch (MGXDispatcherException | MGXException ex) {
             mgx.log(ex.getMessage());
@@ -254,74 +253,6 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
-    }
-
-    private final class DeleteJob extends TaskI {
-
-        private final Connection conn;
-        private final long id;
-
-        public DeleteJob(long id, Connection conn, String projName) {
-            super(projName);
-            this.conn = conn;
-            this.id = id;
-        }
-
-        @Override
-        public void cancel() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-
-                // delete observations
-                setStatus(State.PROCESSING, "Deleting observations");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-
-                // delete attributecounts
-                setStatus(State.PROCESSING, "Deleting attributes");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
-                        + "(SELECT id FROM attribute WHERE job_id=?)")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-
-                // delete attributes
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-
-                setStatus(State.PROCESSING, "Deleting job");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-                conn.close();
-                state = State.FINISHED;
-            } catch (Exception e) {
-                setStatus(State.FAILED, e.getMessage());
-            }
-            setStatus(State.FINISHED, "Complete");
-        }
     }
 
     @GET

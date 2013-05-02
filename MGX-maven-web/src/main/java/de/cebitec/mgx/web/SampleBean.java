@@ -9,6 +9,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteSample;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -126,53 +127,7 @@ public class SampleBean {
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteSample(mgx.getConnection(), id, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
-    }
-
-    private final class DeleteSample extends TaskI {
-
-        private final Connection conn;
-        private final long id;
-
-        public DeleteSample(Connection conn, long id, String projName) {
-            super(projName);
-            this.conn = conn;
-            this.id = id;
-        }
-
-        @Override
-        public void cancel() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                setStatus(TaskI.State.PROCESSING, "Deleting sample");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM sample WHERE id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-                conn.close();
-                state = TaskI.State.FINISHED;
-            } catch (Exception e) {
-                setStatus(TaskI.State.FAILED, e.getMessage());
-            }
-            setStatus(TaskI.State.FINISHED, "Complete");
-        }
     }
 }

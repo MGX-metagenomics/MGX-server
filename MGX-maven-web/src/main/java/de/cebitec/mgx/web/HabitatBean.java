@@ -8,17 +8,12 @@ import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteHabitat;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.sessions.TaskHolder;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -100,51 +95,5 @@ public class HabitatBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
-    }
-
-    private final class DeleteHabitat extends TaskI {
-
-        private final Connection conn;
-        private final long id;
-
-        public DeleteHabitat(Connection conn, long id, String projName) {
-            super(projName);
-            this.conn = conn;
-            this.id = id;
-        }
-
-        @Override
-        public void cancel() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                setStatus(TaskI.State.PROCESSING, "Deleting habitat");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM habitat WHERE id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-                conn.close();
-                state = TaskI.State.FINISHED;
-            } catch (Exception e) {
-                setStatus(TaskI.State.FAILED, e.getMessage());
-            }
-            setStatus(TaskI.State.FINISHED, "Complete");
-        }
     }
 }

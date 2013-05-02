@@ -3,7 +3,6 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -12,11 +11,11 @@ import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.sessions.TaskHolder;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -25,9 +24,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -208,52 +204,5 @@ public class ToolBean {
             sb.append(line);
         }
         return sb.toString();
-    }
-
-    private final class DeleteTool extends TaskI {
-
-        private final Connection conn;
-        private final long id;
-
-        public DeleteTool(Connection conn, long id, String projName) {
-            super(projName);
-            this.conn = conn;
-            this.id = id;
-        }
-
-        @Override
-        public void cancel() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                setStatus(TaskI.State.PROCESSING, "Deleting tool");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-                conn.close();
-                state = TaskI.State.FINISHED;
-            } catch (Exception e) {
-                setStatus(TaskI.State.FAILED, e.getMessage());
-                return;
-            }
-            setStatus(TaskI.State.FINISHED, "Complete");
-        }
     }
 }

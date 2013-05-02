@@ -22,7 +22,16 @@ public class TaskHolder {
     public synchronized UUID addTask(final TaskI task) {
         final UUID uuid = UUID.randomUUID();
         tasks.put(uuid, task);
-        new Thread(task).start();
+        Thread t = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                task.setMainTask();
+                task.run();
+                task.close();
+            }
+        });
+        t.start();
         return uuid;
     }
     

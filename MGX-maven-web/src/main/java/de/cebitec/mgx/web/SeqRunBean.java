@@ -15,18 +15,13 @@ import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -140,7 +135,7 @@ public class SeqRunBean {
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteSeqRun(mgx.getConnection(), id, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -174,51 +169,5 @@ public class SeqRunBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return b.build();
-    }
-
-    private final class DeleteSeqRun extends TaskI {
-
-        private final Connection conn;
-        private final long id;
-
-        public DeleteSeqRun(Connection conn, long id, String projName) {
-            super(projName);
-            this.conn = conn;
-            this.id = id;
-        }
-
-        @Override
-        public void cancel() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void close() {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        @Override
-        public void run() {
-            try {
-                setStatus(TaskI.State.PROCESSING, "Deleting sequencing run");
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
-                }
-                conn.close();
-                state = TaskI.State.FINISHED;
-            } catch (Exception e) {
-                setStatus(TaskI.State.FAILED, e.getMessage());
-            }
-            setStatus(TaskI.State.FINISHED, "Complete");
-        }
     }
 }
