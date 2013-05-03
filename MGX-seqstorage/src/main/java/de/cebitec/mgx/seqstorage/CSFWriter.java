@@ -6,6 +6,14 @@ import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -16,6 +24,7 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
     private OutputStream seqout;
     private OutputStream nameout;
     private long seqout_offset;
+    private final String fname;
 
     public CSFWriter(File file) throws IOException, SeqStoreException {
 
@@ -23,6 +32,8 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
         if ((new File(file.getCanonicalPath() + ".csf").exists()) || file.getCanonicalFile().exists()) {
             throw new SeqStoreException("CSF file already exists");
         }
+
+        fname = file.getCanonicalPath();
 
         seqout = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath() + ".csf", false));
         seqout.write(FourBitEncoder.CSF_MAGIC);
@@ -38,6 +49,8 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
         if ((new File(filename + ".csf").exists()) || (new File(filename).exists())) {
             throw new SeqStoreException("CSF file already exists");
         }
+
+        fname = filename;
 
         seqout = new BufferedOutputStream(new FileOutputStream(filename + ".csf", false));
         seqout.write(FourBitEncoder.CSF_MAGIC);
@@ -70,5 +83,17 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
     public void close() throws IOException {
         seqout.close();
         nameout.close();
+
+        Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE,
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.GROUP_WRITE);
+        try {
+            Files.setPosixFilePermissions(Paths.get(fname), perms);
+            Files.setPosixFilePermissions(Paths.get(fname + ".csf"), perms);
+        } catch (IOException ex) {
+            Logger.getLogger(CSFWriter.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 }
