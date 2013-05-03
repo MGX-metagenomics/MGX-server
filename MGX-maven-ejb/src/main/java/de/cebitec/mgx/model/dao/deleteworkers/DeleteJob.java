@@ -44,6 +44,14 @@ public final class DeleteJob extends TaskI {
                 stmt.execute();
             }
 
+            // parameters
+            setStatus(TaskI.State.PROCESSING, "Deleting job parameters for job " + id);
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM jobparameter WHERE job_id=?")) {
+                stmt.setLong(1, id);
+                stmt.execute();
+            }
+
+            // job
             setStatus(TaskI.State.PROCESSING, "Deleting job " + id);
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
                 stmt.setLong(1, id);

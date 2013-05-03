@@ -9,16 +9,11 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -35,68 +30,17 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
     @Override
     public void delete(long id) throws MGXException {
-        
-        getController().log("0");
-        
         StringBuilder sb = new StringBuilder(getController().getProjectDirectory())
                 .append(File.separator)
                 .append("jobs")
                 .append(File.separator)
                 .append(id);
 
-        boolean all_deleted = true;
         for (String suffix : suffices) {
             File f = new File(sb.toString() + suffix);
             if (f.exists()) {
-                boolean deleted = f.delete();
-                all_deleted = all_deleted && deleted;
+                f.delete();
             }
-        }
-
-        getController().log("1");
-
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = getConnection();
-
-            // delete observations
-            stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)");
-            stmt.setLong(1, id);
-            stmt.execute();
-            stmt.close();
-            getController().log("2");
-
-
-            // delete attributecounts
-            stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
-                    + "(SELECT id FROM attribute WHERE job_id=?)");
-            stmt.setLong(1, id);
-            stmt.execute();
-            stmt.close();
-            getController().log("3");
-
-
-            // delete attributes
-            stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?");
-            stmt.setLong(1, id);
-            stmt.execute();
-            stmt.close();
-            getController().log("4");
-
-
-            stmt = conn.prepareStatement("DELETE FROM job WHERE id=?");
-            stmt.setLong(1, id);
-            stmt.execute();
-            stmt.close();
-            getController().log("5");
-
-
-        } catch (Exception e) {
-            getController().log(e.getMessage());
-        } finally {
-            close(conn, stmt, null);
         }
     }
 
