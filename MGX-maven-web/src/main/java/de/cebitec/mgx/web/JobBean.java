@@ -220,14 +220,17 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public MGXString delete(@PathParam("id") Long id) {
 
+        // notify dispatcher
         try {
-            // notify dispatcher
             js.delete(mgx, id);
-
-            // remove persistent files
-            mgx.getJobDAO().delete(id);
-
         } catch (MGXDispatcherException | MGXException ex) {
+            mgx.log(ex.getMessage());
+        }
+
+        // remove persistent files
+        try {
+            mgx.getJobDAO().delete(id);
+        } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
