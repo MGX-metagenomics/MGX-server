@@ -3,9 +3,11 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.UnixHelper;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 
 /**
  *
@@ -26,9 +28,14 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         Long id = super.create(obj);
 
+        File jobDir = new File(getController().getProjectDirectory() + "jobs");
+        if (!jobDir.exists()) {
+            UnixHelper.createDirectory(jobDir);
+        }
+
         String fname = getController().getProjectDirectory() + "jobs" + File.separator + id.toString() + ".xml";
         try {
-            try (FileWriter fw = new FileWriter(fname)) {
+            try (Writer fw = new BufferedWriter(new FileWriter(fname))) {
                 fw.write(xmldata);
                 fw.flush();
             }
