@@ -49,7 +49,9 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public final void log(String msg) {
-        logger.log(Level.INFO, msg);
+        if (msg != null) {
+            logger.log(Level.INFO, msg);
+        }
     }
 
     @Override
@@ -92,7 +94,7 @@ public class MGXControllerImpl implements MGXController {
             UnixHelper.createDirectory(targetDir);
         }
         try {
-            Process exec = Runtime.getRuntime().exec("/usr/bin/chmod 02770 "+ret+"/*");
+            Process exec = Runtime.getRuntime().exec("/usr/bin/chmod 02770 " + ret + "/*");
         } catch (IOException ex) {
             Logger.getLogger(MGXControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
