@@ -10,6 +10,7 @@ import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
 import java.sql.*;
@@ -208,6 +209,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         File dirTree = new File(fname.toString());
         if (!dirTree.exists()) {
             dirTree.mkdirs();
+            UnixHelper.makeDirectoryGroupWritable(fname.toString());
         }
 
         fname.append(run_id);
