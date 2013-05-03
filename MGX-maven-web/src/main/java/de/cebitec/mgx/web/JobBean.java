@@ -17,19 +17,13 @@ import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.deleteworkers.DeleteJob;
 import de.cebitec.mgx.model.db.*;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -230,7 +224,7 @@ public class JobBean {
             // notify dispatcher
             js.delete(mgx, id);
 
-            // remove persistent files and job object
+            // remove persistent files
             mgx.getJobDAO().delete(id);
 
         } catch (MGXDispatcherException | MGXException ex) {
