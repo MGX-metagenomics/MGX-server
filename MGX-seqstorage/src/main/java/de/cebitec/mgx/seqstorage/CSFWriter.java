@@ -88,12 +88,7 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
                 PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.GROUP_READ,
                 PosixFilePermission.GROUP_WRITE);
-        try {
-            Files.setPosixFilePermissions(Paths.get(fname), perms);
-            Files.setPosixFilePermissions(Paths.get(fname + ".csf"), perms);
-        } catch (IOException ex) {
-            Logger.getLogger(CSFWriter.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+        Files.setPosixFilePermissions(Paths.get(fname), perms);
+        Files.setPosixFilePermissions(Paths.get(fname + ".csf"), perms);
     }
 }
