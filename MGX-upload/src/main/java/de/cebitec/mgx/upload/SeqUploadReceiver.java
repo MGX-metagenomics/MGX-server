@@ -63,7 +63,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
-        for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext(); ) {
+        for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext();) {
             SequenceDTO s = iter.next();
             DNASequenceI d = new DNASequence();
             d.setName(s.getName().getBytes());
@@ -92,14 +92,11 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
         String sql = createSQLBulkStatement(commitList.size());
         // insert sequence names and fetch list of generated ids
-        
-        int curPos=0;
+
+        int curPos = 0;
         long[] generatedIDs = new long[commitList.size()];
-        
-        PreparedStatement stmt = null;
-        ResultSet res = null;
-        try {
-            stmt = conn.prepareStatement(sql);
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             int i = 1;
             for (DNASequenceI s : commitList) {
@@ -109,27 +106,21 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 i += 3;
             }
 
-            res = stmt.executeQuery();
-            while (res.next()) {
-                generatedIDs[curPos++] = res.getLong(1);
+            try (ResultSet res = stmt.executeQuery()) {
+                while (res.next()) {
+                    generatedIDs[curPos++] = res.getLong(1);
+                }
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            try {
-                res.close();
-                stmt.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
-        
+
         //
         // write sequences to persistent storage using the generated ids
         //
         curPos = 0;
         try {
-            for (Iterator<DNASequenceI> iter = commitList.iterator(); iter.hasNext(); ) {
+            for (Iterator<DNASequenceI> iter = commitList.iterator(); iter.hasNext();) {
                 // add the generated IDs
                 DNASequenceI s = iter.next();
                 s.setId(generatedIDs[curPos++]);
@@ -142,7 +133,6 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void close() throws MGXException {
-        PreparedStatement stmt = null;
         try {
             // commit pending data
             while (seqholder.size() > 0) {
@@ -151,11 +141,12 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             writer.close();
 
             String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, file.getCanonicalPath().toString());
-            stmt.setLong(2, total_num_sequences);
-            stmt.setLong(3, runId);
-            stmt.executeUpdate();
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, file.getCanonicalPath().toString());
+                stmt.setLong(2, total_num_sequences);
+                stmt.setLong(3, runId);
+                stmt.executeUpdate();
+            }
             //
             conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
@@ -163,7 +154,6 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         } finally {
             try {
                 conn.close();
-                stmt.close();
             } catch (SQLException ex) {
                 Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -173,20 +163,19 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void cancel() {
-        PreparedStatement stmt = null;
         try {
             writer.close();
             SeqReaderFactory.delete(file.getCanonicalPath().toString());
-            stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?");
-            stmt.setLong(1, runId);
-            stmt.executeUpdate();
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
+                stmt.setLong(1, runId);
+                stmt.executeUpdate();
+            }
             //
             conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                stmt.close();
                 conn.close();
             } catch (SQLException ex) {
                 Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
