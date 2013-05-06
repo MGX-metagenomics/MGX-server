@@ -46,11 +46,11 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         pcs = new PropertyChangeSupport(this);
     }
 
-    public void setMainTask() {
+    void setMainTask() {
         isSubTask = false;
     }
 
-    public long lastAccessed() {
+    long lastAccessed() {
         return timeStamp;
     }
 
