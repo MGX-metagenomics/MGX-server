@@ -139,4 +139,9 @@ public class Project implements DBProjectI {
         }
 
     }
+
+    @Override
+    public boolean isPublic() {
+        return false;
+    }
 }
