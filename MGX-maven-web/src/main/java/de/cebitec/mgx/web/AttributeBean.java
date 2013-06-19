@@ -23,6 +23,7 @@ import de.cebitec.mgx.sessions.ResultHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.LimitingIterator;
 import de.cebitec.mgx.util.Pair;
+import de.cebitec.mgx.util.Triple;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.*;
@@ -65,12 +66,9 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
 
-        Map<Attribute, Long> dist;
+        List<Triple<Attribute, Long, Long>> dist;
         try {
-            //AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
-            Job job = mgx.getJobDAO().getById(jobId);
-            assert (job != null && job.getStatus() == JobState.FINISHED);
-            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, job);
+            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -100,7 +98,7 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     public AttributeCorrelation getCorrelation(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("attrType2Id") Long attrType2Id, @PathParam("job2Id") Long job2Id) {
 
-        Map<Pair<Attribute, Attribute>, Long> ret;
+        Map<Pair<Attribute, Attribute>, Integer> ret;
         try {
             Job job = mgx.getJobDAO().getById(jobId);
             assert (job != null && job.getStatus() == JobState.FINISHED);
@@ -187,15 +185,42 @@ public class AttributeBean {
         return b.build();
     }
 
-    private AttributeCorrelation convertCorrelation(Map<Pair<Attribute, Attribute>, Long> ret) {
+    private AttributeDistribution convert(List<Triple<Attribute, Long, Long>> dist) {
+        // attribute, parent id, count
+
+        Set<AttributeType> aTypes = new HashSet<>();
+
+        AttributeDistribution.Builder b = AttributeDistribution.newBuilder();
+        
+        for (Triple<Attribute, Long, Long> t : dist) {
+            Attribute attr = t.getFirst();
+            Long parentId = t.getSecond();
+            Long count = t.getThird();
+            
+            AttributeDTO attrDTO = AttributeDTOFactory.getInstance().toDTO(attr, parentId);
+            AttributeCount attrcnt = AttributeCount.newBuilder().setAttribute(attrDTO).setCount(count).build();
+
+            aTypes.add(attr.getAttributeType());
+
+            b.addAttributeCounts(attrcnt);
+        }
+
+        for (AttributeType at : aTypes) {
+            b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(at));
+        }
+
+        return b.build();
+    }
+
+    private AttributeCorrelation convertCorrelation(Map<Pair<Attribute, Attribute>, Integer> ret) {
 
         Set<AttributeType> aTypes = new HashSet<>();
         Builder ac = AttributeCorrelation.newBuilder();
 
-        for (Entry<Pair<Attribute, Attribute>, Long> e : ret.entrySet()) {
+        for (Entry<Pair<Attribute, Attribute>, Integer> e : ret.entrySet()) {
             Attribute first = e.getKey().getFirst();
             Attribute second = e.getKey().getSecond();
-            Long count = e.getValue();
+            Integer count = e.getValue();
 
             CorrelatedAttributeCount cac = CorrelatedAttributeCount.newBuilder()
                     .setRestrictedAttribute(AttributeDTOFactory.getInstance().toDTO(first))
