@@ -35,6 +35,16 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         return b.build();
     }
 
+    public AttributeDTO toDTO(Attribute attr, long parentId) {
+        Builder b = AttributeDTO.newBuilder();
+        b.setId(attr.getId())
+                .setValue(attr.getValue())
+                .setJobid(attr.getJob().getId())
+                .setAttributeTypeId(attr.getAttributeType().getId());
+        b.setParentId(parentId);
+        return b.build();
+    }
+
     @Override
     public final Attribute toDB(AttributeDTO dto) {
         throw new UnsupportedOperationException("Not supported.");
