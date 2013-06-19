@@ -5,8 +5,10 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.Pair;
+import de.cebitec.mgx.util.Triple;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,11 +26,13 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return Attribute.class;
     }
 
-    public Map<Attribute, Long> getDistribution(long attrTypeId, Job job) throws MGXException {
+    public List<Triple<Attribute, Long, Long>> getDistribution(long attrTypeId, long jobId) throws MGXException {
 
         AttributeType attrType = getController().getAttributeTypeDAO().getById(attrTypeId);
+        Job job = getController().getJobDAO().getById(jobId);
 
-        Map<Attribute, Long> ret = new HashMap<>();
+        // attribute, parent id, count
+        List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -36,7 +40,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         try {
             stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?)");
             stmt.setLong(1, attrTypeId);
-            stmt.setLong(2, job.getId());
+            stmt.setLong(2, jobId);
             rs = stmt.executeQuery();
             while (rs.next()) {
                 Attribute attr = new Attribute();
@@ -45,7 +49,16 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 //
                 attr.setId(rs.getLong(1));
                 attr.setValue(rs.getString(2));
-                ret.put(attr, rs.getLong(3));
+
+                Long count = rs.getLong(3);
+                // 
+                // read the parent attributes id, if present
+                Long parentId = rs.getLong(4);
+                if (parentId.longValue() == 0) {
+                    parentId = -1L;
+                }
+
+                ret.add(new Triple<>(attr, parentId, count));
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
@@ -115,7 +128,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
-    public Map<Pair<Attribute, Attribute>, Long> getCorrelation(long attrTypeId, Job job, long attrType2Id, Job job2) throws MGXException {
+    public Map<Pair<Attribute, Attribute>, Integer> getCorrelation(long attrTypeId, Job job, long attrType2Id, Job job2) throws MGXException {
 
         AttributeType attrType = getController().getAttributeTypeDAO().getById(attrTypeId);
         AttributeType attrType2 = getController().getAttributeTypeDAO().getById(attrType2Id);
@@ -125,7 +138,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
 //            System.err.println("got AT: " + at.getName());
 //        }
 
-        Map<Pair<Attribute, Attribute>, Long> ret = new HashMap<>();
+        Map<Pair<Attribute, Attribute>, Integer> ret = new HashMap<>();
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -152,7 +165,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 attr2.setId(rs.getLong(3));
                 attr2.setValue(rs.getString(4));
 
-                long cnt = rs.getLong(5);
+                int cnt = rs.getInt(5);
 
                 ret.put(new Pair<>(attr, attr2), cnt);
             }
