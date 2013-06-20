@@ -51,7 +51,10 @@ public class DownloadSessions {
         return uuid;
     }
 
-    public DownloadProviderI getSession(UUID uuid) {
+    public DownloadProviderI getSession(UUID uuid) throws MGXException {
+        if (!sessions.containsKey(uuid)) {
+            throw new MGXException("No such session: " + uuid.toString());
+        }
         return sessions.get(uuid);
     }
 
@@ -77,10 +80,10 @@ public class DownloadSessions {
                 Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
                 toRemove.add(uuid);
                 s.cancel();
-                
+
             }
         }
-        
+
         for (UUID uuid : toRemove) {
             sessions.remove(uuid);
         }
