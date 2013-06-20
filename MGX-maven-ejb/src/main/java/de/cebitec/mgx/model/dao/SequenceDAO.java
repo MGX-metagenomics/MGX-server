@@ -49,7 +49,9 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             Iterator<DNASequenceHolder> iter = reader.fetch(new long[]{id}).iterator();
             assert iter.hasNext();
             byte[] seqdata = iter.next().getSequence().getSequence();
-            seq.setSequence(new String(seqdata));
+            String seqString = new String(seqdata);
+            seq.setSequence(seqString);
+            seq.setLength(seqString.length());
         } catch (Exception ex) {
             throw new MGXException(ex);
         }
