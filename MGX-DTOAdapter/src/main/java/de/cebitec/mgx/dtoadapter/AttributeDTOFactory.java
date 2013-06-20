@@ -5,7 +5,6 @@ import de.cebitec.mgx.dto.dto.AttributeDTO.Builder;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 
 /**
  *
