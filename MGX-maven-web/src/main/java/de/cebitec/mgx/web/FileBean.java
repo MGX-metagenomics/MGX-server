@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.BytesDTO;
 import de.cebitec.mgx.dto.dto.FileDTO;
 import de.cebitec.mgx.dto.dto.FileDTOList;
@@ -55,6 +57,7 @@ public class FileBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong create(FileDTO dto) {
         // this method is only used to create directories
         if (!dto.getIsDirectory()) {
@@ -80,6 +83,7 @@ public class FileBean {
 
     @DELETE
     @Path("delete/{path}")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response delete(@PathParam("path") String path) {
 
         path = path.replace("|", "/");

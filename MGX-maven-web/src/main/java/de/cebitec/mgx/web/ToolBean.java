@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -54,6 +56,7 @@ public class ToolBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong create(ToolDTO dto) {
         Tool t = ToolDTOFactory.getInstance().toDB(dto, false);
         Long id = null;
@@ -110,6 +113,7 @@ public class ToolBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response update(ToolDTO dto) {
         // not used
         assert false;
@@ -119,6 +123,7 @@ public class ToolBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -131,6 +136,7 @@ public class ToolBean {
     @Path("installGlobalTool/{global_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong installGlobalTool(@PathParam("global_id") Long global_id) {
         Tool globalTool = null;
         try {

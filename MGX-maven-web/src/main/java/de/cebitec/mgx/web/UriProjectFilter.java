@@ -33,7 +33,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
         }
     }
 
-    private String getProjectFromPath(String path) {
+    private static String getProjectFromPath(String path) {
         int idx = path.indexOf('/');
         if (idx != -1) {
             return path.substring(0, idx);
@@ -42,7 +42,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
         }
     }
 
-    private String removeProjectFromPath(String path) {
+    private static String removeProjectFromPath(String path) {
         int idx = path.indexOf('/');
         if (idx != -1) {
             return path.substring(idx + 1);

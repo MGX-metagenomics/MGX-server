@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
@@ -52,6 +54,7 @@ public class JobBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong create(JobDTO dto) {
         Tool tool = null;
         SeqRun seqrun = null;
@@ -131,6 +134,7 @@ public class JobBean {
     @Path("setParameters/{id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
         try {
             Job job = mgx.getJobDAO().getById(id);
@@ -147,6 +151,7 @@ public class JobBean {
     @GET
     @Path("verify/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXBoolean verify(@PathParam("id") Long id) {
         boolean verified = false;
 
@@ -164,6 +169,7 @@ public class JobBean {
     @GET
     @Path("execute/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXBoolean execute(@PathParam("id") Long id) {
 
         boolean submitted = false;
@@ -185,6 +191,7 @@ public class JobBean {
     @GET
     @Path("cancel/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXBoolean cancel(@PathParam("id") Long id) {
 
         try {
@@ -198,6 +205,7 @@ public class JobBean {
 
     @POST
     @Path("update")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response update(JobDTO dto) {
         Job h = JobDTOFactory.getInstance().toDB(dto);
         try {
@@ -211,8 +219,8 @@ public class JobBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("id") Long id) {
-
         // notify dispatcher
         try {
             js.delete(mgx, id);

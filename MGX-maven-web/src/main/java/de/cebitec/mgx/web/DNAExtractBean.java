@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -46,6 +48,7 @@ public class DNAExtractBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong create(DNAExtractDTO dto) {
         Long DNAExtract_id = null;
         try {
@@ -62,6 +65,7 @@ public class DNAExtractBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response update(DNAExtractDTO dto) {
         Sample s = null;
         try {
@@ -115,6 +119,7 @@ public class DNAExtractBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();

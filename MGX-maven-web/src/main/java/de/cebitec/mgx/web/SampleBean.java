@@ -1,9 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.dto.dto;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SampleDTO;
@@ -13,16 +14,10 @@ import de.cebitec.mgx.model.dao.deleteworkers.DeleteSample;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.TaskHolder;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -52,6 +47,7 @@ public class SampleBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXLong create(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -72,6 +68,7 @@ public class SampleBean {
 
     @POST
     @Path("update")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response update(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -126,6 +123,7 @@ public class SampleBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();

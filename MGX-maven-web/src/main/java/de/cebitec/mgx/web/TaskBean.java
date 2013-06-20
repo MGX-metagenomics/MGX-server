@@ -38,7 +38,6 @@ public class TaskBean {
         UUID taskId = UUID.fromString(uuid);
         TaskI task = taskHolder.getTask(taskId);
         if (task == null) {
-            mgx.log("Invalid task " + uuid);
             throw new MGXWebException("Invalid task " + uuid);
         }
         if ((task.getState() == State.FAILED) || (task.getState() == State.FINISHED)) {

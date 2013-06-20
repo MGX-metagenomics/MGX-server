@@ -6,9 +6,8 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
-import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
-import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -42,6 +41,13 @@ public class AttributeTypeBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return AttributeTypeDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @GET
+    @Path("fetchall")
+    @Produces("application/x-protobuf")
+    public AttributeTypeDTOList fetchall() {
+        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().getAll());
     }
 
     @GET

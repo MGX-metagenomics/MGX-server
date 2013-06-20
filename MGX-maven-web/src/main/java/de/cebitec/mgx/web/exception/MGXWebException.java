@@ -15,13 +15,8 @@ public class MGXWebException extends WebApplicationException {
 
     private Status http_status = null;
 
-//    public MGXWebException(Throwable cause) {
-//        super(cause);
-//    }
     public MGXWebException(String message) {
-        super(Response.status(Status.BAD_REQUEST).entity(message).type(MediaType.TEXT_PLAIN).build());
-        assert message != null;
-        assert !"".equals(message);
+        this(Status.BAD_REQUEST, message);
     }
 
     public MGXWebException(Status status, String message) {
@@ -32,10 +27,6 @@ public class MGXWebException extends WebApplicationException {
     }
 
     public Status status() {
-        if (http_status != null) {
-            return http_status;
-        } else {
-            return Status.INTERNAL_SERVER_ERROR;
-        }
+        return http_status != null ? http_status : Status.INTERNAL_SERVER_ERROR;
     }
 }

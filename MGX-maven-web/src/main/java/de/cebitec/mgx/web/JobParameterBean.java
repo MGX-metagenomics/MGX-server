@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
@@ -41,6 +43,7 @@ public class JobParameterBean {
 
     @POST
     @Path("update")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response update(JobParameterDTO dto) {
         JobParameter h = JobParameterDTOFactory.getInstance().toDB(dto);
         try {
@@ -53,6 +56,7 @@ public class JobParameterBean {
 
     @DELETE
     @Path("delete/{id}")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getJobParameterDAO().delete(id);
