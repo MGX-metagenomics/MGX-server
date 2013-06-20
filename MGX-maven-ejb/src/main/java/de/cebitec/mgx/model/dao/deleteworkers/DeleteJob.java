@@ -60,7 +60,7 @@ public final class DeleteJob extends TaskI {
 
             setStatus(TaskI.State.FINISHED, "Job " + id + " deleted");
         } catch (Exception e) {
-            Logger.getLogger(DeleteJob.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(DeleteJob.class.getName()).log(Level.SEVERE, "Could not delete job " + id, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }
     }
