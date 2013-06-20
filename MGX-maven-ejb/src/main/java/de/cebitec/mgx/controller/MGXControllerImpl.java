@@ -1,5 +1,6 @@
 package de.cebitec.mgx.controller;
 
+import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
@@ -193,6 +194,11 @@ public class MGXControllerImpl implements MGXController {
     public String getCurrentUser() {
         return gpmsmaster.getLogin();
     }
+    
+    @Override
+    public RoleI getCurrentRole() {
+        return gpmsmaster.getRole();
+    }
 
     private <T extends DAO> T getDAO(Class<T> clazz) {
         if (!daos.containsKey(clazz)) {
@@ -222,4 +228,5 @@ public class MGXControllerImpl implements MGXController {
         }
         throw new UnsupportedOperationException("Could not create DAO " + clazz);
     }
+
 }

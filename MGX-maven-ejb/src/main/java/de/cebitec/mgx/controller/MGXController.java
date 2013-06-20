@@ -1,5 +1,6 @@
 package de.cebitec.mgx.controller;
 
+import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
@@ -43,6 +44,8 @@ public interface MGXController {
     public String getProjectName();
 
     public String getCurrentUser();
+    
+    public RoleI getCurrentRole();
 
     public MGXConfiguration getConfiguration();
 
