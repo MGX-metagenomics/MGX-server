@@ -111,6 +111,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             }
         }
         lastAccessed = System.currentTimeMillis();
+        listBuilder.setComplete(!reader.hasMoreElements());
         return listBuilder.build();
     }
 
