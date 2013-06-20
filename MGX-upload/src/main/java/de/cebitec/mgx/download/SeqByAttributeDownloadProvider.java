@@ -92,8 +92,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             ids[i++] = l.longValue();
         }
         
-        //System.err.print("will fetch "+ids.length+ " entries for this chunk.");
-
         try {
             for (DNASequenceHolder holder : reader.fetch(ids)) {
                 DNASequenceI seq = holder.getSequence();
@@ -108,6 +106,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             throw new MGXException(ex);
         }
         lastAccessed = System.currentTimeMillis();
+        listBuilder.setComplete(!have_more_data);
         return listBuilder.build();
     }
 
