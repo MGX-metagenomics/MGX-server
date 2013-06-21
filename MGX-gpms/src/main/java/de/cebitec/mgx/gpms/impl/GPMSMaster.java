@@ -81,7 +81,8 @@ public class GPMSMaster implements DBMasterI {
         return membership.getRole();
     }
 
-    private void log(String msg) {
+    @Override
+    public void log(String msg) {
         logger.log(Level.INFO, msg);
     }
 
