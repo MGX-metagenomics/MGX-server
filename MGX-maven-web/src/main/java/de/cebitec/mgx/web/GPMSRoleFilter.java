@@ -6,8 +6,14 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sun.jersey.spi.container.ResourceFilter;
+import de.cebitec.gpms.core.MembershipI;
+import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.RoleI;
+import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.gpms.data.DBMasterI;
+import de.cebitec.gpms.data.DBMembershipI;
+import de.cebitec.gpms.data.DBProjectI;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.lang.reflect.Method;
@@ -17,7 +23,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriBuilder;
 
 /**
  *
@@ -25,6 +34,8 @@ import javax.ws.rs.core.Response;
  */
 public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
 
+    @Context
+    SecurityContext ctx;
     private DBGPMSI gpms;
 
     public GPMSRoleFilter() {
@@ -61,17 +72,32 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
 
         @Override
         public ContainerRequest filter(ContainerRequest cr) {
-
             if (rights.length == 0) {
                 return cr;
             }
+            DBMasterI master = gpmslocal.getCurrentMaster();
+            if (master == null) {
+                throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No master object for this request");
+            }
+            UserI user = gpmslocal.getCurrentUser();
+            if (user == null) {
+                throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No user for this request");
+            }
+            RoleI role = master.getRole();
+            if (role == null) {
+                throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No roles assigned for " + user.getLogin());
+            }
+            DBProjectI project = master.getProject();
+            if (project == null) {
+                throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No project selected");
+            }
 
-            RoleI role = gpmslocal.getCurrentMaster().getRole();
             for (String right : rights) {
                 if (role.getName().equals(right)) {
                     return cr;
                 }
             }
+            master.log("Denied access to " + cr.getPath() + " to user " + master.getLogin() + " in " + project.getName());
             throw new MGXWebException(Response.Status.FORBIDDEN, "Resource access denied.");
         }
     }
