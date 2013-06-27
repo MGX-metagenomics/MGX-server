@@ -5,7 +5,6 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Sequence;
-import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.util.Triple;
@@ -61,6 +60,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 ret.add(new Triple<>(attr, parentId, count));
             }
         } catch (SQLException ex) {
+            getController().log(ex.getMessage());
             throw new MGXException(ex.getMessage());
         } finally {
             close(conn, stmt, rs);
