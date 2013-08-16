@@ -5,7 +5,6 @@ import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.HabitatDTOList.Builder;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 
 /**
  *
