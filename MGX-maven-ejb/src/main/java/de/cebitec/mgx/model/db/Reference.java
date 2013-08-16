@@ -80,4 +80,8 @@ public class Reference implements Serializable, Identifiable {
     public Long getId() {
      return id;   
     }
+    
+    public void setId(Long l) {
+        id = l;
+    }
 }
