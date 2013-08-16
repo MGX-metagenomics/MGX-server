@@ -1,40 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
-  <persistence-unit name="MGX-PU" transaction-type="JTA">
-    <provider>org.hibernate.ejb.HibernatePersistence</provider>
-    <!-- <jta-data-source>jdbc/MGX/project</jta-data-source> -->
-    <class>de.cebitec.mgx.model.db.DNAExtract</class>
-    <class>de.cebitec.mgx.model.db.Habitat</class>
-    <class>de.cebitec.mgx.model.db.Job</class>
-    <class>de.cebitec.mgx.model.db.JobParameter</class>
-    <class>de.cebitec.mgx.model.db.Observation</class>
-    <class>de.cebitec.mgx.model.db.Sample</class>
-    <class>de.cebitec.mgx.model.db.SeqRun</class>
-    <class>de.cebitec.mgx.model.db.Sequence</class>
-    <class>de.cebitec.mgx.model.db.Tool</class>
-    <class>de.cebitec.mgx.model.db.AttributeType</class>
-    <class>de.cebitec.mgx.model.db.Attribute</class>
-    <exclude-unlisted-classes>true</exclude-unlisted-classes>
-    <properties>
-      <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
-      <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
-      <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
-      <property name="hibernate.id.new_generator_mappings" value="true"/>
-      <property name="hibernate.connection.release_mode" value="after_statement"/>
-      <!-- <property name="hibernate.hbm2ddl.auto" value="create"/> -->
-    </properties>
-  </persistence-unit>
-  <persistence-unit name="MGX-global" transaction-type="JTA">
-    <provider>org.hibernate.ejb.HibernatePersistence</provider>
-    <class>de.cebitec.mgx.model.db.Tool</class>
-    <class>de.cebitec.mgx.model.db.Term</class>
-    <exclude-unlisted-classes>true</exclude-unlisted-classes>
-    <properties>
-      <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
-      <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
-      <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
-      <property name="hibernate.id.new_generator_mappings" value="true"/>
-      <property name="hibernate.connection.release_mode" value="after_statement"/>
-    </properties>
-  </persistence-unit>
+    <persistence-unit name="MGX-PU" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <!-- <jta-data-source>jdbc/MGX/project</jta-data-source> -->
+        <class>de.cebitec.mgx.model.db.DNAExtract</class>
+        <class>de.cebitec.mgx.model.db.Habitat</class>
+        <class>de.cebitec.mgx.model.db.Job</class>
+        <class>de.cebitec.mgx.model.db.JobParameter</class>
+        <class>de.cebitec.mgx.model.db.Observation</class>
+        <class>de.cebitec.mgx.model.db.Sample</class>
+        <class>de.cebitec.mgx.model.db.SeqRun</class>
+        <class>de.cebitec.mgx.model.db.Sequence</class>
+        <class>de.cebitec.mgx.model.db.Tool</class>
+        <class>de.cebitec.mgx.model.db.AttributeType</class>
+        <class>de.cebitec.mgx.model.db.Attribute</class>
+        <class>de.cebitec.mgx.model.db.Reference</class>
+        <class>de.cebitec.mgx.model.db.Region</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <properties>
+            <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
+            <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
+            <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
+            <property name="hibernate.id.new_generator_mappings" value="true"/>
+            <property name="hibernate.connection.release_mode" value="after_statement"/>
+            <!-- <property name="hibernate.hbm2ddl.auto" value="create"/> -->
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="MGX-global" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <class>de.cebitec.mgx.model.db.Tool</class>
+        <class>de.cebitec.mgx.model.db.Term</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <properties>
+            <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>
+            <!-- <property name="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.SunONETransactionManagerLookup"/> -->
+            <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.SunOneJtaPlatform"/>
+            <property name="hibernate.id.new_generator_mappings" value="true"/>
+            <property name="hibernate.connection.release_mode" value="after_statement"/>
+        </properties>
+    </persistence-unit>
 </persistence>

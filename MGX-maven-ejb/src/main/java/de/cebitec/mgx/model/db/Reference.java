@@ -1,11 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.model.db;
 
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
 import javax.persistence.*;
@@ -17,7 +12,8 @@ import javax.validation.constraints.NotNull;
  * @author belmann
  */
 @Entity
-@Table(name = "Reference")
+@Table(name = "Reference", uniqueConstraints =
+@UniqueConstraint(columnNames = {"name"}))
 public class Reference implements Serializable, Identifiable {
 
     @Id
@@ -27,17 +23,15 @@ public class Reference implements Serializable, Identifiable {
     @OneToMany(mappedBy = "reference", fetch = FetchType.LAZY)
     private Collection<Region> regions;
 
-    
     @Basic
     @NotNull
-    @Column(name = "ref_name")
+    @Column(name = "name")
     private String name;
     
     @Basic
     @NotNull
     @Column(name = "ref_length")
     private int length;
-
     
     @Basic
     @NotNull

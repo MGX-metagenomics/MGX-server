@@ -1,14 +1,9 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.model.db;
 
 /**
  *
  * @author belmann
  */
-import java.io.File;
 import java.io.Serializable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -26,15 +21,15 @@ public class Region implements Serializable, Identifiable {
     private Long id;
     @Basic
     @NotNull
-    @Column(name = "reg_name")
+    @Column(name = "name")
     private String name;
-    @ManyToOne
-    @JoinColumn(name = "reference_id", nullable = false)
-    private Reference reference;
     @Basic
     @NotNull
-    @Column(name = "reg_length")
-    private int length;
+    @Column(name = "description")
+    private String description;
+    @ManyToOne
+    @JoinColumn(name = "ref_id", nullable = false)
+    private Reference reference;
     @Basic
     @NotNull
     @Column(name = "reg_start")
@@ -69,12 +64,12 @@ public class Region implements Serializable, Identifiable {
         this.name = name;
     }
 
-    public int getLength() {
-        return length;
+    public String getDescription() {
+        return description;
     }
 
-    public void setLength(int length) {
-        this.length = length;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public int getStart() {
