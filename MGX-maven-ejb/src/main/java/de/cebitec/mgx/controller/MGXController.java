@@ -20,7 +20,7 @@ public interface MGXController {
     public void log(String msg, Object... args);
 
     public HabitatDAO<Habitat> getHabitatDAO();
-    
+
     public AttributeTypeDAO<AttributeType> getAttributeTypeDAO();
 
     public AttributeDAO<Attribute> getAttributeDAO();
@@ -36,15 +36,17 @@ public interface MGXController {
     public ToolDAO<Tool> getToolDAO();
 
     public JobDAO<Job> getJobDAO();
-    
+
     public JobParameterDAO<JobParameter> getJobParameterDAO();
-    
+
     public ObservationDAO getObservationDAO();
+
+    public ReferenceDAO getReferenceDAO();
 
     public String getProjectName();
 
     public String getCurrentUser();
-    
+
     public RoleI getCurrentRole();
 
     public MGXConfiguration getConfiguration();

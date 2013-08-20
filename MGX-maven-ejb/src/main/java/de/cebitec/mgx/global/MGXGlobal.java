@@ -2,8 +2,10 @@ package de.cebitec.mgx.global;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.model.dao.DAO;
+import de.cebitec.mgx.model.dao.ReferenceDAO;
 import de.cebitec.mgx.model.dao.TermDAO;
 import de.cebitec.mgx.model.dao.ToolDAO;
+import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Term;
 import de.cebitec.mgx.model.db.Tool;
 import java.lang.reflect.Constructor;
@@ -54,6 +56,10 @@ public class MGXGlobal {
             daos.put(TermDAO.class, dao);
         }
         return (TermDAO) daos.get(TermDAO.class);
+    }
+
+    public ReferenceDAO<Reference> getReferenceDAO() {
+        return getDAO(ReferenceDAO.class);
     }
 
     private <T extends DAO> T getDAO(Class<T> clazz) {

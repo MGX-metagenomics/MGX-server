@@ -186,6 +186,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public ReferenceDAO<Reference> getReferenceDAO() {
+        return getDAO(ReferenceDAO.class);
+    }
+
+    @Override
     public String getProjectName() {
         return gpmsmaster.getProject().getName();
     }
@@ -194,7 +199,7 @@ public class MGXControllerImpl implements MGXController {
     public String getCurrentUser() {
         return gpmsmaster.getLogin();
     }
-    
+
     @Override
     public RoleI getCurrentRole() {
         return gpmsmaster.getRole();
@@ -228,5 +233,4 @@ public class MGXControllerImpl implements MGXController {
         }
         throw new UnsupportedOperationException("Could not create DAO " + clazz);
     }
-
 }
