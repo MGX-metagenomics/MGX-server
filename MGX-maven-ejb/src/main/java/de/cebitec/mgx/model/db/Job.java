@@ -42,22 +42,6 @@ public class Job implements Serializable, Identifiable {
     @Basic
     @Column(name = "job_state")
     private int jobstate;
-    
-//    // not persistent, mapped by its integer value
-//    @Transient
-//    protected JobState status;
-//
-//    @PrePersist
-//    @PreUpdate
-//    void copyJobState() {
-//        jobstate = status.ordinal();
-//    }
-//
-//    @PostLoad
-//    @PostUpdate
-//    void translateJobState() {
-//        status = JobState.values()[jobstate];
-//    }
 
     @Override
     public Long getId() {
