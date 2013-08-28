@@ -11,8 +11,10 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
+import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
 import de.cebitec.mgx.model.dao.deleteworkers.DeleteDNAExtract;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Reference;
@@ -139,5 +141,18 @@ public class ReferenceBean {
         }
         return newRef.getId();
 
+    }
+
+    @GET
+    @Path("byReferenceInterval/{refid}/{from}/{to}")
+    @Produces("application/x-protobuf")
+    public RegionDTOList byReferenceInterval(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("from") int to) {
+        Reference ref;
+        try {
+            ref = mgx.getReferenceDAO().getById(id);
+            return RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(ref, from, to));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 }
