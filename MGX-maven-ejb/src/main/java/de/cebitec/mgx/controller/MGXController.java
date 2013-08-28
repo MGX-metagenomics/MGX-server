@@ -41,7 +41,7 @@ public interface MGXController {
 
     public ObservationDAO getObservationDAO();
 
-    public ReferenceDAO getReferenceDAO();
+    public ReferenceDAO<Reference> getReferenceDAO();
 
     public String getProjectName();
 

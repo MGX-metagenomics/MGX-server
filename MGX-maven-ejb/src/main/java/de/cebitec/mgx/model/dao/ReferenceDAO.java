@@ -20,14 +20,14 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         return Reference.class;
     }
 
-    public DBIterator<Region> byReferenceInterval(long seqId, int from, int to) throws MGXException {
+    public DBIterator<Region> byReferenceInterval(final Reference ref, int from, int to) throws MGXException {
         DBIterator<Region> iter = null;
         Connection conn = getConnection();
         PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
             stmt = conn.prepareStatement("SELECT * from getRegions(?,?,?)");
-            stmt.setLong(1, seqId);
+            stmt.setLong(1, ref.getId());
             stmt.setInt(2, from);
             stmt.setInt(3, to);
             rset = stmt.executeQuery();
@@ -36,6 +36,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
                 @Override
                 public Region convert(ResultSet rs) throws SQLException {
                     Region r = new Region();
+                    r.setReference(ref);
                     r.setId(rs.getLong(1));
                     r.setName(rs.getString(2));
                     r.setDescription(rs.getString(3));
