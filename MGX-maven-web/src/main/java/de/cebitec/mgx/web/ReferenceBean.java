@@ -16,6 +16,8 @@ import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.Stateless;
@@ -101,8 +103,10 @@ public class ReferenceBean {
         try {
             globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
             // copy sequence data
-            //copyFile(globalRef.getFile(), mgx.getProjectDirectory() + "/reference/" + globalRef.getName() + ".fas");
-        } catch (MGXException ex) {
+            mgx.getGlobal().getReferenceDAO().copyFile(new File(globalRef.getFile()), new File(mgx.getProjectDirectory() + "/reference/" + globalRef.getName() + ".fas"));
+        } catch (MGXException ex ) {
+            Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
             Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
         }
 
