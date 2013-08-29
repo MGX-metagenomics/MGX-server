@@ -4,33 +4,23 @@
  */
 package de.cebitec.mgx.web;
 
-import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
-import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteDNAExtract;
-import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
-import de.cebitec.mgx.model.db.Sample;
-import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -106,7 +96,7 @@ public class ReferenceBean {
     @Path("installGlobalTool/{global_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public long installGlobalReference(long globalId) {
+    public long installGlobalReference(@PathParam("refid") Long globalId) {
         Reference globalRef = null;
         try {
             globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
