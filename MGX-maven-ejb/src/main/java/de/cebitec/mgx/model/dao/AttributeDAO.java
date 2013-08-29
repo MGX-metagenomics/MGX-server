@@ -112,6 +112,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                 ret.put(attr, rs.getLong(8));
             }
         } catch (SQLException ex) {
+            getController().log(ex.getMessage());
             throw new MGXException(ex.getMessage());
         } finally {
             close(conn, stmt, rs);
