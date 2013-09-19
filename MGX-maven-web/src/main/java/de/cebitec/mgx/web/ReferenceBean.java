@@ -9,9 +9,11 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
+import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -95,6 +97,13 @@ public class ReferenceBean {
     }
 
     @GET
+    @Path("listGlobalReferences")
+    @Produces("application/x-protobuf")
+    public ReferenceDTOList listGlobalReferences() {
+        return ReferenceDTOFactory.getInstance().toDTOList(mgx.getGlobal().getReferenceDAO().getAll());
+    }
+
+    @GET
     @Path("installGlobalTool/{global_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
@@ -104,7 +113,7 @@ public class ReferenceBean {
             globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
             // copy sequence data
             mgx.getGlobal().getReferenceDAO().copyFile(new File(globalRef.getFile()), new File(mgx.getProjectDirectory() + "/reference/" + globalRef.getName() + ".fas"));
-        } catch (MGXException ex ) {
+        } catch (MGXException ex) {
             Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
