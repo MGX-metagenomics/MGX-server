@@ -116,6 +116,8 @@ public class JobSubmitterImpl implements JobSubmitter {
             cfgFile.newLine();
             cfgFile.write("mgx.job_id=" + j.getId());
             cfgFile.newLine();
+            cfgFile.write("mgx.projectDir=" + mgx.getProjectDirectory());
+            cfgFile.newLine();
 
             for (JobParameter jp : params) {
                 cfgFile.write(jp.getNodeId() + "." + jp.getParameterName() + "=" + jp.getParameterValue());
