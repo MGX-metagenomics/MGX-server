@@ -4,7 +4,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
-import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;

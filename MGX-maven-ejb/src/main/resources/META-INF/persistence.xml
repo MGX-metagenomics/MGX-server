@@ -16,6 +16,7 @@
         <class>de.cebitec.mgx.model.db.Attribute</class>
         <class>de.cebitec.mgx.model.db.Reference</class>
         <class>de.cebitec.mgx.model.db.Region</class>
+        <class>de.cebitec.mgx.model.db.Mapping</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="hibernate.dialect" value="de.cebitec.mgx.controller.PG9Dialect"/>

@@ -1,8 +1,10 @@
 package de.cebitec.mgx.model.dao.deleteworkers;
 
 import de.cebitec.mgx.sessions.TaskI;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,6 +44,20 @@ public final class DeleteJob extends TaskI {
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
                 stmt.setLong(1, id);
                 stmt.execute();
+            }
+
+            // delete mappings
+            setStatus(TaskI.State.PROCESSING, "Deleting mapping data for job " + id);
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        File bamFile = new File(rs.getString(1));
+                        if (bamFile.exists()) {
+                            bamFile.delete();
+                        }
+                    }
+                }
             }
 
             // parameters

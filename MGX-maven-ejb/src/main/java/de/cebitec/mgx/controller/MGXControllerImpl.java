@@ -44,7 +44,7 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public final void log(String msg) {
         if (msg != null) {
-            logger.log(Level.INFO, msg);
+            logger.log(Level.INFO, "{0}: {1}", new Object[]{gpmsmaster.getProject().getName(), msg});
         }
     }
 
