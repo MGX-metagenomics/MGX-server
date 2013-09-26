@@ -43,6 +43,8 @@ public interface MGXController {
 
     public ReferenceDAO<Reference> getReferenceDAO();
 
+    public MappingDAO<Mapping> getMappingDAO();
+
     public String getProjectName();
 
     public String getCurrentUser();

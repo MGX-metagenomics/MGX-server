@@ -191,6 +191,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public MappingDAO<Mapping> getMappingDAO() {
+        return getDAO(MappingDAO.class);
+    }
+
+    @Override
     public String getProjectName() {
         return gpmsmaster.getProject().getName();
     }
