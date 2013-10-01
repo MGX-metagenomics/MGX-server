@@ -1,30 +1,33 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
-import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
+import de.cebitec.mgx.model.dao.deleteworkers.DeleteReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
+import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.UUID;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -44,6 +47,8 @@ public class ReferenceBean {
     @Inject
     @MGX
     MGXController mgx;
+    @EJB
+    TaskHolder taskHolder;
 
     @PUT
     @Path("create")
@@ -89,6 +94,15 @@ public class ReferenceBean {
         return ReferenceDTOFactory.getInstance().toDTO(obj);
     }
 
+    @DELETE
+    @Path("delete/{id}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
+    public MGXString delete(@PathParam("id") Long id) {
+        UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName()));
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
+    }
+
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
@@ -104,46 +118,67 @@ public class ReferenceBean {
     }
 
     @GET
-    @Path("installGlobalTool/{global_id}")
+    @Path("installGlobalReference/{refid}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public long installGlobalReference(@PathParam("refid") Long globalId) {
+    public MGXLong installGlobalReference(@PathParam("refid") Long globalId) {
+        File referencesDir = new File(mgx.getProjectDirectory() + "/reference/");
+        if (!referencesDir.exists()) {
+            UnixHelper.createDirectory(referencesDir);
+        }
+
         Reference globalRef = null;
         try {
             globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
-            // copy sequence data
-            mgx.getGlobal().getReferenceDAO().copyFile(new File(globalRef.getFile()), new File(mgx.getProjectDirectory() + "/reference/" + globalRef.getName() + ".fas"));
         } catch (MGXException ex) {
-            Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
         }
 
         Reference newRef = new Reference();
-        // attribute von globalRef rueberkopieren: name/length/..
-        newRef.setFile(mgx.getProjectDirectory() + "/reference/" + globalRef.getName() + ".fas");
+        newRef.setFile("");
         newRef.setName(globalRef.getName());
         newRef.setFile(globalRef.getFile());
-        newRef.setId(globalRef.getId());
         newRef.setLength(globalRef.getLength());
-
+        newRef.setRegions(new ArrayList<Region>());
 
         for (Region r : globalRef.getRegions()) {
             Region newReg = new Region();
             newReg.setDescription(r.getDescription());
-            newReg.setId(r.getId());
             newReg.setReference(newRef);
             newReg.setStart(r.getStart());
             newReg.setStop(r.getStop());
             newRef.getRegions().add(newReg);
         }
+
         try {
             mgx.getReferenceDAO().create(newRef);
         } catch (MGXException ex) {
-            Logger.getLogger(ReferenceBean.class.getName()).log(Level.SEVERE, null, ex);
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
         }
-        return newRef.getId();
 
+        File targetFile = new File(mgx.getProjectDirectory() + "/reference/" + newRef.getId() + ".fas");
+        try {
+            UnixHelper.copyFile(new File(globalRef.getFile()), targetFile);
+        } catch (IOException ex) {
+            mgx.log(ex.getMessage());
+            if (targetFile.exists()) {
+                targetFile.delete();
+            }
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        newRef.setFile(targetFile.getAbsolutePath());
+        try {
+            mgx.getReferenceDAO().update(newRef);
+        } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
+        }
+
+
+        return MGXLong.newBuilder().setValue(newRef.getId()).build();
     }
 
     @GET
