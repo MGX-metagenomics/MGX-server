@@ -87,7 +87,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         try {
             File src = new File(global.getXMLFile());
             File dest = new File(targetName.toString());
-            copyFile(src, dest);
+            UnixHelper.copyFile(src, dest);
             UnixHelper.makeFileGroupWritable(dest.getAbsolutePath());
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());

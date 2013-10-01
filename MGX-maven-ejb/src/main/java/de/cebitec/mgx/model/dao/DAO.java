@@ -202,24 +202,4 @@ public abstract class DAO<T extends Identifiable> {
         return new ArrayList<>(Arrays.asList(message.split(separator)));
     }
 
-    public void copyFile(File in, File out) throws IOException {
-        FileInputStream fis = new FileInputStream(in);
-        FileOutputStream fos = new FileOutputStream(out);
-        FileChannel inChannel = fis.getChannel();
-        FileChannel outChannel = fos.getChannel();
-        try {
-            inChannel.transferTo(0, inChannel.size(), outChannel);
-        } catch (IOException e) {
-            throw e;
-        } finally {
-            if (inChannel != null) {
-                inChannel.close();
-            }
-            if (outChannel != null) {
-                outChannel.close();
-            }
-            fis.close();
-            fos.close();
-        }
-    }
 }

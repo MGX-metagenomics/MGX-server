@@ -1,7 +1,10 @@
 package de.cebitec.mgx.util;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,6 +76,27 @@ public class UnixHelper {
             Files.setPosixFilePermissions(path, perms);
         } catch (IOException ex) {
             Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public static void copyFile(File in, File out) throws IOException {
+        FileInputStream fis = new FileInputStream(in);
+        FileOutputStream fos = new FileOutputStream(out);
+        FileChannel inChannel = fis.getChannel();
+        FileChannel outChannel = fos.getChannel();
+        try {
+            inChannel.transferTo(0, inChannel.size(), outChannel);
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            if (inChannel != null) {
+                inChannel.close();
+            }
+            if (outChannel != null) {
+                outChannel.close();
+            }
+            fis.close();
+            fos.close();
         }
     }
 }
