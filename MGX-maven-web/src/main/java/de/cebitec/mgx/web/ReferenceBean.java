@@ -8,6 +8,7 @@ import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.ReferenceDTO;
 import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
@@ -16,6 +17,8 @@ import de.cebitec.mgx.model.dao.deleteworkers.DeleteReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.upload.ReferenceUploadReceiver;
+import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -23,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -49,17 +54,17 @@ public class ReferenceBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
+    UploadSessions upSessions;
 
     @PUT
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public dto.MGXLong create(dto.ReferenceDTO dto) {
-        Long Reference_id = null;
+    public MGXLong create(ReferenceDTO dto) {
+        long Reference_id;
         try {
-            //Sample s = mgx.getSampleDAO().getById(dto.getSampleId());
             Reference ref = ReferenceDTOFactory.getInstance().toDB(dto);
-
             Reference_id = mgx.getReferenceDAO().create(ref);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -70,7 +75,7 @@ public class ReferenceBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    public Response update(dto.ReferenceDTO dto) {
+    public Response update(ReferenceDTO dto) {
 
         Reference reference = ReferenceDTOFactory.getInstance().toDB(dto);
         try {
@@ -192,5 +197,60 @@ public class ReferenceBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+    }
+
+    @GET
+    @Path("init/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString init(@PathParam("id") Long ref_id) {
+        mgx.log("Creating reference importer session for " + mgx.getProjectName());
+        Reference ref = null;
+        try {
+            ref = mgx.getReferenceDAO().getById(ref_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        ref.setFile(mgx.getProjectDirectory() + "/reference/" + ref.getId() + ".fas");
+        ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
+        UUID uuid = upSessions.registerUploadSession(recv);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    @PUT
+    @Path("addSequence/{uuid}")
+    @Produces("application/x-protobuf")
+    public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
+        ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
+        try {
+            recv.addSequenceData(chunkDNA.getValue());
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("addRegions/{uuid}")
+    @Produces("application/x-protobuf")
+    public Response addRegions(@PathParam("uuid") UUID session_id, RegionDTOList dtos) {
+        ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
+        try {
+            recv.add(dtos);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("close/{uuid}")
+    @Produces("application/x-protobuf")
+    public Response close(@PathParam("uuid") UUID session_id) {
+        try {
+            upSessions.closeSession(session_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
     }
 }
