@@ -1,6 +1,7 @@
 package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,6 +48,7 @@ public class FileUploadReceiver implements UploadReceiverI<byte[]> {
     public void close() throws MGXException {
         try {
             writer.close();
+            UnixHelper.makeFileGroupWritable(targetFile);
         } catch (IOException ex) {
             throw new MGXException(ex);
         } finally {

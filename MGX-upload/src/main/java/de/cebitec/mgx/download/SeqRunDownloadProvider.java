@@ -149,12 +149,16 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         try (PreparedStatement stmt = conn.prepareStatement("SELECT name from read WHERE id=?")) {
             stmt.setLong(1, seqId);
             try (ResultSet rs = stmt.executeQuery()) {
-                rs.next();
-                return rs.getString(1);
+                if (rs.next()) {
+                    return rs.getString(1);
+                } else {
+                    throw new MGXException("No name for read id " + seqId + " in project " + projectName);
+                }
             }
         } catch (SQLException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
         }
-        return null;
+        //return null;
     }
 }

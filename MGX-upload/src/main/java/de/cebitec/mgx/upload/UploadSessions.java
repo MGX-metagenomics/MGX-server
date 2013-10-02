@@ -32,7 +32,7 @@ public class UploadSessions {
 
     @PostConstruct
     public void start() {
-        sessions = new HashMap<UUID, UploadReceiverI>();
+        sessions = new HashMap<>();
         uploadTimeout = mgxconfig.getTransferTimeout();
     }
 
@@ -68,7 +68,7 @@ public class UploadSessions {
 
     @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
     public void timeout(Timer timer) {
-        Set<UUID> toRemove = new HashSet<UUID>();
+        Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : sessions.keySet()) {
             UploadReceiverI s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
