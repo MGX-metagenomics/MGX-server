@@ -81,7 +81,6 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 throw new MGXException(ex.getMessage());
             }
         }
-        // TODO persist regions
         reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=?")) {
@@ -89,6 +88,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             stmt.execute();
         } catch (SQLException ex) {
             cancel();
+            throw new MGXException(ex.getMessage());
         }
         try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
             for (Region r : regions) {
@@ -99,9 +99,10 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 stmt.setLong(5, reference.getId());
                 stmt.addBatch();
             }
-            stmt.execute();
+            stmt.executeBatch();
         } catch (SQLException ex) {
             cancel();
+            throw new MGXException(ex.getMessage());
         }
     }
 
