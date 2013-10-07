@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -79,9 +81,28 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 throw new MGXException(ex.getMessage());
             }
         }
-        // TODO persist file name, regions
+        // TODO persist regions
         reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
+        try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=?")) {
+            stmt.setString(1, reference.getFile());
+            stmt.execute();
+        } catch (SQLException ex) {
+            cancel();
+        }
+        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
+            for (Region r : regions) {
+                stmt.setString(1, r.getName());
+                stmt.setString(2, r.getDescription());
+                stmt.setInt(3, r.getStart());
+                stmt.setInt(4, r.getStop());
+                stmt.setLong(5, reference.getId());
+                stmt.addBatch();
+            }
+            stmt.execute();
+        } catch (SQLException ex) {
+            cancel();
+        }
     }
 
     @Override
