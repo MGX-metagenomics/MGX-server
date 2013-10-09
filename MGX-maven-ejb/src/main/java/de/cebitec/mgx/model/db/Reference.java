@@ -34,7 +34,6 @@ public class Reference implements Serializable, Identifiable {
     private int length;
     
     @Basic
-    @NotNull
     @Column(name = "ref_filePath")
     private String filePath;
     
