@@ -27,7 +27,7 @@ public class Region implements Serializable, Identifiable {
     @NotNull
     @Column(name = "description")
     private String description;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ref_id", nullable = false)
     private Reference reference;
     @Basic
