@@ -46,7 +46,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         if (fasta == null) {
             fasta = new File(reference.getFile());
             writer = new FileWriter(fasta);
-            writer.append(">" + reference.getName() + "\n");
+            writer.append(">lcl|" + reference.getId() + " " + reference.getName() + "\n");
         }
         writer.append(dna);
         dnaSize += dna.length();
