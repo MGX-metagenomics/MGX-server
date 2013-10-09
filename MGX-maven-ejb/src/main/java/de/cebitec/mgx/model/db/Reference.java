@@ -20,7 +20,7 @@ public class Reference implements Serializable, Identifiable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @OneToMany(mappedBy = "reference", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "reference", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     private Collection<Region> regions;
 
     @Basic
