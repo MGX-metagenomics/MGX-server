@@ -1,4 +1,3 @@
-
 package de.cebitec.mgx.model.dao.deleteworkers;
 
 import de.cebitec.mgx.sessions.TaskI;
@@ -16,7 +15,8 @@ import java.util.logging.Logger;
  * @author sjaenick
  */
 public class DeleteReference extends TaskI {
-      private final long id;
+
+    private final long id;
 
     public DeleteReference(Connection conn, long id, String projName) {
         super(projName, conn);
@@ -61,6 +61,11 @@ public class DeleteReference extends TaskI {
             File f = new File(fileName);
             if (f.exists()) {
                 f.delete();
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
+                stmt.setLong(1, id);
+                stmt.execute();
             }
 
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
