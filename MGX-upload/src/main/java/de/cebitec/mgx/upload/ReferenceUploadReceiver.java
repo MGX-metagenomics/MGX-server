@@ -83,13 +83,15 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         }
         reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
-        try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=?")) {
+        try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
             stmt.setString(1, reference.getFile());
+            stmt.setLong(2, reference.getId());
             stmt.execute();
         } catch (SQLException ex) {
             cancel();
             throw new MGXException(ex.getMessage());
         }
+        int cnt = 0;
         try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
             for (Region r : regions) {
                 stmt.setString(1, r.getName());
@@ -98,9 +100,12 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 stmt.setInt(4, r.getStop());
                 stmt.setLong(5, reference.getId());
                 stmt.addBatch();
+                cnt++;
             }
             stmt.executeBatch();
+            conn.close();
         } catch (SQLException ex) {
+            Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             cancel();
             throw new MGXException(ex.getMessage());
         }
@@ -119,6 +124,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             r.setStop(dto.getStop());
             regions.add(r);
         }
+        lastAccessed = System.currentTimeMillis();
     }
 
     @Override
