@@ -21,10 +21,15 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
     }
 
     public DBIterator<Region> byReferenceInterval(final Reference ref, int from, int to) throws MGXException {
+
+        if (from > to || from < 0 || to < 0 || from == to) {
+            throw new MGXException("Invalid coordinates: " + from + " " + to);
+        }
         DBIterator<Region> iter = null;
         Connection conn = getConnection();
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
+        ResultSet rset;
+        PreparedStatement stmt;
+        
         try {
             stmt = conn.prepareStatement("SELECT * from getRegions(?,?,?)");
             stmt.setLong(1, ref.getId());
