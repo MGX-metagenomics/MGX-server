@@ -58,19 +58,21 @@ public class DeleteReference extends TaskI {
                 }
             }
             setStatus(TaskI.State.PROCESSING, "Deleting reference " + refName);
-            File f = new File(fileName);
-            if (f.exists()) {
-                f.delete();
+            if (fileName != null) {
+                File f = new File(fileName);
+                if (f.exists()) {
+                    f.delete();
+                }
             }
 
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
                 stmt.setLong(1, id);
-                stmt.execute();
+                stmt.executeUpdate();
             }
 
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
                 stmt.setLong(1, id);
-                stmt.execute();
+                stmt.executeUpdate();
             }
             setStatus(TaskI.State.FINISHED, refName + " deleted");
         } catch (Exception e) {
