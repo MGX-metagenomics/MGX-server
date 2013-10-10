@@ -60,6 +60,7 @@ public class RegionDTOFactory extends DTOConversionBase<Region, RegionDTO, Regio
                 b.addRegion(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+            System.err.println(ex.getMessage());
         }
         return b.build();
     }
