@@ -54,9 +54,13 @@ public class UploadSessions {
         return sessions.get(uuid);
     }
 
-    @Asynchronous
+    //@Asynchronous -- not here
     public void closeSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).close();
+        UploadReceiverI recv = sessions.get(uuid);
+        if (recv == null) {
+            throw new MGXException("No active session for "+ uuid);
+        }
+        recv.close();
         sessions.remove(uuid);
     }
 
