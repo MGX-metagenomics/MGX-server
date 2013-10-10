@@ -19,6 +19,7 @@ import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -148,8 +149,10 @@ public class ReferenceBean {
         newRef.setLength(globalRef.getLength());
         newRef.setRegions(new ArrayList<Region>());
 
+
         for (Region r : globalRef.getRegions()) {
             Region newReg = new Region();
+            newReg.setName(r.getName());
             newReg.setDescription(r.getDescription());
             newReg.setReference(newRef);
             newReg.setStart(r.getStart());
@@ -190,14 +193,17 @@ public class ReferenceBean {
     @GET
     @Path("byReferenceInterval/{refid}/{from}/{to}")
     @Produces("application/x-protobuf")
-    public RegionDTOList byReferenceInterval(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("from") int to) {
+    public RegionDTOList byReferenceInterval(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
         Reference ref;
+        RegionDTOList ret = null;
         try {
             ref = mgx.getReferenceDAO().getById(id);
-            return RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(ref, from, to));
+            ret = RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(ref, from, to));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+        mgx.log("found regions in interval: " + ret.getRegionCount());
+        return ret;
     }
 
     @GET
