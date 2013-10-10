@@ -19,7 +19,6 @@ import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
-import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -186,7 +185,6 @@ public class ReferenceBean {
             throw new MGXWebException(ex.getMessage());
         }
 
-
         return MGXLong.newBuilder().setValue(newRef.getId()).build();
     }
 
@@ -194,15 +192,13 @@ public class ReferenceBean {
     @Path("byReferenceInterval/{refid}/{from}/{to}")
     @Produces("application/x-protobuf")
     public RegionDTOList byReferenceInterval(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
-        Reference ref;
         RegionDTOList ret = null;
         try {
-            ref = mgx.getReferenceDAO().getById(id);
+            Reference ref = mgx.getReferenceDAO().getById(id);
             ret = RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(ref, from, to));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        mgx.log("found regions in interval: " + ret.getRegionCount());
         return ret;
     }
 
@@ -257,6 +253,7 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User})
     public Response close(@PathParam("uuid") UUID session_id) {
+        mgx.log("Closing reference importer session for " + mgx.getProjectName());
         try {
             upSessions.closeSession(session_id);
         } catch (MGXException ex) {
