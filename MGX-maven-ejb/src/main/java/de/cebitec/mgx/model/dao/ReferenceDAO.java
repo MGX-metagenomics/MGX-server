@@ -29,10 +29,10 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
     }
 
     public String getSequence(final Reference ref, int from, int to) throws MGXException {
-        if (from > to || from < 0 || to < 0 || from == to) {
+        if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
             throw new MGXException("Invalid coordinates: " + from + " " + to);
         }
-        int len = to-from+1;
+        int len = to - from + 1;
         char[] buf = new char[len];
         try (BufferedReader br = new BufferedReader(new FileReader(ref.getFile()))) {
             br.readLine(); // skip header line
@@ -48,7 +48,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
 
     public DBIterator<Region> byReferenceInterval(final Reference ref, int from, int to) throws MGXException {
 
-        if (from > to || from < 0 || to < 0 || from == to) {
+        if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
             throw new MGXException("Invalid coordinates: " + from + " " + to);
         }
         DBIterator<Region> iter = null;
