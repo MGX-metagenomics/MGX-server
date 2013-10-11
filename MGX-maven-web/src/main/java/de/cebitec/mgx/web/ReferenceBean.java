@@ -203,6 +203,20 @@ public class ReferenceBean {
     }
 
     @GET
+    @Path("getSequence/{refid}/{from}/{to}")
+    @Produces("application/x-protobuf")
+    public MGXString getSequence(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
+        String subseq = null;
+        try {
+            Reference ref = mgx.getReferenceDAO().getById(id);
+            subseq = mgx.getReferenceDAO().getSequence(ref, from, to);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return MGXString.newBuilder().setValue(subseq).build();
+    }
+
+    @GET
     @Path("init/{id}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User})
