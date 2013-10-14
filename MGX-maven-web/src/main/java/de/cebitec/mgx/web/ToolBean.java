@@ -179,7 +179,6 @@ public class ToolBean {
             if (!validator.isValid(dto.getXml())) {
                 throw new MGXWebException("XML is not Valid");
             }
-            Logger.getLogger(ToolBean.class.getName()).info("NO Exception");
         } catch (SAXException ex) {
             Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXWebException("XML is not valid: " + ex.getMessage());
