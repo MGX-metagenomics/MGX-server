@@ -92,7 +92,7 @@ public class ReferenceBean {
     public dto.ReferenceDTO fetch(@PathParam("id") Long id) {
         Reference obj = null;
         try {
-            obj = (Reference) mgx.getReferenceDAO().getById(id);
+            obj = mgx.getReferenceDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -136,6 +136,10 @@ public class ReferenceBean {
         Reference globalRef = null;
         try {
             globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
+            File refData = new File(globalRef.getFile());
+            if (!refData.exists()) {
+                throw new MGXException("Cannot access reference sequence. Please report this error.");
+            }
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
@@ -144,10 +148,8 @@ public class ReferenceBean {
         Reference newRef = new Reference();
         newRef.setFile("");
         newRef.setName(globalRef.getName());
-        newRef.setFile(globalRef.getFile());
         newRef.setLength(globalRef.getLength());
         newRef.setRegions(new ArrayList<Region>());
-
 
         for (Region r : globalRef.getRegions()) {
             Region newReg = new Region();
