@@ -18,12 +18,14 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.deleteworkers.DeleteJob;
+import de.cebitec.mgx.model.dao.deleteworkers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
 import java.util.HashSet;
 import java.util.UUID;
 import javax.ejb.EJB;
@@ -156,6 +158,11 @@ public class JobBean {
         boolean verified = false;
 
         try {
+            Job job = mgx.getJobDAO().getById(id);
+            String fname = job.getSeqrun().getDBFile();
+            if (fname == null || !new File(fname).exists()) {
+                throw new MGXException("Cannot access sequence data for sequencing run.");
+            }
             verified = js.validate(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
             throw new MGXJobException(ex.getMessage());
@@ -186,6 +193,16 @@ public class JobBean {
         }
 
         return MGXBoolean.newBuilder().setValue(submitted).build();
+    }
+
+    @GET
+    @Path("restart/{id}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
+    public MGXString restart(@PathParam("id") Long id) {
+        RestartJob dJob = new RestartJob(id, mgx.getConnection(), mgx.getProjectName(), js);
+        UUID taskId = taskHolder.addTask(dJob);
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
     @GET
