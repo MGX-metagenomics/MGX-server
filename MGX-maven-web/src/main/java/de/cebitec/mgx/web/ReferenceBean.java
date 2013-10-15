@@ -5,7 +5,6 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTO;
@@ -89,7 +88,7 @@ public class ReferenceBean {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    public dto.ReferenceDTO fetch(@PathParam("id") Long id) {
+    public ReferenceDTO fetch(@PathParam("id") Long id) {
         Reference obj = null;
         try {
             obj = mgx.getReferenceDAO().getById(id);
@@ -111,7 +110,7 @@ public class ReferenceBean {
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    public dto.ReferenceDTOList fetchall() {
+    public ReferenceDTOList fetchall() {
         return ReferenceDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().getAll());
     }
 
@@ -176,7 +175,7 @@ public class ReferenceBean {
             if (targetFile.exists()) {
                 targetFile.delete();
             }
-            throw new MGXWebException(ex.getMessage());
+            throw new MGXWebException("Could not copy DNA sequence");
         }
 
         newRef.setFile(targetFile.getAbsolutePath());
