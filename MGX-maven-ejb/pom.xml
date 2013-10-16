@@ -68,6 +68,12 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>de.cebitec.external</groupId>
+            <artifactId>sam-jdk</artifactId>
+            <version>1.100</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>6.0</version>
