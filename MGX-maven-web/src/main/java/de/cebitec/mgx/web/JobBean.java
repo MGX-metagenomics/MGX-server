@@ -18,6 +18,7 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.workers.DeleteJob;
+import de.cebitec.mgx.model.dao.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -87,6 +88,8 @@ public class JobBean {
             }
             for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(dto.getParameters())) {
                 jp.setId(null);
+                
+                // TODO if it refers to a file, adapt the path
 
                 j.getParameters().add(jp);
                 jp.setJob(j);
