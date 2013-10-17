@@ -6,13 +6,10 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sun.jersey.spi.container.ResourceFilter;
-import de.cebitec.gpms.core.MembershipI;
-import de.cebitec.gpms.core.ProjectClassI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.DBMasterI;
-import de.cebitec.gpms.data.DBMembershipI;
 import de.cebitec.gpms.data.DBProjectI;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -26,7 +23,6 @@ import javax.naming.NamingException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriBuilder;
 
 /**
  *
