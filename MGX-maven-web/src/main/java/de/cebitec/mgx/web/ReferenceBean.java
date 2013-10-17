@@ -12,7 +12,7 @@ import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteReference;
+import de.cebitec.mgx.model.dao.workers.DeleteReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;

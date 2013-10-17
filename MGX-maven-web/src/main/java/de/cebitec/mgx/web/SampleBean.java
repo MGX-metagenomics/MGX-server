@@ -10,7 +10,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteSample;
+import de.cebitec.mgx.model.dao.workers.DeleteSample;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.TaskHolder;

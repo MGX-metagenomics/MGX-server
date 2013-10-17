@@ -10,7 +10,7 @@ import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteHabitat;
+import de.cebitec.mgx.model.dao.workers.DeleteHabitat;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;

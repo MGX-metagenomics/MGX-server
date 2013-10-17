@@ -17,7 +17,7 @@ import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteSeqRun;
+import de.cebitec.mgx.model.dao.workers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;

@@ -10,7 +10,7 @@ import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteDNAExtract;
+import de.cebitec.mgx.model.dao.workers.DeleteDNAExtract;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.TaskHolder;

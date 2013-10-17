@@ -13,7 +13,7 @@ import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteTool;
+import de.cebitec.mgx.model.dao.workers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;

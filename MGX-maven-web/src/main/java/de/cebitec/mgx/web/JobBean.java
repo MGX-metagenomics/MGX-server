@@ -17,8 +17,7 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
-import de.cebitec.mgx.model.dao.deleteworkers.DeleteJob;
-import de.cebitec.mgx.model.dao.deleteworkers.RestartJob;
+import de.cebitec.mgx.model.dao.workers.DeleteJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -195,15 +194,15 @@ public class JobBean {
         return MGXBoolean.newBuilder().setValue(submitted).build();
     }
 
-    @GET
-    @Path("restart/{id}")
-    @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
-    public MGXString restart(@PathParam("id") Long id) {
-        RestartJob dJob = new RestartJob(id, mgx.getConnection(), mgx.getProjectName(), js);
-        UUID taskId = taskHolder.addTask(dJob);
-        return MGXString.newBuilder().setValue(taskId.toString()).build();
-    }
+//    @GET
+//    @Path("restart/{id}")
+//    @Produces("application/x-protobuf")
+//    @Secure(rightsNeeded = {MGXRoles.User})
+//    public MGXString restart(@PathParam("id") Long id) {
+//        RestartJob dJob = new RestartJob(id, mgx.getConnection(), mgx.getProjectName(), js);
+//        UUID taskId = taskHolder.addTask(dJob);
+//        return MGXString.newBuilder().setValue(taskId.toString()).build();
+//    }
 
     @GET
     @Path("cancel/{id}")
