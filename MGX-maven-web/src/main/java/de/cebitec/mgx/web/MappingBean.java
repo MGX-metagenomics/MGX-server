@@ -4,14 +4,18 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.MappedSequenceDTOList;
 import de.cebitec.mgx.dto.dto.MappingDTO;
 import de.cebitec.mgx.dto.dto.MappingDTOList;
+import de.cebitec.mgx.dtoadapter.MappedSequenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.MappingDTOFactory;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.SeqRun;
-import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.sessions.MappingDataSession;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
@@ -38,7 +42,7 @@ public class MappingBean {
     @MGX
     MGXController mgx;
     @EJB
-    TaskHolder taskHolder;
+    MappingSessions mapSessions;
 
     @GET
     @Path("fetch/{id}")
@@ -105,14 +109,17 @@ public class MappingBean {
     @GET
     @Path("byReferenceInterval/{uuid}/{from}/{to}")
     @Produces("application/x-protobuf")
-    public void byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) {
+    public MappedSequenceDTOList byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) {
+        MappingDataSession session = mapSessions.getSession(uuid);
+        AutoCloseableIterator<MappedSequence> iter = session.get(from, to);
+        return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
     }
 
     @GET
     @Path("closeMapping/{uuidid}")
     @Produces("application/x-protobuf")
     public Response closeMapping(@PathParam("uuid") UUID uuid) {
-        taskHolder.removeTask(uuid);
+        mapSessions.removeSession(uuid);
         return Response.ok().build();
     }
 }
