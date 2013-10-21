@@ -16,6 +16,9 @@ import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.*;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,8 +52,15 @@ public class JobSubmitterImpl implements JobSubmitter {
             mgx.log(ex.getMessage());
         }
 
-        job.setStatus(JobState.VERIFIED);
-        mgx.getJobDAO().update(job);
+       // job.setStatus(JobState.VERIFIED);
+//        mgx.getJobDAO().update(job);
+        try (PreparedStatement stmt = mgx.getConnection().prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
+            stmt.setInt(1, JobState.VERIFIED.getValue());
+            stmt.setLong(2, jobId);
+            stmt.execute();
+        } catch (SQLException ex) {
+            return false;
+        }
         return ret;
     }
 

@@ -42,7 +42,7 @@ public class PluginDocumentHandler extends DefaultHandler {
      * searchItemConfig wird hier zunächst auf false gesetzt, solange kein
      * Knoten aus dem Store in der XML Datei gefunden wurde.
      *
-     * @param lNodeTypes Store mit konfigurierbaren Knoten
+     * @param lStore Store mit konfigurierbaren Knoten
      */
     public PluginDocumentHandler(Store lStore) {
         store = lStore;

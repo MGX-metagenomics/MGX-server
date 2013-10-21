@@ -20,41 +20,32 @@ import javax.ejb.Startup;
  *
  * @author sjaenick
  */
-@Singleton(mappedName = "TaskHolder")
+@Singleton(mappedName = "MappingSessions")
 @Startup
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
-public class TaskHolder {
+public class MappingSessions {
 
     @EJB
     MGXConfiguration mgxconfig;
     private int timeout;
-    private final ConcurrentMap<UUID, TaskI> tasks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, MappingDataSession> tasks = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void start() {
         timeout = 60 * 60 * 24; // a day
     }
 
-    public synchronized UUID addTask(final TaskI task) {
+    public synchronized UUID addSession(final MappingDataSession task) {
         final UUID uuid = UUID.randomUUID();
         tasks.put(uuid, task);
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                task.setMainTask();
-                task.run();
-                task.close();
-            }
-        });
-        t.start();
         return uuid;
     }
 
-    public synchronized void removeTask(UUID uuid) {
+    public synchronized void removeSession(UUID uuid) {
         tasks.remove(uuid);
     }
 
-    public TaskI getTask(UUID uuid) {
+    public MappingDataSession getSession(UUID uuid) {
         return tasks.get(uuid);
     }
 
@@ -62,12 +53,12 @@ public class TaskHolder {
     public void timeout() {
         Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : tasks.keySet()) {
-            TaskI s = tasks.get(uuid);
+            MappingDataSession s = tasks.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
             if (sessionIdleTime > timeout) {
-                Logger.getLogger(TaskHolder.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting task for {1}", new Object[]{timeout, s.getProjectName()});
+                Logger.getLogger(MappingSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting mapping data session for {1}", new Object[]{timeout, s.getProjectName()});
                 toRemove.add(uuid);
-                s.cancel();
+                s.close();
             }
         }
 
