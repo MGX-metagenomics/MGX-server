@@ -44,9 +44,9 @@ public class StatisticsBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.Guest})
     public PointDTOList create(MGXLongList dto) {
-        long[] data = new long[dto.getLongCount()];
-        for (int i=0;i< dto.getLongCount(); i++) {
-            data[i] = dto.getLong(i).getValue();
+        int[] data = new int[dto.getLongCount()];
+        for (int i = 0; i < dto.getLongCount(); i++) {
+            data[i] = (int) dto.getLong(i).getValue();
         }
         AutoCloseableIterator<Point> ret = rarefaction.rarefy(data);
         return PointDTOFactory.getInstance().toDTOList(ret);
