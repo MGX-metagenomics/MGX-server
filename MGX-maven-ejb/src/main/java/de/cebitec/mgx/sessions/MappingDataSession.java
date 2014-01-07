@@ -16,11 +16,10 @@ public class MappingDataSession {
     private final Reference ref;
     private final String projName;
     private long lastAccessed;
-    private SAMFileReader samReader;      
-    private String samFile;
-    
-    
-    public MappingDataSession(Reference ref, String projName,String samFile) {
+    private SAMFileReader samReader;
+    private final String samFile;
+
+    public MappingDataSession(Reference ref, String projName, String samFile) {
         this.ref = ref;
         this.projName = projName;
         lastAccessed = System.currentTimeMillis();
@@ -28,7 +27,7 @@ public class MappingDataSession {
     }
 
     public AutoCloseableIterator<MappedSequence> get(int from, int to) {
-        lastAccessed = System.currentTimeMillis(); 
+        lastAccessed = System.currentTimeMillis();
         samReader = new SAMFileReader(new File(this.samFile));
         return new AutoCloseableSAMRecordIterator(samReader.iterator());
     }
@@ -42,7 +41,8 @@ public class MappingDataSession {
     }
 
     public void close() {
-
+        samReader.close();
+        samReader = null;
     }
 
 }
