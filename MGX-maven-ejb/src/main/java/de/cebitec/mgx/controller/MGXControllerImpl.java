@@ -29,7 +29,7 @@ public class MGXControllerImpl implements MGXController {
     private final static Logger logger = Logger.getLogger(MGXControllerImpl.class.getPackage().getName());
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
-    private Map<Class, DAO> daos = new HashMap<>();
+    private final Map<Class, DAO> daos = new HashMap<>();
     //
     private final MGXConfiguration config;
     private final MGXGlobal global;
@@ -45,11 +45,14 @@ public class MGXControllerImpl implements MGXController {
     public final void log(String msg) {
         if (msg != null) {
             logger.log(Level.INFO, "{0}: {1}", new Object[]{gpmsmaster.getProject().getName(), msg});
+            if ("".equals(msg)) {
+                throw new RuntimeException("empty log message");
+            }
         }
     }
 
     @Override
-    public final void log(String msg, Object... args) {
+    public final void log(String msg, Object... args) { 
         logger.log(Level.INFO, String.format(msg, args));
     }
 
@@ -87,11 +90,11 @@ public class MGXControllerImpl implements MGXController {
             // make group writable directory
             UnixHelper.createDirectory(targetDir);
         }
-        try {
-            Process exec = Runtime.getRuntime().exec("/usr/bin/chmod 02770 " + ret + "/*");
-        } catch (IOException ex) {
-            Logger.getLogger(MGXControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
+        
+        if (!UnixHelper.isGroupWritable(targetDir)) {
+            UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
         }
+  
         return ret;
     }
 
