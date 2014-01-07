@@ -14,7 +14,7 @@ import net.sf.samtools.SAMRecordIterator;
  */
 public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<MappedSequence> {
 
-    SAMRecordIterator iterator;
+    private final SAMRecordIterator iterator;
     int counter;
     
     public AutoCloseableSAMRecordIterator(SAMRecordIterator iterator) {
@@ -40,6 +40,6 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
 
     @Override
     public void close() throws Exception {
-     //nothing
+        iterator.close();
     }
 }
