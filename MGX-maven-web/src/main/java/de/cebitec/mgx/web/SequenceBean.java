@@ -20,8 +20,10 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -67,6 +69,18 @@ public class SequenceBean {
     @Produces("application/x-protobuf")
     public MGXString initUpload(@PathParam("id") Long seqrun_id) {
         mgx.log("Creating upload session for " + mgx.getProjectName());
+
+        StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
+                .append(File.separator)
+                .append("seqruns");
+        File f = new File(dir.toString());
+        if (!f.exists()) {
+            UnixHelper.createDirectory(f);
+        }
+        if (!UnixHelper.isGroupWritable(f)) {
+            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
+        }
+
         SeqUploadReceiver recv = null;
 
         try {

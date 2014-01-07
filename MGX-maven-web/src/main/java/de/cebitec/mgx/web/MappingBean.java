@@ -101,7 +101,7 @@ public class MappingBean {
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
         } catch (MGXException ex) {
-            Logger.getLogger(MappingBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }

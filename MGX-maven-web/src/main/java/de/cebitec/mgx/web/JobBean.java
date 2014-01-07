@@ -18,7 +18,6 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.workers.DeleteJob;
-import de.cebitec.mgx.model.dao.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -186,10 +185,7 @@ public class JobBean {
             submitted = js.submit(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
             throw new MGXJobException(ex.getMessage());
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        } catch (MGXDispatcherException ex) {
+        } catch (MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
