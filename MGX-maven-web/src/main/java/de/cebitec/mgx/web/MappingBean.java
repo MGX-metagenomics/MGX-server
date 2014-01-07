@@ -100,9 +100,10 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
+            uuid = mapSessions.addSession(new MappingDataSession(m.getReference(),"test",m.getBAMFile())); 
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
+        }       
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
@@ -113,8 +114,8 @@ public class MappingBean {
         MappingDataSession session = mapSessions.getSession(uuid);
         AutoCloseableIterator<MappedSequence> iter = session.get(from, to);
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
-    }
-
+        }
+        
     @GET
     @Path("closeMapping/{uuidid}")
     @Produces("application/x-protobuf")
