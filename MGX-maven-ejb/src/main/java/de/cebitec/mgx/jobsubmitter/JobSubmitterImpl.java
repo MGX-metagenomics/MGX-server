@@ -102,6 +102,10 @@ public class JobSubmitterImpl implements JobSubmitter {
         if (!f.exists()) {
             UnixHelper.createDirectory(f);
         }
+        
+        if (!UnixHelper.isGroupWritable(f)) {
+            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
+        }
 
         jobconfig.append(File.separator);
         jobconfig.append(j.getId().toString());
