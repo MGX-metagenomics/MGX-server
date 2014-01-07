@@ -42,7 +42,8 @@ public class MappingSessions {
     }
 
     public synchronized void removeSession(UUID uuid) {
-        tasks.remove(uuid);
+        MappingDataSession old = tasks.remove(uuid);
+        old.close();
     }
 
     public MappingDataSession getSession(UUID uuid) {
