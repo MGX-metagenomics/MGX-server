@@ -6,11 +6,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +21,7 @@ import org.hibernate.internal.SessionFactoryImpl;
 /**
  *
  * @author sjaenick
+ * @param <T>
  */
 public abstract class DAO<T extends Identifiable> {
 

@@ -12,19 +12,14 @@ import org.rosuda.JRI.Rengine;
  *
  * @author sjaenick
  */
-@Singleton(mappedName = "RTest")
+@Singleton(mappedName = "R")
 @Startup
-public class RTest {
+public class R {
 
-    private final static Logger logger = Logger.getLogger(RTest.class.getPackage().getName());
+    private final static Logger logger = Logger.getLogger(R.class.getPackage().getName());
     private Rengine re = null;
 
-    @PostConstruct
-    public void start() {
-        if (!Rengine.versionCheck()) {
-            throw new RuntimeException("** Version mismatch - Java files don't match library version.");
-        }
-
+    public Rengine getR() {
         re = Rengine.getMainEngine();
         if (re == null) {
             re = new Rengine(new String[]{("--vanilla"), ("--silent")}, false, new RLogger());
@@ -32,10 +27,15 @@ public class RTest {
                 throw new RuntimeException("Error waiting for R!");
             }
         }
-        
         re.assign("tmpdir", System.getProperty("java.io.tmpdir"));
+        return re;
+    }
 
-        logger.log(Level.INFO, "Rengine created");
+    @PostConstruct
+    public void start() {
+        if (!Rengine.versionCheck()) {
+            throw new RuntimeException("** R Version mismatch - Java files don't match library version.");
+        }
     }
 
     @PreDestroy
