@@ -20,6 +20,16 @@ import java.util.logging.Logger;
  * @author sjaenick
  */
 public class UnixHelper {
+    
+    public static boolean isGroupWritable(File f) {
+        try {
+            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
+            return perms.contains(PosixFilePermission.GROUP_WRITE);
+        } catch (IOException ex) {
+            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return false;
+    }
 
     public static void createDirectory(File targetDir) {
         Path path = Paths.get(targetDir.toURI());
