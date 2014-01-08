@@ -19,8 +19,6 @@ import de.cebitec.mgx.util.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -41,7 +39,7 @@ public class MappingBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MappingSessions")
     MappingSessions mapSessions;
 
     @GET
@@ -100,10 +98,10 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(m.getReference(),"test",m.getBAMFile())); 
+            uuid = mapSessions.addSession(new MappingDataSession(m.getReference(), mgx.getProjectName(), m.getBAMFile()));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }       
+        }
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
@@ -114,10 +112,10 @@ public class MappingBean {
         MappingDataSession session = mapSessions.getSession(uuid);
         AutoCloseableIterator<MappedSequence> iter = session.get(from, to);
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
-        }
-        
+    }
+
     @GET
-    @Path("closeMapping/{uuidid}")
+    @Path("closeMapping/{uuid}")
     @Produces("application/x-protobuf")
     public Response closeMapping(@PathParam("uuid") UUID uuid) {
         mapSessions.removeSession(uuid);
