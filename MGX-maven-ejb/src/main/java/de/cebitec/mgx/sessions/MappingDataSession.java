@@ -6,6 +6,7 @@ import de.cebitec.mgx.util.AutoCloseableSAMRecordIterator;
 import de.cebitec.mgx.util.MappedSequence;
 import java.io.File;
 import net.sf.samtools.SAMFileReader;
+import net.sf.samtools.SAMRecordIterator;
 
 /**
  *
@@ -16,20 +17,19 @@ public class MappingDataSession {
     private final Reference ref;
     private final String projName;
     private long lastAccessed;
-    private SAMFileReader samReader;
-    private final String samFile;
+    private final SAMFileReader samReader;
 
     public MappingDataSession(Reference ref, String projName, String samFile) {
         this.ref = ref;
         this.projName = projName;
         lastAccessed = System.currentTimeMillis();
-        this.samFile = samFile;
+        samReader = new SAMFileReader(new File(samFile));
     }
 
     public AutoCloseableIterator<MappedSequence> get(int from, int to) {
         lastAccessed = System.currentTimeMillis();
-        samReader = new SAMFileReader(new File(this.samFile));
-        return new AutoCloseableSAMRecordIterator(samReader.iterator());
+        SAMRecordIterator overlaps = samReader.queryOverlapping(ref.getId().toString(), from, to);
+        return new AutoCloseableSAMRecordIterator(overlaps);
     }
 
     public long lastAccessed() {
@@ -42,7 +42,6 @@ public class MappingDataSession {
 
     public void close() {
         samReader.close();
-        samReader = null;
     }
 
 }

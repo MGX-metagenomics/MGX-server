@@ -29,7 +29,7 @@ public class MappingSessions {
     MGXConfiguration mgxconfig;
     private int timeout;
     private final ConcurrentMap<UUID, MappingDataSession> tasks = new ConcurrentHashMap<>();
-
+    
     @PostConstruct
     public void start() {
         timeout = 60 * 60 * 24; // a day
@@ -42,8 +42,10 @@ public class MappingSessions {
     }
 
     public synchronized void removeSession(UUID uuid) {
-        MappingDataSession old = tasks.remove(uuid);
-        old.close();
+        if (tasks.containsKey(uuid)) {
+            MappingDataSession old = tasks.remove(uuid);
+            old.close();
+        }
     }
 
     public MappingDataSession getSession(UUID uuid) {
