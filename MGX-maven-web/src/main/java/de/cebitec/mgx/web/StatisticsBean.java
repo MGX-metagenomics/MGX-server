@@ -3,18 +3,13 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
-import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.PointDTOList;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
 import de.cebitec.mgx.statistics.Rarefaction;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.Point;
-import de.cebitec.mgx.web.exception.MGXWebException;
-import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -44,9 +39,9 @@ public class StatisticsBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.Guest})
     public PointDTOList create(MGXLongList dto) {
-        int[] data = new int[dto.getLongCount()];
+        long[] data = new long[dto.getLongCount()];
         for (int i = 0; i < dto.getLongCount(); i++) {
-            data[i] = (int) dto.getLong(i).getValue();
+            data[i] = dto.getLong(i).getValue();
         }
         AutoCloseableIterator<Point> ret = rarefaction.rarefy(data);
         return PointDTOFactory.getInstance().toDTOList(ret);
