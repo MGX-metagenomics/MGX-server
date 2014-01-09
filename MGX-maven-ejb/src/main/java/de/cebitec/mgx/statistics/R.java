@@ -1,6 +1,5 @@
 package de.cebitec.mgx.statistics;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
