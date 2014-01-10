@@ -39,7 +39,6 @@ public class StatisticsBean {
     @Path("Rarefaction")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.Guest})
     public PointDTOList create(MGXLongList dto) {
         long[] data = new long[dto.getLongCount()];
         for (int i = 0; i < dto.getLongCount(); i++) {
