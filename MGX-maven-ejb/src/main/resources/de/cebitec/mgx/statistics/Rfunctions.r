@@ -1,6 +1,7 @@
 
-rarefaction<-function(x, subsample=5, plot=TRUE, color=TRUE, error=FALSE, legend=TRUE, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)) {
-
+rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)) {
+  library(lattice)
+  library(permute)
   library(vegan)
   library(parallel)
 
@@ -24,13 +25,13 @@ rarefaction<-function(x, subsample=5, plot=TRUE, color=TRUE, error=FALSE, legend
   }
                 
   storesummary.e<-as.data.frame(storesummary.e)               
-  richness.error<<-storesummary.se
+  #richness.error<<-storesummary.se
                 
   for (i in 1:(length(storesummary.e))) {
     storesummary.e[,i]<-ifelse(select>sum(x[i,]), NA, storesummary.e[,i])
   }
 
-  list("richness"= storesummary.e, "SE"=richness.error, "subsample"=select)        
+  list("richness"= storesummary.e$V1, "subsample"=select)        
 }
 
 rareStep<-function(x, select, i) {
