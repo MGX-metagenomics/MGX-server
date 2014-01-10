@@ -40,9 +40,9 @@ public class StatisticsBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public PointDTOList create(MGXLongList dto) {
-        long[] data = new long[dto.getLongCount()];
+        double[] data = new double[dto.getLongCount()];
         for (int i = 0; i < dto.getLongCount(); i++) {
-            data[i] = dto.getLong(i).getValue();
+            data[i] = (double) dto.getLong(i).getValue();
         }
         AutoCloseableIterator<Point> ret;
         try {
