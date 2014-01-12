@@ -4,8 +4,6 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.Point;
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -35,7 +33,7 @@ public class Rarefaction {
         double[] subsamples = engine.eval(name + ".rare$subsample").asDoubleArray();
         double[] richness = engine.eval(name + ".rare$richness").asDoubleArray();
 
-        engine.eval("print (" + name + ".rare)");
+        //engine.eval("print (" + name + ".rare)");
         if (subsamples == null || richness == null) {
             throw new MGXException("Computing rarefaction failed.");
         }
@@ -44,7 +42,7 @@ public class Rarefaction {
         for (int i = 0; i < subsamples.length; i++) {
             Point p = new Point(subsamples[i], richness[i]);
             ret.add(p);
-            System.err.println(p.getX() + " / " + p.getY());
+            //System.err.println(p.getX() + " / " + p.getY());
         }
 
         // cleanup variables

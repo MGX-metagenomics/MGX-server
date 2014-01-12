@@ -18,6 +18,12 @@ rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   rownames(storesummary.se)<-c(select)
   colnames(storesummary.se)<-rownames(x)
 
+  rareStep<-function(x, select, i) {
+    select.c<-select[i]
+    foo<-rarefy(x, select.c, se=T)
+    return(c(foo[1,], foo[2,]))
+  }
+
   tmp <- mclapply(1:length(select), function(X) rareStep(x, select, X), mc.cores=48)
   for (i in 1:length(select)) {
     storesummary.e[i,] <- tmp[[i]][1]
@@ -34,8 +40,3 @@ rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   list("richness"= storesummary.e$V1, "subsample"=select)        
 }
 
-rareStep<-function(x, select, i) {
-  select.c<-select[i]
-  foo<-rarefy(x, select.c, se=T)
-  return(c(foo[1,], foo[2,]))
-}
