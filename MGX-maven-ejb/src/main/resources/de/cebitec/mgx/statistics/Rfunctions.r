@@ -29,9 +29,9 @@ rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
     storesummary.e[i,] <- tmp[[i]][1]
     storesummary.se[i,] <- tmp[[i]][2]
   }
+  rm(tmp)
                 
   storesummary.e<-as.data.frame(storesummary.e)               
-  #richness.error<<-storesummary.se
                 
   for (i in 1:(length(storesummary.e))) {
     storesummary.e[,i]<-ifelse(select>sum(x[i,]), NA, storesummary.e[,i])
