@@ -83,6 +83,7 @@ public class FileBean {
 
     @DELETE
     @Path("delete/{path}")
+    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User})
     public Response delete(@PathParam("path") String path) {
 
