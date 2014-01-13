@@ -11,6 +11,9 @@ import de.cebitec.mgx.dto.dto.FileDTOList;
 import de.cebitec.mgx.dto.dto.FileDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.model.dao.workers.DeleteFile;
+import de.cebitec.mgx.model.dao.workers.DeleteHabitat;
+import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.FileUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.UnixHelper;
@@ -45,6 +48,8 @@ public class FileBean {
     MGXController mgx;
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
     UploadSessions sessions;
+    @EJB
+    TaskHolder taskHolder;
 
     @GET
     @Path("fetchall/{baseDir}")
@@ -99,9 +104,9 @@ public class FileBean {
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
-
-        deleteHierarchy(target);
-        return MGXString.newBuilder().setValue("").build();
+        
+        UUID taskId = taskHolder.addTask(new DeleteFile(mgx.getConnection(), target, mgx.getProjectName()));
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
     @GET
@@ -206,15 +211,6 @@ public class FileBean {
             throw new MGXWebException(basedir.getAbsolutePath() + " is not a directory.");
         }
         return basedir;
-    }
-
-    private void deleteHierarchy(File f) {
-        if (f.isDirectory()) {
-            for (File tmp : f.listFiles()) {
-                deleteHierarchy(tmp);
-            }
-        }
-        f.delete();
     }
 
     private String stripProjectDir(String input) {
