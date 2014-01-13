@@ -85,7 +85,7 @@ public class FileBean {
     @Path("delete/{path}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User})
-    public Response delete(@PathParam("path") String path) {
+    public MGXString delete(@PathParam("path") String path) {
 
         path = path.replace("|", "/");
 
@@ -101,7 +101,7 @@ public class FileBean {
         }
 
         deleteHierarchy(target);
-        return Response.ok().build();
+        return MGXString.newBuilder().setValue("").build();
     }
 
     @GET
