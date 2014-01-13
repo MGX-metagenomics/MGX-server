@@ -108,7 +108,7 @@ public class MappingBean {
     @GET
     @Path("byReferenceInterval/{uuid}/{from}/{to}")
     @Produces("application/x-protobuf")
-    public MappedSequenceDTOList byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) {
+    public MappedSequenceDTOList byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) throws MGXException {
         MappingDataSession session = mapSessions.getSession(uuid);
         AutoCloseableIterator<MappedSequence> iter = session.get(from, to);
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);

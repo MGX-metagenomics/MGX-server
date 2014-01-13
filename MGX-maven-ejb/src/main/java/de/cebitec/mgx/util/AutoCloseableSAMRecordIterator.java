@@ -4,7 +4,6 @@
  */
 package de.cebitec.mgx.util;
 
-import java.util.logging.Logger;
 import net.sf.samtools.SAMRecord;
 import net.sf.samtools.SAMRecordIterator;
 
@@ -31,7 +30,7 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
     public MappedSequence next() {
        SAMRecord record =  this.iterator.next();
        counter++;
-       return new MappedSequence(counter, record.getAlignmentStart(), record.getAlignmentEnd(),0);
+       return new MappedSequence(counter, record.getAlignmentStart(), record.getAlignmentEnd(),record.getMappingQuality());
     }
 
     @Override

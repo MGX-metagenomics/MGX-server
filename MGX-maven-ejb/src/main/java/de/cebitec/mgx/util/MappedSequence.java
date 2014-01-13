@@ -10,7 +10,7 @@ public class MappedSequence {
     private final long seq_id;
     private final int start;
     private final int stop;
-    private final int identity; // range 0-100
+    private final int identity; // range 0-255
 
     public MappedSequence(long seq_id, int start, int stop, int identity) {
         this.seq_id = seq_id;
