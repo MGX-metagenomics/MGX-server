@@ -12,7 +12,6 @@ import de.cebitec.mgx.dto.dto.FileDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.model.dao.workers.DeleteFile;
-import de.cebitec.mgx.model.dao.workers.DeleteHabitat;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.FileUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -55,6 +54,15 @@ public class FileBean {
     @Path("fetchall/{baseDir}")
     @Produces("application/x-protobuf")
     public FileDTOList fetchall(@PathParam("baseDir") String baseDir) {
+        File targetDir = new File(mgx.getProjectDirectory() + "files");
+        if (!targetDir.exists()) {
+            UnixHelper.createDirectory(targetDir);
+        }
+
+        if (!baseDir.startsWith(".|")) {
+            throw new MGXWebException("Invalid path.");
+        }
+
         File currentDirectory = getCurrentDirectory(baseDir);
         return listDir(currentDirectory);
     }
@@ -70,14 +78,16 @@ public class FileBean {
         }
 
         // security check
-        if (dto.getName().contains("..") || !dto.getName().startsWith("." + File.separator)) {
+        if (dto.getName().contains("..") || !dto.getName().startsWith(".|")) {
             mgx.log(mgx.getCurrentUser() + " tried to create " + dto.getName());
             throw new MGXWebException("Invalid path.");
         }
+        
+        String name = dto.getName().substring(2).replace("|", File.separator);
 
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + dto.getName());
+        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + name);
         if (target.exists()) {
-            throw new MGXWebException(dto.getName() + " already exists.");
+            throw new MGXWebException(dto.getName().substring(2) + " already exists.");
         }
         UnixHelper.createDirectory(target);
         if (!target.exists()) {
@@ -91,20 +101,18 @@ public class FileBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("path") String path) {
-
-        path = path.replace("|", "/");
-
         // security check
-        if (path.contains("..") || !path.startsWith("." + File.separator)) {
+        if (path.contains("..") || !path.startsWith(".|")) {
             mgx.log(mgx.getCurrentUser() + " tried to delete " + path);
-            throw new MGXWebException("Invalid path.");
+            throw new MGXWebException("Invalid path: " + path);
         }
-
+        
+        path = path.replace("|", "/");
         File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
-        
+
         UUID taskId = taskHolder.addTask(new DeleteFile(mgx.getConnection(), target, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
@@ -112,10 +120,10 @@ public class FileBean {
     @GET
     @Path("init/{path}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString init(@PathParam("path") String path) {
 
         mgx.log("Creating file upload session for " + mgx.getProjectName());
-        FileUploadReceiver recv = null;
 
         path = path.replace("|", "/");
 
@@ -125,18 +133,24 @@ public class FileBean {
             throw new MGXWebException("Invalid path.");
         }
 
+        File targetDir = new File(mgx.getProjectDirectory() + "files");
+        if (!targetDir.exists()) {
+            UnixHelper.createDirectory(targetDir);
+        }
+
         File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
         if (target.exists()) {
             throw new MGXWebException("File already exists: " + path);
         }
 
-        recv = new FileUploadReceiver(target.getAbsolutePath(), mgx.getProjectName());
+        FileUploadReceiver recv = new FileUploadReceiver(target.getAbsolutePath(), mgx.getProjectName());
         UUID uuid = sessions.registerUploadSession(recv);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
     @GET
     @Path("close/{uuid}")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response close(@PathParam("uuid") UUID session_id) {
         try {
             sessions.closeSession(session_id);
@@ -149,6 +163,7 @@ public class FileBean {
     @POST
     @Path("add/{uuid}")
     @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response add(@PathParam("uuid") UUID session_id, BytesDTO data) {
         try {
             sessions.getSession(session_id).add(data.getData().toByteArray());
@@ -160,6 +175,7 @@ public class FileBean {
 
     @GET
     @Path("cancel/{uuid}")
+    @Secure(rightsNeeded = {MGXRoles.User})
     public Response cancel(@PathParam("uuid") UUID session_id) {
         try {
             sessions.cancelSession(session_id);
@@ -169,7 +185,7 @@ public class FileBean {
         return Response.ok().build();
     }
 
-    private FileDTOList listDir(File base) {
+    private FileDTOList listDir(File baseDir) {
         //
         // This is ugly - application logic shouldn't exist on the
         // presentation (web/REST) layer. On the other hand, the 
@@ -177,9 +193,10 @@ public class FileBean {
         // we would need to convert this twice.
         //
         Builder list = FileDTOList.newBuilder();
-        for (File f : base.listFiles()) {
+        for (File f : baseDir.listFiles()) {
             FileDTO.Builder entryBuilder = de.cebitec.mgx.dto.dto.FileDTO.newBuilder();
-            entryBuilder.setName(f.getName())
+            String fName = ".|" + stripProjectDir(f.getAbsolutePath());
+            entryBuilder.setName(fName.replace("/", "|"))
                     .setIsDirectory(f.isDirectory())
                     .setSize(f.isFile() ? f.length() : 0);
 
@@ -190,7 +207,8 @@ public class FileBean {
 
     private File getCurrentDirectory(String path) {
 
-        path = path.replace("|", "/");
+        path = path.substring(2); // remove leading ".|";
+        path = path.replace("|", File.pathSeparator);
 
         if (path.contains("..")) {
             mgx.log(mgx.getCurrentUser() + " tried to access " + path);
@@ -199,9 +217,6 @@ public class FileBean {
 
         // validate project directory
         File basedir = new File(mgx.getProjectDirectory() + "files");
-        if (!basedir.exists()) {
-            basedir.mkdirs();
-        }
         if (!basedir.isDirectory()) {
             throw new MGXWebException("File storage subsystem corrupted. Contact server admin.");
         }
@@ -214,11 +229,12 @@ public class FileBean {
     }
 
     private String stripProjectDir(String input) {
-        String projectDirectory = mgx.getProjectDirectory();
+        String projectDirectory = mgx.getProjectDirectory() + "files/";
         if (input.startsWith(projectDirectory)) {
             input = input.substring(projectDirectory.length());
         } else {
-            Logger.getLogger(FileBean.class.getName()).log(Level.SEVERE, null, projectDirectory + " not found in " + input);
+            mgx.log(projectDirectory + " not found in " + input);
+            return "";
         }
         return input;
     }
