@@ -240,7 +240,7 @@ public class JobBean {
         try {
             js.delete(mgx, id);
         } catch (MGXDispatcherException | MGXException ex) {
-            mgx.log(ex.getMessage());
+            //mgx.log(ex.getMessage());
         }
 
         // remove persistent files

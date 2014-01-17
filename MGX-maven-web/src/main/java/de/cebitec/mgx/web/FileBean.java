@@ -19,8 +19,6 @@ import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -59,7 +57,7 @@ public class FileBean {
             UnixHelper.createDirectory(targetDir);
         }
 
-        if (!baseDir.startsWith(".|")) {
+        if (!baseDir.startsWith(".")) {
             throw new MGXWebException("Invalid path.");
         }
 
@@ -80,13 +78,13 @@ public class FileBean {
         // security check
         if (dto.getName().contains("..") || !dto.getName().startsWith(".|")) {
             mgx.log(mgx.getCurrentUser() + " tried to create " + dto.getName());
-            throw new MGXWebException("Invalid path.");
+            throw new MGXWebException("Invalid path: " + dto.getName());
         }
         
         String name = dto.getName().substring(2).replace("|", File.separator);
         File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + name);
         if (target.exists()) {
-            throw new MGXWebException(dto.getName().substring(2) + " already exists.");
+            throw new MGXWebException(dto.getName().substring(3) + " already exists.");
         }
         UnixHelper.createDirectory(target);
         if (!target.exists()) {
@@ -101,9 +99,13 @@ public class FileBean {
     @Secure(rightsNeeded = {MGXRoles.User})
     public MGXString delete(@PathParam("path") String path) {
         // security check
-        if (path.contains("..") || !path.startsWith(".|")) {
+        if (path.contains("..") || !path.startsWith(".")) {
             mgx.log(mgx.getCurrentUser() + " tried to delete " + path);
             throw new MGXWebException("Invalid path: " + path);
+        }
+        
+        if (path.startsWith(".|")) {
+            path = path.substring(2);
         }
         
         path = path.replace("|", "/");
@@ -206,8 +208,8 @@ public class FileBean {
 
     private File getCurrentDirectory(String path) {
 
-        path = path.substring(2); // remove leading ".|";
-        path = path.replace("|", File.pathSeparator);
+        path = path.substring(1); // remove leading ".|";
+        path = path.replace("|", File.separator);
 
         if (path.contains("..")) {
             mgx.log(mgx.getCurrentUser() + " tried to access " + path);
@@ -220,7 +222,7 @@ public class FileBean {
             throw new MGXWebException("File storage subsystem corrupted. Contact server admin.");
         }
 
-        basedir = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+        basedir = new File(mgx.getProjectDirectory() + "files" + File.separator + path);
         if (!basedir.isDirectory()) {
             throw new MGXWebException(basedir.getAbsolutePath() + " is not a directory.");
         }
