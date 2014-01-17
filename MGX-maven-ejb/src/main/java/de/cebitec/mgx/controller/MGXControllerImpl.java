@@ -8,7 +8,6 @@ import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -44,10 +43,10 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public final void log(String msg) {
         if (msg != null) {
-            logger.log(Level.INFO, "{0}: {1}", new Object[]{gpmsmaster.getProject().getName(), msg});
             if ("".equals(msg)) {
-                throw new RuntimeException("empty log message");
+                return;
             }
+            logger.log(Level.INFO, "{0}: {1}", new Object[]{gpmsmaster.getProject().getName(), msg});
         }
     }
 
