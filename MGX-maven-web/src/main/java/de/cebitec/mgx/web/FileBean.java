@@ -84,7 +84,7 @@ public class FileBean {
         String name = dto.getName().substring(2).replace("|", File.separator);
         File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + name);
         if (target.exists()) {
-            throw new MGXWebException(dto.getName().substring(3) + " already exists.");
+            throw new MGXWebException(dto.getName().substring(2) + " already exists.");
         }
         UnixHelper.createDirectory(target);
         if (!target.exists()) {
