@@ -18,6 +18,7 @@ import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.workers.DeleteJob;
+import de.cebitec.mgx.model.dao.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -27,6 +28,8 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -87,8 +90,12 @@ public class JobBean {
             }
             for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(dto.getParameters())) {
                 jp.setId(null);
-                
-                // TODO if it refers to a file, adapt the path
+
+                if (jp.getType().equals("ConfigFile")) {
+                    String fullPath = mgx.getProjectDirectory() + "files" + File.separator
+                            + jp.getParameterValue().substring(2).replace("|", File.separator);
+                    jp.setParameterValue(fullPath);
+                }
 
                 j.getParameters().add(jp);
                 jp.setJob(j);
@@ -143,6 +150,12 @@ public class JobBean {
             Job job = mgx.getJobDAO().getById(id);
             for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(paramdtos)) {
                 jp.setJob(job);
+
+                if (jp.getType().equals("ConfigFile")) {
+                    String fullPath = mgx.getProjectDirectory() + "files" + File.separator
+                            + jp.getParameterValue().substring(2).replace("|", File.separator);
+                    jp.setParameterValue(fullPath);
+                }
                 job.getParameters().add(jp);
             }
             mgx.getJobDAO().update(job);
@@ -182,7 +195,8 @@ public class JobBean {
 
         boolean submitted = false;
         try {
-            submitted = js.submit(mgx, id);
+            Job job = mgx.getJobDAO().getById(id);
+            submitted = js.submit(mgx.getConfiguration().getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
             throw new MGXJobException(ex.getMessage());
         } catch (MGXException | MGXDispatcherException ex) {
@@ -193,15 +207,22 @@ public class JobBean {
         return MGXBoolean.newBuilder().setValue(submitted).build();
     }
 
-//    @GET
-//    @Path("restart/{id}")
-//    @Produces("application/x-protobuf")
-//    @Secure(rightsNeeded = {MGXRoles.User})
-//    public MGXString restart(@PathParam("id") Long id) {
-//        RestartJob dJob = new RestartJob(id, mgx.getConnection(), mgx.getProjectName(), js);
-//        UUID taskId = taskHolder.addTask(dJob);
-//        return MGXString.newBuilder().setValue(taskId.toString()).build();
-//    }
+    @GET
+    @Path("restart/{id}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User})
+    public MGXString restart(@PathParam("id") Long id) {
+        Job job;
+        try {
+            job = mgx.getJobDAO().getById(id);
+            RestartJob dJob = new RestartJob(mgx, job, mgx.getConnection(), mgx.getProjectName(), mgx.getConfiguration().getDispatcherHost(), js);
+            UUID taskId = taskHolder.addTask(dJob);
+            return MGXString.newBuilder().setValue(taskId.toString()).build();
+        } catch (MGXException | MGXDispatcherException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
+    }
 
     @GET
     @Path("cancel/{id}")
