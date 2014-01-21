@@ -28,8 +28,6 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -94,6 +92,9 @@ public class JobBean {
                 if (jp.getType().equals("ConfigFile")) {
                     String fullPath = mgx.getProjectDirectory() + "files" + File.separator
                             + jp.getParameterValue().substring(2).replace("|", File.separator);
+                    if (!new File(fullPath).exists()) {
+                        throw new MGXWebException("Invalid file path: " + jp.getParameterValue());
+                    }
                     jp.setParameterValue(fullPath);
                 }
 
@@ -183,7 +184,7 @@ public class JobBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
+        
         return MGXBoolean.newBuilder().setValue(verified).build();
     }
 
@@ -196,8 +197,12 @@ public class JobBean {
         boolean submitted = false;
         try {
             Job job = mgx.getJobDAO().getById(id);
+            if (job.getStatus() != JobState.VERIFIED) {
+                throw new MGXWebException("Job is in invalid state.");
+            }
             submitted = js.submit(mgx.getConfiguration().getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
         } catch (MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
@@ -219,6 +224,7 @@ public class JobBean {
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
 
