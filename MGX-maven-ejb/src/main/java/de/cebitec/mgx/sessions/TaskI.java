@@ -20,7 +20,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         PROCESSING(1),
         FAILED(2),
         FINISHED(3);
-        private int code;
+        private final int code;
 
         private State(int c) {
             code = c;
@@ -31,7 +31,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         }
     }
     private final PropertyChangeSupport pcs;
-    private final String projName;
+    protected final String projName;
     protected final Connection conn;
     private String statusMessage = "";
     protected long timeStamp;
