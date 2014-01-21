@@ -46,9 +46,9 @@ public class GPMS implements DBGPMSI {
     @Resource
     private EJBContext ejbCtx;
     //
-    private ThreadLocal<GPMSMaster> currentMaster = new ThreadLocal<>();
+    private final ThreadLocal<GPMSMaster> currentMaster = new ThreadLocal<>();
     //
-    private static Set<ProjectClassI> supportedPClasses = new HashSet<>();
+    private static final Set<ProjectClassI> supportedPClasses = new HashSet<>();
     //
     private final static Logger logger = Logger.getLogger(GPMS.class.getPackage().getName());
     //
