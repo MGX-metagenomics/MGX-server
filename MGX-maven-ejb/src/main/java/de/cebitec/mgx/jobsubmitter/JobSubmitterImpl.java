@@ -34,6 +34,8 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     private Client client = null;
     private String dispatcherHost = null;
+    
+    private final static String MGX_CLASS = "MGX/";
 
     @Override
     public void shutdown(MGXController mgx) throws MGXDispatcherException {
@@ -57,7 +59,7 @@ public class JobSubmitterImpl implements JobSubmitter {
         }
         boolean ret = false;
         try {
-            ret = get(config.getDispatcherHost(), "validate/" + projName + "/" + job.getId(), Boolean.class);
+            ret = get(config.getDispatcherHost(), "validate/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
         } catch (MGXDispatcherException ex) {
             throw new MGXException(ex.getMessage());
         }
@@ -95,18 +97,18 @@ public class JobSubmitterImpl implements JobSubmitter {
         }
 
         // and send to dispatcher
-        ret = get(dispatcherHost, "submit/" + projName + "/" + job.getId(), Boolean.class);
+        ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
         return ret;
     }
 
     @Override
     public void cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete(mgx, "cancel/" + mgx.getProjectName() + "/" + jobId);
+        delete(mgx, "cancel/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
     }
 
     @Override
     public void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete(mgx, "delete/" + mgx.getProjectName() + "/" + jobId);
+        delete(mgx, "delete/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
     }
 
     private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, String projectDir, Job j) throws MGXException {
