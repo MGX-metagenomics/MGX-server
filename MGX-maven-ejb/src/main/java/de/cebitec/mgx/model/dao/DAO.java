@@ -140,12 +140,15 @@ public abstract class DAO<T extends Identifiable> {
         try {
             if (r != null) {
                 r.close();
+                r = null;
             }
             if (s != null) {
                 s.close();
+                s = null;
             }
             if (c != null) {
                 c.close();
+                c = null;
             }
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
