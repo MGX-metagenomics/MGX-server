@@ -1,11 +1,10 @@
 package de.cebitec.mgx.gpms.util;
 
-import com.jolbox.bonecp.BoneCPConfig;
-import com.jolbox.bonecp.BoneCPDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import de.cebitec.gpms.data.DBMembershipI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -15,62 +14,51 @@ public class DataSourceFactory {
 
     private final static Logger logger = Logger.getLogger(DataSourceFactory.class.getPackage().getName());
 
-//    public static DataSource getDataSource(DBMembershipI mbr) {
-//
-//        // lookup final datasource for project or create a new one
-//        String jndiname = new StringBuilder("jdbc/")
-//                .append(mbr.getProject().getProjectClass().getName())
-//                .append("/").append(mbr.getProject().getName())
-//                .toString();
-//
-//        DataSource ds = null;
-//
-//        try {
-//            ds = InitialContext.<DataSource>doLookup(jndiname);
-//        } catch (NamingException ex) {
-//        }
-//
-//        if (ds == null) {
-//            log("Creating datasource for JNDI name " + jndiname);
-//            try {
-//                ds = createDataSource(mbr);
-//                // publish the datasource
-//                Context ctx = new InitialContext();
-//                ctx.bind(jndiname, ds);
-//            } catch (NamingException | GPMSException ex) {
-//                log(ex.getMessage());
-//            }
-//        } else {
-//            log("Re-using old datasource from JNDI " + jndiname);
-//        }
-//
-//        return ds;
-//    }
-
-    public static DataSource createDataSource(DBMembershipI m) {
+    public static HikariDataSource createDataSource(DBMembershipI m) {
 
         String jdbc = m.getProject().getDBConfig().getURI();
 
         String poolname = new StringBuilder("DS-")
                 .append(m.getProject().getName())
+                .append("-")
                 .append(m.getRole().getName())
                 .toString();
 
-        BoneCPConfig cfg = new BoneCPConfig();
-        cfg.setLazyInit(true);
-        cfg.setMaxConnectionsPerPartition(5);
-        cfg.setMinConnectionsPerPartition(2);
-        cfg.setPartitionCount(1);
-        cfg.setJdbcUrl(jdbc);
-        cfg.setUsername(m.getRole().getDBUser());
-        cfg.setPassword(m.getRole().getDBPassword());
+        HikariConfig cfg = new HikariConfig();
         cfg.setPoolName(poolname);
-        cfg.setCloseConnectionWatch(false);
-        cfg.setMaxConnectionAgeInSeconds(600);
+        cfg.setMinimumPoolSize(5);
+        cfg.setMaximumPoolSize(50);
+        cfg.setDataSourceClassName("org.postgresql.ds.PGSimpleDataSource");
+        cfg.addDataSourceProperty("url", jdbc);
+        cfg.setMaxLifetime(1000 * 60 * 2);  // 2 mins
+        cfg.setIdleTimeout(1000 * 60 * 2);
 
-        return new BoneCPDataSource(cfg);
+        return new HikariDataSource(cfg);
     }
 
+//    public static DataSource createDataSource(DBMembershipI m) {
+//
+//        String jdbc = m.getProject().getDBConfig().getURI();
+//
+//        String poolname = new StringBuilder("DS-")
+//                .append(m.getProject().getName())
+//                .append(m.getRole().getName())
+//                .toString();
+//
+//        BoneCPConfig cfg = new BoneCPConfig();
+//        cfg.setLazyInit(true);
+//        cfg.setMaxConnectionsPerPartition(5);
+//        cfg.setMinConnectionsPerPartition(2);
+//        cfg.setPartitionCount(1);
+//        cfg.setJdbcUrl(jdbc);
+//        cfg.setUsername(m.getRole().getDBUser());
+//        cfg.setPassword(m.getRole().getDBPassword());
+//        cfg.setPoolName(poolname);
+//        cfg.setCloseConnectionWatch(false);
+//        cfg.setMaxConnectionAgeInSeconds(600);
+//
+//        return new BoneCPDataSource(cfg);
+//    }
     private static void log(String msg) {
         logger.log(Level.INFO, msg);
     }
