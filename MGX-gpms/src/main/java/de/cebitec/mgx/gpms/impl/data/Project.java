@@ -19,10 +19,11 @@ public class Project implements DBProjectI {
     private final String name;
     private final GPMS gpms;
     private final ProjectClassI pclass;
-    private DBConfigI dbcfg;
+    private final DBConfigI dbcfg;
     private String jdbcUrl;
     private String host;
     private String dbname;
+    private int dbPort;
     //
     private final static String sql = new StringBuffer("SELECT Host.hostname as host, DataSource.name as dbname, ")
             .append("CONCAT('jdbc:', LOWER(DBMS_Type.name), '://', Host.hostname, ':',")
@@ -102,6 +103,11 @@ public class Project implements DBProjectI {
             public String getDatabaseName() {
                 return dbname;
             }
+
+            @Override
+            public int getDatabasePort() {
+                return dbPort;
+            }
         };
     }
 
@@ -119,6 +125,7 @@ public class Project implements DBProjectI {
                 host = res.getString(1);
                 dbname = res.getString(2);
                 jdbcUrl = res.getString(3);
+                dbPort = Integer.valueOf(jdbcUrl.split(":")[3].split("/")[0]);
             }
         } catch (SQLException e) {
             throw new GPMSException(e.getMessage());
