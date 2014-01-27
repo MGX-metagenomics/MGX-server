@@ -48,7 +48,7 @@ public class SeqRunBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(SeqRunDTO dto) {
         DNAExtract extract;
         long run_id;
@@ -66,7 +66,7 @@ public class SeqRunBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(SeqRunDTO dto) {
         /*
          * since not all fields are exposed via the DTO, we need to fetch the
@@ -138,7 +138,7 @@ public class SeqRunBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();

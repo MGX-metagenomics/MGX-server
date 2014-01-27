@@ -68,7 +68,7 @@ public class FileBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(FileDTO dto) {
         // this method is only used to create directories
         if (!dto.getIsDirectory()) {
@@ -96,7 +96,7 @@ public class FileBean {
     @DELETE
     @Path("delete/{path}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("path") String path) {
         // security check
         if (path.contains("..") || !path.startsWith(".")) {
@@ -121,7 +121,7 @@ public class FileBean {
     @GET
     @Path("init/{path}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString init(@PathParam("path") String path) {
 
         mgx.log("Creating file upload session for " + mgx.getProjectName());
@@ -151,7 +151,7 @@ public class FileBean {
 
     @GET
     @Path("close/{uuid}")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response close(@PathParam("uuid") UUID session_id) {
         try {
             sessions.closeSession(session_id);
@@ -164,7 +164,7 @@ public class FileBean {
     @POST
     @Path("add/{uuid}")
     @Consumes("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response add(@PathParam("uuid") UUID session_id, BytesDTO data) {
         try {
             sessions.getSession(session_id).add(data.getData().toByteArray());
@@ -176,7 +176,7 @@ public class FileBean {
 
     @GET
     @Path("cancel/{uuid}")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response cancel(@PathParam("uuid") UUID session_id) {
         try {
             sessions.cancelSession(session_id);

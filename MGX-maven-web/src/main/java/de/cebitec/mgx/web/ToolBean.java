@@ -56,7 +56,7 @@ public class ToolBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(ToolDTO dto) {
         Tool t = ToolDTOFactory.getInstance().toDB(dto, false);
         Long id = null;
@@ -113,7 +113,7 @@ public class ToolBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(ToolDTO dto) {
         // not used
         assert false;
@@ -123,7 +123,7 @@ public class ToolBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -136,7 +136,7 @@ public class ToolBean {
     @Path("installGlobalTool/{global_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong installGlobalTool(@PathParam("global_id") Long global_id) {
         Tool globalTool = null;
         try {

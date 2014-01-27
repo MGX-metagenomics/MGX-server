@@ -48,7 +48,7 @@ public class DNAExtractBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(DNAExtractDTO dto) {
         Long DNAExtract_id = null;
         try {
@@ -65,7 +65,7 @@ public class DNAExtractBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(DNAExtractDTO dto) {
         Sample s = null;
         try {
@@ -119,7 +119,7 @@ public class DNAExtractBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();

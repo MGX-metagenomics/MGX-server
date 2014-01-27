@@ -47,7 +47,7 @@ public class SampleBean {
     @PUT
     @Path("create")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -68,7 +68,7 @@ public class SampleBean {
 
     @POST
     @Path("update")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(SampleDTO dto) {
         Habitat h = null;
         try {
@@ -123,7 +123,7 @@ public class SampleBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();

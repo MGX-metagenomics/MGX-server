@@ -58,7 +58,7 @@ public class ReferenceBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(ReferenceDTO dto) {
         long Reference_id;
         try {
@@ -73,7 +73,7 @@ public class ReferenceBean {
     @POST
     @Path("update")
     @Consumes("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(ReferenceDTO dto) {
 
         Reference reference = ReferenceDTOFactory.getInstance().toDB(dto);
@@ -101,7 +101,7 @@ public class ReferenceBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -125,7 +125,7 @@ public class ReferenceBean {
     @Path("installGlobalReference/{refid}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong installGlobalReference(@PathParam("refid") Long globalId) {
         File referencesDir = new File(mgx.getProjectDirectory() + "/reference/");
         if (!referencesDir.exists()) {
@@ -220,7 +220,7 @@ public class ReferenceBean {
     @GET
     @Path("init/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString init(@PathParam("id") Long ref_id) {
         mgx.log("Creating reference importer session for " + mgx.getProjectName());
         Reference ref = null;
@@ -238,7 +238,7 @@ public class ReferenceBean {
     @PUT
     @Path("addSequence/{uuid}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
         try {
@@ -252,7 +252,7 @@ public class ReferenceBean {
     @PUT
     @Path("addRegions/{uuid}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addRegions(@PathParam("uuid") UUID session_id, RegionDTOList dtos) {
         ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
         try {
@@ -266,7 +266,7 @@ public class ReferenceBean {
     @GET
     @Path("close/{uuid}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response close(@PathParam("uuid") UUID session_id) {
         mgx.log("Closing reference importer session for " + mgx.getProjectName());
         try {

@@ -43,7 +43,7 @@ public class JobParameterBean {
 
     @POST
     @Path("update")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(JobParameterDTO dto) {
         JobParameter h = JobParameterDTOFactory.getInstance().toDB(dto);
         try {
@@ -56,7 +56,7 @@ public class JobParameterBean {
 
     @DELETE
     @Path("delete/{id}")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response delete(@PathParam("id") Long id) {
         try {
             mgx.getJobParameterDAO().delete(id);

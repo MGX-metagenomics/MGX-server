@@ -47,7 +47,7 @@ public class HabitatBean {
     @Path("create")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(HabitatDTO dto) {
         Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
         try {
@@ -62,7 +62,7 @@ public class HabitatBean {
     @Path("update")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(HabitatDTO dto) {
         Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
         try {
@@ -96,7 +96,7 @@ public class HabitatBean {
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User})
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
