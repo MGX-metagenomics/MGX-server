@@ -29,6 +29,7 @@ public class MGXControllerImpl implements MGXController {
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
     private final Map<Class, DAO> daos = new HashMap<>();
+    private String projectDir = null;
     //
     private final MGXConfiguration config;
     private final MGXGlobal global;
@@ -78,9 +79,13 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getProjectDirectory() {
+        if (projectDir != null) {
+            return projectDir;
+        }
+        
         String ret = new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
         while (ret.contains(File.separator + File.separator)) {
-            ret = ret.replaceAll(File.separator + File.separator, "/");
+            ret = ret.replaceAll(File.separator + File.separator, File.separator);
         }
 
         // 
@@ -93,6 +98,8 @@ public class MGXControllerImpl implements MGXController {
         if (!UnixHelper.isGroupWritable(targetDir)) {
             UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
         }
+        
+        projectDir = ret;
   
         return ret;
     }
