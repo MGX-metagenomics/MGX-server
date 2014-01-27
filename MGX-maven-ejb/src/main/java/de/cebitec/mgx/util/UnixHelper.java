@@ -32,6 +32,9 @@ public class UnixHelper {
     }
 
     public static void createDirectory(File targetDir) {
+        if (targetDir.exists()) {
+            return;
+        }
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
