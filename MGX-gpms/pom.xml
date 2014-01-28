@@ -21,10 +21,15 @@
     </properties>
 
     <dependencies>
-        <dependency>
+        <!-- <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>1.2.8</version>
+        </dependency> -->
+        <dependency>
+            <groupId>de.cebitec.external</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>1.2.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.gpms</groupId>

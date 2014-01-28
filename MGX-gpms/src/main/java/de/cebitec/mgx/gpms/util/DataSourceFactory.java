@@ -12,11 +12,7 @@ import java.util.logging.Logger;
  */
 public class DataSourceFactory {
 
-    private final static Logger logger = Logger.getLogger(DataSourceFactory.class.getPackage().getName());
-
     public static HikariDataSource createDataSource(DBMembershipI m) {
-
-        String jdbc = m.getProject().getDBConfig().getURI();
 
         String poolname = new StringBuilder("DS-")
                 .append(m.getProject().getName())
@@ -27,9 +23,13 @@ public class DataSourceFactory {
         HikariConfig cfg = new HikariConfig();
         cfg.setPoolName(poolname);
         cfg.setMinimumPoolSize(5);
-        cfg.setMaximumPoolSize(50);
+        cfg.setMaximumPoolSize(5);
         cfg.setDataSourceClassName("org.postgresql.ds.PGSimpleDataSource");
-        cfg.addDataSourceProperty("url", jdbc);
+        cfg.addDataSourceProperty("user", m.getRole().getDBUser());
+        cfg.addDataSourceProperty("password", m.getRole().getDBPassword());
+        cfg.addDataSourceProperty("serverName", m.getProject().getDBConfig().getDatabaseHost());
+        cfg.addDataSourceProperty("portNumber", m.getProject().getDBConfig().getDatabasePort());
+        cfg.addDataSourceProperty("databaseName", m.getProject().getDBConfig().getDatabaseName());
         cfg.setMaxLifetime(1000 * 60 * 2);  // 2 mins
         cfg.setIdleTimeout(1000 * 60 * 2);
 
@@ -59,7 +59,4 @@ public class DataSourceFactory {
 //
 //        return new BoneCPDataSource(cfg);
 //    }
-    private static void log(String msg) {
-        logger.log(Level.INFO, msg);
-    }
 }
