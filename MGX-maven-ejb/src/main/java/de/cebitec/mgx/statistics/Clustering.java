@@ -2,8 +2,8 @@ package de.cebitec.mgx.statistics;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.misc.NamedVector;
+import de.cebitec.mgx.util.StringUtils;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class Clustering {
         varnames.addAll(names.keySet());
 
         String matrixName = "matr" + generateSuffix();
-        engine.assign(matrixName, "rbind(" + join(varnames, ",") + ")");
+        engine.assign(matrixName, "rbind(" + StringUtils.join(varnames, ",") + ")");
 
         // cleanup
         for (String varname : names.keySet()) {
@@ -76,20 +76,5 @@ public class Clustering {
             ret[i++] = (double) l;
         }
         return ret;
-    }
-
-    /*
-     * from http://snippets.dzone.com/posts/show/91
-     */
-    protected static String join(Iterable< ? extends Object> pColl, String separator) {
-        Iterator< ? extends Object> oIter;
-        if (pColl == null || (!(oIter = pColl.iterator()).hasNext())) {
-            return "";
-        }
-        StringBuilder oBuilder = new StringBuilder(String.valueOf(oIter.next()));
-        while (oIter.hasNext()) {
-            oBuilder.append(separator).append(oIter.next());
-        }
-        return oBuilder.toString();
     }
 }
