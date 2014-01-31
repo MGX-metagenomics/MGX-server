@@ -246,8 +246,8 @@ public class SequenceBean {
     @Produces("application/x-protobuf")
     public SequenceDTOList fetchall(MGXLongList ids) {
         Set<Long> idlist = new HashSet<>();
-        for (MGXLong l : ids.getLongList()) {
-            idlist.add(l.getValue());
+        for (long l : ids.getLongList()) {
+            idlist.add(l);
         }
         AutoCloseableIterator<Sequence> objs;
         try {
