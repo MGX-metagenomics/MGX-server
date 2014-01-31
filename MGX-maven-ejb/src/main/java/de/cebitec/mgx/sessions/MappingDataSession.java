@@ -4,7 +4,7 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.AutoCloseableSAMRecordIterator;
-import de.cebitec.mgx.util.MappedSequence;
+import de.cebitec.mgx.model.misc.MappedSequence;
 import java.io.File;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecordIterator;

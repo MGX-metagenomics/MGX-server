@@ -32,7 +32,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
     private final PropertyChangeSupport pcs;
     protected final String projName;
-    protected final Connection conn;
+    protected Connection conn;
     private String statusMessage = "";
     protected long timeStamp;
     private State state;

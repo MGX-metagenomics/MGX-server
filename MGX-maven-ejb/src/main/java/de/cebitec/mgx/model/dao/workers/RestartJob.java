@@ -93,6 +93,9 @@ public class RestartJob extends TaskI {
             } else {
                 setStatus(TaskI.State.FAILED, "verify failed");
             }
+            
+            conn.close();
+            conn = null;
 
         } catch (MGXException | MGXDispatcherException | SQLException e) {
             System.err.println("Could not restart job " + job.getId() + ": " + e.getMessage());

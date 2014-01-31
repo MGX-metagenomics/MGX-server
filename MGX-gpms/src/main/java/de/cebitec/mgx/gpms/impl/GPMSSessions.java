@@ -1,6 +1,5 @@
 package de.cebitec.mgx.gpms.impl;
 
-import com.zaxxer.hikari.HikariDataSource;
 import de.cebitec.gpms.data.DBMembershipI;
 import de.cebitec.mgx.gpms.util.DataSourceFactory;
 import java.util.*;
@@ -11,6 +10,7 @@ import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.ejb.Timer;
+import javax.sql.DataSource;
 
 /**
  *
@@ -33,7 +33,7 @@ public class GPMSSessions {
         GPMSMaster master;
 
         if (!sessions.containsKey(m)) {
-            HikariDataSource ds = DataSourceFactory.createDataSource(m);
+            DataSource ds = DataSourceFactory.createDataSource(m);
             master = new GPMSMaster(m, ds);
             sessions.put(m, master);
         }

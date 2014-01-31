@@ -1,6 +1,6 @@
 package de.cebitec.mgx.gpms.impl;
 
-import com.zaxxer.hikari.HikariDataSource;
+import com.jolbox.bonecp.BoneCPDataSource;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
@@ -20,11 +20,11 @@ public class GPMSMaster implements DBMasterI {
     private long lastUsed;
     private final DBMembershipI membership;
     private EntityManagerFactory emf = null;
-    private final HikariDataSource ds;
+    private final DataSource ds;
     //private String jndiname;
     private String login = null;
 
-    public GPMSMaster(DBMembershipI m, HikariDataSource ds) {
+    public GPMSMaster(DBMembershipI m, DataSource ds) {
         membership = m;
         this.ds = ds;
         lastUsed = System.currentTimeMillis();
@@ -41,7 +41,8 @@ public class GPMSMaster implements DBMasterI {
     }
 
     public void close() {
-        ds.shutdown();
+        ((BoneCPDataSource)ds).close();
+        //ds.shutdown();
         
 //        // unpublish the datasource
 //        Context ctx;

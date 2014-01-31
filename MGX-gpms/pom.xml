@@ -26,22 +26,22 @@
             <artifactId>HikariCP</artifactId>
             <version>1.2.8</version>
         </dependency> -->
-        <dependency>
+        <!-- <dependency>
             <groupId>de.cebitec.external</groupId>
             <artifactId>HikariCP</artifactId>
             <version>1.2.8-SNAPSHOT</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>de.cebitec.gpms</groupId>
             <artifactId>GPMS-db-api</artifactId>
             <version>1.0-RELEASE</version>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>com.jolbox</groupId>
             <artifactId>bonecp</artifactId>
             <version>0.7.1-rc3</version>
             <type>jar</type>
-        </dependency> -->
+        </dependency>
         <dependency>
             <groupId>de.cebitec.gpms</groupId>
             <artifactId>GPMS-core-api</artifactId>

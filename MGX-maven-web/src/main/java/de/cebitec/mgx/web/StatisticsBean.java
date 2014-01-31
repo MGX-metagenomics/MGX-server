@@ -1,11 +1,11 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.dto.dto.MGXLongList;
+import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
+import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.PointDTOList;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
 import de.cebitec.mgx.statistics.Rarefaction;
@@ -39,10 +39,10 @@ public class StatisticsBean {
     @Path("Rarefaction")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public PointDTOList create(MGXLongList dto) {
+    public PointDTOList rarefy(MGXLongList dto) {
         double[] data = new double[dto.getLongCount()];
         for (int i = 0; i < dto.getLongCount(); i++) {
-            data[i] = (double) dto.getLong(i).getValue();
+            data[i] = (double) dto.getLong(i);
         }
         AutoCloseableIterator<Point> ret;
         try {
@@ -51,5 +51,13 @@ public class StatisticsBean {
             throw new MGXWebException(ex.getMessage());
         }
         return PointDTOFactory.getInstance().toDTOList(ret);
+    }
+
+    @PUT
+    @Path("Clustering")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public MGXString cluster(MGXMatrixDTO dto) {
+        return MGXString.newBuilder().setValue("FIXME").build();
     }
 }

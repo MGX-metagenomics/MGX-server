@@ -1,4 +1,4 @@
-package de.cebitec.mgx.util;
+package de.cebitec.mgx.model.misc;
 
 /**
  *

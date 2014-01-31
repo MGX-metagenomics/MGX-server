@@ -68,6 +68,7 @@ public class JobSubmitterImpl implements JobSubmitter {
             stmt.setInt(1, JobState.VERIFIED.getValue());
             stmt.setLong(2, job.getId());
             stmt.execute();
+            job.setStatus(JobState.VERIFIED);
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
         }

@@ -1,9 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package de.cebitec.mgx.util;
 
+import de.cebitec.mgx.model.misc.MappedSequence;
 import net.sf.samtools.CigarElement;
 import net.sf.samtools.SAMRecord;
 import net.sf.samtools.SAMRecordIterator;

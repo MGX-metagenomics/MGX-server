@@ -15,7 +15,7 @@ import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sessions.MappingDataSession;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.MappedSequence;
+import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
