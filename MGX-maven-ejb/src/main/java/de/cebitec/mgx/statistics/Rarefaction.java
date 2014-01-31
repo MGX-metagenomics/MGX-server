@@ -42,7 +42,6 @@ public class Rarefaction {
         for (int i = 0; i < subsamples.length; i++) {
             Point p = new Point(subsamples[i], richness[i]);
             ret.add(p);
-            //System.err.println(p.getX() + " / " + p.getY());
         }
 
         // cleanup variables
