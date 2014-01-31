@@ -81,8 +81,6 @@ public class JobSubmitterImpl implements JobSubmitter {
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
-        boolean ret = false;
-
         // set job to submitted
         int numRows = 0;
         job.setStatus(JobState.SUBMITTED);
@@ -98,8 +96,7 @@ public class JobSubmitterImpl implements JobSubmitter {
         }
 
         // and send to dispatcher
-        ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
-        return ret;
+        return get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
     }
 
     @Override
