@@ -3,7 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.MappedSequenceDTO;
 import de.cebitec.mgx.dto.dto.MappedSequenceDTOList;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.MappedSequence;
+import de.cebitec.mgx.model.misc.MappedSequence;
 
 /**
  *
