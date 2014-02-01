@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import javax.ejb.EJB;
@@ -48,6 +49,9 @@ public class Clustering {
         String matrixName = "matr" + generateSuffix();
         engine.assign(matrixName, "rbind(" + StringUtils.join(varnames, ",") + ")");
 
+        // nwk <- hc2Newick(hclust(dist(matr)))
+        String nwk = engine.eval("ctc::hc2Newick(hclust(dist(" + matrixName + ")))").asString();
+
         // cleanup
         for (String varname : names.keySet()) {
             engine.eval("rm(" + varname + ")");
@@ -55,7 +59,12 @@ public class Clustering {
         engine.eval("rm(" + matrixName + ")");
         engine.end();
 
-        return "FIXME";
+        // re-convert group names
+        for (Map.Entry<String,String> e : names.entrySet()) {
+            nwk = nwk.replace(e.getKey(), e.getValue());
+        }
+
+        return nwk;
     }
 
     private static String generateSuffix() {
