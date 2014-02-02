@@ -30,12 +30,12 @@ public class R {
             }
         }
         re.assign("tmpdir", System.getProperty("java.io.tmpdir"));
-        File srcFile = createScript();
+        File scriptFile = createScript();
 
-        if (!srcFile.exists()) {
-            throw new MGXException("Source file " + srcFile.getAbsolutePath() + " missing.");
+        if (!scriptFile.exists()) {
+            throw new MGXException("Source file " + scriptFile.getAbsolutePath() + " missing.");
         }
-        re.eval("source(\"" + srcFile.getAbsolutePath() + "\")");
+        re.eval("source(\"" + scriptFile.getAbsolutePath() + "\")");
 
         return re;
     }

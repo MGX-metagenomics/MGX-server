@@ -40,6 +40,7 @@ public class Clustering {
             String varname = "grp" + generateSuffix();
             names.put(varname, nv.getName());
             engine.assign(varname, toDoubleArray(nv.getData()));
+            //engine.assign(varname, "t(" + varname + ")");
         }
 
         // ordered list of R variable names
@@ -47,7 +48,9 @@ public class Clustering {
         varnames.addAll(names.keySet());
 
         String matrixName = "matr" + generateSuffix();
-        engine.assign(matrixName, "rbind(" + StringUtils.join(varnames, ",") + ")");
+        engine.eval(matrixName + " <- rbind(" + StringUtils.join(varnames, ",") + ")");
+        
+        engine.eval("print("+matrixName+")");
 
         // nwk <- hc2Newick(hclust(dist(matr)))
         String nwk = engine.eval("ctc::hc2Newick(hclust(dist(" + matrixName + ")))").asString();
@@ -60,7 +63,7 @@ public class Clustering {
         engine.end();
 
         // re-convert group names
-        for (Map.Entry<String,String> e : names.entrySet()) {
+        for (Map.Entry<String, String> e : names.entrySet()) {
             nwk = nwk.replace(e.getKey(), e.getValue());
         }
 

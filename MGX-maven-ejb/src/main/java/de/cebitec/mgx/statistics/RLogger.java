@@ -10,12 +10,14 @@ import org.rosuda.JRI.Rengine;
  * @author sjaenick
  */
 public class RLogger implements RMainLoopCallbacks {
-    
+
     private final static Logger logger = Logger.getLogger(RLogger.class.getPackage().getName());
 
     @Override
     public void rWriteConsole(Rengine rngn, String string, int i) {
-        logger.log(Level.INFO, "R INFO: {0}", string);
+        if (string != null) {
+            logger.log(Level.INFO, "R INFO: {0}", string);
+        }
     }
 
     @Override
@@ -30,7 +32,9 @@ public class RLogger implements RMainLoopCallbacks {
 
     @Override
     public void rShowMessage(Rengine rngn, String string) {
-        logger.log(Level.INFO, "R MESG: {0}", string);
+        if (string != null) {
+            logger.log(Level.INFO, "R MESG: {0}", string);
+        }
     }
 
     @Override
@@ -49,5 +53,5 @@ public class RLogger implements RMainLoopCallbacks {
     @Override
     public void rLoadHistory(Rengine rngn, String string) {
     }
-    
+
 }
