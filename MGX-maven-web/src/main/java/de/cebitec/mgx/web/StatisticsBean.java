@@ -1,7 +1,5 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.controller.MGX;
-import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
@@ -18,11 +16,8 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -35,10 +30,6 @@ import javax.ws.rs.Produces;
 @Path("Statistics")
 @Stateless
 public class StatisticsBean {
-
-    @Inject
-    @MGX
-    MGXController mgx;
 
     @EJB
     Rarefaction rarefaction;
@@ -81,7 +72,6 @@ public class StatisticsBean {
         try {
             ret = clust.cluster(data);
         } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(ret).build();
