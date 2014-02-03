@@ -1,10 +1,14 @@
 package de.cebitec.mgx.web;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.download.DownloadProviderI;
+import de.cebitec.mgx.download.DownloadSessions;
+import de.cebitec.mgx.download.FileDownloadProvider;
 import de.cebitec.mgx.dto.dto.BytesDTO;
 import de.cebitec.mgx.dto.dto.FileDTO;
 import de.cebitec.mgx.dto.dto.FileDTOList;
@@ -46,6 +50,8 @@ public class FileBean {
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
     UploadSessions sessions;
     @EJB
+    DownloadSessions dsessions;
+    @EJB
     TaskHolder taskHolder;
 
     @GET
@@ -80,9 +86,9 @@ public class FileBean {
             mgx.log(mgx.getCurrentUser() + " tried to create " + dto.getName());
             throw new MGXWebException("Invalid path: " + dto.getName());
         }
-        
+
         String name = dto.getName().substring(2).replace("|", File.separator);
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + name);
+        File target = new File(mgx.getProjectDirectory() + "files" + File.separator + name);
         if (target.exists()) {
             throw new MGXWebException(dto.getName().substring(2) + " already exists.");
         }
@@ -103,13 +109,13 @@ public class FileBean {
             mgx.log(mgx.getCurrentUser() + " tried to delete " + path);
             throw new MGXWebException("Invalid path: " + path);
         }
-        
+
         if (path.startsWith(".|")) {
             path = path.substring(2);
         }
-        
-        path = path.replace("|", "/");
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+
+        path = path.replace("|", File.separator);
+        File target = new File(mgx.getProjectDirectory() + "files" + File.separator + path);
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
@@ -118,20 +124,78 @@ public class FileBean {
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
+    /*
+     * file download interface
+     */
     @GET
-    @Path("init/{path}")
+    @Path("initDownload/{path}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXString init(@PathParam("path") String path) {
-
-        mgx.log("Creating file upload session for " + mgx.getProjectName());
-
-        path = path.replace("|", "/");
+    public MGXString initDownload(@PathParam("path") String path) {
+        path = path.replace("|", File.separator);
 
         // security check
         if (path.contains("..") || !path.startsWith("." + File.separator)) {
             mgx.log(mgx.getCurrentUser() + " tried to access " + path);
             throw new MGXWebException("Invalid path.");
+        }
+
+        if (path.startsWith("." + File.separator)) {
+            path = path.substring(2);
+        }
+
+        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+        if (!target.exists()) {
+            mgx.log(mgx.getCurrentUser() + " tried to download non-existing " + path);
+            throw new MGXWebException("File does not exist: " + path);
+        }
+        mgx.log(mgx.getCurrentUser() + " initiating file download from " + target.getAbsolutePath());
+        FileDownloadProvider fdp = new FileDownloadProvider(mgx.getProjectName(), target);
+
+        UUID uuid = dsessions.registerDownloadSession(fdp);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    @GET
+    @Path("get/{uuid}")
+    @Consumes("application/x-protobuf")
+    public BytesDTO get(@PathParam("uuid") UUID session_id) {
+        try {
+            DownloadProviderI<byte[]> dp = dsessions.<byte[]>getSession(session_id);
+            return BytesDTO.newBuilder().setData(ByteString.copyFrom(dp.fetch())).build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("closeDownload/{uuid}")
+    public Response closeDownload(@PathParam("uuid") UUID session_id) {
+        try {
+            dsessions.closeSession(session_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    /*
+     * file upload interface
+     */
+    @GET
+    @Path("initUpload/{path}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXString initUpload(@PathParam("path") String path) {
+        path = path.replace("|", File.separator);
+
+        // security check
+        if (path.contains("..") || !path.startsWith("." + File.separator)) {
+            mgx.log(mgx.getCurrentUser() + " tried to access " + path);
+            throw new MGXWebException("Invalid path.");
+        }
+
+        if (path.startsWith("." + File.separator)) {
+            path = path.substring(2);
         }
 
         File targetDir = new File(mgx.getProjectDirectory() + "files");
@@ -143,6 +207,7 @@ public class FileBean {
         if (target.exists()) {
             throw new MGXWebException("File already exists: " + path);
         }
+        mgx.log(mgx.getCurrentUser() + " initiating file upload to " + target.getAbsolutePath());
 
         FileUploadReceiver recv = new FileUploadReceiver(target.getAbsolutePath(), mgx.getProjectName());
         UUID uuid = sessions.registerUploadSession(recv);
@@ -150,9 +215,9 @@ public class FileBean {
     }
 
     @GET
-    @Path("close/{uuid}")
+    @Path("closeUpload/{uuid}")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public Response close(@PathParam("uuid") UUID session_id) {
+    public Response closeUpload(@PathParam("uuid") UUID session_id) {
         try {
             sessions.closeSession(session_id);
         } catch (MGXException ex) {
