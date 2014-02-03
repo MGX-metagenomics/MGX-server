@@ -51,7 +51,7 @@ public class DownloadSessions {
         return uuid;
     }
 
-    public DownloadProviderI getSession(UUID uuid) throws MGXException {
+    public <T> DownloadProviderI<T> getSession(UUID uuid) throws MGXException {
         if (!sessions.containsKey(uuid)) {
             throw new MGXException("No such session: " + uuid.toString());
         }

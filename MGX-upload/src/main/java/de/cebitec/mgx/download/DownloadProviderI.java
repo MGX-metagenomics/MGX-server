@@ -5,6 +5,7 @@ import de.cebitec.mgx.controller.MGXException;
 /**
  *
  * @author sjaenick
+ * @param <T>
  */
 public interface DownloadProviderI<T> {
 

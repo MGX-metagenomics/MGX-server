@@ -3,6 +3,7 @@ package de.cebitec.mgx.upload;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import javax.ejb.TransactionAttribute;
@@ -62,7 +63,7 @@ public class FileUploadReceiver implements UploadReceiverI<byte[]> {
         if (writer == null) {
             try {
                 writer = new FileOutputStream(targetFile);
-            } catch (IOException ex) {
+            } catch (FileNotFoundException ex) {
                 throw new MGXException(ex.getMessage());
             }
         }
