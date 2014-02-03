@@ -4,10 +4,7 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.misc.NamedVector;
 import de.cebitec.mgx.util.StringUtils;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import javax.ejb.EJB;
@@ -25,6 +22,9 @@ public class Clustering {
     R r;
 
     public String cluster(Set<NamedVector> data) throws MGXException {
+        if (data.size() < 2) {
+            throw new MGXException("Insufficient number of datasets.");
+        }
         Rengine engine = r.getR();
 
         int vecLen = -1;
@@ -40,20 +40,12 @@ public class Clustering {
             String varname = "grp" + generateSuffix();
             names.put(varname, nv.getName());
             engine.assign(varname, toDoubleArray(nv.getData()));
-            //engine.assign(varname, "t(" + varname + ")");
         }
 
-        // ordered list of R variable names
-        List<String> varnames = new LinkedList<>();
-        varnames.addAll(names.keySet());
-
         String matrixName = "matr" + generateSuffix();
-        engine.eval(matrixName + " <- rbind(" + StringUtils.join(varnames, ",") + ")");
+        engine.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
         
-        engine.eval("print("+matrixName+")");
-
-        // nwk <- hc2Newick(hclust(dist(matr)))
-        String nwk = engine.eval("ctc::hc2Newick(hclust(dist(" + matrixName + ")))").asString();
+        String nwk = engine.eval("ctc::hc2Newick(hclust(dist(scale(" + matrixName + "))))").asString();
 
         // cleanup
         for (String varname : names.keySet()) {
