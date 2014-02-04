@@ -21,6 +21,7 @@ import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 /**
@@ -55,10 +56,10 @@ public class StatisticsBean {
     }
 
     @PUT
-    @Path("Clustering")
+    @Path("Clustering/{dist}/{agglo}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public MGXString cluster(MGXMatrixDTO dto) {
+    public MGXString cluster(MGXMatrixDTO dto, @PathParam("dist") String distMethod,  @PathParam("agglo") String aggloMethod) {
         Set<NamedVector> data = new HashSet<>();
         for (ProfileDTO pdto : dto.getRowList()) {
             List<Long> ll = pdto.getValues().getLongList();
@@ -70,7 +71,7 @@ public class StatisticsBean {
         }
         String ret;
         try {
-            ret = clust.cluster(data);
+            ret = clust.cluster(data, distMethod, aggloMethod);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }

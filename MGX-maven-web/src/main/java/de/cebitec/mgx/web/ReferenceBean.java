@@ -17,6 +17,7 @@ import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
+import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -222,13 +223,13 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString init(@PathParam("id") Long ref_id) {
-        mgx.log("Creating reference importer session for " + mgx.getProjectName());
         Reference ref = null;
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+        mgx.log(mgx.getCurrentUser() + " creating reference importer session for " + ref.getName());
         ref.setFile(mgx.getProjectDirectory() + "/reference/" + ref.getId() + ".fas");
         ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
         UUID uuid = upSessions.registerUploadSession(recv);
@@ -254,7 +255,7 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addRegions(@PathParam("uuid") UUID session_id, RegionDTOList dtos) {
-        ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
+        UploadReceiverI<RegionDTOList> recv = upSessions.getSession(session_id);
         try {
             recv.add(dtos);
         } catch (MGXException ex) {
@@ -268,7 +269,7 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response close(@PathParam("uuid") UUID session_id) {
-        mgx.log("Closing reference importer session for " + mgx.getProjectName());
+        mgx.log(mgx.getCurrentUser() + " closing reference importer session for " + mgx.getProjectName());
         try {
             upSessions.closeSession(session_id);
         } catch (MGXException ex) {
