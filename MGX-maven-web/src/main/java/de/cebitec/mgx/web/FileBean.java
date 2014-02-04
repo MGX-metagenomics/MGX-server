@@ -83,7 +83,7 @@ public class FileBean {
 
         // security check
         if (dto.getName().contains("..") || !dto.getName().startsWith(".|")) {
-            mgx.log(mgx.getCurrentUser() + " tried to create " + dto.getName());
+            mgx.log("tried to create invalid directory " + dto.getName());
             throw new MGXWebException("Invalid path: " + dto.getName());
         }
 
@@ -106,7 +106,7 @@ public class FileBean {
     public MGXString delete(@PathParam("path") String path) {
         // security check
         if (path.contains("..") || !path.startsWith(".")) {
-            mgx.log(mgx.getCurrentUser() + " tried to delete " + path);
+            mgx.log("tried to delete invalid " + path);
             throw new MGXWebException("Invalid path: " + path);
         }
 
@@ -135,7 +135,7 @@ public class FileBean {
 
         // security check
         if (path.contains("..") || !path.startsWith("." + File.separator)) {
-            mgx.log(mgx.getCurrentUser() + " tried to access " + path);
+            mgx.log("tried to access invalid path " + path);
             throw new MGXWebException("Invalid path.");
         }
 
@@ -145,10 +145,10 @@ public class FileBean {
 
         File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
         if (!target.exists()) {
-            mgx.log(mgx.getCurrentUser() + " tried to download non-existing " + path);
+            mgx.log("tried to download non-existing path " + path);
             throw new MGXWebException("File does not exist: " + path);
         }
-        mgx.log(mgx.getCurrentUser() + " initiating file download from " + target.getAbsolutePath());
+        mgx.log("initiating file download for " + target.getAbsolutePath());
         FileDownloadProvider fdp = new FileDownloadProvider(mgx.getProjectName(), target);
 
         UUID uuid = dsessions.registerDownloadSession(fdp);
