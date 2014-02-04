@@ -18,7 +18,7 @@ public class Installer {
 
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
     private DBGPMSI gpms;
-    private EMFNameResolver resolver = new MGXPUResolver();
+    private final EMFNameResolver resolver = new MGXPUResolver();
 
     @PostConstruct
     public void start() {
