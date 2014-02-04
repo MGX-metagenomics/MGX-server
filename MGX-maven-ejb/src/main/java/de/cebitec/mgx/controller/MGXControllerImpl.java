@@ -47,13 +47,13 @@ public class MGXControllerImpl implements MGXController {
             if ("".equals(msg)) {
                 return;
             }
-            logger.log(Level.INFO, "{0}: {1}", new Object[]{gpmsmaster.getProject().getName(), msg});
+            logger.log(Level.INFO, "{0}/{1}: {2}", new Object[]{gpmsmaster.getProject().getName(), getCurrentUser(), msg});
         }
     }
     
     @Override
     public final void log(String msg, Object... args) { 
-        logger.log(Level.INFO, String.format(msg, args));
+        log(String.format(msg, args));
     }
 
     @Override
