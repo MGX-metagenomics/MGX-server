@@ -20,11 +20,22 @@ public class Clustering {
 
     @EJB
     R r;
+    //
+    private static final String[] AGGLO = new String[]{"ward", "single", "complete", "average", "mcquitty", "median", "centroid"};
+    private static final String[] DIST = new String[]{"euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"};
 
-    public String cluster(Set<NamedVector> data) throws MGXException {
+    public String cluster(Set<NamedVector> data, String distMethod, String aggloMethod) throws MGXException {
         if (data.size() < 2) {
             throw new MGXException("Insufficient number of datasets.");
         }
+
+        if (!contains(DIST, distMethod)) {
+            throw new MGXException("Invalid distance method: " + distMethod);
+        }
+        if (!contains(AGGLO, aggloMethod)) {
+            throw new MGXException("Invalid agglomeration method: " + aggloMethod);
+        }
+        
         Rengine engine = r.getR();
 
         int vecLen = -1;
@@ -44,8 +55,9 @@ public class Clustering {
 
         String matrixName = "matr" + generateSuffix();
         engine.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
-        
-        String nwk = engine.eval("ctc::hc2Newick(hclust(dist(scale(" + matrixName + "))))").asString();
+
+        String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
+        String nwk = engine.eval(stmt).asString();
 
         // cleanup
         for (String varname : names.keySet()) {
@@ -80,5 +92,14 @@ public class Clustering {
             ret[i++] = (double) l;
         }
         return ret;
+    }
+
+    private static boolean contains(String[] options, String value) {
+        for (String o : options) {
+            if (o.equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

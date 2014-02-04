@@ -1,3 +1,6 @@
+library('BiocGenerics', warn.conflicts=F)
+library('Biobase', warn.conflicts=F)
+library('amap', warn.conflicts=F)
 
 rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)) {
   library(lattice)
