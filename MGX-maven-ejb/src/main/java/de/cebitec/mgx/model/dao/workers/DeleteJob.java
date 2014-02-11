@@ -52,9 +52,14 @@ public final class DeleteJob extends TaskI {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        File bamFile = new File(rs.getString(1));
+                        String bamName = rs.getString(1);
+                        File bamFile = new File(bamName);
                         if (bamFile.exists()) {
                             bamFile.delete();
+                        }
+                        File bamIdx = new File(bamName + ".bai");
+                        if (bamIdx.exists()) {
+                            bamIdx.delete();
                         }
                     }
                 }
