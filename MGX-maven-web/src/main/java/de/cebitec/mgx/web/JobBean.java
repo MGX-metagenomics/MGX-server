@@ -28,6 +28,8 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -263,6 +265,15 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+        try {
+            Job job = mgx.getJobDAO().getById(id);
+            job.setStatus(JobState.IN_DELETION);
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        
+        
         // notify dispatcher
         try {
             js.delete(mgx, id);
