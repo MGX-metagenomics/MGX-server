@@ -28,7 +28,7 @@ public class FastaWriter implements SeqWriterI<DNASequenceI> {
         StringBuilder sb = new StringBuilder(">");
         sb.append(new String(seq.getName()));
         sb.append("\n");
-        sb.append(new String(seq.getSequence()));
+        sb.append(new String(seq.getSequence()).toUpperCase());
         sb.append("\n");
         seqout.write(sb.toString());
     }
