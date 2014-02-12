@@ -48,7 +48,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             writer = new FileWriter(fasta);
             writer.append(">lcl|" + reference.getId() + " " + reference.getName() + "\n");
         }
-        writer.append(dna);
+        writer.append(dna.toUpperCase());
         dnaSize += dna.length();
         lastAccessed = System.currentTimeMillis();
     }
@@ -65,6 +65,13 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         }
         if (fasta != null && fasta.exists()) {
             fasta.delete();
+        }
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
@@ -91,7 +98,6 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             cancel();
             throw new MGXException(ex.getMessage());
         }
-        int cnt = 0;
         try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
             for (Region r : regions) {
                 stmt.setString(1, r.getName());
@@ -100,7 +106,6 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 stmt.setInt(4, r.getStop());
                 stmt.setLong(5, reference.getId());
                 stmt.addBatch();
-                cnt++;
             }
             stmt.executeBatch();
             conn.close();
