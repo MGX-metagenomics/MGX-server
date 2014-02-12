@@ -42,7 +42,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         try {
             in = new FileInputStream(cfgFile);
             config.load(in);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new RuntimeException(ex);
         } finally {
             if (in != null) {
