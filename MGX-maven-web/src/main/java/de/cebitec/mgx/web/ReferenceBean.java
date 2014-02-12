@@ -243,7 +243,7 @@ public class ReferenceBean {
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
         try {
-            recv.addSequenceData(chunkDNA.getValue());
+            recv.addSequenceData(chunkDNA.getValue().toUpperCase());
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
