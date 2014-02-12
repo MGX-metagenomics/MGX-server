@@ -98,7 +98,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
     }
 
     public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) {
-        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun").
+        Iterator<Job> iterator = getEntityManager().createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun").
                 setParameter("seqrun", sr).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }
@@ -116,7 +116,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
         String line;
         try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
             while ((line = br.readLine()) != null) {
-                ret.append(line).append("\n");
+                ret.append(line).append(System.lineSeparator());
             }
         } catch (IOException ex) {
         }
