@@ -40,8 +40,7 @@ public class DownloadSessions {
     @PreDestroy
     public void stop() {
         for (UUID uuid : sessions.keySet()) {
-            sessions.get(uuid).cancel();
-            sessions.remove(uuid);
+            sessions.remove(uuid).cancel();
         }
     }
 
@@ -60,14 +59,12 @@ public class DownloadSessions {
 
     @Asynchronous
     public void closeSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).close();
-        sessions.remove(uuid);
+        sessions.remove(uuid).close();
     }
 
     @Asynchronous
     public void cancelSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).cancel();
-        sessions.remove(uuid);
+        sessions.remove(uuid).cancel();
     }
 
     @Schedule(hour = "*", minute = "*", second = "10", persistent = false)

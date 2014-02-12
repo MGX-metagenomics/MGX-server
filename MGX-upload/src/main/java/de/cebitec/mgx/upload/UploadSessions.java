@@ -40,7 +40,8 @@ public class UploadSessions {
     public void stop() {
         for (UUID uuid : sessions.keySet()) {
             sessions.get(uuid).cancel();
-            sessions.remove(uuid);
+            UploadReceiverI ur = sessions.remove(uuid);
+            ur.cancel();
         }
     }
 
@@ -56,12 +57,11 @@ public class UploadSessions {
 
     //@Asynchronous -- not here
     public void closeSession(UUID uuid) throws MGXException {
-        UploadReceiverI recv = sessions.get(uuid);
+        UploadReceiverI recv = sessions.remove(uuid);
         if (recv == null) {
             throw new MGXException("No active session for "+ uuid);
         }
         recv.close();
-        sessions.remove(uuid);
     }
 
     @Asynchronous
