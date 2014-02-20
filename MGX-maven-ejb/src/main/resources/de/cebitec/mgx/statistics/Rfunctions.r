@@ -27,7 +27,7 @@ rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
     return(c(foo[1,], foo[2,]))
   }
 
-  tmp <- mclapply(1:length(select), function(X) rareStep(x, select, X), mc.cores=48)
+  tmp <- mclapply(1:length(select), function(X) rareStep(x, select, X), mc.cores=48, mc.cleanup=TRUE, mc.silent=TRUE)
   for (i in 1:length(select)) {
     storesummary.e[i,] <- tmp[[i]][1]
     storesummary.se[i,] <- tmp[[i]][2]

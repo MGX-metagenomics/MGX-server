@@ -9,7 +9,9 @@ import java.util.Random;
 import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import org.rosuda.JRI.Rengine;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.Rserve.RConnection;
 
 /**
  *
@@ -19,7 +21,7 @@ import org.rosuda.JRI.Rengine;
 public class Clustering {
 
     @EJB
-    R r;
+    Rserve r;
     //
     private static final String[] AGGLO = new String[]{"ward", "single", "complete", "average", "mcquitty", "median", "centroid"};
     private static final String[] DIST = new String[]{"euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"};
@@ -35,36 +37,43 @@ public class Clustering {
         if (!contains(AGGLO, aggloMethod)) {
             throw new MGXException("Invalid agglomeration method: " + aggloMethod);
         }
-        
-        Rengine engine = r.getR();
 
-        int vecLen = -1;
+        RConnection conn = r.getR();
         Map<String, String> names = new HashMap<>();
+        String nwk = null;
 
-        for (NamedVector nv : data) {
-            if (vecLen == -1) {
-                vecLen = nv.getData().length;
+        try {
+            int vecLen = -1;
+
+            for (NamedVector nv : data) {
+                if (vecLen == -1) {
+                    vecLen = nv.getData().length;
+                }
+                if (vecLen != nv.getData().length) {
+                    throw new MGXException("Received vectors of different length.");
+                }
+                String varname = "grp" + generateSuffix();
+                names.put(varname, nv.getName());
+                conn.assign(varname, toDoubleArray(nv.getData()));
             }
-            if (vecLen != nv.getData().length) {
-                throw new MGXException("Received vectors of different length.");
+
+            String matrixName = "matr" + generateSuffix();
+            conn.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
+
+            String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
+            nwk = conn.eval(stmt).asString();
+
+            // cleanup
+            for (String varname : names.keySet()) {
+                conn.eval("rm(" + varname + ")");
             }
-            String varname = "grp" + generateSuffix();
-            names.put(varname, nv.getName());
-            engine.assign(varname, toDoubleArray(nv.getData()));
+            conn.eval("rm(" + matrixName + ")");
+
+        } catch (REngineException | REXPMismatchException ex) {
+            throw new MGXException(ex.getMessage());
+        } finally {
+            conn.close();
         }
-
-        String matrixName = "matr" + generateSuffix();
-        engine.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
-
-        String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
-        String nwk = engine.eval(stmt).asString();
-
-        // cleanup
-        for (String varname : names.keySet()) {
-            engine.eval("rm(" + varname + ")");
-        }
-        engine.eval("rm(" + matrixName + ")");
-        engine.end();
 
         // re-convert group names
         for (Map.Entry<String, String> e : names.entrySet()) {

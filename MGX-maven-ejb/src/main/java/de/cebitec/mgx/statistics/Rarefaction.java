@@ -6,10 +6,12 @@ import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.Point;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import org.rosuda.JRI.Rengine;
+import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPMismatchException;
+import org.rosuda.REngine.REngineException;
+import org.rosuda.REngine.Rserve.RConnection;
 
 /**
  *
@@ -19,48 +21,50 @@ import org.rosuda.JRI.Rengine;
 public class Rarefaction {
 
     @EJB
-    R r;
+    Rserve r;
 
     public AutoCloseableIterator<Point> rarefy(double[] data) throws MGXException {
-        Rengine engine = r.getR();
-
-        // create unique variable name
-        String name = "data" + generateSuffix();
-
-        engine.assign(name, data);
-        engine.eval(name + ".rare <- rarefaction(data.frame(t(" + name + ")))");
-
-        double[] subsamples = engine.eval(name + ".rare$subsample").asDoubleArray();
-        double[] richness = engine.eval(name + ".rare$richness").asDoubleArray();
-
-        //engine.eval("print (" + name + ".rare)");
-        if (subsamples == null || richness == null) {
-            throw new MGXException("Computing rarefaction failed.");
-        }
-
+        RConnection conn = r.getR();
         List<Point> ret = new LinkedList<>();
-        for (int i = 0; i < subsamples.length; i++) {
-            Point p = new Point(subsamples[i], richness[i]);
-            ret.add(p);
+
+        try {
+            // create unique variable name
+            String name = "data" + Rserve.generateSuffix();
+
+            conn.assign(name, data);
+            REXP ev = conn.eval(name + ".rare <- rarefaction(data.frame(t(" + name + ")))");
+            if (ev != null) {
+                
+                //System.err.println(ev.asString());
+                
+                double[] subsamples = conn.eval(name + ".rare$subsample").asDoubles();
+                double[] richness = conn.eval(name + ".rare$richness").asDoubles();
+
+                if (subsamples == null || richness == null) {
+                    throw new MGXException("Computing rarefaction failed.");
+                }
+
+                for (int i = 0; i < subsamples.length; i++) {
+                    Point p = new Point(subsamples[i], richness[i]);
+                    ret.add(p);
+                }
+            }
+
+            // cleanup variables
+            conn.eval("rm(" + name + ")");
+            conn.eval("rm(" + name + ".rare)");
+            conn.close();
+        } catch (REXPMismatchException | REngineException ex) {
+            throw new MGXException("Computing rarefaction failed: " + ex.getMessage());
+        } finally {
+            conn.close();
         }
 
-        // cleanup variables
-        engine.eval("rm(" + name + ")");
-        engine.eval("rm(" + name + ".rare)");
-        engine.end();
+        if (ret.isEmpty()) {
+            throw new MGXException("Computing rarefaction failed, no results.");
+        }
 
         return new ForwardingIterator<>(ret.iterator());
-    }
-
-    private static String generateSuffix() {
-        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            char c = chars[random.nextInt(chars.length)];
-            sb.append(c);
-        }
-        return sb.toString();
     }
 
 }
