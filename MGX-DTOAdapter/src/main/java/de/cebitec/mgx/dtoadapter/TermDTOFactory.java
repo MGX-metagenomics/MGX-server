@@ -5,7 +5,6 @@ import de.cebitec.mgx.dto.dto.TermDTO.Builder;
 import de.cebitec.mgx.dto.dto.TermDTOList;
 import de.cebitec.mgx.model.db.Term;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 
 /**
  *

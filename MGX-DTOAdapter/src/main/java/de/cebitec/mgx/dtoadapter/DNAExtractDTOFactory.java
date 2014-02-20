@@ -5,7 +5,6 @@ import de.cebitec.mgx.dto.dto.DNAExtractDTO.Builder;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 
 /**
  *

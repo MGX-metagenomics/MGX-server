@@ -9,7 +9,6 @@ import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Term;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

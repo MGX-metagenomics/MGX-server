@@ -9,7 +9,6 @@ import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -97,7 +96,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
         jp.setParameterValue(dto.getParameterValue());
 
         if (dto.hasChoices()) {
-            jp.setChoices(new HashMap<String, String>());
+            jp.setChoices(new HashMap<String, String>(dto.getChoices().getEntryCount()));
             for (KVPair kv : dto.getChoices().getEntryList()) {
                 jp.getChoices().put(kv.getKey(), kv.getValue());
             }
