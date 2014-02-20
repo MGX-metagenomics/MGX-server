@@ -17,7 +17,7 @@ import java.util.Iterator;
  */
 public class SequenceDAO<T extends Sequence> extends DAO<T> {
 
-    private static String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
+    private static final String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
 
     @Override
     Class getType() {

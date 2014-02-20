@@ -3,9 +3,6 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
-import de.cebitec.mgx.sequence.SeqReaderFactory;
-import de.cebitec.mgx.sequence.SeqReaderI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.util.DBIterator;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,8 +11,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *

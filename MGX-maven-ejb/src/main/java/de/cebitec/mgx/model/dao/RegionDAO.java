@@ -18,7 +18,7 @@ public class RegionDAO<T extends Region> extends DAO<T> {
     }
 
     public AutoCloseableIterator<Region> byReference(Reference s) {
-        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT d FROM " + getClassName() + " d WHERE d.reference = :reference").
+        Iterator<Region> iterator = getEntityManager().createQuery("SELECT DISTINCT d FROM " + getClassName() + " d WHERE d.reference = :reference").
                                     setParameter("reference", s).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }

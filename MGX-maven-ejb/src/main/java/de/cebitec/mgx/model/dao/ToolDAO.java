@@ -40,7 +40,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
                 fw.flush();
             }
             UnixHelper.makeFileGroupWritable(fname);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             delete(id); // remove from database, aka rollback
             throw new MGXException(ex.getMessage());
         }

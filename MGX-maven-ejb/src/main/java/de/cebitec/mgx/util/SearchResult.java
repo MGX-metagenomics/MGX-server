@@ -12,7 +12,7 @@ public class SearchResult {
 
     private String sequence_name;
     private int sequence_length;
-    private final List<Observation> observations = new ArrayList<>();
+    private final List<Observation> observations = new ArrayList<>(5);
 
     public int getSequenceLength() {
         return sequence_length;

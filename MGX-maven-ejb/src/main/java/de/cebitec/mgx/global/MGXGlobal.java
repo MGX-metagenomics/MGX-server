@@ -114,13 +114,13 @@ public class MGXGlobal {
 //            log("Re-using old datasource for global zone.");
 //        }
 
-        Map<String, String> globalCfg = new HashMap<>();
+        Map<String, String> globalCfg = new HashMap<>(1);
         globalCfg.put("javax.persistence.jtaDataSource", "jdbc/MGXGlobal");
 
         emf = Persistence.createEntityManagerFactory("MGX-global", globalCfg);
         em = emf.createEntityManager();
 
-        daos = new HashMap<>();
+        daos = new HashMap<>(15);
 
         log("MGX global zone ready.");
     }

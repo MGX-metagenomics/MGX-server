@@ -8,14 +8,13 @@ package de.cebitec.mgx.model.misc;
 public class MappedSequence {
     
     private final long seq_id;
-    private final int start;
-    private final int stop;
+    private final int[] coords = new int[2];
     private final int identity; // range 0-255
 
     public MappedSequence(long seq_id, int start, int stop, int identity) {
         this.seq_id = seq_id;
-        this.start = start;
-        this.stop = stop;
+        this.coords[0] = start;
+        this.coords[1] = stop;
         this.identity = identity;
     }
 
@@ -24,11 +23,11 @@ public class MappedSequence {
     }
 
     public int getStart() {
-        return start;
+        return coords[0];
     }
 
     public int getStop() {
-        return stop;
+        return coords[1];
     }
 
     public int getIdentity() {

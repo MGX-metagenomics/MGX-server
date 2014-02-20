@@ -28,7 +28,7 @@ public class TaskHolder {
     @EJB
     MGXConfiguration mgxconfig;
     private int timeout;
-    private final ConcurrentMap<UUID, TaskI> tasks = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, TaskI> tasks = new ConcurrentHashMap<>(10);
 
     @PostConstruct
     public void start() {

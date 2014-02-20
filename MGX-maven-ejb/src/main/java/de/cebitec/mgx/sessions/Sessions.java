@@ -35,7 +35,7 @@ public class Sessions {
 
     @PostConstruct
     public void start() {
-        sessions = new HashMap<>();
+        sessions = new HashMap<>(10);
         timeout = mgxconfig.getTransferTimeout();
     }
 

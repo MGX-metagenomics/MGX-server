@@ -18,7 +18,7 @@ public class SampleDAO<T extends Sample> extends DAO<T> {
     }
 
     public AutoCloseableIterator<Sample> byHabitat(Habitat h) {
-        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.habitat = :hab").
+        Iterator<Sample> iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.habitat = :hab").
                                     setParameter("hab", h).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }

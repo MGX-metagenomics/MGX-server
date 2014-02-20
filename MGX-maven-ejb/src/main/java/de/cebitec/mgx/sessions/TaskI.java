@@ -38,7 +38,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     private State state;
     private boolean isSubTask = true;
 
-    public TaskI(String pName, Connection c) {
+    public TaskI(final String pName, final Connection c) {
         projName = pName;
         conn = c;
         timeStamp = System.currentTimeMillis();

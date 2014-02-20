@@ -16,12 +16,12 @@ import javax.sql.DataSource;
  */
 public class TermDAO<T extends Term> extends DAO<T> {
 
-    private DataSource globalDS;
+    private final DataSource globalDS;
     private final static String BY_CATNAME = "SELECT t.id, t.parent_id, t.name, "
             + "t.description FROM term t LEFT JOIN category ON (t.cat_id = category.id) "
             + "WHERE category.name=?";
 
-    public TermDAO(DataSource ds) {
+    public TermDAO(final DataSource ds) {
         globalDS = ds;
     }
 

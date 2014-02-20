@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 public class UnixHelper {
     
-    public static boolean isGroupWritable(File f) {
+    public static boolean isGroupWritable(final File f) {
         try {
             Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
             return perms.contains(PosixFilePermission.GROUP_WRITE);
@@ -31,7 +31,7 @@ public class UnixHelper {
         return false;
     }
 
-    public static void createDirectory(File targetDir) {
+    public static void createDirectory(final File targetDir) {
         if (targetDir.exists()) {
             return;
         }
@@ -49,7 +49,7 @@ public class UnixHelper {
         }
     }
 
-    public static void createFile(File targetDir) {
+    public static void createFile(final File targetDir) {
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -64,7 +64,7 @@ public class UnixHelper {
         }
     }
 
-    public static void makeDirectoryGroupWritable(String file) {
+    public static void makeDirectoryGroupWritable(final String file) {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -79,7 +79,7 @@ public class UnixHelper {
         }
     }
 
-    public static void makeFileGroupWritable(String file) {
+    public static void makeFileGroupWritable(final String file) {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -92,7 +92,7 @@ public class UnixHelper {
         }
     }
 
-    public static void copyFile(File in, File out) throws IOException {
+    public static void copyFile(final File in, final File out) throws IOException {
         FileInputStream fis = new FileInputStream(in);
         FileOutputStream fos = new FileOutputStream(out);
         FileChannel inChannel = fis.getChannel();

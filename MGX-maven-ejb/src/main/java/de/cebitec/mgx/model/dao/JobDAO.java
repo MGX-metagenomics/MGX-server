@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class JobDAO<T extends Job> extends DAO<T> {
 
-    private static String[] suffices = {"", ".stdout", ".stderr"};
+    private static final String[] suffices = {"", ".stdout", ".stderr"};
 
     @Override
     Class getType() {
@@ -30,11 +30,11 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
     @Override
     public void delete(long id) throws MGXException {
-        StringBuilder sb = new StringBuilder(getController().getProjectDirectory())
+        String sb = new StringBuilder(getController().getProjectDirectory())
                 .append(File.separator)
                 .append("jobs")
                 .append(File.separator)
-                .append(id);
+                .append(id).toString();
 
         for (String suffix : suffices) {
             File f = new File(sb.toString() + suffix);
@@ -55,14 +55,12 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     + jobParameter.getParameterName() + "\""
                     + answer + "\"";
         }
-        System.out.println("toParameterString: " + parameter);
         return parameter;
     }
 
     public Iterable<JobParameter> getParameters(String in) {
-        List<JobParameter> ret = new ArrayList<>();
+        List<JobParameter> ret = new ArrayList<>(5);
         // muster: nodeid.configname "wert"    
-        System.out.println("GetParameters: " + in);
         String[] tempSplit = in.split("\\.");
         JobParameter parameter;
         String tempString = "";
@@ -73,11 +71,8 @@ public class JobDAO<T extends Job> extends DAO<T> {
             tempString = tempSplit[i];
 
             if (i == 0) {
-
                 nodeId = Long.parseLong(tempString);
-
             } else {
-
                 tempString = tempSplit[i];
                 String[] splitString = tempString.split("\"");
                 String configName = splitString[0];
@@ -113,8 +108,8 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 .append(".stderr").toString();
         StringBuilder ret = new StringBuilder();
 
-        String line;
         try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
+            String line;
             while ((line = br.readLine()) != null) {
                 ret.append(line).append(System.lineSeparator());
             }

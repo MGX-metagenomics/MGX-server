@@ -87,7 +87,7 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
     }
 
     public AutoCloseableIterator<SeqRun> byDNAExtract(DNAExtract extract) {
-        Iterator iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract").
+        Iterator<SeqRun> iterator = getEntityManager().createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract").
                                     setParameter("extract", extract).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }
