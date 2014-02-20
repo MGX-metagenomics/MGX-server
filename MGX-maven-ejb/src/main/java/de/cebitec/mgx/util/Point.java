@@ -6,20 +6,19 @@ package de.cebitec.mgx.util;
  */
 public class Point {
 
-    private final double x;
-    private final double y;
+    private final double[] data = new double[2];
 
     public Point(double x, double y) {
-        this.x = x;
-        this.y = y;
+        data[0] = x;
+        data[1] = y;
     }
 
     public double getX() {
-        return x;
+        return data[0];
     }
 
     public double getY() {
-        return y;
+        return data[1];
     }
 
 }
