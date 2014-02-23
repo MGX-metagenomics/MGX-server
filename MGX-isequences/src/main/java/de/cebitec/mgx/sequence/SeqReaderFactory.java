@@ -9,9 +9,9 @@ import java.util.ServiceLoader;
  */
 public class SeqReaderFactory {
 
-    private static ServiceLoader<FactoryI> loader = ServiceLoader.load(FactoryI.class);
+    private static final ServiceLoader<FactoryI> loader = ServiceLoader.load(FactoryI.class);
 
-    public static SeqReaderI getReader(String filename) throws SeqStoreException {
+    public static <T> SeqReaderI<T> getReader(String filename) throws SeqStoreException {
         FactoryI fac = get();
         if (fac == null) {
             throw new SeqStoreException("No SeqReaderFactory found.");
@@ -26,10 +26,10 @@ public class SeqReaderFactory {
         }
     }
 
-    private static FactoryI get() {
+    private static <T> FactoryI<T> get() {
         Iterator<FactoryI> ps = loader.iterator();
         while (ps.hasNext()) {
-            FactoryI sr = ps.next();
+            FactoryI<T> sr = ps.next();
             if (sr != null) {
                 return sr;
             }

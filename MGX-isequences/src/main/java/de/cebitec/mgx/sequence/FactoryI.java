@@ -1,10 +1,10 @@
-
 package de.cebitec.mgx.sequence;
 
 /**
  *
  * @author sjaenick
  */
-public interface FactoryI {
-    public SeqReaderI getReader(String uri) throws SeqStoreException;
+public interface FactoryI<T> {
+
+    public SeqReaderI<T> getReader(String uri) throws SeqStoreException;
 }
