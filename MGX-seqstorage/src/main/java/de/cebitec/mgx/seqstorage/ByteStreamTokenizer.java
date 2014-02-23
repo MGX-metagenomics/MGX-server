@@ -11,12 +11,12 @@ import java.util.zip.GZIPInputStream;
 
 public class ByteStreamTokenizer implements Enumeration {
 
-    private InputStream in;
-    private int DEFAULT_BUFSIZE = 49152;
-    private int bufferSize;
+    private final InputStream in;
+    private final int DEFAULT_BUFSIZE = 49152;
+    private final int bufferSize;
     private long bufferRefillPosition;
     private byte buffer[];
-    private byte separator;
+    private final byte separator;
     private int startpos = 0;
     private int endpos = 0;
     private byte elem[] = null;

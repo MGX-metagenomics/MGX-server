@@ -7,13 +7,10 @@ import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -27,20 +24,21 @@ public class CSFWriter implements SeqWriterI<DNASequenceI> {
     private final String fname;
 
     public CSFWriter(File file) throws IOException, SeqStoreException {
-
-        // make sure we don't accidentally overwrite pre-existing data
-        if ((new File(file.getCanonicalPath() + ".csf").exists()) || file.getCanonicalFile().exists()) {
-            throw new SeqStoreException("CSF file already exists");
-        }
-
-        fname = file.getCanonicalPath();
-
-        seqout = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath() + ".csf", false));
-        seqout.write(FourBitEncoder.CSF_MAGIC);
-        seqout_offset = FourBitEncoder.CSF_MAGIC.length;
-
-        nameout = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath(), false));
-        nameout.write(FourBitEncoder.NMS_MAGIC);
+        this(file.getCanonicalPath());
+//
+//        // make sure we don't accidentally overwrite pre-existing data
+//        if ((new File(file.getCanonicalPath() + ".csf").exists()) || file.getCanonicalFile().exists()) {
+//            throw new SeqStoreException("CSF file already exists");
+//        }
+//
+//        fname = file.getCanonicalPath();
+//
+//        seqout = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath() + ".csf", false));
+//        seqout.write(FourBitEncoder.CSF_MAGIC);
+//        seqout_offset = FourBitEncoder.CSF_MAGIC.length;
+//
+//        nameout = new BufferedOutputStream(new FileOutputStream(file.getCanonicalPath(), false));
+//        nameout.write(FourBitEncoder.NMS_MAGIC);
     }
 
     public CSFWriter(String filename) throws IOException, SeqStoreException {

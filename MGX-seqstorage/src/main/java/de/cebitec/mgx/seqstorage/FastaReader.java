@@ -6,6 +6,7 @@ import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,7 +26,7 @@ public class FastaReader implements SeqReaderI<DNASequenceHolder> {
         fastafile = filename;
         try {
             stream = new ByteStreamTokenizer(fastafile, gzipCompressed, LINEBREAK, 0);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new SeqStoreException("File not found or unreadable: " + fastafile);
         }
 

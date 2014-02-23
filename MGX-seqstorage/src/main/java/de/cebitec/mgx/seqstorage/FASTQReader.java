@@ -4,6 +4,7 @@ import de.cebitec.mgx.seqholder.DNAQualitySequenceHolder;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +23,7 @@ public class FASTQReader implements SeqReaderI<DNAQualitySequenceHolder> {
         fastqfile = filename;
         try {
             stream = new ByteStreamTokenizer(fastqfile, gzipCompressed, LINEBREAK, 0);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new SeqStoreException("File not found or unreadable: " + fastqfile + "\n" + ex.getMessage());
         }
     }

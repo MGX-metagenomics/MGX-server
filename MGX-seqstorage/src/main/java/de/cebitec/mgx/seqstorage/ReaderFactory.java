@@ -34,16 +34,14 @@ public class ReaderFactory implements FactoryI {
         }
 
         char[] cbuf = new char[4];
-        try {
-            FileReader fr = new FileReader(uri);
+        try (FileReader fr = new FileReader(uri)) {
             fr.read(cbuf, 0, 4);
-            fr.close();
         } catch (FileNotFoundException ex) {
             throw new SeqStoreException("Sequence file " + uri + " missing");
         } catch (IOException ex) {
             throw new SeqStoreException("Could not read sequence file");
         }
-        
+
         boolean is_compressed = false;
 
         // check for gzip magic
@@ -75,7 +73,7 @@ public class ReaderFactory implements FactoryI {
                 if (cbuf[1] == 's' && cbuf[2] == 'f' && cbuf[3] == 'f') {
                     ret = new SFFReader(uri);
                 }
-                // no break; here
+            // no break; here
             default:
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");
         }
