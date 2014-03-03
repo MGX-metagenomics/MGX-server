@@ -68,8 +68,8 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
 
         final String sql = "SELECT DISTINCT atype.id, atype.name, atype.value_type, atype.structure "
                 + "FROM job "
-                + "LEFT JOIN attribute attr ON (job.id = attr.job_id) "
-                + "LEFT JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
+                + "JOIN attribute attr ON (job.id = attr.job_id) "
+                + "JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
                 + "WHERE job.job_state=? AND job.seqrun_id=?";
 
         Connection c = getConnection();
