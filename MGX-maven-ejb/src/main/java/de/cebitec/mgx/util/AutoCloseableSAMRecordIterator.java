@@ -39,7 +39,7 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
                 matched += elem.getLength();
             }
         }
-        int alignment = 100 * (matched / ((rec.getAlignmentEnd() - rec.getAlignmentStart()) + 1));
+        int alignment =  (int) (matched * 100.0d/ ((rec.getAlignmentEnd() - rec.getAlignmentStart()) + 1));
         return alignment;
     }
 
