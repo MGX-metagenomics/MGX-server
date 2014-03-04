@@ -14,7 +14,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 
@@ -53,6 +52,7 @@ public class Rserve {
     }
 
     private File scriptFile = null;
+    private Process p = null;
     private Thread err = null;
     private Thread out = null;
 
@@ -61,7 +61,7 @@ public class Rserve {
         try {
             scriptFile = createScript();
             String rserveStartCommand = "R CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
-            Process p = Runtime.getRuntime().exec(rserveStartCommand);
+            p = Runtime.getRuntime().exec(rserveStartCommand);
             //
             err = new Thread(new RStreamReader(p.getErrorStream()));
             err.setName("R error logger thread");
@@ -79,6 +79,9 @@ public class Rserve {
 
     @PreDestroy
     public void stop() {
+        if (p != null) {
+            p.destroy();
+        }
         RConnection conn = null;
         try {
             conn = new RConnection();
