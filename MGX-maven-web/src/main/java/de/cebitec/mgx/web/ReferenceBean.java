@@ -242,6 +242,9 @@ public class ReferenceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
+        if (recv == null) {
+            throw new MGXWebException("No upload session registered for "+ session_id);
+        }
         try {
             recv.addSequenceData(chunkDNA.getValue().toUpperCase());
         } catch (IOException ex) {

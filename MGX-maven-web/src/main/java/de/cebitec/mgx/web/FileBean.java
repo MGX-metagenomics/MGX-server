@@ -178,6 +178,18 @@ public class FileBean {
         return Response.ok().build();
     }
 
+    @GET
+    @Path("initPluginDownload")
+    @Produces("application/x-protobuf")
+    public MGXString initPluginDownload() {
+        File target = mgx.getConfiguration().getPluginDump();
+        mgx.log("initiating file download for " + target.getAbsolutePath());
+        FileDownloadProvider fdp = new FileDownloadProvider(mgx.getProjectName(), target);
+
+        UUID uuid = dsessions.registerDownloadSession(fdp);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
     /*
      * file upload interface
      */
