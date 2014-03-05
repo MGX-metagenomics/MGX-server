@@ -196,9 +196,4 @@ public abstract class DAO<T extends Identifiable> {
 
         return oBuilder.toString();
     }
-
-    protected static List<String> split(String message, String separator) {
-        return new ArrayList<>(Arrays.asList(message.split(separator)));
-    }
-
 }

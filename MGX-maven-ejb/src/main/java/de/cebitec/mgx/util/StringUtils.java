@@ -1,6 +1,9 @@
 package de.cebitec.mgx.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -21,5 +24,10 @@ public class StringUtils {
             oBuilder.append(separator).append(oIter.next());
         }
         return oBuilder.toString();
+    }
+    
+    
+    public static List<String> split(String message, String separator) {
+        return new ArrayList<>(Arrays.asList(message.split(separator)));
     }
 }
