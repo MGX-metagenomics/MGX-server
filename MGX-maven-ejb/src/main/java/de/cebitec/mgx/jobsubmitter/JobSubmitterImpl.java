@@ -71,6 +71,11 @@ public class JobSubmitterImpl implements JobSubmitter {
             job.setStatus(JobState.VERIFIED);
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+            }
         }
         return ret;
     }
@@ -93,6 +98,11 @@ public class JobSubmitterImpl implements JobSubmitter {
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+            }
         }
 
         // and send to dispatcher
