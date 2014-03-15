@@ -100,6 +100,13 @@ public class RestartJob extends TaskI {
         } catch (MGXException | MGXDispatcherException | SQLException e) {
             System.err.println("Could not restart job " + job.getId() + ": " + e.getMessage());
             setStatus(TaskI.State.FAILED, e.getMessage());
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException ex) {
+                }
+            }
         }
     }
 }
