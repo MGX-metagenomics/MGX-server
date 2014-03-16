@@ -5,6 +5,7 @@ import de.cebitec.mgx.sessions.TaskI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -49,16 +50,16 @@ public final class DeleteSeqRun extends TaskI {
             delJob.removePropertyChangeListener(this);
         }
 
-
         try {
             String runName = null;
             String dBFile = null;
             try (PreparedStatement stmt = conn.prepareStatement("SELECT name, dbfile FROM seqrun WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    runName = rs.getString(1);
-                    dBFile = rs.getString(2);
+                    while (rs.next()) {
+                        runName = rs.getString(1);
+                        dBFile = rs.getString(2);
+                    }
                 }
             }
             setStatus(TaskI.State.PROCESSING, "Deleting sequencing run " + runName);
@@ -78,7 +79,7 @@ public final class DeleteSeqRun extends TaskI {
                 stmt.execute();
             }
             setStatus(TaskI.State.FINISHED, runName + " deleted");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.getLogger(DeleteSeqRun.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }
