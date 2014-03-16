@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -27,17 +26,14 @@ public class TaskHolder {
 
     @EJB
     MGXConfiguration mgxconfig;
-    private int timeout;
+    private final int timeout = 60 * 60 * 24; // a day;
     private final ConcurrentMap<UUID, TaskI> tasks = new ConcurrentHashMap<>(10);
-
-    @PostConstruct
-    public void start() {
-        timeout = 60 * 60 * 24; // a day
-    }
 
     public synchronized UUID addTask(final TaskI task) {
         final UUID uuid = UUID.randomUUID();
         tasks.put(uuid, task);
+        
+        // FIXME - leaking this thread?
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
