@@ -4,6 +4,7 @@ import de.cebitec.mgx.sessions.TaskI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -48,14 +49,14 @@ public final class DeleteSample extends TaskI {
             t.removePropertyChangeListener(this);
         }
 
-
         try {
             String sampleName = null;
             try (PreparedStatement stmt = conn.prepareStatement("SELECT material FROM sample WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    sampleName = rs.getString(1);
+                    while (rs.next()) {
+                        sampleName = rs.getString(1);
+                    }
                 }
             }
             setStatus(TaskI.State.PROCESSING, "Deleting sample " + sampleName);
@@ -65,7 +66,7 @@ public final class DeleteSample extends TaskI {
                 stmt.execute();
             }
             setStatus(TaskI.State.FINISHED, sampleName + " deleted");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.getLogger(DeleteSample.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }

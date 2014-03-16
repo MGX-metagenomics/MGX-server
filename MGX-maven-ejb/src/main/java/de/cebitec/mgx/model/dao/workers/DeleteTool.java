@@ -5,6 +5,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -53,16 +54,18 @@ public final class DeleteTool extends TaskI {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT name, xml_file FROM tool WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    toolName = rs.getString(1);
-
-                    conveyorGraph = rs.getString(2);
+                    while (rs.next()) {
+                        toolName = rs.getString(1);
+                        conveyorGraph = rs.getString(2);
+                    }
                 }
             }
             setStatus(TaskI.State.PROCESSING, "Deleting tool " + toolName);
-            File f = new File(conveyorGraph);
-            if (f.exists()) {
-                f.delete();
+            if (conveyorGraph != null) {
+                File f = new File(conveyorGraph);
+                if (f.exists()) {
+                    f.delete();
+                }
             }
 
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=?")) {
@@ -70,7 +73,7 @@ public final class DeleteTool extends TaskI {
                 stmt.execute();
             }
             setStatus(TaskI.State.FINISHED, toolName + " deleted");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.getLogger(DeleteTool.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }

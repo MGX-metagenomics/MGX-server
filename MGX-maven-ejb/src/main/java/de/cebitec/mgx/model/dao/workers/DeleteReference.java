@@ -5,6 +5,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -33,7 +34,7 @@ public class DeleteReference extends TaskI {
                     mappings.add(rs.getLong(1));
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             setStatus(TaskI.State.FAILED, e.getMessage());
             return;
         }
@@ -48,16 +49,19 @@ public class DeleteReference extends TaskI {
 
         try {
             String refName = null;
-            String fileName;
+            String fileName = null;
             try (PreparedStatement stmt = conn.prepareStatement("SELECT name, ref_filepath FROM reference WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    refName = rs.getString(1);
-                    fileName = rs.getString(2);
+                    while (rs.next()) {
+                        refName = rs.getString(1);
+                        fileName = rs.getString(2);
+                    }
                 }
             }
-            setStatus(TaskI.State.PROCESSING, "Deleting reference " + refName);
+            if (refName != null) {
+                setStatus(TaskI.State.PROCESSING, "Deleting reference " + refName);
+            }
             if (fileName != null) {
                 File f = new File(fileName);
                 if (f.exists()) {
@@ -75,7 +79,7 @@ public class DeleteReference extends TaskI {
                 stmt.executeUpdate();
             }
             setStatus(TaskI.State.FINISHED, refName + " deleted");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.getLogger(DeleteReference.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }

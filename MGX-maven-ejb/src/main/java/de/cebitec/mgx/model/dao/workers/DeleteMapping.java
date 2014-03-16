@@ -31,9 +31,14 @@ public class DeleteMapping extends TaskI {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    File file = new File(rs.getString(1));
-                    if (file.exists()) {
-                        file.delete();
+                    String bamName = rs.getString(1);
+                    File bamFile = new File(bamName);
+                    if (bamFile.exists()) {
+                        bamFile.delete();
+                    }
+                    File bamIdx = new File(bamName + ".bai");
+                    if (bamIdx.exists()) {
+                        bamIdx.delete();
                     }
                     jobs.add(rs.getLong(2));
                 }

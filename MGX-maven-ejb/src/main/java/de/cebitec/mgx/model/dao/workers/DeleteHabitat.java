@@ -4,6 +4,7 @@ import de.cebitec.mgx.sessions.TaskI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -53,18 +54,23 @@ public final class DeleteHabitat extends TaskI {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM habitat WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    habitatName = rs.getString(1);
+                    while (rs.next()) {
+                        habitatName = rs.getString(1);
+                    }
                 }
             }
-            setStatus(TaskI.State.PROCESSING, "Deleting habitat " + habitatName);
+            if (habitatName != null) {
+                setStatus(TaskI.State.PROCESSING, "Deleting habitat " + habitatName);
+            }
 
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM habitat WHERE id=?")) {
                 stmt.setLong(1, id);
                 stmt.execute();
             }
-            setStatus(TaskI.State.FINISHED, habitatName + " deleted");
-        } catch (Exception e) {
+            if (habitatName != null) {
+                setStatus(TaskI.State.FINISHED, habitatName + " deleted");
+            }
+        } catch (SQLException e) {
             Logger.getLogger(DeleteHabitat.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }
