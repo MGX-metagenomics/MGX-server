@@ -58,6 +58,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         try {
             if (conn != null && !isSubTask) {
                 conn.close();
+                conn = null;
             }
         } catch (SQLException ex) {
             Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
@@ -68,6 +69,7 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         try {
             if (conn != null && !isSubTask) {
                 conn.close();
+                conn = null;
             }
         } catch (SQLException ex) {
             Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
