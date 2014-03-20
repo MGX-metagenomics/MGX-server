@@ -39,6 +39,10 @@ public class Clustering {
         }
 
         RConnection conn = r.getR();
+        if (conn == null) {
+            throw new MGXException("Could not connect to R.");
+        }
+        
         Map<String, String> names = new HashMap<>();
         String nwk = null;
 
@@ -73,6 +77,10 @@ public class Clustering {
             throw new MGXException(ex.getMessage());
         } finally {
             conn.close();
+        }
+        
+        if (nwk == null) {
+            throw new MGXException("Clustering failed.");
         }
 
         // re-convert group names
