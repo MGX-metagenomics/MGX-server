@@ -184,7 +184,7 @@ public class JobBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
+
         return MGXBoolean.newBuilder().setValue(verified).build();
     }
 
@@ -235,6 +235,23 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean cancel(@PathParam("id") Long id) {
+        boolean isActive = true;
+        try {
+            Job job = mgx.getJobDAO().getById(id);
+            JobState status = job.getStatus();
+            // check if job has already reached a terminal state
+            if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
+                isActive = false;
+            }
+            job.setStatus(JobState.IN_DELETION);
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        
+        if (!isActive) {
+            throw new MGXWebException("Job is not being processed, cannot cancel.");
+        }
 
         try {
             js.cancel(mgx, id);
@@ -263,20 +280,28 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        boolean isActive = true;
         try {
             Job job = mgx.getJobDAO().getById(id);
+            JobState status = job.getStatus();
+            // check if job has already reached a terminal state
+            if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
+                isActive = false;
+            }
             job.setStatus(JobState.IN_DELETION);
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
-        
-        // notify dispatcher
-        try {
-            js.delete(mgx, id);
-        } catch (MGXDispatcherException | MGXException ex) {
-            //mgx.log(ex.getMessage());
+
+        if (isActive) {
+            // notify dispatcher
+            try {
+                js.delete(mgx, id);
+            } catch (MGXDispatcherException | MGXException ex) {
+                //mgx.log(ex.getMessage());
+            }
         }
 
         // remove persistent files
