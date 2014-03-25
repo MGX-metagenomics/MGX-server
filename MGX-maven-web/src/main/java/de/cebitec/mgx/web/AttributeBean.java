@@ -84,7 +84,9 @@ public class AttributeBean {
         Map<Attribute, Long> dist;
         try {
             Job job = mgx.getJobDAO().getById(jobId);
-            assert (job != null && job.getStatus() == JobState.FINISHED);
+            if (job == null || job.getStatus() != JobState.FINISHED) {
+                throw new MGXWebException("Non-existing job or job in invalid state");
+            }
             dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
