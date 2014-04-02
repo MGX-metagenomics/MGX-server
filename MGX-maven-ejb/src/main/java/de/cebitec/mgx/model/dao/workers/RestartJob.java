@@ -27,12 +27,12 @@ public class RestartJob extends TaskI {
     private final String dbName;
     private final String projDir;
 
-    public RestartJob(MGXController mgx, Job job, Connection conn, String projName, String dispatcherHost, JobSubmitter js) {
+    public RestartJob(MGXController mgx, MGXConfiguration cfg, Job job, Connection conn, String projName, String dispatcherHost, JobSubmitter js) {
         super(projName, conn);
         this.job = job;
         this.dispatcherHost = dispatcherHost;
         this.js = js;
-        mgxcfg = mgx.getConfiguration();
+        mgxcfg = cfg;
         dbHost = mgx.getDatabaseHost();
         dbName = mgx.getDatabaseName();
         projDir = mgx.getProjectDirectory();

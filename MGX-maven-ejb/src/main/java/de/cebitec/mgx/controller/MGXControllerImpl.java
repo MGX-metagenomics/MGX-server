@@ -3,7 +3,6 @@ package de.cebitec.mgx.controller;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.util.UnixHelper;
@@ -14,6 +13,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
@@ -29,30 +29,41 @@ public class MGXControllerImpl implements MGXController {
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
     private final Map<Class, DAO> daos = new HashMap<>();
-    private String projectDir = null;
+    private final String projectDir;
     //
-    private final MGXConfiguration config;
-    private final MGXGlobal global;
+    //private final MGXConfiguration config;
 
-    public MGXControllerImpl(DBMasterI gpmsmaster, MGXGlobal global, MGXConfiguration cfg) {
+    public MGXControllerImpl(DBMasterI gpmsmaster, MGXConfiguration cfg) {
         this.gpmsmaster = gpmsmaster;
-        this.global = global;
-        this.config = cfg;
         this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
+
+        String ret = new StringBuilder(cfg.getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
+        while (ret.contains(File.separator + File.separator)) {
+            ret = ret.replaceAll(File.separator + File.separator, File.separator);
+        }
+        // 
+        File targetDir = new File(ret);
+        if (!targetDir.exists()) {
+            // make group writable directory
+            UnixHelper.createDirectory(targetDir);
+        }
+
+        if (!UnixHelper.isGroupWritable(targetDir)) {
+            UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
+        }
+        projectDir = ret;
     }
 
     @Override
     public final void log(String msg) {
-        if (msg != null) {
-            if ("".equals(msg)) {
-                return;
-            }
-            logger.log(Level.INFO, "{0}/{1}: {2}", new Object[]{gpmsmaster.getProject().getName(), getCurrentUser(), msg});
+        if (msg == null || "".equals(msg)) {
+            return;
         }
+        logger.log(Level.INFO, "{0}/{1}: {2}", new Object[]{gpmsmaster.getProject().getName(), getCurrentUser(), msg});
     }
-    
+
     @Override
-    public final void log(String msg, Object... args) { 
+    public final void log(String msg, Object... args) {
         log(String.format(msg, args));
     }
 
@@ -67,41 +78,19 @@ public class MGXControllerImpl implements MGXController {
         return em;
     }
 
-    @Override
-    public MGXConfiguration getConfiguration() {
-        return config;
-    }
-
-    @Override
-    public MGXGlobal getGlobal() {
-        return global;
-    }
-
+//    @Override
+//    public MGXConfiguration getConfiguration() {
+//        return config;
+//    }
+//
+//    @Override
+//    public MGXGlobal getGlobal() {
+//        return global;
+//    }
     @Override
     public String getProjectDirectory() {
-        if (projectDir != null) {
-            return projectDir;
-        }
-        
-        String ret = new StringBuilder(getConfiguration().getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
-        while (ret.contains(File.separator + File.separator)) {
-            ret = ret.replaceAll(File.separator + File.separator, File.separator);
-        }
+        return projectDir;
 
-        // 
-        File targetDir = new File(ret);
-        if (!targetDir.exists()) {
-            // make group writable directory
-            UnixHelper.createDirectory(targetDir);
-        }
-        
-        if (!UnixHelper.isGroupWritable(targetDir)) {
-            UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
-        }
-        
-        projectDir = ret;
-  
-        return ret;
     }
 
     @Override
@@ -246,5 +235,27 @@ public class MGXControllerImpl implements MGXController {
             logger.log(Level.SEVERE, null, ex);
         }
         throw new UnsupportedOperationException("Could not create DAO " + clazz);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 17 * hash + Objects.hashCode(this.gpmsmaster);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final MGXControllerImpl other = (MGXControllerImpl) obj;
+        if (!Objects.equals(this.gpmsmaster, other.gpmsmaster)) {
+            return false;
+        }
+        return true;
     }
 }

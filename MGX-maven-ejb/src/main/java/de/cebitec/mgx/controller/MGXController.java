@@ -1,8 +1,6 @@
 package de.cebitec.mgx.controller;
 
 import de.cebitec.gpms.core.RoleI;
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import java.sql.Connection;
@@ -13,7 +11,7 @@ import javax.persistence.EntityManagerFactory;
  *
  * @author sjaenick
  */
-public interface MGXController {
+public interface MGXController extends AutoCloseable {
 
     public void log(String msg);
 
@@ -51,9 +49,9 @@ public interface MGXController {
 
     public RoleI getCurrentRole();
 
-    public MGXConfiguration getConfiguration();
+    //public MGXConfiguration getConfiguration();
 
-    public MGXGlobal getGlobal();
+    //public MGXGlobal getGlobal();
 
     public EntityManager getEntityManager();
 
@@ -69,5 +67,5 @@ public interface MGXController {
 
     public String getJDBCUrl();
 
-    public void close();
+    //public void close();
 }

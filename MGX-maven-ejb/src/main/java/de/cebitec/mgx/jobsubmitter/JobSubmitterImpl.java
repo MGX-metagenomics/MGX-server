@@ -22,6 +22,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.UriBuilder;
 
@@ -31,6 +32,9 @@ import javax.ws.rs.core.UriBuilder;
  */
 @Stateless(mappedName = "JobSubmitter")
 public class JobSubmitterImpl implements JobSubmitter {
+    
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    MGXConfiguration mgxconfig;
 
     private Client client = null;
     private String dispatcherHost = null;
@@ -39,8 +43,8 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
     public void shutdown(MGXController mgx) throws MGXDispatcherException {
-        String token = mgx.getConfiguration().getDispatcherToken();
-        boolean success = get(mgx.getConfiguration().getDispatcherHost(), "shutdown/" + token, Boolean.class);
+        String token = mgxconfig.getDispatcherToken();
+        boolean success = get(mgxconfig.getDispatcherHost(), "shutdown/" + token, Boolean.class);
         if (!success) {
             throw new MGXDispatcherException("Could not shutdown dispatcher.");
         }
@@ -49,7 +53,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     @Override
     public boolean validate(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
-        return validate(mgx.getProjectName(), mgx.getConnection(), job, mgx.getConfiguration(), mgx.getDatabaseHost(), mgx.getDatabaseName(), mgx.getProjectDirectory());
+        return validate(mgx.getProjectName(), mgx.getConnection(), job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgx.getProjectDirectory());
     }
 
     @Override
@@ -202,7 +206,7 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     protected final <U> U put(MGXController mgx, final String path, Object obj, Class<U> c) throws MGXDispatcherException {
         //System.err.println("PUT uri: " + getWebResource().path(path).getURI().toASCIIString());
-        ClientResponse res = getWebResource(mgx.getConfiguration().getDispatcherHost()).path(path).put(ClientResponse.class, obj);
+        ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).put(ClientResponse.class, obj);
         catchException(res);
         return res.<U>getEntity(c);
     }
@@ -216,12 +220,12 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     protected final void delete(MGXController mgx, final String path) throws MGXDispatcherException {
         //System.err.println("DELETE uri: " +getWebResource().path(path).getURI().toASCIIString());
-        ClientResponse res = getWebResource(mgx.getConfiguration().getDispatcherHost()).path(path).delete(ClientResponse.class);
+        ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).delete(ClientResponse.class);
         catchException(res);
     }
 
     protected final <U> void post(MGXController mgx, final String path, U obj) throws MGXDispatcherException {
-        ClientResponse res = getWebResource(mgx.getConfiguration().getDispatcherHost()).path(path).post(ClientResponse.class, obj);
+        ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).post(ClientResponse.class, obj);
         catchException(res);
     }
 
