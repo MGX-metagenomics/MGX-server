@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -17,6 +18,7 @@ import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
+import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.workers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -43,6 +45,10 @@ public class SeqRunBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    MGXConfiguration mgxconfig;
+    @EJB
+    MGXGlobal global;
 
     @PUT
     @Path("create")
@@ -54,7 +60,7 @@ public class SeqRunBean {
         long run_id;
         try {
             extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
-            SeqRun seqrun = SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDB(dto);
+            SeqRun seqrun = SeqRunDTOFactory.getInstance(global).toDB(dto);
             seqrun.setExtract(extract);
             run_id = mgx.getSeqRunDAO().create(seqrun);
         } catch (MGXException ex) {
@@ -78,8 +84,8 @@ public class SeqRunBean {
         Term seqTech = null;
         try {
             orig = mgx.getSeqRunDAO().getById(dto.getId());
-            seqMethod = mgx.getGlobal().getTermDAO().getById(dto.getSequencingMethod().getId());
-            seqTech = mgx.getGlobal().getTermDAO().getById(dto.getSequencingTechnology().getId());
+            seqMethod = global.getTermDAO().getById(dto.getSequencingMethod().getId());
+            seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -112,14 +118,14 @@ public class SeqRunBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTO(seqrun);
+        return SeqRunDTOFactory.getInstance(global).toDTO(seqrun);
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().getAll());
+        return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().getAll());
     }
 
     @GET
@@ -132,7 +138,7 @@ public class SeqRunBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SeqRunDTOFactory.getInstance(mgx.getGlobal()).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
+        return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
     }
 
     @DELETE

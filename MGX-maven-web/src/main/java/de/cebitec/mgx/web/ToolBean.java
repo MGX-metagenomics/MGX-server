@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -12,6 +13,7 @@ import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
+import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
 import de.cebitec.mgx.model.dao.workers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
@@ -52,6 +54,10 @@ public class ToolBean {
     JobParameterHelper paramHelper;
     @EJB
     TaskHolder taskHolder;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    MGXConfiguration mgxconfig;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXGlobal")
+    MGXGlobal global;
 
     @PUT
     @Path("create")
@@ -87,7 +93,7 @@ public class ToolBean {
     @Path("listGlobalTools")
     @Produces("application/x-protobuf")
     public ToolDTOList listGlobalTools() {
-        return ToolDTOFactory.getInstance().toDTOList(mgx.getGlobal().getToolDAO().getAll());
+        return ToolDTOFactory.getInstance().toDTOList(global.getToolDAO().getAll());
     }
 
     @GET
@@ -140,7 +146,7 @@ public class ToolBean {
     public MGXLong installGlobalTool(@PathParam("global_id") Long global_id) {
         Tool globalTool = null;
         try {
-            globalTool = mgx.getGlobal().getToolDAO().getById(global_id);
+            globalTool = global.getToolDAO().getById(global_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -158,9 +164,9 @@ public class ToolBean {
     @GET
     @Path("getAvailableParameters/{id}/{global}")
     @Produces("application/x-protobuf")
-    public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean global) {
+    public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
-            Tool tool = global ? mgx.getGlobal().getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
+            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
             String toolXMLData = readFile(new File(tool.getXMLFile()));
             return getParams(toolXMLData);
         } catch (MGXException | IOException ex) {
@@ -190,12 +196,11 @@ public class ToolBean {
             throw new MGXWebException("XML is not valid: " + ex.getMessage());
         }
 
-
         return getParams(dto.getXml());
     }
 
     private JobParameterListDTO getParams(String XMLData) {
-        File plugins = mgx.getConfiguration().getPluginDump();
+        File plugins = mgxconfig.getPluginDump();
         AutoCloseableIterator<JobParameter> params = paramHelper.getParameters(XMLData, plugins);
         return JobParameterDTOFactory.getInstance().toDTOList(params);
     }

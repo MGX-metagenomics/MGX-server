@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -12,6 +13,7 @@ import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
+import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.workers.DeleteReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
@@ -54,6 +56,8 @@ public class ReferenceBean {
     TaskHolder taskHolder;
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
     UploadSessions upSessions;
+    @EJB
+    MGXGlobal global;
 
     @PUT
     @Path("create")
@@ -119,7 +123,7 @@ public class ReferenceBean {
     @Path("listGlobalReferences")
     @Produces("application/x-protobuf")
     public ReferenceDTOList listGlobalReferences() {
-        return ReferenceDTOFactory.getInstance().toDTOList(mgx.getGlobal().getReferenceDAO().getAll());
+        return ReferenceDTOFactory.getInstance().toDTOList(global.getReferenceDAO().getAll());
     }
 
     @GET
@@ -135,7 +139,7 @@ public class ReferenceBean {
 
         Reference globalRef = null;
         try {
-            globalRef = mgx.getGlobal().getReferenceDAO().getById(globalId);
+            globalRef = global.getReferenceDAO().getById(globalId);
             File refData = new File(globalRef.getFile());
             if (!refData.exists()) {
                 throw new MGXException("Cannot access reference sequence. Please report this error.");
@@ -243,7 +247,7 @@ public class ReferenceBean {
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
         if (recv == null) {
-            throw new MGXWebException("No upload session registered for "+ session_id);
+            throw new MGXWebException("No upload session registered for " + session_id);
         }
         try {
             recv.addSequenceData(chunkDNA.getValue().toUpperCase());

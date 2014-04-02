@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -51,6 +52,8 @@ public class JobBean {
     JobParameterHelper paramHelper;
     @EJB
     TaskHolder taskHolder;
+    @EJB
+    MGXConfiguration mgxconfig;
 
     @PUT
     @Path("create")
@@ -200,7 +203,7 @@ public class JobBean {
             if (job.getStatus() != JobState.VERIFIED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            submitted = js.submit(mgx.getConfiguration().getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
+            submitted = js.submit(mgxconfig.getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
             mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
@@ -220,7 +223,7 @@ public class JobBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(id);
-            RestartJob dJob = new RestartJob(mgx, job, mgx.getConnection(), mgx.getProjectName(), mgx.getConfiguration().getDispatcherHost(), js);
+            RestartJob dJob = new RestartJob(mgx, mgxconfig, job, mgx.getConnection(), mgx.getProjectName(), mgxconfig.getDispatcherHost(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException ex) {
@@ -248,7 +251,7 @@ public class JobBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
+
         if (!isActive) {
             throw new MGXWebException("Job is not being processed, cannot cancel.");
         }

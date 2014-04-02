@@ -2,6 +2,7 @@ package de.cebitec.mgx.web;
 
 import com.google.protobuf.ByteString;
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -53,6 +54,8 @@ public class FileBean {
     DownloadSessions dsessions;
     @EJB
     TaskHolder taskHolder;
+    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    MGXConfiguration mgxconfig;
 
     @GET
     @Path("fetchall/{baseDir}")
@@ -182,7 +185,7 @@ public class FileBean {
     @Path("initPluginDownload")
     @Produces("application/x-protobuf")
     public MGXString initPluginDownload() {
-        File target = mgx.getConfiguration().getPluginDump();
+        File target = mgxconfig.getPluginDump();
         mgx.log("initiating file download for " + target.getAbsolutePath());
         FileDownloadProvider fdp = new FileDownloadProvider(mgx.getProjectName(), target);
 
