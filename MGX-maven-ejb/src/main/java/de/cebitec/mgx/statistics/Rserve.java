@@ -60,7 +60,7 @@ public class Rserve {
     public void start() {
         try {
             scriptFile = createScript();
-            String rserveStartCommand = "R CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
+            String rserveStartCommand = "/vol/r-2.15/bin/R CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
             p = Runtime.getRuntime().exec(rserveStartCommand);
             //
             err = new Thread(new RStreamReader(p.getErrorStream()));
@@ -79,22 +79,30 @@ public class Rserve {
 
     @PreDestroy
     public void stop() {
+        exiting = true;
         if (p != null) {
-            p.destroy();
-        }
-        RConnection conn = null;
-        try {
-            conn = new RConnection();
-        } catch (RserveException ex) {
-        }
-        if (conn != null) {
+            RConnection conn = null;
             try {
-                conn.shutdown();
-                conn.close();
+                conn = new RConnection();
             } catch (RserveException ex) {
             }
+            if (conn != null) {
+                try {
+                    conn.shutdown();
+                    conn.close();
+                } catch (RserveException ex) {
+                }
+            }
+            try {
+                p.getInputStream().close();
+                p.getErrorStream().close();
+            } catch (IOException ex) {
+                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            p.destroy();
         }
-        if (scriptFile != null) {
+
+        if (scriptFile != null && scriptFile.exists()) {
             scriptFile.delete();
         }
         if (err != null) {
@@ -134,23 +142,24 @@ public class Rserve {
             StringBuffer tmpRFileName = new StringBuffer('.').append("RSource").append(".R");
             File tmpRFile = File.createTempFile(String.valueOf(System.currentTimeMillis()), tmpRFileName.toString());
 
-            FileOutputStream rOut = new FileOutputStream(tmpRFile);
-
             byte[] buffer = new byte[1024];
+            try (FileOutputStream rOut = new FileOutputStream(tmpRFile)) {
+                int bytesRead = is.read(buffer);
+                while (bytesRead >= 0) {
+                    rOut.write(buffer, 0, bytesRead);
+                    bytesRead = is.read(buffer);
+                }
 
-            int bytesRead = is.read(buffer);
-            while (bytesRead >= 0) {
-                rOut.write(buffer, 0, bytesRead);
-                bytesRead = is.read(buffer);
+                rOut.flush();
+                rOut.close();
             }
-
-            rOut.flush();
-            rOut.close();
+            is.close();
             return tmpRFile;
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
         }
     }
+    private static volatile boolean exiting = false;
 
     private static class RStreamReader implements Runnable {
 
@@ -164,13 +173,15 @@ public class Rserve {
         public void run() {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(err))) {
                 String line;
-                while (!Thread.currentThread().isInterrupted() && ((line = in.readLine()) != null)) {
+                while (!exiting && ((line = in.readLine()) != null)) {
                     if (!line.trim().isEmpty()) {
                         Logger.getLogger(Rserve.class.getName()).log(Level.INFO, "R: {0}", line);
                     }
                 }
             } catch (IOException ex) {
-                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
+                if (!exiting) {
+                    Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
     }

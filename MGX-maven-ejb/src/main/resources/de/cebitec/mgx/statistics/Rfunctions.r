@@ -12,7 +12,9 @@ rarefaction<-function(x, subsample=5, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   y1<-apply(x, 1, sum)
   rare.data<-x                                   
 
-  select<-unique(sort(c((apply(x, 1, sum)), (seq(0,(max(y1)), by=subsample)), recursive=TRUE)))
+  tmpmax <- max(y1)
+  select<-unique(sort(c((apply(x, 1, sum)), (seq(0, tmpmax, by=subsample)), recursive=TRUE)))
+  ###print(paste(select, sep=","))
 
   storesummary.e<-matrix(data=NA, ncol=length(rare.data[,1]),nrow=length(select))
   rownames(storesummary.e)<-c(select)

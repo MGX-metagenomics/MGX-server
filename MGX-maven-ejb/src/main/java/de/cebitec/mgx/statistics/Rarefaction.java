@@ -31,12 +31,18 @@ public class Rarefaction {
             // create unique variable name
             String name = "data" + Rserve.generateSuffix();
 
+            float d = 0;
+            for (double x : data) {
+                d += x;
+            }
+            int subsample = 5;
+            if (d > 100) {
+                subsample = Math.max(1, Math.round(d / 75f));
+            }
+
             conn.assign(name, data);
-            REXP ev = conn.eval(name + ".rare <- rarefaction(data.frame(t(" + name + ")))");
+            REXP ev = conn.eval(name + ".rare <- rarefaction(data.frame(t(" + name + ")), subsample=" + subsample + ")");
             if (ev != null) {
-                
-                //System.err.println(ev.asString());
-                
                 double[] subsamples = conn.eval(name + ".rare$subsample").asDoubles();
                 double[] richness = conn.eval(name + ".rare$richness").asDoubles();
 
