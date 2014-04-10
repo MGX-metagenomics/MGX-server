@@ -236,7 +236,6 @@ public class SequenceBean {
         try {
             obj = mgx.getSequenceDAO().getById(id);
         } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTO(obj);
