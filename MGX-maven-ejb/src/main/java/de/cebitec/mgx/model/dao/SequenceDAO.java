@@ -26,23 +26,31 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
 
     @Override
     public T getById(Long id) throws MGXException {
-        T seq = (T) new Sequence();
-        seq.setId(id);
 
         // find the storage file for this sequence
         String dbFile = null;
+        String seqName = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(GET_SEQRUN)) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    rs.next();
-                    dbFile = rs.getString(1);
-                    seq.setName(rs.getString(2));
+                    while (rs.next()) {
+                        dbFile = rs.getString(1);
+                        seqName = rs.getString(2);
+                    }
                 }
             }
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+
+        if (dbFile == null || seqName == null) {
+            throw new MGXException("No sequence for ID "+ id);
+        }
+        
+        T seq = (T) new Sequence();
+        seq.setId(id);
+        seq.setName(seqName);
 
         // read sequence data
         try (SeqReaderI<DNASequenceHolder> reader = SeqReaderFactory.getReader(dbFile)) {
