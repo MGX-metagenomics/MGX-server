@@ -79,7 +79,7 @@ public abstract class DAO<T extends Identifiable> {
         }
         T ret = (T) getEntityManager().find(getType(), id);
         if (ret == null) {
-            throw new MGXException("No object of type " + getType() + " for ID " + id + ".");
+            throw new MGXException("No object of type " + getType().getSimpleName() + " for ID " + id + ".");
         }
         return ret;
     }
