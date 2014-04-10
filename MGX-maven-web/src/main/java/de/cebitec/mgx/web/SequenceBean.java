@@ -9,7 +9,6 @@ import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
-import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
@@ -68,7 +67,6 @@ public class SequenceBean {
     @Path("initUpload/{id}")
     @Produces("application/x-protobuf")
     public MGXString initUpload(@PathParam("id") Long seqrun_id) {
-        mgx.log("Creating upload session for " + mgx.getProjectName());
 
         StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
                 .append(File.separator)
@@ -84,6 +82,9 @@ public class SequenceBean {
         SeqUploadReceiver recv = null;
 
         try {
+            // check seqrun exists before creating upload session
+            mgx.getSeqRunDAO().getById(seqrun_id);
+            mgx.log("Creating upload session for " + mgx.getProjectName());
             recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
