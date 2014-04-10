@@ -245,13 +245,10 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
-        ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
-        if (recv == null) {
-            throw new MGXWebException("No upload session registered for " + session_id);
-        }
         try {
+            ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
             recv.addSequenceData(chunkDNA.getValue().toUpperCase());
-        } catch (IOException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return Response.ok().build();
@@ -262,8 +259,8 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addRegions(@PathParam("uuid") UUID session_id, RegionDTOList dtos) {
-        UploadReceiverI<RegionDTOList> recv = upSessions.getSession(session_id);
         try {
+            UploadReceiverI<RegionDTOList> recv = upSessions.getSession(session_id);
             recv.add(dtos);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
