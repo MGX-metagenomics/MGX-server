@@ -12,6 +12,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -64,6 +66,7 @@ public class RestartJob extends TaskI {
             }
 
             // delete mappings
+            setStatus(TaskI.State.PROCESSING, "Deleting mappings");
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
                 stmt.setLong(1, job.getId());
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -81,24 +84,27 @@ public class RestartJob extends TaskI {
                 }
             }
 
+            setStatus(TaskI.State.PROCESSING, "Validating job configuration");
             boolean verified = false;
             verified = js.validate(projName, conn, job, mgxcfg, dbHost, dbName, projDir);
 
             if (verified) {
+                setStatus(TaskI.State.PROCESSING, "Resubmitting job..");
                 if (js.submit(dispatcherHost, conn, projName, job)) {
                     setStatus(TaskI.State.FINISHED, "Job " + job.getId() + " restarted");
                 } else {
                     setStatus(TaskI.State.FAILED, "submit failed");
                 }
             } else {
-                setStatus(TaskI.State.FAILED, "verify failed");
+                setStatus(TaskI.State.FAILED, "Verification failed");
             }
-            
+
             conn.close();
             conn = null;
 
         } catch (MGXException | MGXDispatcherException | SQLException e) {
             System.err.println("Could not restart job " + job.getId() + ": " + e.getMessage());
+            Logger.getLogger(RestartJob.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         } finally {
             if (conn != null) {
