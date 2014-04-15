@@ -5,6 +5,7 @@ import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
 import de.cebitec.gpms.data.DBProjectI;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManagerFactory;
@@ -101,4 +102,28 @@ public class GPMSMaster implements DBMasterI {
         lastUsed = System.currentTimeMillis();
         return login;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 59 * hash + Objects.hashCode(this.membership);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final GPMSMaster other = (GPMSMaster) obj;
+        if (!Objects.equals(this.membership, other.membership)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 }
