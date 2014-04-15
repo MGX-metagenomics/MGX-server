@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -228,15 +230,16 @@ public class ReferenceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString init(@PathParam("id") Long ref_id) {
         Reference ref = null;
+        UUID uuid = null;
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
+            mgx.log(mgx.getCurrentUser() + " creating reference importer session for " + ref.getName());
+            ref.setFile(mgx.getProjectDirectory() + "/reference/" + ref.getId() + ".fas");
+            ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
+            uuid = upSessions.registerUploadSession(recv);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        mgx.log(mgx.getCurrentUser() + " creating reference importer session for " + ref.getName());
-        ref.setFile(mgx.getProjectDirectory() + "/reference/" + ref.getId() + ".fas");
-        ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
-        UUID uuid = upSessions.registerUploadSession(recv);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 

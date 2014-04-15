@@ -59,11 +59,17 @@ public class DownloadSessions {
 
     @Asynchronous
     public void closeSession(UUID uuid) throws MGXException {
+        if (!sessions.containsKey(uuid)) {
+            throw new MGXException("No such session: " + uuid.toString());
+        }
         sessions.remove(uuid).close();
     }
 
     @Asynchronous
     public void cancelSession(UUID uuid) throws MGXException {
+        if (!sessions.containsKey(uuid)) {
+            throw new MGXException("No such session: " + uuid.toString());
+        }
         sessions.remove(uuid).cancel();
     }
 

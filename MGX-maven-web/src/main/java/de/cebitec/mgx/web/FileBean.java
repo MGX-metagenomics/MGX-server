@@ -225,7 +225,12 @@ public class FileBean {
         mgx.log(mgx.getCurrentUser() + " initiating file upload to " + target.getAbsolutePath());
 
         FileUploadReceiver recv = new FileUploadReceiver(target.getAbsolutePath(), mgx.getProjectName());
-        UUID uuid = sessions.registerUploadSession(recv);
+        UUID uuid;
+        try {
+            uuid = sessions.registerUploadSession(recv);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 

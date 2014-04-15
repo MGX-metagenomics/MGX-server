@@ -14,7 +14,6 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
-import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -26,7 +25,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 import javax.ejb.EJB;
@@ -80,18 +78,19 @@ public class SequenceBean {
         }
 
         SeqUploadReceiver recv = null;
-
+        UUID uuid = null;
         try {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
             recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
+            uuid = upSessions.registerUploadSession(recv);
+
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
 
-        UUID uuid = upSessions.registerUploadSession(recv);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
@@ -147,7 +146,7 @@ public class SequenceBean {
         try {
             // make sure requested run exists
             mgx.getSeqRunDAO().getById(seqrun_id);
-            mgx.log("Creating download session for " + mgx.getProjectName());
+            mgx.log("Creating download session for run ID " + seqrun_id);
             provider = new SeqRunDownloadProvider(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
@@ -168,14 +167,9 @@ public class SequenceBean {
             for (AttributeDTO dto : attrdtos.getAttributeList()) {
                 ids.add(dto.getId());
             }
-            Set<Attribute> attrs = new HashSet<>();
-            Iterator<Attribute> iter = mgx.getAttributeDAO().getByIds(ids);
-            while (iter.hasNext()) {
-                attrs.add(iter.next());
-            }
 
-            mgx.log("Creating download session for " + mgx.getProjectName());
-            provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), attrs);
+            mgx.log("Creating attribute-based download session for " + mgx.getProjectName());
+            provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), mgx.getAttributeDAO().getByIds(ids));
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());

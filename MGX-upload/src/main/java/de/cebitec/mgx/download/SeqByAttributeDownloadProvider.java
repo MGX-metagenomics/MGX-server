@@ -13,6 +13,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +24,7 @@ import java.util.Set;
  */
 public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
 
-    private static String GET_SEQS = "SELECT DISTINCT ON (r.id) r.id, r.name "
+    private static final String GET_SEQS = "SELECT DISTINCT ON (r.id) r.id, r.name "
             + "FROM observation o JOIN read r ON (o.seq_id = r.id) "
             + "WHERE o.attr_id IN (?";
     private PreparedStatement stmt = null;
@@ -30,16 +32,19 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     private boolean have_more_data = true;
     private Map<Long, String> readnames = null;
 
-    public SeqByAttributeDownloadProvider(Connection connection, String projectName, Set<Attribute> attrs) throws MGXException {
+    public SeqByAttributeDownloadProvider(Connection connection, String projectName, Iterator<Attribute> attrIter) throws MGXException {
         super(connection, projectName);
         
-        if (attrs.isEmpty()) {
+        if (!attrIter.hasNext()) {
             throw new MGXException("No attributes provided.");
         }
         
+        Set<Attribute> attributes = new HashSet<>();
         // all attributes are assumed to refer to the same run
         String fName = null;
-        for (Attribute a : attrs) {
+        while (attrIter.hasNext()) {
+            Attribute a = attrIter.next();
+            attributes.add(a);
             if (fName == null) {
                 fName = a.getJob().getSeqrun().getDBFile();
             } else {
@@ -58,10 +63,10 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         readnames = new HashMap<>(bulksize);
 
         try {
-            String sql = buildSQLTemplate(attrs.size());
+            String sql = buildSQLTemplate(attributes.size());
             stmt = conn.prepareStatement(sql);
             int pos = 1;
-            for (Attribute a : attrs) {
+            for (Attribute a : attributes) {
                 stmt.setLong(pos++, a.getId());
             }
             rs = stmt.executeQuery();
