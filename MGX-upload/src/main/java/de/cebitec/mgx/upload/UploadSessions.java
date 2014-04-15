@@ -45,13 +45,19 @@ public class UploadSessions {
         }
     }
 
-    public UUID registerUploadSession(UploadReceiverI recv) {
+    public UUID registerUploadSession(UploadReceiverI recv) throws MGXException {
+        if (recv == null) {
+            throw new MGXException("Cannot register null session.");
+        }
         UUID uuid = UUID.randomUUID();
         sessions.put(uuid, recv);
         return uuid;
     }
 
-    public UploadReceiverI getSession(UUID uuid) {
+    public UploadReceiverI getSession(UUID uuid) throws MGXException {
+        if (!sessions.containsKey(uuid)) {
+            throw new MGXException("No session for " + uuid);
+        }
         return sessions.get(uuid);
     }
 
@@ -59,7 +65,7 @@ public class UploadSessions {
     public void closeSession(UUID uuid) throws MGXException {
         UploadReceiverI recv = sessions.remove(uuid);
         if (recv == null) {
-            throw new MGXException("No active session for "+ uuid);
+            throw new MGXException("No active session for " + uuid);
         }
         recv.close();
     }
@@ -80,10 +86,10 @@ public class UploadSessions {
                 Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
                 toRemove.add(uuid);
                 s.cancel();
-                
+
             }
         }
-        
+
         for (UUID uuid : toRemove) {
             sessions.remove(uuid);
         }
