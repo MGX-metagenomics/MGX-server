@@ -29,7 +29,11 @@ public class PCAResultDTOFactory extends DTOConversionBase<PCAResult, PCAResultD
         for (double d : pca.getVariances()) {
             b.addVariance(d);
         }
-        
+
+        for (Point p : pca.getLoadings()) {
+            b.addLoading(PointDTOFactory.getInstance().toDTO(p));
+        }
+
         for (Point p : pca.getDatapoints()) {
             b.addDatapoint(PointDTOFactory.getInstance().toDTO(p));
         }
