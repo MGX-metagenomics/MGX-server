@@ -1,4 +1,3 @@
-
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.PointDTO;
@@ -11,7 +10,8 @@ import de.cebitec.mgx.util.Point;
  * @author sj
  */
 public class PointDTOFactory extends DTOConversionBase<Point, PointDTO, PointDTOList> {
-     static {
+
+    static {
         instance = new PointDTOFactory();
     }
     protected final static PointDTOFactory instance;
@@ -28,12 +28,19 @@ public class PointDTOFactory extends DTOConversionBase<Point, PointDTO, PointDTO
         PointDTO.Builder dto = PointDTO.newBuilder()
                 .setX(a.getX())
                 .setY(a.getY());
+        if (a.getName() != null) {
+            dto.setName(a.getName());
+        }
         return dto.build();
     }
 
     @Override
     public Point toDB(PointDTO dto) {
-        return new Point(dto.getX(), dto.getY());
+        if (dto.hasName()) {
+            return new Point(dto.getX(), dto.getY(), dto.getName());
+        } else {
+            return new Point(dto.getX(), dto.getY());
+        }
     }
 
     @Override
