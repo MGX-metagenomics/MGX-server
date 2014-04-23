@@ -7,10 +7,16 @@ package de.cebitec.mgx.util;
 public class Point {
 
     private final double[] data = new double[2];
+    private final String name;
 
-    public Point(double x, double y) {
+    public Point(double x, double y, String name) {
         data[0] = x;
         data[1] = y;
+        this.name = name;
+    }
+
+    public Point(double x, double y) {
+        this(x, y, null);
     }
 
     public double getX() {
@@ -19,6 +25,10 @@ public class Point {
 
     public double getY() {
         return data[1];
+    }
+    
+    public String getName() {
+        return name;
     }
 
 }

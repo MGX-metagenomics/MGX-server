@@ -1,12 +1,12 @@
 package de.cebitec.mgx.statistics;
 
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.model.misc.Matrix;
 import de.cebitec.mgx.model.misc.NamedVector;
 import de.cebitec.mgx.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
@@ -26,8 +26,8 @@ public class Clustering {
     private static final String[] AGGLO = new String[]{"ward", "single", "complete", "average", "mcquitty", "median", "centroid"};
     private static final String[] DIST = new String[]{"euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"};
 
-    public String cluster(Set<NamedVector> data, String distMethod, String aggloMethod) throws MGXException {
-        if (data.size() < 2) {
+    public String cluster(Matrix m, String distMethod, String aggloMethod) throws MGXException {
+        if (m.getRows().size() < 2) {
             throw new MGXException("Insufficient number of datasets.");
         }
 
@@ -49,7 +49,7 @@ public class Clustering {
         try {
             int vecLen = -1;
 
-            for (NamedVector nv : data) {
+            for (NamedVector nv : m.getRows()) {
                 if (vecLen == -1) {
                     vecLen = nv.getData().length;
                 }
