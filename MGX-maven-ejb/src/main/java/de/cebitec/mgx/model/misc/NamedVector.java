@@ -8,9 +8,9 @@ package de.cebitec.mgx.model.misc;
 public class NamedVector {
 
     private final String name;
-    private final long[] data;
+    private final double[] data;
 
-    public NamedVector(final String name, final long[] data) {
+    public NamedVector(final String name, final double[] data) {
         this.name = name;
         this.data = data;
     }
@@ -19,7 +19,7 @@ public class NamedVector {
         return name;
     }
 
-    public long[] getData() {
+    public double[] getData() {
         return data;
     }
 
