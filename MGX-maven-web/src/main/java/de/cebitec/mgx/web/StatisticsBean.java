@@ -80,10 +80,13 @@ public class StatisticsBean {
     }
 
     @PUT
-    @Path("PCA/")
+    @Path("PCA/{pc1}/{pc2}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public PCAResultDTO PCA(MGXMatrixDTO dto) {
+    public PCAResultDTO PCA(MGXMatrixDTO dto, @PathParam("pc1") Integer pc1, @PathParam("pc2") Integer pc2) {
+        if (pc1 < 1 || pc1 > 3 || pc2 < 1 || pc2 > 3) {
+            throw new MGXWebException("Invalid PC requested");
+        }
         Matrix m = MatrixDTOFactory.getInstance().toDB(dto);
         
         int numVars = m.getColumnNames().length;
@@ -96,7 +99,7 @@ public class StatisticsBean {
         
         PCAResult ret;
         try {
-            ret = pca.pca(m);
+            ret = pca.pca(m, pc1, pc2);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
