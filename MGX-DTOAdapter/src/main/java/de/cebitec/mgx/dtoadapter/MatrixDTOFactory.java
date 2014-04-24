@@ -37,8 +37,8 @@ public class MatrixDTOFactory extends DTOConversionBase<Matrix, MGXMatrixDTO, Ob
     public Matrix toDB(MGXMatrixDTO dto) {
         Set<NamedVector> data = new HashSet<>();
         for (ProfileDTO pdto : dto.getRowList()) {
-            List<Long> ll = pdto.getValues().getLongList();
-            long[] tmp = new long[ll.size()];
+            List<Double> ll = pdto.getValues().getValueList();
+            double[] tmp = new double[ll.size()];
             for (int i = 0; i < tmp.length; i++) {
                 tmp[i] = ll.get(i);
             }
