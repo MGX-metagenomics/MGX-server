@@ -27,7 +27,7 @@ public class PCA {
     Rserve r;
     //
 
-    public PCAResult pca(Matrix m) throws MGXException {
+    public PCAResult pca(Matrix m, int pc1, int pc2) throws MGXException {
         if (m.getRows().size() < 2) {
             throw new MGXException("Insufficient number of datasets.");
         }
@@ -82,24 +82,31 @@ public class PCA {
             double[] variances = conn.eval(pcaName + "$sdev^2").asDoubles();
             ret = new PCAResult(variances);
 
-            for (Entry<String, String> e : sampleNames.entrySet()) {
-                double[] coords = conn.eval(String.format("%s$x[\"%s\",1:2]", pcaName, e.getKey())).asDoubles();
-                Point p = new Point(coords[0], coords[1], e.getValue());
-                ret.addPoint(p);
-            }
+            try {
 
-            // fetch loadings
-            for (Entry<String, String> e : varNames.entrySet()) {
-                double[] coords = conn.eval(String.format("%s$rotation[\"%s\",1:2]", pcaName, e.getKey())).asDoubles();
-                Point p = new Point(coords[0], coords[1], e.getValue());
-                ret.addLoading(p);
-            }
+                for (Entry<String, String> e : sampleNames.entrySet()) {
+                    double[] coords = conn.eval(String.format("%s$x[\"%s\",]", pcaName, e.getKey())).asDoubles();
+                    Point p = new Point(coords[pc1 - 1], coords[pc2 - 1], e.getValue());
+                    ret.addPoint(p);
+                }
 
-            // cleanup
-            for (String varName : sampleNames.keySet()) {
-                conn.eval(String.format("rm(%s)", varName));
+                // fetch loadings
+                for (Entry<String, String> e : varNames.entrySet()) {
+                    double[] coords = conn.eval(String.format("%s$rotation[\"%s\",]", pcaName, e.getKey())).asDoubles();
+                    //assert coords.length == 3;
+                    Point p = new Point(coords[pc1 - 1], coords[pc2 - 1], e.getValue());
+                    ret.addLoading(p);
+                }
+
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                throw new MGXException("Could not access requested principal components.");
+            } finally {
+                // cleanup
+                for (String varName : sampleNames.keySet()) {
+                    conn.eval(String.format("rm(%s)", varName));
+                }
+                conn.eval(String.format("rm(%s)", matrixName));
             }
-            conn.eval(String.format("rm(%s)", matrixName));
 
         } catch (REngineException | REXPMismatchException ex) {
             throw new MGXException(ex.getMessage());
