@@ -53,7 +53,7 @@ public class PCA {
                 }
                 String varname = "grp" + generateSuffix();
                 sampleNames.put(varname, nv.getName());
-                conn.assign(varname, toDoubleArray(nv.getData()));
+                conn.assign(varname, nv.getData());
             }
 
             String matrixName = "matr" + generateSuffix();
@@ -136,14 +136,14 @@ public class PCA {
         return sb.toString();
     }
 
-    private double[] toDoubleArray(long[] in) {
-        double[] ret = new double[in.length];
-        int i = 0;
-        for (long l : in) {
-            ret[i++] = (double) l;
-        }
-        return ret;
-    }
+//    private double[] toDoubleArray(long[] in) {
+//        double[] ret = new double[in.length];
+//        int i = 0;
+//        for (long l : in) {
+//            ret[i++] = (double) l;
+//        }
+//        return ret;
+//    }
 
     private static boolean contains(String[] options, String value) {
         for (String o : options) {
