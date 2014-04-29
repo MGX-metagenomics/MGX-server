@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.misc;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  *
@@ -9,9 +9,9 @@ import java.util.Set;
 public class Matrix {
 
     private final String[] columnNames;
-    private final Set<NamedVector> rows;
+    private final List<NamedVector> rows;
 
-    public Matrix(String[] columnNames, Set<NamedVector> rows) {
+    public Matrix(String[] columnNames, List<NamedVector> rows) {
         this.columnNames = columnNames;
         this.rows = rows;
     }
@@ -20,7 +20,7 @@ public class Matrix {
         return columnNames;
     }
 
-    public Set<NamedVector> getRows() {
+    public List<NamedVector> getRows() {
         return rows;
     }
 }

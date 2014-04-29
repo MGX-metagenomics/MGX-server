@@ -3,11 +3,13 @@ package de.cebitec.mgx.statistics;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.misc.Matrix;
 import de.cebitec.mgx.model.misc.NamedVector;
-import de.cebitec.mgx.model.misc.PCAResult;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.Point;
 import de.cebitec.mgx.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,14 +24,14 @@ import org.rosuda.REngine.Rserve.RConnection;
  *
  * @author sjaenick
  */
-@Stateless(mappedName = "PCA")
-public class PCA {
+@Stateless(mappedName = "PCoA")
+public class PCoA {
 
     @EJB
     Rserve r;
     //
 
-    public PCAResult pca(Matrix m, int pc1, int pc2) throws MGXException {
+    public AutoCloseableIterator<Point> pcoa(Matrix m) throws MGXException {
         if (m.getRows().size() < 2) {
             throw new MGXException("Insufficient number of datasets.");
         }
@@ -42,7 +44,7 @@ public class PCA {
         Map<String, String> sampleNames = new HashMap<>();
         Map<String, String> varNames = new HashMap<>();
         List<String> varOrder = new ArrayList<>();
-        PCAResult ret = null;
+        List<Point> ret = new LinkedList<>();
 
         try {
             int vecLen = -1;
@@ -75,39 +77,25 @@ public class PCA {
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
 
-            String pcaName = "pca" + generateSuffix();
-            conn.eval(String.format("%s <- try(prcomp(%s, scale=T), silent=T)", pcaName, matrixName));
-
-            // if PCA fails, e.g. due to 0 variance in a column, try without scaling
-            conn.eval(String.format("if (class(%s) == \"try-error\") { %s <- prcomp(%s, scale=F) }", pcaName, pcaName, matrixName));
-
-            // get variances
-            double[] variances = conn.eval(pcaName + "$sdev^2").asDoubles();
-            ret = new PCAResult(variances);
-
+            String pcoaName = "pcoa" + generateSuffix();
+            conn.eval(String.format("%s <- cmdscale(%s)", pcoaName, matrixName));
             try {
 
                 for (Entry<String, String> e : sampleNames.entrySet()) {
-                    double[] coords = conn.eval(String.format("%s$x[\"%s\",]", pcaName, e.getKey())).asDoubles();
-                    Point p = new Point(coords[pc1 - 1], coords[pc2 - 1], e.getValue());
-                    ret.addPoint(p);
+                    double[] coords = conn.eval(String.format("%s[\"%s\",]", pcoaName, e.getKey())).asDoubles();
+                    Point p = new Point(coords[0], coords[1], e.getValue());
+                    ret.add(p);
                 }
-
-                // fetch loadings
-                for (Entry<String, String> e : varNames.entrySet()) {
-                    double[] coords = conn.eval(String.format("%s$rotation[\"%s\",]", pcaName, e.getKey())).asDoubles();
-                    Point p = new Point(coords[pc1 - 1], coords[pc2 - 1], e.getValue());
-                    ret.addLoading(p);
-                }
-
             } catch (ArrayIndexOutOfBoundsException ex) {
-                throw new MGXException("Could not access requested principal components.");
+                conn.eval(String.format("print(%s)", matrixName));
+                conn.eval(String.format("print(%s)", pcoaName));
+                throw new MGXException("Could not access requested components." + ex.getMessage());
             } finally {
                 // cleanup
                 for (String varName : sampleNames.keySet()) {
                     conn.eval(String.format("rm(%s)", varName));
                 }
-                conn.eval(String.format("rm(%s)", pcaName));
+                conn.eval(String.format("rm(%s)", pcoaName));
                 conn.eval(String.format("rm(%s)", matrixName));
             }
 
@@ -118,9 +106,14 @@ public class PCA {
         }
 
         if (ret == null) {
-            throw new MGXException("PCA failed.");
+            throw new MGXException("PCoA failed.");
         }
-        return ret;
+
+//        // re-convert group names
+//        for (Map.Entry<String, String> e : names.entrySet()) {
+//            nwk = nwk.replace(e.getKey(), e.getValue());
+//        }
+        return new ForwardingIterator<>(ret.iterator());
     }
 
     private static String generateSuffix() {
@@ -132,5 +125,22 @@ public class PCA {
             sb.append(c);
         }
         return sb.toString();
+    }
+
+//    private double[] toDoubleArray(long[] in) {
+//        double[] ret = new double[in.length];
+//        int i = 0;
+//        for (long l : in) {
+//            ret[i++] = (double) l;
+//        }
+//        return ret;
+//    }
+    private static boolean contains(String[] options, String value) {
+        for (String o : options) {
+            if (o.equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
