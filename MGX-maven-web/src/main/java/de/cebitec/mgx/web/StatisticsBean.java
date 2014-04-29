@@ -6,7 +6,6 @@ import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.PCAResultDTO;
 import de.cebitec.mgx.dto.dto.PointDTOList;
-import de.cebitec.mgx.dto.dto.ProfileDTO;
 import de.cebitec.mgx.dtoadapter.MatrixDTOFactory;
 import de.cebitec.mgx.dtoadapter.PCAResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
@@ -15,13 +14,11 @@ import de.cebitec.mgx.model.misc.NamedVector;
 import de.cebitec.mgx.model.misc.PCAResult;
 import de.cebitec.mgx.statistics.Clustering;
 import de.cebitec.mgx.statistics.PCA;
+import de.cebitec.mgx.statistics.PCoA;
 import de.cebitec.mgx.statistics.Rarefaction;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.Point;
 import de.cebitec.mgx.web.exception.MGXWebException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -44,7 +41,9 @@ public class StatisticsBean {
     Clustering clust;
     @EJB
     PCA pca;
-    
+    @EJB
+    PCoA pcoa;
+
     @PUT
     @Path("Rarefaction")
     @Consumes("application/x-protobuf")
@@ -88,7 +87,7 @@ public class StatisticsBean {
             throw new MGXWebException("Invalid PC requested");
         }
         Matrix m = MatrixDTOFactory.getInstance().toDB(dto);
-        
+
         int numVars = m.getColumnNames().length;
         for (NamedVector nv : m.getRows()) {
             if (nv.getData().length != numVars) {
@@ -96,7 +95,7 @@ public class StatisticsBean {
                         numVars, nv.getData().length));
             }
         }
-        
+
         PCAResult ret;
         try {
             ret = pca.pca(m, pc1, pc2);
@@ -104,5 +103,29 @@ public class StatisticsBean {
             throw new MGXWebException(ex.getMessage());
         }
         return PCAResultDTOFactory.getInstance().toDTO(ret);
+    }
+
+    @PUT
+    @Path("PCoA")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public PointDTOList PCoA(MGXMatrixDTO dto) {
+        Matrix m = MatrixDTOFactory.getInstance().toDB(dto);
+
+        int numVars = m.getColumnNames().length;
+        for (NamedVector nv : m.getRows()) {
+            if (nv.getData().length != numVars) {
+                throw new MGXWebException(String.format("Error in data matrix: %d variables, got vector with %d elements",
+                        numVars, nv.getData().length));
+            }
+        }
+
+        AutoCloseableIterator<Point> ret;
+        try {
+            ret = pcoa.pcoa(m);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return PointDTOFactory.getInstance().toDTOList(ret);
     }
 }
