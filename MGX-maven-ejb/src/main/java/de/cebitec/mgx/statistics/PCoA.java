@@ -78,7 +78,7 @@ public class PCoA {
             conn.eval(String.format("rm(%s)", tmp));
 
             String pcoaName = "pcoa" + generateSuffix();
-            conn.eval(String.format("%s <- cmdscale(%s)", pcoaName, matrixName));
+            conn.eval(String.format("%s <- cmdscale(dist(%s))", pcoaName, matrixName));
             try {
 
                 for (Entry<String, String> e : sampleNames.entrySet()) {
