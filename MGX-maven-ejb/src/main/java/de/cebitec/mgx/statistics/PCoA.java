@@ -32,7 +32,7 @@ public class PCoA {
     //
 
     public AutoCloseableIterator<Point> pcoa(Matrix m) throws MGXException {
-        if (m.getRows().size() < 2) {
+        if (m.getRows().size() < 3) {
             throw new MGXException("Insufficient number of datasets.");
         }
 
@@ -76,9 +76,9 @@ public class PCoA {
             conn.assign(tmp, colAliases);
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
-
+            
             String pcoaName = "pcoa" + generateSuffix();
-            conn.eval(String.format("%s <- cmdscale(dist(%s))", pcoaName, matrixName));
+            conn.eval(String.format("%s <- cmdscale(dist(%s), k=2)", pcoaName, matrixName));
             try {
 
                 for (Entry<String, String> e : sampleNames.entrySet()) {
@@ -87,8 +87,6 @@ public class PCoA {
                     ret.add(p);
                 }
             } catch (ArrayIndexOutOfBoundsException ex) {
-                conn.eval(String.format("print(%s)", matrixName));
-                conn.eval(String.format("print(%s)", pcoaName));
                 throw new MGXException("Could not access requested components." + ex.getMessage());
             } finally {
                 // cleanup
