@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,6 +88,8 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_WRITE);
         try {
             Files.setPosixFilePermissions(path, perms);
+        } catch (FileSystemException fse) {
+            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, fse.getMessage());
         } catch (IOException ex) {
             Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
         }
