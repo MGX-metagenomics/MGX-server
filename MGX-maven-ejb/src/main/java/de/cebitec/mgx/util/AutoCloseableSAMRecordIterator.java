@@ -1,8 +1,9 @@
-
 package de.cebitec.mgx.util;
 
 import de.cebitec.mgx.model.misc.MappedSequence;
+import net.sf.samtools.Cigar;
 import net.sf.samtools.CigarElement;
+import net.sf.samtools.CigarOperator;
 import net.sf.samtools.SAMRecord;
 import net.sf.samtools.SAMRecordIterator;
 
@@ -26,18 +27,22 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
     @Override
     public MappedSequence next() {
         SAMRecord record = this.iterator.next();
-        return new MappedSequence(Long.parseLong(record.getReadName()), record.getAlignmentStart(), record.getAlignmentEnd(), getIdentity(record));
+        return new MappedSequence(Long.parseLong(record.getReadName()), record.getAlignmentStart(), record.getAlignmentEnd(), getIdentity(record.getCigar()));
     }
 
-    private int getIdentity(SAMRecord rec) {
+    private int getIdentity(Cigar c) {
         int matched = 0;
-        for (CigarElement elem : rec.getCigar().getCigarElements()) {
-            if (elem.getOperator().name().equals("M")) {
+        int alnLen = 0;
+        for (CigarElement elem : c.getCigarElements()) {
+            if (elem.getOperator() == CigarOperator.HARD_CLIP) {
+                continue;
+            }
+            alnLen += elem.getLength();
+            if (elem.getOperator() == CigarOperator.M) {
                 matched += elem.getLength();
             }
         }
-        int alignment =  (int) (matched * 100.0d/ ((rec.getAlignmentEnd() - rec.getAlignmentStart()) + 1));
-        return alignment;
+        return (int) (matched * 100.0d / (alnLen));
     }
 
     @Override
