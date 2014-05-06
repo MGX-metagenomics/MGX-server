@@ -19,6 +19,8 @@ import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -108,9 +110,14 @@ public class MappingBean {
     @GET
     @Path("byReferenceInterval/{uuid}/{from}/{to}")
     @Produces("application/x-protobuf")
-    public MappedSequenceDTOList byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) throws MGXException {
+    public MappedSequenceDTOList byReferenceInterval(@PathParam("uuid") UUID uuid, @PathParam("from") int from, @PathParam("to") int to) {
         MappingDataSession session = mapSessions.getSession(uuid);
-        AutoCloseableIterator<MappedSequence> iter = session.get(from, to);
+        AutoCloseableIterator<MappedSequence> iter;
+        try {
+            iter = session.get(from, to);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
     }
 
