@@ -13,11 +13,9 @@ import net.sf.samtools.SAMRecordIterator;
 public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<MappedSequence> {
 
     private final SAMRecordIterator iterator;
-    int counter;
 
     public AutoCloseableSAMRecordIterator(SAMRecordIterator iterator) {
         this.iterator = iterator;
-        counter = -1;
     }
 
     @Override
@@ -28,8 +26,7 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
     @Override
     public MappedSequence next() {
         SAMRecord record = this.iterator.next();
-        counter++;
-        return new MappedSequence(counter, record.getAlignmentStart(), record.getAlignmentEnd(), getIdentity(record));
+        return new MappedSequence(Long.parseLong(record.getReadName()), record.getAlignmentStart(), record.getAlignmentEnd(), getIdentity(record));
     }
 
     private int getIdentity(SAMRecord rec) {
