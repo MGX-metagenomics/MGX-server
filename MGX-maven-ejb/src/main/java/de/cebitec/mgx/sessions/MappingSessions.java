@@ -1,6 +1,7 @@
 package de.cebitec.mgx.sessions;
 
 import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.controller.MGXException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -48,7 +49,10 @@ public class MappingSessions {
         }
     }
 
-    public MappingDataSession getSession(UUID uuid) {
+    public MappingDataSession getSession(UUID uuid) throws MGXException {
+        if (!tasks.containsKey(uuid)) {
+            throw new MGXException("No mapping session for " + uuid);
+        }
         return tasks.get(uuid);
     }
 
