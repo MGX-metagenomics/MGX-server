@@ -72,6 +72,8 @@ public class JobSubmitterImpl implements JobSubmitter {
             stmt.setInt(1, JobState.VERIFIED.getValue());
             stmt.setLong(2, job.getId());
             stmt.execute();
+            stmt.close();
+            conn.close();
             job.setStatus(JobState.VERIFIED);
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
@@ -86,12 +88,13 @@ public class JobSubmitterImpl implements JobSubmitter {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
         // set job to submitted
-        int numRows = 0;
         job.setStatus(JobState.SUBMITTED);
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
             stmt.setInt(1, JobState.SUBMITTED.getValue());
             stmt.setLong(2, job.getId());
-            numRows = stmt.executeUpdate();
+            int numRows = stmt.executeUpdate();
+            stmt.close();
+            conn.close();
             if (numRows != 1) {
                 throw new MGXException("Could not update job state.");
             }
@@ -105,12 +108,12 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
     public void cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete(mgx, "cancel/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
+        delete("cancel/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
     }
 
     @Override
     public void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete(mgx, "delete/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
+        delete("delete/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
     }
 
     private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, String projectDir, Job j) throws MGXException {
@@ -194,7 +197,7 @@ public class JobSubmitterImpl implements JobSubmitter {
         return UriBuilder.fromUri(uri).build();
     }
 
-    protected final <U> U put(MGXController mgx, final String path, Object obj, Class<U> c) throws MGXDispatcherException {
+    protected final <U> U put(final String path, Object obj, Class<U> c) throws MGXDispatcherException {
         //System.err.println("PUT uri: " + getWebResource().path(path).getURI().toASCIIString());
         ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).put(ClientResponse.class, obj);
         catchException(res);
@@ -208,13 +211,13 @@ public class JobSubmitterImpl implements JobSubmitter {
         return res.<U>getEntity(c);
     }
 
-    protected final void delete(MGXController mgx, final String path) throws MGXDispatcherException {
+    protected final void delete(final String path) throws MGXDispatcherException {
         //System.err.println("DELETE uri: " +getWebResource().path(path).getURI().toASCIIString());
         ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).delete(ClientResponse.class);
         catchException(res);
     }
 
-    protected final <U> void post(MGXController mgx, final String path, U obj) throws MGXDispatcherException {
+    protected final <U> void post(final String path, U obj) throws MGXDispatcherException {
         ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).post(ClientResponse.class, obj);
         catchException(res);
     }
