@@ -7,6 +7,8 @@ import de.cebitec.mgx.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
@@ -42,7 +44,7 @@ public class Clustering {
         if (conn == null) {
             throw new MGXException("Could not connect to R.");
         }
-        
+
         Map<String, String> names = new HashMap<>();
         String nwk = null;
 
@@ -78,9 +80,36 @@ public class Clustering {
         } finally {
             conn.close();
         }
-        
+
         if (nwk == null) {
             throw new MGXException("Clustering failed.");
+        }
+
+        /*
+         * Clustering might fail e.g. when two equal datasets are present 
+         * since their distance is 0. Try to extract and report a meaningful
+         * error message
+         */
+        if (nwk.contains("Error in")) {
+            LOG.log(Level.SEVERE, nwk);
+            String err = "Unknown error.";
+            if (nwk.contains(":")) {
+                err = nwk.substring(nwk.lastIndexOf(":"));
+                err = err.replaceAll("\n", ""); // remove line breaks
+                if (err.contains(":")) {
+                    err = err.substring(err.lastIndexOf(":"));
+                }
+                if (err.contains("(")) {
+                    err = err.substring(0, err.lastIndexOf("("));
+                }
+                if (err.startsWith(": ")) {
+                    err = err.substring(2);
+                }
+                while (err.contains("  ")) {
+                    err = err.replaceAll("  ", " ");
+                }
+            }
+            throw new MGXException("Could not cluster data: " + err.trim());
         }
 
         // re-convert group names
@@ -90,6 +119,7 @@ public class Clustering {
 
         return nwk;
     }
+    private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
 
     private static String generateSuffix() {
         char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
@@ -110,7 +140,6 @@ public class Clustering {
 //        }
 //        return ret;
 //    }
-
     private static boolean contains(String[] options, String value) {
         for (String o : options) {
             if (o.equals(value)) {
