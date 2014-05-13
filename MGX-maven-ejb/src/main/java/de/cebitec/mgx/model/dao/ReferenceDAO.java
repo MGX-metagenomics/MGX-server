@@ -25,7 +25,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
 
     public String getSequence(final Reference ref, int from, int to) throws MGXException {
         if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
-            throw new MGXException("Invalid coordinates: " + from + " " + to);
+            throw new MGXException("Invalid coordinates: " + from + " " + to + ", reference length is " + ref.getLength());
         }
         int len = to - from + 1;
         char[] buf = new char[len];
