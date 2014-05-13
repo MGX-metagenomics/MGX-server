@@ -35,7 +35,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
             if (len != br.read(buf)) {
                 throw new MGXException("Cannot retrieve sequence");
             }
-            return String.valueOf(buf);
+            return String.valueOf(buf).toUpperCase();
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
         }
