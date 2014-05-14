@@ -70,7 +70,7 @@
         <dependency>
             <groupId>de.cebitec.external</groupId>
             <artifactId>sam-jdk</artifactId>
-            <version>1.100</version>
+            <version>1.113</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -89,7 +89,7 @@
             <artifactId>REngine</artifactId>
             <version>1.8.0</version>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>de.cebitec.external</groupId>
             <artifactId>JRI</artifactId>
             <version>0.9-6</version>
