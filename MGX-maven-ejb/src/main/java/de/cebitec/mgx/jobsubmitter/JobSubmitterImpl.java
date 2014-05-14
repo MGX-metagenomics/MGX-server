@@ -32,13 +32,13 @@ import javax.ws.rs.core.UriBuilder;
  */
 @Stateless(mappedName = "JobSubmitter")
 public class JobSubmitterImpl implements JobSubmitter {
-    
+
     @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
 
     private Client client = null;
     private String dispatcherHost = null;
-    
+
     private final static String MGX_CLASS = "MGX/";
 
     @Override
@@ -68,6 +68,14 @@ public class JobSubmitterImpl implements JobSubmitter {
             throw new MGXException(ex.getMessage());
         }
 
+        try {
+            if (conn.isClosed()) {
+                throw new MGXException("Cannot validate with closed database connection.");
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
             stmt.setInt(1, JobState.VERIFIED.getValue());
             stmt.setLong(2, job.getId());
@@ -87,6 +95,15 @@ public class JobSubmitterImpl implements JobSubmitter {
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
+
+        try {
+            if (conn.isClosed()) {
+                throw new MGXException("Cannot submit with closed database connection.");
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
         // set job to submitted
         job.setStatus(JobState.SUBMITTED);
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
