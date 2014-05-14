@@ -144,7 +144,7 @@ public class ConfigItem implements Comparator<ConfigItem>, Comparable<ConfigItem
      * @param lAnswer Die Antwort des Users.
      */
     public ConfigItem setAnswer(String lAnswer) {
-        if (lAnswer.trim().isEmpty() || lAnswer == null) {
+        if (lAnswer == null || lAnswer.trim().isEmpty()) {
             answer = "";
         } else {
             this.answer = lAnswer;

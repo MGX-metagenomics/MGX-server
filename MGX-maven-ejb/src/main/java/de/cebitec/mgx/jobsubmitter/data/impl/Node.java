@@ -100,8 +100,7 @@ public class Node implements Iterable<Entry<String, ConfigItem>> {
      *
      */
     public Map<String, String> getAnswers() {
-
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new HashMap<>(configItems.size());
         for (Entry<String, ConfigItem> entry : configItems.entrySet()) {
             if (entry.getValue().isAnswerSet()) {
                 map.put(entry.getKey(), entry.getValue().getAnswer());

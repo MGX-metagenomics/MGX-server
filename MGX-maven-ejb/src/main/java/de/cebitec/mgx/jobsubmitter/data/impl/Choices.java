@@ -1,4 +1,3 @@
-
 package de.cebitec.mgx.jobsubmitter.data.impl;
 
 import java.util.LinkedHashMap;
@@ -17,7 +16,7 @@ public class Choices {
      * Hier sind die einzelnen Elemente gespeichert, dabei dient der choice Name
      * als key und die Beschreibung als value.
      */
-    private Map<String, String> sample;
+    private final Map<String, String> sample;
 
     public Choices() {
         sample = new LinkedHashMap<>();
@@ -55,6 +54,3 @@ public class Choices {
         return sample;
     }
 }
-
-
-//~ Formatted by Jindent --- http://www.jindent.com
