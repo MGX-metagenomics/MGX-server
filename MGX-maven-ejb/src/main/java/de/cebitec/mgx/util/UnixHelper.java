@@ -23,6 +23,9 @@ import java.util.logging.Logger;
 public class UnixHelper {
     
     public static boolean isGroupWritable(final File f) {
+        if (!f.exists()) {
+            return false;
+        }
         try {
             Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
             return perms.contains(PosixFilePermission.GROUP_WRITE);
