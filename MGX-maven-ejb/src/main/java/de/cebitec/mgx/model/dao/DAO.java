@@ -106,7 +106,7 @@ public abstract class DAO<T extends Identifiable> {
             e.persist(obj);
             e.flush();
         } catch (PersistenceException ex) {
-            throw new MGXException(ex.getCause());
+            throw new MGXException(ex);
         }
         return obj.getId();
     }
@@ -117,7 +117,7 @@ public abstract class DAO<T extends Identifiable> {
             e.merge(obj);
             e.flush();
         } catch (PersistenceException ex) {
-            throw new MGXException(ex.getCause());
+            throw new MGXException(ex);
         }
     }
 
