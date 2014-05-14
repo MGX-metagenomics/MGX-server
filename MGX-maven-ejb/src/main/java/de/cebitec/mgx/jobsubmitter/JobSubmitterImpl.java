@@ -81,7 +81,6 @@ public class JobSubmitterImpl implements JobSubmitter {
             stmt.setLong(2, job.getId());
             stmt.execute();
             stmt.close();
-            conn.close();
             job.setStatus(JobState.VERIFIED);
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
@@ -111,7 +110,6 @@ public class JobSubmitterImpl implements JobSubmitter {
             stmt.setLong(2, job.getId());
             int numRows = stmt.executeUpdate();
             stmt.close();
-            conn.close();
             if (numRows != 1) {
                 throw new MGXException("Could not update job state.");
             }
