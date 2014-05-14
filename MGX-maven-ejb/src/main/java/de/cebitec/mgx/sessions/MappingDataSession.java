@@ -15,13 +15,13 @@ import net.sf.samtools.SAMRecordIterator;
  */
 public class MappingDataSession {
 
-    private final Reference ref;
+    private final long refId;
     private final String projName;
     private long lastAccessed;
     private final SAMFileReader samReader;
     
-    public MappingDataSession(Reference ref, String projName, String samFile){
-        this.ref = ref;
+    public MappingDataSession(long refId, String projName, String samFile){
+        this.refId = refId;
         this.projName = projName;
         lastAccessed = System.currentTimeMillis();
         samReader = new SAMFileReader(new File(samFile));
@@ -29,7 +29,7 @@ public class MappingDataSession {
 
     public AutoCloseableIterator<MappedSequence> get(int from, int to) throws MGXException {
         lastAccessed = System.currentTimeMillis();
-        SAMRecordIterator overlaps = samReader.queryOverlapping(ref.getId().toString(), from, to);
+        SAMRecordIterator overlaps = samReader.queryOverlapping(String.valueOf(refId), from, to);
         return new AutoCloseableSAMRecordIterator(overlaps);
     }
 

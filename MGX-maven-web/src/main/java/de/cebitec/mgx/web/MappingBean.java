@@ -19,8 +19,6 @@ import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -100,7 +98,7 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(m.getReference(), mgx.getProjectName(), m.getBAMFile()));
+            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), mgx.getProjectName(), m.getBAMFile()));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
