@@ -20,7 +20,7 @@ import javax.ejb.Startup;
 @Startup
 public class MGXConfiguration extends DispatcherConfigBase {
 
-    protected Properties config;
+    private final Properties config = new Properties();
 
     public MGXConfiguration() {
     }
@@ -38,7 +38,6 @@ public class MGXConfiguration extends DispatcherConfigBase {
         }
 
         FileInputStream in = null;
-        config = new Properties();
         try {
             in = new FileInputStream(cfgFile);
             config.load(in);
@@ -119,7 +118,6 @@ public class MGXConfiguration extends DispatcherConfigBase {
          * dispatcher host might be changing, therefore we have to read
          * this file every time
          */
-
         File f = new File(dispatcherHostFile);
         if (!f.exists()) {
             throw new MGXDispatcherException("Dispatcher host file missing, dispatcher not running?");
@@ -130,7 +128,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         try {
             in = new FileInputStream(f);
             p.load(in);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new MGXDispatcherException(ex);
         } finally {
             try {
@@ -151,7 +149,6 @@ public class MGXConfiguration extends DispatcherConfigBase {
          * dispatcher host might be changing, therefore we have to read
          * this file every time
          */
-
         File f = new File(dispatcherHostFile);
         if (!f.exists()) {
             throw new MGXDispatcherException("Dispatcher host file missing, dispatcher not running?");
@@ -162,7 +159,7 @@ public class MGXConfiguration extends DispatcherConfigBase {
         try {
             in = new FileInputStream(f);
             p.load(in);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new MGXDispatcherException(ex);
         } finally {
             try {
