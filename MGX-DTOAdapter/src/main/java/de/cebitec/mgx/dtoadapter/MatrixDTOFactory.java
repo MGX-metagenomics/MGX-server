@@ -6,9 +6,8 @@ import de.cebitec.mgx.dto.dto.ProfileDTO;
 import de.cebitec.mgx.model.misc.Matrix;
 import de.cebitec.mgx.model.misc.NamedVector;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  *
@@ -35,7 +34,7 @@ public class MatrixDTOFactory extends DTOConversionBase<Matrix, MGXMatrixDTO, Ob
 
     @Override
     public Matrix toDB(MGXMatrixDTO dto) {
-        Set<NamedVector> data = new HashSet<>();
+        List<NamedVector> data = new ArrayList<>(dto.getRowCount());
         for (ProfileDTO pdto : dto.getRowList()) {
             List<Double> ll = pdto.getValues().getValueList();
             double[] tmp = new double[ll.size()];
