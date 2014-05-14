@@ -40,13 +40,13 @@ public class PG9Dialect extends PostgreSQLDialect {
     public ViolatedConstraintNameExtracter getViolatedConstraintNameExtracter() {
         return EXTRACTER;
     }
-    private static ViolatedConstraintNameExtracter EXTRACTER = new TemplatedViolatedConstraintNameExtracter() {
+    private static final ViolatedConstraintNameExtracter EXTRACTER = new TemplatedViolatedConstraintNameExtracter() {
 
         @Override
         public String extractConstraintName(SQLException sqle) {
 
             try {
-                int sqlState = Integer.valueOf(JdbcExceptionHelper.extractSqlState(sqle)).intValue();
+                int sqlState = Integer.valueOf(JdbcExceptionHelper.extractSqlState(sqle));
                 switch (sqlState) {
                     // CHECK VIOLATION
                     case 23514:
