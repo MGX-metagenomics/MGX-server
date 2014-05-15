@@ -1,6 +1,7 @@
 package de.cebitec.mgx.util;
 
 import de.cebitec.mgx.model.misc.MappedSequence;
+import java.util.concurrent.locks.Lock;
 import net.sf.samtools.Cigar;
 import net.sf.samtools.CigarElement;
 import net.sf.samtools.CigarOperator;
@@ -14,9 +15,11 @@ import net.sf.samtools.SAMRecordIterator;
 public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<MappedSequence> {
 
     private final SAMRecordIterator iterator;
+    private final Lock lock;
 
-    public AutoCloseableSAMRecordIterator(SAMRecordIterator iterator) {
+    public AutoCloseableSAMRecordIterator(SAMRecordIterator iterator, Lock l) {
         this.iterator = iterator;
+        this.lock = l;
     }
 
     @Override
@@ -52,5 +55,6 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
     @Override
     public void close() throws Exception {
         iterator.close();
+        lock.unlock();
     }
 }
