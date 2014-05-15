@@ -43,7 +43,6 @@ public class MappingDataSession {
         } catch (InterruptedException ex) {
             throw new MGXException(ex);
         }
-        return null;
     }
 
     public long lastAccessed() {
