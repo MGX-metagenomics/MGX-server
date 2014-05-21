@@ -18,13 +18,15 @@ import net.sf.samtools.SAMRecordIterator;
 public class MappingDataSession {
 
     private final long refId;
+    private final int refLength;
     private final String projName;
     private long lastAccessed;
     private final SAMFileReader samReader;
     private final Lock lock;
 
-    public MappingDataSession(long refId, String projName, String samFile) {
+    public MappingDataSession(long refId, int refLen, String projName, String samFile) {
         this.refId = refId;
+        this.refLength = refLen;
         this.projName = projName;
         lastAccessed = System.currentTimeMillis();
         samReader = new SAMFileReader(new File(samFile));
@@ -44,7 +46,7 @@ public class MappingDataSession {
             throw new MGXException(ex);
         }
     }
-
+    
     public long lastAccessed() {
         return lastAccessed;
     }
