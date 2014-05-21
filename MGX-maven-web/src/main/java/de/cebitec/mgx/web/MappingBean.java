@@ -98,7 +98,7 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), mgx.getProjectName(), m.getBAMFile()));
+            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), m.getBAMFile()));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
