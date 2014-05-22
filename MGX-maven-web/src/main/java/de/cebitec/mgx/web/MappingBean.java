@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.MappedSequenceDTOList;
 import de.cebitec.mgx.dto.dto.MappingDTO;
@@ -117,6 +118,20 @@ public class MappingBean {
             throw new MGXWebException(ex.getMessage());
         }
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
+    }
+
+    @GET
+    @Path("getMaxCoverage/{uuid}")
+    @Produces("application/x-protobuf")
+    public MGXLong getMaxCoverage(@PathParam("uuid") UUID uuid) {
+        long maxCov = -1;
+        try {
+            MappingDataSession session = mapSessions.getSession(uuid);
+            maxCov = session.getMaxCoverage();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return MGXLong.newBuilder().setValue(maxCov).build();
     }
 
     @GET
