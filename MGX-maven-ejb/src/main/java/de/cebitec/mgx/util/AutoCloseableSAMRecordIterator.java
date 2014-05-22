@@ -29,8 +29,12 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
 
     @Override
     public MappedSequence next() {
-        SAMRecord record = this.iterator.next();
-        return new MappedSequence(Long.parseLong(record.getReadName()), record.getAlignmentStart(), record.getAlignmentEnd(), getIdentity(record.getCigar()));
+        SAMRecord record = iterator.next();
+        // convert to 0-based positions
+        return new MappedSequence(Long.parseLong(record.getReadName()), 
+                record.getAlignmentStart()-1, 
+                record.getAlignmentEnd()-1, 
+                getIdentity(record.getCigar()));
     }
 
     private int getIdentity(Cigar c) {
