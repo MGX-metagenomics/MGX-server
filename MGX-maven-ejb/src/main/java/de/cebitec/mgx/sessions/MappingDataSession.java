@@ -28,6 +28,7 @@ public class MappingDataSession {
     private final String samFile;
     private final SAMFileReader samReader;
     private final Lock lock;
+    private long maxCov = -1;
 
     public MappingDataSession(long refId, int refLen, String projName, String samFile) {
         this.refId = refId;
@@ -36,10 +37,14 @@ public class MappingDataSession {
         this.samFile = samFile;
         lastAccessed = System.currentTimeMillis();
         samReader = new SAMFileReader(new File(samFile));
+        samReader.setValidationStringency(SAMFileReader.ValidationStringency.STRICT);
         lock = new ReentrantLock();
     }
 
     public AutoCloseableIterator<MappedSequence> get(int from, int to) throws MGXException {
+        if (from > to) {
+            throw new IllegalArgumentException();
+        }
         lastAccessed = System.currentTimeMillis();
         try {
             if (lock.tryLock(5, TimeUnit.SECONDS)) {
@@ -55,12 +60,15 @@ public class MappingDataSession {
     }
 
     public long getMaxCoverage() {
-        ForkJoinPool pool = new ForkJoinPool();
-        // sam-jdk wants 1-based positions - ARGH
-        GetCoverage getCov = new GetCoverage(samFile, 1, refLength, refId);
-        long ret = pool.invoke(getCov);
-        pool.shutdown();
-        return ret;
+        if (maxCov == -1) {
+            ForkJoinPool pool = new ForkJoinPool();
+            // sam-jdk wants 1-based positions - ARGH
+            GetCoverage getCov = new GetCoverage(samFile, 1, refLength, refId);
+            maxCov = pool.invoke(getCov);
+            pool.shutdown();
+        }
+        lastAccessed = System.currentTimeMillis();
+        return maxCov;
     }
 
     public long lastAccessed() {

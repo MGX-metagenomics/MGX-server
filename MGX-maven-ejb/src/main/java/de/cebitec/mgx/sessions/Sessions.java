@@ -59,8 +59,10 @@ public class Sessions {
 
     @Asynchronous
     public void closeSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).close();
-        sessions.remove(uuid);
+        TaskI t = sessions.remove(uuid);
+        if (t != null) {
+            t.close();
+        }
     }
 
     @Asynchronous
@@ -74,11 +76,13 @@ public class Sessions {
         Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : sessions.keySet()) {
             TaskI s = sessions.get(uuid);
-            long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
-            if (sessionIdleTime > timeout) {
-                Logger.getLogger(Sessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
-                toRemove.add(uuid);
-                s.cancel();
+            if (s != null) {
+                long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
+                if (sessionIdleTime > timeout) {
+                    Logger.getLogger(Sessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
+                    toRemove.add(uuid);
+                    s.cancel();
+                }
             }
         }
 
