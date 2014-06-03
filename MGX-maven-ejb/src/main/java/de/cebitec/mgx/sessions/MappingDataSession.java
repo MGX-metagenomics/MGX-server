@@ -1,9 +1,9 @@
 package de.cebitec.mgx.sessions;
 
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.AutoCloseableSAMRecordIterator;
-import de.cebitec.mgx.model.misc.MappedSequence;
 import java.io.File;
 import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
@@ -112,7 +112,7 @@ public class MappingDataSession {
                 GetCoverage left = new GetCoverage(samFile, from, mid, refId);
                 left.fork();
                 GetCoverage right = new GetCoverage(samFile, mid + 1, to, refId);
-                right.compute();
+                //right.compute();
 
                 long maxLeft = left.join();
                 long maxRight = right.compute();
