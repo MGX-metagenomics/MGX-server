@@ -64,7 +64,7 @@ public class GPMSConfiguration {
             in = new FileInputStream(cfgFile);
             config.load(in);
             in.close();
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             throw new RuntimeException(ex.getMessage());
         } finally {
             if (in != null) {
