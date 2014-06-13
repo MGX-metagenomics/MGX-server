@@ -18,6 +18,7 @@ import java.io.*;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -53,7 +54,21 @@ public class JobSubmitterImpl implements JobSubmitter {
     @Override
     public boolean validate(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
-        return validate(mgx.getProjectName(), mgx.getConnection(), job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgx.getProjectDirectory());
+        Connection conn = mgx.getConnection();
+        try {
+            conn.setClientInfo("ApplicationName", "validate-" + jobId);
+        } catch (SQLClientInfoException ex) {
+            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        boolean ret = validate(mgx.getProjectName(), conn, job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgx.getProjectDirectory());
+        try {
+            conn.setClientInfo("ApplicationName", "");
+            conn.close();
+            assert conn.isClosed();
+        } catch (SQLException ex) {
+            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
     }
 
     @Override
@@ -90,7 +105,11 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
     public boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXException, MGXDispatcherException {
-
+        try {
+            conn.setClientInfo("ApplicationName", "submit-" + job.getId());
+        } catch (SQLClientInfoException ex) {
+            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
@@ -116,9 +135,16 @@ public class JobSubmitterImpl implements JobSubmitter {
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
         }
-
         // and send to dispatcher
-        return get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
+        Boolean ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
+        try {
+            conn.setClientInfo("ApplicationName", "submit-" + job.getId());
+            conn.close();
+            assert conn.isClosed();
+        } catch (SQLException ex) {
+            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
     }
 
     @Override
