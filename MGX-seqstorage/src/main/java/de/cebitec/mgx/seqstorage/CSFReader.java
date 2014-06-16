@@ -1,5 +1,6 @@
 package de.cebitec.mgx.seqstorage;
 
+import de.cebitec.mgx.braf.BufferedRandomAccessFile;
 import de.cebitec.mgx.seqholder.DNASequenceHolder;
 import de.cebitec.mgx.seqstorage.encoding.ByteUtils;
 import de.cebitec.mgx.seqstorage.encoding.FourBitEncoder;
@@ -174,7 +175,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
         }
     }
     private NMSReader idx = null;
-    private RandomAccessFile raf = null;
+    private BufferedRandomAccessFile raf = null;
 
     @Override
     public Set<DNASequenceHolder> fetch(long[] ids) throws SeqStoreException {
@@ -189,7 +190,7 @@ public class CSFReader implements SeqReaderI<DNASequenceHolder> {
                 idx = new NMSReader(namein);
             }
             if (raf == null) {
-                raf = new RandomAccessFile(csffile, "r");
+                raf = new BufferedRandomAccessFile(csffile, "r");
             }
         } catch (IOException ex) {
             throw new SeqStoreException("Could not parse index: " + ex);

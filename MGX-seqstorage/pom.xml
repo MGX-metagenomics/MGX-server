@@ -95,5 +95,15 @@
             <artifactId>MGX-seqholder</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>de.cebitec.mgx</groupId>
+            <artifactId>MGX-BufferedRandomAccessFile</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>SFFReader</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
