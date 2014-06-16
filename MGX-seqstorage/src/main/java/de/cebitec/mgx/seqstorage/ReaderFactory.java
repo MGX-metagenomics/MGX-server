@@ -73,7 +73,7 @@ public class ReaderFactory implements FactoryI {
                 if (cbuf[1] == 's' && cbuf[2] == 'f' && cbuf[3] == 'f') {
                     ret = new SFFReader(uri);
                 }
-            // no break; here
+                break;
             default:
                 throw new SeqStoreException("Unsupported file type (" + new String(cbuf) + ")");
         }
