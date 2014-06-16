@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -71,7 +73,12 @@ public class ReaderFactory implements FactoryI {
                 break;
             case '.':
                 if (cbuf[1] == 's' && cbuf[2] == 'f' && cbuf[3] == 'f') {
-                    ret = new SFFReader(uri);
+                    try {
+                        ret = new SFFReader(uri);
+                    } catch (IOException ex) {
+                        Logger.getLogger(ReaderFactory.class.getName()).log(Level.SEVERE, null, ex);
+                        throw new SeqStoreException(ex.getMessage());
+                    }
                 }
                 break;
             default:
