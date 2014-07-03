@@ -24,7 +24,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>de.cebitec.mgx.sffreader</Import-Package>
+                        <Import-Package>de.cebitec.mgx.sffreader,de.cebitec.mgx.sequence</Import-Package>
                         <Export-Package>de.cebitec.mgx.seqstorage,de.cebitec.mgx.seqstorage.encoding</Export-Package>
                         <Private-Package>de.cebitec.mgx.seqstorage.*</Private-Package>
                         <Embed-Dependency>trove4j;scope=compile;inline=true</Embed-Dependency>
