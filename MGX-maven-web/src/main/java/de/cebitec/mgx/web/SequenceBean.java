@@ -1,8 +1,10 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
@@ -64,6 +66,7 @@ public class SequenceBean {
     @GET
     @Path("initUpload/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString initUpload(@PathParam("id") Long seqrun_id) {
 
         StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
@@ -96,6 +99,7 @@ public class SequenceBean {
 
     @GET
     @Path("closeUpload/{uuid}")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response closeUpload(@PathParam("uuid") UUID session_id) {
         try {
             upSessions.closeSession(session_id);
@@ -110,6 +114,7 @@ public class SequenceBean {
     @POST
     @Path("add/{uuid}")
     @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response add(@PathParam("uuid") UUID session_id, SequenceDTOList seqList) {
         try {
             upSessions.getSession(session_id).add(seqList);
@@ -122,6 +127,7 @@ public class SequenceBean {
 
     @GET
     @Path("cancelUpload/{uuid}")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response cancelUpload(@PathParam("uuid") UUID session_id) {
         try {
             upSessions.cancelSession(session_id);
