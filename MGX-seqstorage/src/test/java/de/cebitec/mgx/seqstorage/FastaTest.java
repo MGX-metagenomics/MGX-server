@@ -1,15 +1,9 @@
 package de.cebitec.mgx.seqstorage;
 
-import de.cebitec.mgx.seqholder.DNASequenceHolder;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
