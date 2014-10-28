@@ -27,9 +27,9 @@ public class FastaWriter implements SeqWriterI<DNASequenceI> {
     public synchronized void addSequence(DNASequenceI seq) throws IOException {
         StringBuilder sb = new StringBuilder(">");
         sb.append(new String(seq.getName()));
-        sb.append("\n");
+        sb.append(System.lineSeparator());
         sb.append(new String(seq.getSequence()).toUpperCase());
-        sb.append("\n");
+        sb.append(System.lineSeparator());
         seqout.write(sb.toString());
     }
 
@@ -37,6 +37,7 @@ public class FastaWriter implements SeqWriterI<DNASequenceI> {
     public void close() throws IOException {
         if (seqout != null) {
             seqout.close();
+            seqout = null;
         }
     }
 }
