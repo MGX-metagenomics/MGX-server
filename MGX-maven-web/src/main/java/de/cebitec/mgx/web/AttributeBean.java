@@ -3,12 +3,15 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
 import de.cebitec.mgx.dto.dto.CorrelatedAttributeCount;
+import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.MGXStringList;
 import de.cebitec.mgx.dto.dto.SearchRequestDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
@@ -116,6 +119,25 @@ public class AttributeBean {
     }
 
     @PUT
+    @Path("find")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public MGXStringList find(SearchRequestDTO req) {
+        AutoCloseableIterator<String> iter = null;
+        try {
+            iter = mgx.getAttributeDAO().find(req.getTerm(), req.getSeqrunIdList());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        MGXStringList.Builder dtos = MGXStringList.newBuilder();
+        while (iter != null && iter.hasNext()) {
+            dtos.addString(MGXString.newBuilder().setValue(iter.next()).build());
+        }
+
+        return dtos.build();
+    }
+
+    @PUT
     @Path("search")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
@@ -193,12 +215,12 @@ public class AttributeBean {
         Set<AttributeType> aTypes = new HashSet<>();
 
         AttributeDistribution.Builder b = AttributeDistribution.newBuilder();
-        
+
         for (Triple<Attribute, Long, Long> t : dist) {
             Attribute attr = t.getFirst();
             Long parentId = t.getSecond();
             Long count = t.getThird();
-            
+
             AttributeDTO attrDTO = AttributeDTOFactory.getInstance().toDTO(attr, parentId);
             AttributeCount attrcnt = AttributeCount.newBuilder().setAttribute(attrDTO).setCount(count).build();
 

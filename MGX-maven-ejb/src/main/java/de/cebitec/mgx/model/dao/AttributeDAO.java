@@ -138,7 +138,6 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
 //        for (AttributeType at : getController().getAttributeTypeDAO().getByIds(Arrays.asList(attrTypeId, attrType2Id))) {
 //            System.err.println("got AT: " + at.getName());
 //        }
-
         Map<Pair<Attribute, Attribute>, Integer> ret = new HashMap<>();
         Connection conn = getController().getConnection();
         PreparedStatement stmt = null;
@@ -176,6 +175,37 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
             close(conn, stmt, rs);
         }
         return ret;
+    }
+
+    private final static String SQL_FIND = "SELECT attr.id, value, attrtype_id, job_id, parent_id from attribute attr "
+            + "LEFT JOIN job ON (attr.job_id = job.id) "
+            + "WHERE job.seqrun_id = ANY(?) AND job.job_state=5 "
+            + "AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')";
+
+    public DBIterator<String> find(String term, List<Long> seqrunIdList) throws MGXException {
+        if (term.isEmpty() || seqrunIdList.isEmpty()) {
+            throw new MGXException("Empty search term or empty run list.");
+        }
+        DBIterator<String> iter = null;
+        final Connection conn = getController().getConnection();
+
+        try {
+            PreparedStatement stmt = conn.prepareStatement(SQL_FIND);
+            stmt.setArray(1, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
+            stmt.setString(2, term);
+            ResultSet rset = stmt.executeQuery();
+            final ResultSet rs = rset;
+
+            iter = new DBIterator<String>(rs, stmt, conn) {
+                @Override
+                public String convert(ResultSet rs) throws SQLException {
+                    return rs.getString(2);
+                }
+            };
+        } catch (SQLException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+        return iter;
     }
 
     public DBIterator<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
