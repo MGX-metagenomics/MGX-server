@@ -323,11 +323,12 @@ public class JobBean {
     @Path("BySeqRun/{seqrun_id}")
     @Produces("application/x-protobuf")
     public JobDTOList BySeqRun(@PathParam("seqrun_id") Long seqrun_id) {
-        SeqRun run;
+        SeqRun run = null;
         try {
             run = mgx.getSeqRunDAO().getById(seqrun_id);
         } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            // we don't fail for non-existing seqruns; instead, an empty
+            // result is returned
         }
         return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
     }
