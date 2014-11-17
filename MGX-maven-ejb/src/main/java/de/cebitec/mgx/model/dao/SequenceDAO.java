@@ -48,7 +48,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             throw new MGXException("No sequence for ID "+ id);
         }
         
-        T seq = (T) new Sequence();
+        Sequence seq = new Sequence();
         seq.setId(id);
         seq.setName(seqName);
 
@@ -57,12 +57,12 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             Iterator<DNASequenceHolder> iter = reader.fetch(new long[]{id}).iterator();
             assert iter.hasNext();
             byte[] seqdata = iter.next().getSequence().getSequence();
-            String seqString = new String(seqdata);
+            String seqString = new String(seqdata).toUpperCase();
             seq.setSequence(seqString);
             seq.setLength(seqString.length());
         } catch (Exception ex) {
             throw new MGXException(ex);
         }
-        return seq;
+        return (T)seq;
     }
 }
