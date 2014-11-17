@@ -23,12 +23,9 @@
         <module>MGX-maven-ejb</module>
         <module>MGX-maven-web</module>
         <module>MGX-maven-ear</module>
-        <module>MGX-isequences</module>
         <module>MGX-upload</module>
-        <module>MGX-seqstorage</module>
         <module>MGX-DTOAdapter</module>
         <module>MGX-gpms</module>
-        <module>MGX-seqholder</module>
     </modules>
 
     <distributionManagement>
