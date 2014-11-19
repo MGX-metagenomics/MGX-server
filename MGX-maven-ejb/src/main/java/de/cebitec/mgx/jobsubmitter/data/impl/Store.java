@@ -59,6 +59,7 @@ public class Store implements Iterable<Entry<Long, Node>> {
                 final ConfigItem configItem = configItementry.getValue();
 
                 JobParameter jobParameter = new JobParameter()
+                        .setId(-1L)
                     .setParameterName(configItementry.getKey())
                     .setParameterValue(configItem.getAnswer())
                     .setClassName(node.getClassName())
