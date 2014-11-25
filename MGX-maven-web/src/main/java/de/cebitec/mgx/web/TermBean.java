@@ -1,6 +1,5 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -30,8 +29,6 @@ public class TermBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
-    MGXConfiguration mgxconfig;
     @EJB
     MGXGlobal global;
 
