@@ -56,7 +56,7 @@ public class ReferenceBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
+    @EJB
     UploadSessions upSessions;
     @EJB
     MGXGlobal global;

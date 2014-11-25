@@ -48,13 +48,13 @@ public class FileBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
+    @EJB
     UploadSessions sessions;
     @EJB
     DownloadSessions dsessions;
     @EJB
     TaskHolder taskHolder;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB
     MGXConfiguration mgxconfig;
 
     @GET
