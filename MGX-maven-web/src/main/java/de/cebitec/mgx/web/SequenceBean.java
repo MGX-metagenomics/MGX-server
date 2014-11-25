@@ -52,9 +52,9 @@ public class SequenceBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/UploadSessions")
+    @EJB
     UploadSessions upSessions;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-web/DownloadSessions")
+    @EJB
     DownloadSessions downSessions;
 
     /*
