@@ -1,5 +1,6 @@
 package de.cebitec.mgx.jobsubmitter;
 
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.jobsubmitter.data.impl.Store;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.PluginDocumentHandler;
 import de.cebitec.mgx.jobsubmitter.parser.documenthandler.ToolDocumentHandler;
@@ -11,6 +12,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -25,17 +27,20 @@ import org.xml.sax.SAXException;
 @Stateless(mappedName = "JobParameterHelper")
 public class JobParameterHelper {
 
-    public AutoCloseableIterator<JobParameter> getParameters(String toolData, File plugins) {
+    @EJB
+    MGXConfiguration mgxconfig;
+
+    public AutoCloseableIterator<JobParameter> getParameters(String toolData) {
         Store store = null;
         try {
-            store = computeParameters(toolData, plugins);
+            store = computeParameters(toolData, mgxconfig.getPluginDump());
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             Logger.getLogger(JobParameterHelper.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return store.extractJobParameters();
     }
-    
+
     /**
      *
      * Gibt die konfigurierbaren Nodes mit ihren ConfigItems wieder.
@@ -50,7 +55,7 @@ public class JobParameterHelper {
         try (Reader r = new StringReader(toolXMLData)) {
             parser.parse(new InputSource(r), toolHandler);
         }
-        
+
         PluginDocumentHandler pluginHandler = new PluginDocumentHandler(toolHandler.getFilledStore());
         parser.parse(pluginXMLFile, pluginHandler);
         return pluginHandler.getFilledStore();
