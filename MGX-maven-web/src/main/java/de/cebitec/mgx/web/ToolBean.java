@@ -23,10 +23,9 @@ import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import de.cebitec.mgx.web.helper.Util;
 import de.cebitec.mgx.web.helper.XMLValidator;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -54,9 +53,9 @@ public class ToolBean {
     JobParameterHelper paramHelper;
     @EJB
     TaskHolder taskHolder;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB
     MGXConfiguration mgxconfig;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXGlobal")
+    @EJB
     MGXGlobal global;
 
     @PUT
@@ -167,9 +166,9 @@ public class ToolBean {
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
             Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
-            String toolXMLData = readFile(new File(tool.getXMLFile()));
+            String toolXMLData = Util.readFile(new File(tool.getXMLFile()));
             return getParams(toolXMLData);
-        } catch (MGXException | IOException ex) {
+        } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
     }
@@ -200,19 +199,8 @@ public class ToolBean {
     }
 
     private JobParameterListDTO getParams(String XMLData) {
-        File plugins = mgxconfig.getPluginDump();
-        AutoCloseableIterator<JobParameter> params = paramHelper.getParameters(XMLData, plugins);
+        AutoCloseableIterator<JobParameter> params = paramHelper.getParameters(XMLData);
         return JobParameterDTOFactory.getInstance().toDTOList(params);
     }
 
-    private static String readFile(File f) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        FileReader fr = new FileReader(f);
-        BufferedReader br = new BufferedReader(fr);
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-        }
-        return sb.toString();
-    }
 }
