@@ -45,7 +45,7 @@ public class SeqRunBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB
     MGXConfiguration mgxconfig;
     @EJB
     MGXGlobal global;
@@ -154,6 +154,8 @@ public class SeqRunBean {
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
     public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
+        
+        // TODO - too many DB roundtrips here
         SeqRun run;
         try {
             run = mgx.getSeqRunDAO().getById(seqrun_id);
