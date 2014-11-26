@@ -7,10 +7,10 @@ import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.KVPair;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  *
@@ -117,12 +117,13 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
                 b.addParameter(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+            log(ex.getMessage());
         }
         return b.build();
     }
 
-    public List<JobParameter> toDBList(JobParameterListDTO paramdtos) {
-        List<JobParameter> params = new ArrayList<>();
+    public Set<JobParameter> toDBList(JobParameterListDTO paramdtos) {
+        Set<JobParameter> params = new HashSet<>();
         for (JobParameterDTO dto : paramdtos.getParameterList()) {
             params.add(toDB(dto));
         }
