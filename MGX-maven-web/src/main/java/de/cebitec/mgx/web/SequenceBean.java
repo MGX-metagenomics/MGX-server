@@ -64,21 +64,12 @@ public class SequenceBean {
      * 
      */
     @GET
-    @Path("initUpload/{id}")
+    @Path("initUpload/{id}/{hasQuality}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXString initUpload(@PathParam("id") Long seqrun_id) {
-
-        StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
-                .append(File.separator)
-                .append("seqruns");
-        File f = new File(dir.toString());
-        if (!f.exists()) {
-            UnixHelper.createDirectory(f);
-        }
-        if (!UnixHelper.isGroupWritable(f)) {
-            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
-        }
+    public MGXString initUpload(@PathParam("id") Long seqrun_id, @PathParam("hasQuality") Boolean hasQuality) {
+        
+        createDirs();
 
         SeqUploadReceiver recv = null;
         UUID uuid = null;
@@ -86,7 +77,7 @@ public class SequenceBean {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
+            recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQuality);
             uuid = upSessions.registerUploadSession(recv);
 
         } catch (MGXException ex) {
@@ -257,5 +248,29 @@ public class SequenceBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTOList(objs);
+    }
+
+    private void createDirs() {
+        StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
+                .append(File.separator)
+                .append("seqruns");
+        File f = new File(dir.toString());
+        if (!f.exists()) {
+            UnixHelper.createDirectory(f);
+        }
+        if (!UnixHelper.isGroupWritable(f)) {
+            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
+        }
+
+        StringBuilder qcDir = new StringBuilder(mgx.getProjectDirectory())
+                .append(File.separator)
+                .append("QC");
+        f = new File(qcDir.toString());
+        if (!f.exists()) {
+            UnixHelper.createDirectory(f);
+        }
+        if (!UnixHelper.isGroupWritable(f)) {
+            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
+        }
     }
 }
