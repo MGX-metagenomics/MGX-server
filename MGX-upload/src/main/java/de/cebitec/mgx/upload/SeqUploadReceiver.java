@@ -4,8 +4,12 @@ import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.qc.Analyzer;
+import de.cebitec.mgx.qc.QCFactory;
+import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.DNASequence;
+import de.cebitec.mgx.seqstorage.QualityDNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -13,13 +17,21 @@ import de.cebitec.mgx.sequence.SeqWriterI;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -30,8 +42,11 @@ import javax.naming.NamingException;
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
+    @Inject
+    Executor executor;
+    //
     protected final String projectName;
     protected final long runId;
     protected final Connection conn;
@@ -40,9 +55,12 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     protected List<DNASequenceI> seqholder;
     protected long total_num_sequences = 0;
     protected long lastAccessed;
+    protected final Analyzer[] qcAnalyzers;
     protected int bulksize;
+    //
+    private volatile MGXException lastException = null;
 
-    public SeqUploadReceiver(Connection pConn, String projName, long run_id) throws MGXException {
+    public SeqUploadReceiver(Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
         projectName = projName;
         runId = run_id;
 
@@ -56,6 +74,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
         }
 
+        qcAnalyzers = QCFactory.getQCAnalyzers(hasQuality);
         seqholder = new ArrayList<>();
         bulksize = mgxconfig.getSQLBulkInsertSize();
         lastAccessed = System.currentTimeMillis();
@@ -63,9 +82,19 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @Override
     public void add(SequenceDTOList seqs) throws MGXException {
+        //
+        throwIfError();
+        //
         for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext();) {
             SequenceDTO s = iter.next();
-            DNASequenceI d = new DNASequence();
+            DNASequenceI d;
+            if (s.hasQuality()) {
+                QualityDNASequence qd = new QualityDNASequence();
+                qd.setQuality(s.getQuality().toByteArray());
+                d = qd;
+            } else {
+                d = new DNASequence();
+            }
             d.setName(s.getName().getBytes());
             d.setSequence(s.getSequence().getBytes());
             seqholder.add(d);
@@ -88,51 +117,64 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     protected void flushChunk() throws MGXException {
 
-        List<DNASequenceI> commitList = fetchChunk();
+        final List<? extends DNASequenceI> commitList = fetchChunk();
 
-        String sql = createSQLBulkStatement(commitList.size());
-        // insert sequence names and fetch list of generated ids
+        executor.execute(new Runnable() {
 
-        int curPos = 0;
-        long[] generatedIDs = new long[commitList.size()];
+            @Override
+            public void run() {
+                String sql = createSQLBulkStatement(commitList.size());
+                // insert sequence names and fetch list of generated ids
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                int curPos = 0;
+                long[] generatedIDs = new long[commitList.size()];
 
-            int i = 1;
-            for (DNASequenceI s : commitList) {
-                stmt.setLong(i, runId);
-                stmt.setString(i + 1, new String(s.getName()));
-                stmt.setInt(i + 2, s.getSequence().length);
-                i += 3;
-            }
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            try (ResultSet res = stmt.executeQuery()) {
-                while (res.next()) {
-                    generatedIDs[curPos++] = res.getLong(1);
+                    int i = 1;
+                    for (DNASequenceI s : commitList) {
+                        stmt.setLong(i, runId);
+                        stmt.setString(i + 1, new String(s.getName()));
+                        stmt.setInt(i + 2, s.getSequence().length);
+                        i += 3;
+                    }
+
+                    try (ResultSet res = stmt.executeQuery()) {
+                        while (res.next()) {
+                            generatedIDs[curPos++] = res.getLong(1);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    lastException = new MGXException(ex.getMessage());
+                    return;
+                }
+
+                //
+                // write sequences to persistent storage using the generated ids
+                //
+                curPos = 0;
+                try {
+                    for (Iterator<? extends DNASequenceI> iter = commitList.iterator(); iter.hasNext();) {
+                        // add the generated IDs
+                        DNASequenceI s = iter.next();
+                        s.setId(generatedIDs[curPos++]);
+                        writer.addSequence(s);
+                        for (Analyzer a : qcAnalyzers) {
+                            a.add(s);
+                        }
+                    }
+                } catch (IOException ex) {
+                    lastException = new MGXException(ex);
+                    return;
                 }
             }
-        } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
-        }
+        });
 
-        //
-        // write sequences to persistent storage using the generated ids
-        //
-        curPos = 0;
-        try {
-            for (Iterator<DNASequenceI> iter = commitList.iterator(); iter.hasNext();) {
-                // add the generated IDs
-                DNASequenceI s = iter.next();
-                s.setId(generatedIDs[curPos++]);
-                writer.addSequence(s);
-            }
-        } catch (IOException ex) {
-            throw new MGXException(ex);
-        }
     }
 
     @Override
     public void close() throws MGXException {
+        throwIfError();
         try {
             // commit pending data
             while (seqholder.size() > 0) {
@@ -142,7 +184,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
             String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, file.getCanonicalPath().toString());
+                stmt.setString(1, file.getCanonicalPath());
                 stmt.setLong(2, total_num_sequences);
                 stmt.setLong(3, runId);
                 stmt.executeUpdate();
@@ -158,6 +200,16 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
+        // write QC stats
+        String prefix = new StringBuilder(mgxconfig.getPersistentDirectory())
+                .append(File.separator).append(getProjectName())
+                .append(File.separator).append("QC")
+                .append(File.separator).append(runId).append(".").toString();
+        for (Analyzer a : qcAnalyzers) {
+            Persister.persist(prefix, a.get());
+        }
+        
         lastAccessed = System.currentTimeMillis();
     }
 
@@ -205,10 +257,10 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         return new File(fname.toString());
     }
 
-    private List<DNASequenceI> fetchChunk() {
+    private List<? extends DNASequenceI> fetchChunk() {
         int chunk = seqholder.size() < bulksize ? seqholder.size() : bulksize;
-        List<DNASequenceI> sub = seqholder.subList(0, chunk);
-        List<DNASequenceI> subList = new ArrayList<>(sub);
+        List<? extends DNASequenceI> sub = seqholder.subList(0, chunk);
+        List<? extends DNASequenceI> subList = new ArrayList<>(sub);
         sub.clear(); // since sub is backed by seqholder, this removes all sub-list items from seqholder
         return subList;
     }
@@ -230,7 +282,6 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
          * therefore we restrict to id column to minimize amount of data
          * that needs to be transferred
          */
-
         sql.append(" RETURNING id");
         return sql.toString();
     }
@@ -238,5 +289,17 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     @Override
     public String getProjectName() {
         return projectName;
+    }
+
+    public long getSeqRunId() {
+        return runId;
+    }
+
+    private void throwIfError() throws MGXException {
+        if (lastException != null) {
+            MGXException ex = lastException;
+            lastException = null;
+            throw ex;
+        }
     }
 }
