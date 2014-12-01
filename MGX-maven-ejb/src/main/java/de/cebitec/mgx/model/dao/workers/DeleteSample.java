@@ -17,10 +17,12 @@ import java.util.logging.Logger;
 public final class DeleteSample extends TaskI {
 
     private final long id;
+    private final String projectDir;
 
-    public DeleteSample(long id, Connection conn, String projName) {
+    public DeleteSample(long id, Connection conn, String projName, String projectDir) {
         super(projName, conn);
         this.id = id;
+        this.projectDir = projectDir;
     }
 
     @Override
@@ -43,7 +45,7 @@ public final class DeleteSample extends TaskI {
 
         // delete seqruns
         for (Long extId : extracts) {
-            TaskI t = new DeleteDNAExtract(extId, conn, getProjectName());
+            TaskI t = new DeleteDNAExtract(extId, conn, getProjectName(), projectDir);
             t.addPropertyChangeListener(this);
             t.run();
             t.removePropertyChangeListener(this);

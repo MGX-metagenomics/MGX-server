@@ -17,10 +17,12 @@ import java.util.logging.Logger;
 public final class DeleteHabitat extends TaskI {
 
     private final long id;
+    private final String projectDir;
 
-    public DeleteHabitat(Connection conn, long id, String projName) {
+    public DeleteHabitat(Connection conn, long id, String projName, String projectDir) {
         super(projName, conn);
         this.id = id;
+        this.projectDir = projectDir;
     }
 
     @Override
@@ -43,7 +45,7 @@ public final class DeleteHabitat extends TaskI {
 
         // delete samples
         for (Long sampleId : samples) {
-            TaskI t = new DeleteSample(sampleId, conn, getProjectName());
+            TaskI t = new DeleteSample(sampleId, conn, getProjectName(), projectDir);
             t.addPropertyChangeListener(this);
             t.run();
             t.removePropertyChangeListener(this);
