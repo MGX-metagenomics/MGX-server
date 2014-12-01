@@ -13,23 +13,44 @@ import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobsAndAttributeTypesDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.QCResultDTOList;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
+import de.cebitec.mgx.dtoadapter.QCResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.workers.DeleteSeqRun;
-import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.model.db.AttributeType;
+import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.qc.QCResult;
+import de.cebitec.mgx.qc.io.Loader;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 /**
@@ -151,10 +172,33 @@ public class SeqRunBean {
     }
 
     @GET
+    @Path("getQC/{id}")
+    @Produces("application/x-protobuf")
+    public QCResultDTOList getQC(@PathParam("id") Long id) {
+        File qcDir = new File(mgx.getProjectDirectory() + "QC");
+        List<QCResult> qcList = new ArrayList<>();
+        File[] listFiles = qcDir.listFiles();
+        if (listFiles != null) {
+            for (File f : listFiles) {
+                if (f.getName().startsWith(String.valueOf(id) + ".")) {
+                    try {
+                        QCResult qcr = Loader.load(f.getCanonicalPath());
+                        qcList.add(qcr);
+                    } catch (IOException ex) {
+                        throw new MGXWebException(ex.getMessage());
+                    }
+                }
+            }
+        }
+        Collections.sort(qcList);
+        return QCResultDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(qcList.iterator()));
+    }
+
+    @GET
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
     public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
-        
+
         // TODO - too many DB roundtrips here
         SeqRun run;
         try {
