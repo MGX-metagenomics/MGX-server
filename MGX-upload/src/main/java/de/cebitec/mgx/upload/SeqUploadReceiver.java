@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.inject.Inject;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -44,9 +43,8 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 
     @EJB // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
-    @Inject
-    Executor executor;
     //
+    private final Executor executor;
     protected final String projectName;
     protected final long runId;
     protected final Connection conn;
@@ -60,7 +58,8 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     //
     private volatile MGXException lastException = null;
 
-    public SeqUploadReceiver(Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
+    public SeqUploadReceiver(Executor executor, Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
+        this.executor = executor;
         projectName = projName;
         runId = run_id;
 
@@ -192,6 +191,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             //
             conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
+            Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex.getMessage());
         } finally {
             try {
@@ -200,7 +200,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        
         // write QC stats
         String prefix = new StringBuilder(mgxconfig.getPersistentDirectory())
                 .append(File.separator).append(getProjectName())
