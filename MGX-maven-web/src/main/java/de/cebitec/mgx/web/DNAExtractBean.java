@@ -121,7 +121,7 @@ public class DNAExtractBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 }

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -56,6 +57,8 @@ public class SequenceBean {
     UploadSessions upSessions;
     @EJB
     DownloadSessions downSessions;
+    @Inject
+    Executor executor;
 
     /*
      * 
@@ -64,10 +67,10 @@ public class SequenceBean {
      * 
      */
     @GET
-    @Path("initUpload/{id}/{hasQuality}")
+    @Path("initUpload/{id}/{hasQual}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXString initUpload(@PathParam("id") Long seqrun_id, @PathParam("hasQuality") Boolean hasQuality) {
+    public MGXString initUpload(@PathParam("id") Long seqrun_id, @PathParam("hasQual") Boolean hasQual) {
         
         createDirs();
 
@@ -77,7 +80,7 @@ public class SequenceBean {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            recv = new SeqUploadReceiver(mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQuality);
+            recv = new SeqUploadReceiver(executor, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
         } catch (MGXException ex) {

@@ -125,7 +125,7 @@ public class SampleBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 }
