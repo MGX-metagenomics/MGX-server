@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao.workers;
 
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sessions.TaskI;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,10 +19,12 @@ import java.util.logging.Logger;
 public final class DeleteSeqRun extends TaskI {
 
     private final long id;
+    private final String projectDir;
 
-    public DeleteSeqRun(long id, Connection conn, String projName) {
+    public DeleteSeqRun(long id, Connection conn, String projName, String projectDir) {
         super(projName, conn);
         this.id = id;
+        this.projectDir = projectDir;
     }
 
     @Override
@@ -77,6 +80,16 @@ public final class DeleteSeqRun extends TaskI {
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
                 stmt.setLong(1, id);
                 stmt.execute();
+            }
+            
+            File qcDir = new File(projectDir + "QC");
+            File[] listFiles = qcDir.listFiles();
+            if (listFiles != null) {
+                for (File f : listFiles) {
+                    if (f.getName().startsWith(String.valueOf(id) + ".")) {
+                        f.delete();
+                    }
+                }
             }
             setStatus(TaskI.State.FINISHED, runName + " deleted");
         } catch (SQLException e) {
