@@ -98,7 +98,7 @@ public class HabitatBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName(), mgx.getProjectDirectory()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 }
