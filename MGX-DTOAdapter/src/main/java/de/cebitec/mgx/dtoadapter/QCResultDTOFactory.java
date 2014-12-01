@@ -18,8 +18,20 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
  */
 public class QCResultDTOFactory extends DTOConversionBase<QCResult, QCResultDTO, QCResultDTOList> {
 
+    static {
+        instance = new QCResultDTOFactory();
+    }
+    protected final static QCResultDTOFactory instance;
+
+    private QCResultDTOFactory() {
+    }
+
+    public static QCResultDTOFactory getInstance() {
+        return instance;
+    }
+
     @Override
-    public QCResultDTO toDTO(QCResult a) { 
+    public QCResultDTO toDTO(QCResult a) {
         QCResultDTO.Builder b = QCResultDTO.newBuilder();
         b.setName(a.getName());
         for (DataRow dr : a.getData()) {
@@ -46,5 +58,5 @@ public class QCResultDTOFactory extends DTOConversionBase<QCResult, QCResultDTO,
         }
         return b.build();
     }
-    
+
 }
