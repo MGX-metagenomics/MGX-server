@@ -71,7 +71,7 @@ public class SequenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString initUpload(@PathParam("id") Long seqrun_id, @PathParam("hasQual") Boolean hasQual) {
-        
+
         createDirs();
 
         SeqUploadReceiver recv = null;
@@ -89,6 +89,17 @@ public class SequenceBean {
         }
 
         return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    /*
+     * backward compability for old clients
+    */
+    @GET
+    @Path("initUpload/{id}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXString initUpload(@PathParam("id") Long seqrun_id) {
+        return initUpload(seqrun_id, false);
     }
 
     @GET
