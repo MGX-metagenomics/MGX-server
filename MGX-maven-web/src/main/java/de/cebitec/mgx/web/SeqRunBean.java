@@ -6,7 +6,6 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -197,7 +196,7 @@ public class SeqRunBean {
     @GET
     @Path("JobsAndAttributeTypes/{seqrun_id}")
     @Produces("application/x-protobuf")
-    public dto.JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
+    public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
 
         // TODO - too many DB roundtrips here
         SeqRun run;
