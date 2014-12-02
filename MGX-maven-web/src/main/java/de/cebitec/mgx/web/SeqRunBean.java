@@ -26,7 +26,7 @@ import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Term;
-import de.cebitec.mgx.qc.QCResult;
+import de.cebitec.mgx.qc.QCResultI;
 import de.cebitec.mgx.qc.io.Loader;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -175,13 +175,13 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
         File qcDir = new File(mgx.getProjectDirectory() + "QC");
-        List<QCResult> qcList = new ArrayList<>();
+        List<QCResultI> qcList = new ArrayList<>();
         File[] listFiles = qcDir.listFiles();
         if (listFiles != null) {
             for (File f : listFiles) {
                 if (f.getName().startsWith(String.valueOf(id) + ".")) {
                     try {
-                        QCResult qcr = Loader.load(f.getCanonicalPath());
+                        QCResultI qcr = Loader.load(f.getCanonicalPath());
                         qcList.add(qcr);
                     } catch (IOException ex) {
                         throw new MGXWebException(ex.getMessage());
