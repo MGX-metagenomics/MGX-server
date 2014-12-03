@@ -81,7 +81,7 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
     @Override
     public JobParameter toDB(JobParameterDTO dto) {
         JobParameter jp = new JobParameter();
-        if (dto.hasId()) {
+        if (dto.hasId() && dto.getId() != -1) {
             jp.setId(dto.getId());
         }
         jp.setNodeId(dto.getNodeId());
