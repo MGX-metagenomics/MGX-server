@@ -30,6 +30,7 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import de.cebitec.mgx.web.helper.Util;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,8 +69,13 @@ public class JobBean {
     public MGXLong create(JobDTO dto) {
 
         Job j = JobDTOFactory.getInstance().toDB(dto);
-        Set<JobParameter> params = new HashSet<>();
-        j.setParameters(params);
+
+        // we artificially set the IDs to 'null'; otherwise, JPA considers this
+        // object an detached entity passed to persist()..
+        j.setId(null);
+        for (JobParameter jp : j.getParameters()) {
+            jp.setId(null);
+        }
 
         Tool tool = null;
         SeqRun seqrun = null;
@@ -80,72 +86,53 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-        // fetch and transfer parameters available for the referenced tool
+        j.setStatus(JobState.CREATED);
+        j.setTool(tool);
+        j.setSeqrun(seqrun);
+        j.setCreator(mgx.getCurrentUser());
+
+        // fetch default parameters for the referenced tool
+        Set<JobParameter> defaultParams = new HashSet<>();
         try {
-            String toolXMLData = Util.readFile(new File(tool.getXMLFile()));
-            AutoCloseableIterator<JobParameter> defaultParams = paramHelper.getParameters(toolXMLData);
-            while (defaultParams.hasNext()) {
-                params.add(defaultParams.next());
+            String toolXMLData = Util.readFile(new File(j.getTool().getXMLFile()));
+            AutoCloseableIterator<JobParameter> jpIter = paramHelper.getParameters(toolXMLData);
+            while (jpIter.hasNext()) {
+                defaultParams.add(jpIter.next());
             }
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-        // we artificially set the ID to 'null'; otherwise, JPA considers this
-        // object an detached entity passed to persist()..
-        j.setId(null);
-        j.setStatus(JobState.CREATED);
-        j.setTool(tool);
-        j.setSeqrun(seqrun);
-        j.setCreator(mgx.getCurrentUser());
+        // postprocess user parameters
+        for (JobParameter userParam : j.getParameters()) {
+            JobParameter defaultParam = findDefaultParameter(userParam, defaultParams);
+            String value = userParam.getParameterValue();
 
-        // persist and refetch
+            if (defaultParam.getType().equals("ConfigFile")) {
+                String fullPath = mgx.getProjectDirectory() + "files" + File.separator
+                        + userParam.getParameterValue().substring(2).replace("|", File.separator);
+                if (!new File(fullPath).exists()) {
+                    throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
+                }
+                value = fullPath;
+            }
+            userParam.setParameterValue(value);
+        }
+
+        // make sure all required parameters are set
+        for (JobParameter defaultParam : defaultParams) {
+            JobParameter userParam = findUserParameter(defaultParam, j.getParameters());
+            if (userParam == null && !defaultParam.isOptional()) {
+                throw new MGXWebException("Parameter " + defaultParam.getUserName() + " is required but missing.");
+            }
+        }
+
+        // persist
         Long job_id = null;
         try {
             job_id = mgx.getJobDAO().create(j);
-            j = mgx.getJobDAO().getById(job_id); // refetch
         } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-
-//            if (j.getParameters() == null) {
-//                j.setParameters(new HashSet<JobParameter>());
-//            }
-        // update default parameters with those specified by the user
-        try {
-            Set<JobParameter> userSupplied = JobParameterDTOFactory.getInstance().toDBList(dto.getParameters());
-
-            for (JobParameter defaultParam : j.getParameters()) {
-                
-                JobParameter userParam = findParameter(defaultParam, userSupplied);
-                
-                if (userParam == null && !defaultParam.isOptional()) {
-                    mgx.getJobDAO().delete(j.getId());
-                    throw new MGXWebException("Parameter " + defaultParam.getUserName() + " required but not specified.");
-                }
-                
-                String value = userParam.getParameterValue();
-
-                if (defaultParam.getType().equals("ConfigFile")) {
-                    String fullPath = mgx.getProjectDirectory() + "files" + File.separator
-                            + userParam.getParameterValue().substring(2).replace("|", File.separator);
-                    if (!new File(fullPath).exists()) {
-                        throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
-                    }
-                    value = fullPath;
-                }
-                
-                defaultParam.setParameterValue(value);
-                mgx.getJobParameterDAO().update(defaultParam); // persist changes
-            }
-
-        } catch (MGXException ex) {
-            try {
-                mgx.getJobDAO().delete(j.getId());
-            } catch (MGXException ex1) {
-                mgx.log(ex1.getMessage());
-            }
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
@@ -430,8 +417,17 @@ public class JobBean {
         }
     }
 
-    private JobParameter findParameter(JobParameter defaultParam, Set<JobParameter> userSupplied) {
-        for (JobParameter jp : userSupplied) {
+    private JobParameter findDefaultParameter(JobParameter userParam, Collection<JobParameter> defaultParams) {
+        for (JobParameter jp : defaultParams) {
+            if (jp.getNodeId() == userParam.getNodeId() && jp.getParameterName().equals(userParam.getParameterName())) {
+                return jp;
+            }
+        }
+        return null;
+    }
+
+    private JobParameter findUserParameter(JobParameter defaultParam, Collection<JobParameter> userParams) {
+        for (JobParameter jp : userParams) {
             if (jp.getNodeId() == defaultParam.getNodeId() && jp.getParameterName().equals(defaultParam.getParameterName())) {
                 return jp;
             }
