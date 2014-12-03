@@ -46,9 +46,9 @@ public class DataSourceFactory {
 
         BoneCPConfig cfg = new BoneCPConfig();
         cfg.setLazyInit(true);
-        cfg.setMaxConnectionsPerPartition(5);
+        cfg.setMaxConnectionsPerPartition(15);
         cfg.setMinConnectionsPerPartition(2);
-        cfg.setPartitionCount(1);
+        cfg.setPartitionCount(2);
         cfg.setJdbcUrl(jdbc);
         cfg.setUsername(m.getRole().getDBUser());
         cfg.setPassword(m.getRole().getDBPassword());
