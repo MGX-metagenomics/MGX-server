@@ -26,11 +26,20 @@ import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.qc.Analyzer;
+import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;
 import de.cebitec.mgx.qc.io.Loader;
+import de.cebitec.mgx.qc.io.Persister;
+import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.seqstorage.CSFReader;
+import de.cebitec.mgx.sequence.SeqReaderFactory;
+import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
@@ -39,6 +48,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -69,6 +81,8 @@ public class SeqRunBean {
     MGXConfiguration mgxconfig;
     @EJB
     MGXGlobal global;
+    @Inject
+    Executor executor;
 
     @PUT
     @Path("create")
@@ -174,21 +188,73 @@ public class SeqRunBean {
     @Path("getQC/{id}")
     @Produces("application/x-protobuf")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
+        Analyzer[] analyzers = null;
+        SeqRun sr = null;
+        try {
+            sr = mgx.getSeqRunDAO().getById(id);
+            SeqReaderI r = SeqReaderFactory.getReader(sr.getDBFile());
+            if (r != null) {
+                analyzers = QCFactory.getQCAnalyzers(r.hasQuality());
+                r.close();
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+
         File qcDir = new File(mgx.getProjectDirectory() + "QC");
+        qcDir = new File(qcDir.toString());
+        if (!qcDir.exists()) {
+            UnixHelper.createDirectory(qcDir);
+        }
+        if (!UnixHelper.isGroupWritable(qcDir)) {
+            UnixHelper.makeDirectoryGroupWritable(qcDir.getAbsolutePath());
+        }
+
+        final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
         List<QCResultI> qcList = new ArrayList<>();
-        File[] listFiles = qcDir.listFiles();
-        if (listFiles != null) {
-            for (File f : listFiles) {
-                if (f.getName().startsWith(String.valueOf(id) + ".")) {
-                    try {
-                        QCResultI qcr = Loader.load(f.getCanonicalPath());
-                        qcList.add(qcr);
-                    } catch (IOException ex) {
-                        throw new MGXWebException(ex.getMessage());
+        final SeqRun run = sr;
+        for (final Analyzer a : analyzers) {
+            File outFile = new File(prefix + a.getName());
+            if (!outFile.exists()) {
+                Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Starting QC analyzer {0} for run {1}", new Object[]{a.getName(), run.getName()});
+                executor.execute(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        try {
+                            SeqReaderI<DNASequenceHolder> r = SeqReaderFactory.getReader(run.getDBFile());
+
+                            while (r.hasMoreElements()) {
+                                DNASequenceHolder h = r.nextElement();
+                                try {
+                                    a.add(h.getSequence());
+                                } catch (Exception ex) {
+                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{a.getName(), new String(h.getSequence().getSequence())});
+                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            }
+                            r.close();
+                            if (a.getNumberOfSequences() == run.getNumberOfSequences()) {
+                                Persister.persist(prefix, a);
+                            } else {
+                                Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{a.getName(), run.getName(), a.getNumberOfSequences()});
+                            }
+                        } catch (Exception ex) {
+                            Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
+                        }
                     }
+                });
+            } else {
+                try {
+                    QCResultI qcr = Loader.load(outFile.getCanonicalPath());
+                    qcList.add(qcr);
+                } catch (IOException ex) {
+                    throw new MGXWebException(ex.getMessage());
                 }
             }
         }
+
         Collections.sort(qcList);
         return QCResultDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(qcList.iterator()));
     }
