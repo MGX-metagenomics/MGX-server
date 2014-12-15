@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
@@ -54,6 +55,8 @@ public class SequenceBean {
     @MGX
     MGXController mgx;
     @EJB
+    MGXConfiguration mgxconfig;
+    @EJB
     UploadSessions upSessions;
     @EJB
     DownloadSessions downSessions;
@@ -80,7 +83,7 @@ public class SequenceBean {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            recv = new SeqUploadReceiver(executor, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
+            recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
         } catch (MGXException ex) {
