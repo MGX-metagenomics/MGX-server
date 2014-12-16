@@ -27,7 +27,7 @@
                 <executions>
                     <execution>
                         <phase>install</phase>
-<!--                        <goals>
+                        <!--                        <goals>
                             <goal>deploy</goal>
                         </goals>-->
                     </execution>
@@ -79,6 +79,12 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>MGX-gpms</artifactId>
+            <version>${project.version}</version>
+            <type>ejb</type>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>MGX-ExecutorService</artifactId>
             <version>${project.version}</version>
             <type>ejb</type>
         </dependency>
