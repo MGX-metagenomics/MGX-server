@@ -60,7 +60,7 @@ public class SequenceBean {
     UploadSessions upSessions;
     @EJB
     DownloadSessions downSessions;
-    @Inject
+    @EJB
     Executor executor;
 
     /*
