@@ -81,7 +81,7 @@ public class SeqRunBean {
     MGXConfiguration mgxconfig;
     @EJB
     MGXGlobal global;
-    @Inject
+    @EJB
     Executor executor;
 
     @PUT

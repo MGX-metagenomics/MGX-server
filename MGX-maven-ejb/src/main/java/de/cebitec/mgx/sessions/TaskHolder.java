@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.ConcurrencyManagement;
@@ -26,23 +27,24 @@ public class TaskHolder {
 
     @EJB
     MGXConfiguration mgxconfig;
+    @EJB
+    Executor executor;
     private final int timeout = 60 * 60 * 24; // a day;
     private final ConcurrentMap<UUID, TaskI> tasks = new ConcurrentHashMap<>(10);
 
     public synchronized UUID addTask(final TaskI task) {
         final UUID uuid = UUID.randomUUID();
         tasks.put(uuid, task);
-        
-        // FIXME - leaking this thread?
-        Thread t = new Thread(new Runnable() {
+
+        Runnable r = new Runnable() {
             @Override
             public void run() {
                 task.setMainTask();
                 task.run();
                 task.close();
             }
-        });
-        t.start();
+        };
+        executor.execute(r);
         return uuid;
     }
 
