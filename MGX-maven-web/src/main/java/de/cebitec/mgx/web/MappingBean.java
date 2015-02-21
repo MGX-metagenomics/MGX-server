@@ -19,6 +19,8 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -113,7 +115,7 @@ public class MappingBean {
         AutoCloseableIterator<MappedSequence> iter;
         try {
             MappingDataSession session = mapSessions.getSession(uuid);
-            iter = session.get(from, to);
+            iter = session.get(mgx.getConnection(), from, to);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
@@ -125,11 +127,18 @@ public class MappingBean {
     @Produces("application/x-protobuf")
     public MGXLong getMaxCoverage(@PathParam("uuid") UUID uuid) {
         long maxCov = -1;
+        Connection conn = mgx.getConnection();
         try {
             MappingDataSession session = mapSessions.getSession(uuid);
-            maxCov = session.getMaxCoverage();
+            maxCov = session.getMaxCoverage(conn);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+                throw new MGXWebException(ex.getMessage());
+            }
         }
         return MGXLong.newBuilder().setValue(maxCov).build();
     }
