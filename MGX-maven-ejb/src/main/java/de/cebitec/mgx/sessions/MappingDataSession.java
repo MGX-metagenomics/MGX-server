@@ -139,7 +139,6 @@ public class MappingDataSession {
                 boolean discard = false;
                 long seqId = Long.parseLong(record.getReadName());
 
-                 Logger.getLogger(getClass().getName()).log(Level.INFO, "SQL Q");
                 try (PreparedStatement stmt = conn.prepareStatement("SELECT discard FROM read WHERE id=?")) {
                     stmt.setLong(1, seqId);
                     try (ResultSet rs = stmt.executeQuery()) {
