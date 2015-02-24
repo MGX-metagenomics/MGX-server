@@ -2,7 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Sequence;
-import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import java.sql.Connection;
@@ -53,10 +53,10 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         seq.setName(seqName);
 
         // read sequence data
-        try (SeqReaderI<DNASequenceHolder> reader = SeqReaderFactory.getReader(dbFile)) {
-            Iterator<DNASequenceHolder> iter = reader.fetch(new long[]{id}).iterator();
+        try (SeqReaderI<DNASequenceI> reader = SeqReaderFactory.getReader(dbFile)) {
+            Iterator<DNASequenceI> iter = reader.fetch(new long[]{id}).iterator();
             assert iter.hasNext();
-            byte[] seqdata = iter.next().getSequence().getSequence();
+            byte[] seqdata = iter.next().getSequence();
             String seqString = new String(seqdata).toUpperCase();
             seq.setSequence(seqString);
             seq.setLength(seqString.length());

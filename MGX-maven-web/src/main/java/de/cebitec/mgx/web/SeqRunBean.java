@@ -31,11 +31,9 @@ import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;
 import de.cebitec.mgx.qc.io.Loader;
 import de.cebitec.mgx.qc.io.Persister;
-import de.cebitec.mgx.seqholder.DNASequenceHolder;
-import de.cebitec.mgx.seqstorage.CSFReader;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -223,14 +221,14 @@ public class SeqRunBean {
                     @Override
                     public void run() {
                         try {
-                            SeqReaderI<DNASequenceHolder> r = SeqReaderFactory.getReader(run.getDBFile());
+                            SeqReaderI<DNASequenceI> r = SeqReaderFactory.getReader(run.getDBFile());
 
                             while (r.hasMoreElements()) {
-                                DNASequenceHolder h = r.nextElement();
+                                DNASequenceI h = r.nextElement();
                                 try {
-                                    a.add(h.getSequence());
+                                    a.add(h);
                                 } catch (Exception ex) {
-                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{a.getName(), new String(h.getSequence().getSequence())});
+                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{a.getName(), new String(h.getSequence())});
                                     Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
