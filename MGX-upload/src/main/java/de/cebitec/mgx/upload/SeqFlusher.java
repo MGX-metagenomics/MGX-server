@@ -36,7 +36,6 @@ public class SeqFlusher implements Runnable {
     private final Analyzer[] analyzers;
     private Exception error = null;
     private final int bulkSize;
-    int haveElem = 0; int noElem = 0;
     //
     private final List<DNASequenceI> holder = new ArrayList<>();
     //
@@ -63,10 +62,9 @@ public class SeqFlusher implements Runnable {
                 Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (seq != null) {
-                haveElem++;
                 waitMs-- ; waitMs = waitMs < 1 ? 1 : waitMs;
                 process(seq);
-            } else { noElem++; waitMs++; }
+            }
         }
 
         // flush
@@ -99,7 +97,6 @@ public class SeqFlusher implements Runnable {
         }
         if (holder.size() >= bulkSize) {
             flushChunk();
-            System.err.println("qSize after flush "+ in.size() + " at waitNs "+ waitMs);
         }
     }
 
@@ -107,7 +104,7 @@ public class SeqFlusher implements Runnable {
         int chunk = holder.size() < bulkSize ? holder.size() : bulkSize;
         List<? extends DNASequenceI> sub = holder.subList(0, chunk);
         List<? extends DNASequenceI> subList = new ArrayList<>(sub);
-        sub.clear(); // since sub is backed by seqholder, this removes all sub-list items from seqholder
+        sub.clear(); // since sub is backed by holder, this removes all sub-list items from holder
         return subList;
     }
 
@@ -185,7 +182,6 @@ public class SeqFlusher implements Runnable {
         if (error()) {
             throw getError();
         }
-        System.err.println("completed with haveElem "+ haveElem + " and noElem "+ noElem);
         allDone.await();
     }
 

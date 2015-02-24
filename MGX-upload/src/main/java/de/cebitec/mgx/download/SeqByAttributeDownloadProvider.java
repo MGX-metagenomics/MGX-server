@@ -1,10 +1,11 @@
 package de.cebitec.mgx.download;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -34,11 +35,11 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
 
     public SeqByAttributeDownloadProvider(Connection connection, String projectName, Iterator<Attribute> attrIter) throws MGXException {
         super(connection, projectName);
-        
+
         if (!attrIter.hasNext()) {
             throw new MGXException("No attributes provided.");
         }
-        
+
         Set<Attribute> attributes = new HashSet<>();
         // all attributes are assumed to refer to the same run
         String fName = null;
@@ -59,7 +60,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
-        
+
         readnames = new HashMap<>(bulksize);
 
         try {
@@ -90,22 +91,24 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             throw new MGXException(ex);
         }
         have_more_data = count == bulksize;
-        
+
         long[] ids = new long[readnames.keySet().size()];
         int i = 0;
         for (Long l : readnames.keySet()) {
             ids[i++] = l.longValue();
         }
-        
+
         try {
-            for (DNASequenceHolder holder : reader.fetch(ids)) {
-                DNASequenceI seq = holder.getSequence();
-                SequenceDTO dto = SequenceDTO.newBuilder()
+            for (DNASequenceI seq : reader.fetch(ids)) {
+                SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
                         .setId(seq.getId())
                         .setName(readnames.remove(seq.getId()))
-                        .setSequence(new String(seq.getSequence()))
-                        .build();
-                listBuilder.addSeq(dto);
+                        .setSequence(new String(seq.getSequence()));
+                if (seq instanceof DNAQualitySequenceI) {
+                    DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
+                    dtob.setQuality(ByteString.copyFrom(qseq.getQuality()));
+                }
+                listBuilder.addSeq(dtob.build());
             }
         } catch (SeqStoreException ex) {
             throw new MGXException(ex);
@@ -152,7 +155,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         lastAccessed = System.currentTimeMillis();
         return have_more_data;
     }
-
 
     private static String buildSQLTemplate(int numElements) {
         StringBuilder sb = new StringBuilder(GET_SEQS);
