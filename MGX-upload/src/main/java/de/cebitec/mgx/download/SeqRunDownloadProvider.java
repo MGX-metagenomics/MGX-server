@@ -1,11 +1,12 @@
 package de.cebitec.mgx.download;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
-import de.cebitec.mgx.seqholder.DNASequenceHolder;
+import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
@@ -35,7 +36,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     MGXConfiguration mgxconfig;
     protected final String projectName;
     protected final Connection conn;
-    protected SeqReaderI<DNASequenceHolder> reader;
+    protected SeqReaderI<DNASequenceI> reader;
     protected long lastAccessed;
     protected int bulksize;
 
@@ -98,15 +99,19 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         Builder listBuilder = SequenceDTOList.newBuilder();
         int count = 0;
         while (count <= bulksize && reader.hasMoreElements()) {
-            DNASequenceI seq = reader.nextElement().getSequence();
+            DNASequenceI seq = reader.nextElement();
             String seqName = getSequenceName(seq.getId());
             if (seqName != null) {
-                SequenceDTO dto = SequenceDTO.newBuilder()
+                SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
                         .setId(seq.getId())
                         .setName(seqName)
-                        .setSequence(new String(seq.getSequence()))
-                        .build();
-                listBuilder.addSeq(dto);
+                        .setSequence(new String(seq.getSequence()));
+                
+                if (seq instanceof DNAQualitySequenceI) {
+                    DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
+                    dtob.setQuality(ByteString.copyFrom(qseq.getQuality()));
+                }
+                listBuilder.addSeq(dtob.build());
                 count++;
             }
         }
