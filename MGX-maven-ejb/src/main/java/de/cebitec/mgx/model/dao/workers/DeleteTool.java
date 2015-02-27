@@ -35,7 +35,7 @@ public final class DeleteTool extends TaskI {
                     jobs.add(rs.getLong(1));
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             setStatus(TaskI.State.FAILED, e.getMessage());
             return;
         }
