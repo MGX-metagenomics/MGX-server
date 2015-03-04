@@ -161,6 +161,7 @@ public class FileBean {
     @GET
     @Path("get/{uuid}")
     @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
     public BytesDTO get(@PathParam("uuid") UUID session_id) {
         try {
             DownloadProviderI<byte[]> dp = dsessions.<byte[]>getSession(session_id);
