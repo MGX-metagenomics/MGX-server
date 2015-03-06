@@ -264,7 +264,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     protected final void catchException(final ClientResponse res) throws MGXDispatcherException {
-        if (res.getClientResponseStatus() != Status.OK) {
+        if (Status.fromStatusCode(res.getStatus()) != Status.OK) {
             InputStreamReader isr = new InputStreamReader(res.getEntityInputStream());
             BufferedReader r = new BufferedReader(isr);
             StringBuilder msg = new StringBuilder();
