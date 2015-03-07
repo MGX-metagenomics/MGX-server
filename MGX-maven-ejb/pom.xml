@@ -62,10 +62,9 @@
             <version>1.0-RELEASE</version>
         </dependency>
         <dependency>
-            <groupId>de.cebitec.external</groupId>
-            <artifactId>sam-jdk</artifactId>
-            <version>1.113</version>
-            <type>jar</type>
+            <groupId>com.github.samtools</groupId>
+            <artifactId>htsjdk</artifactId>
+            <version>1.129</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>

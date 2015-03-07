@@ -4,6 +4,10 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.AutoCloseableSAMRecordIterator;
+import htsjdk.samtools.SAMFileReader;
+import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordIterator;
+import htsjdk.samtools.ValidationStringency;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,9 +21,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.samtools.SAMFileReader;
-import net.sf.samtools.SAMRecord;
-import net.sf.samtools.SAMRecordIterator;
 
 /**
  *
@@ -43,7 +44,7 @@ public class MappingDataSession {
         this.samFile = samFile;
         lastAccessed = System.currentTimeMillis();
         samReader = new SAMFileReader(new File(samFile));
-        samReader.setValidationStringency(SAMFileReader.ValidationStringency.STRICT);
+        samReader.setValidationStringency(ValidationStringency.STRICT);
         lock = new ReentrantLock();
     }
 
