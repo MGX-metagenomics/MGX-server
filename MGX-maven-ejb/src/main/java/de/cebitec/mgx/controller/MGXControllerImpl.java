@@ -29,29 +29,16 @@ public class MGXControllerImpl implements MGXController {
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
     private final Map<Class, DAO> daos = new HashMap<>();
-    private final String projectDir;
+    private String projectDir = null;
+    private String projectQCDir = null;
     //
     //private final MGXConfiguration config;
+    private final String persistentDir;
 
     public MGXControllerImpl(DBMasterI gpmsmaster, MGXConfiguration cfg) {
         this.gpmsmaster = gpmsmaster;
         this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
-
-        String ret = new StringBuilder(cfg.getPersistentDirectory()).append(File.separator).append(getProjectName()).append(File.separator).toString();
-        while (ret.contains(File.separator + File.separator)) {
-            ret = ret.replaceAll(File.separator + File.separator, File.separator);
-        }
-        // 
-        File targetDir = new File(ret);
-        if (!targetDir.exists()) {
-            // make group writable directory
-            UnixHelper.createDirectory(targetDir);
-        }
-
-        if (!UnixHelper.isGroupWritable(targetDir)) {
-            UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
-        }
-        projectDir = ret;
+        persistentDir = cfg.getPersistentDirectory();
     }
 
     @Override
@@ -89,8 +76,46 @@ public class MGXControllerImpl implements MGXController {
 //    }
     @Override
     public String getProjectDirectory() {
+        if (projectDir != null) {
+            return projectDir;
+        }
+
+        String ret = new StringBuilder(persistentDir).append(File.separator).append(getProjectName()).append(File.separator).toString();
+        while (ret.contains(File.separator + File.separator)) {
+            ret = ret.replaceAll(File.separator + File.separator, File.separator);
+        }
+        // 
+        File targetDir = new File(ret);
+        if (!targetDir.exists()) {
+            // make group writable directory
+            UnixHelper.createDirectory(targetDir);
+        }
+
+        if (!UnixHelper.isGroupWritable(targetDir)) {
+            UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
+        }
+        projectDir = ret;
+
         return projectDir;
 
+    }
+
+    @Override
+    public String getProjectQCDirectory() {
+        if (projectQCDir != null) {
+            return projectQCDir;
+        }
+        
+        File qcDir = new File(getProjectDirectory() + "QC");
+        qcDir = new File(qcDir.toString());
+        if (!qcDir.exists()) {
+            UnixHelper.createDirectory(qcDir);
+        }
+        if (!UnixHelper.isGroupWritable(qcDir)) {
+            UnixHelper.makeDirectoryGroupWritable(qcDir.getAbsolutePath());
+        }
+        projectQCDir = qcDir.getAbsolutePath();
+        return projectQCDir;
     }
 
     @Override

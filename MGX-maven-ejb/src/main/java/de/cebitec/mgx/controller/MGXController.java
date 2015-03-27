@@ -50,9 +50,7 @@ public interface MGXController extends AutoCloseable {
     public RoleI getCurrentRole();
 
     //public MGXConfiguration getConfiguration();
-
     //public MGXGlobal getGlobal();
-
     public EntityManager getEntityManager();
 
     public EntityManagerFactory getEMF();
@@ -60,6 +58,8 @@ public interface MGXController extends AutoCloseable {
     public Connection getConnection();
 
     public String getProjectDirectory();
+
+    public String getProjectQCDirectory();
 
     public String getDatabaseHost();
 
