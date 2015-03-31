@@ -107,6 +107,11 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+        try {
+            mgx.getReferenceDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
@@ -141,7 +146,7 @@ public class ReferenceBean {
             globalRef = global.getReferenceDAO().getById(globalId);
             File refData = new File(globalRef.getFile());
             if (!refData.exists()) {
-                throw new MGXException("Cannot access reference sequence. Please report this error.");
+                throw new MGXException("Cannot access file containing reference sequence for global ID " + globalId + ". Please report this error.");
             }
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
@@ -156,6 +161,8 @@ public class ReferenceBean {
 
         for (Region r : globalRef.getRegions()) {
             Region newReg = new Region();
+            assert r.getName() != null;
+            assert r.getDescription() != null;
             newReg.setName(r.getName());
             newReg.setDescription(r.getDescription());
             newReg.setReference(newRef);
@@ -176,10 +183,12 @@ public class ReferenceBean {
             UnixHelper.copyFile(new File(globalRef.getFile()), targetFile);
         } catch (IOException ex) {
             mgx.log(ex.getMessage());
+
+            throw new MGXWebException("Could not copy DNA sequence");
+        } finally {
             if (targetFile.exists()) {
                 targetFile.delete();
             }
-            throw new MGXWebException("Could not copy DNA sequence");
         }
 
         newRef.setFile(targetFile.getAbsolutePath());
