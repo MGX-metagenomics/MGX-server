@@ -98,32 +98,41 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     public SequenceDTOList fetch() throws MGXException {
         Builder listBuilder = SequenceDTOList.newBuilder();
         int count = 0;
-        while (count <= bulksize && reader.hasMoreElements()) {
-            DNASequenceI seq = reader.nextElement();
-            String seqName = getSequenceName(seq.getId());
-            if (seqName != null) {
-                SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
-                        .setId(seq.getId())
-                        .setName(seqName)
-                        .setSequence(new String(seq.getSequence()));
-                
-                if (seq instanceof DNAQualitySequenceI) {
-                    DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
-                    dtob.setQuality(ByteString.copyFrom(qseq.getQuality()));
+        try {
+            while (count <= bulksize && reader.hasMoreElements()) {
+                DNASequenceI seq = reader.nextElement();
+                String seqName = getSequenceName(seq.getId());
+                if (seqName != null) {
+                    SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
+                            .setId(seq.getId())
+                            .setName(seqName)
+                            .setSequence(new String(seq.getSequence()));
+
+                    if (seq instanceof DNAQualitySequenceI) {
+                        DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
+                        dtob.setQuality(ByteString.copyFrom(qseq.getQuality()));
+                    }
+                    listBuilder.addSeq(dtob.build());
+                    count++;
                 }
-                listBuilder.addSeq(dtob.build());
-                count++;
             }
+            lastAccessed = System.currentTimeMillis();
+            listBuilder.setComplete(!reader.hasMoreElements());
+            return listBuilder.build();
+        } catch (SeqStoreException ex) {
+            throw new MGXException(ex);
         }
-        lastAccessed = System.currentTimeMillis();
-        listBuilder.setComplete(!reader.hasMoreElements());
-        return listBuilder.build();
     }
 
     @Override
     public boolean isFinished() {
         lastAccessed = System.currentTimeMillis();
-        return !reader.hasMoreElements();
+        try {
+            return !reader.hasMoreElements();
+        } catch (SeqStoreException ex) {
+            Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return true;
     }
 
     @Override

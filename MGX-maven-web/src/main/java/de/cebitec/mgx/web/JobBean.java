@@ -285,9 +285,10 @@ public class JobBean {
             if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
                 isActive = false;
             }
-            job.setStatus(JobState.IN_DELETION);
-            mgx.getJobDAO().update(job);
+//            job.setStatus(JobState.IN_DELETION);
+//            mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
