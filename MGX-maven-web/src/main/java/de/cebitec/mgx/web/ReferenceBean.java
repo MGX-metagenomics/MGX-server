@@ -14,18 +14,16 @@ import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.workers.DeleteReference;
+import de.cebitec.mgx.model.dao.workers.InstallGlobalReference;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
 import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
-import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -135,12 +133,7 @@ public class ReferenceBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLong installGlobalReference(@PathParam("refid") Long globalId) {
-        File referencesDir = new File(mgx.getProjectDirectory() + "/reference/");
-        if (!referencesDir.exists()) {
-            UnixHelper.createDirectory(referencesDir);
-        }
-
+    public MGXString installGlobalReference(@PathParam("refid") Long globalId) {
         Reference globalRef = null;
         try {
             globalRef = global.getReferenceDAO().getById(globalId);
@@ -152,54 +145,10 @@ public class ReferenceBean {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
-
-        Reference newRef = new Reference();
-        newRef.setFile("");
-        newRef.setName(globalRef.getName());
-        newRef.setLength(globalRef.getLength());
-        newRef.setRegions(new ArrayList<Region>());
-
-        for (Region r : globalRef.getRegions()) {
-            Region newReg = new Region();
-            assert r.getName() != null;
-            assert r.getDescription() != null;
-            newReg.setName(r.getName());
-            newReg.setDescription(r.getDescription());
-            newReg.setReference(newRef);
-            newReg.setStart(r.getStart());
-            newReg.setStop(r.getStop());
-            newRef.getRegions().add(newReg);
-        }
-
-        try {
-            mgx.getReferenceDAO().create(newRef);
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ex.getMessage());
-        }
-
-        File targetFile = new File(mgx.getProjectDirectory() + "/reference/" + newRef.getId() + ".fas");
-        try {
-            UnixHelper.copyFile(new File(globalRef.getFile()), targetFile);
-        } catch (IOException ex) {
-            mgx.log(ex.getMessage());
-
-            throw new MGXWebException("Could not copy DNA sequence");
-        } finally {
-            if (targetFile.exists()) {
-                targetFile.delete();
-            }
-        }
-
-        newRef.setFile(targetFile.getAbsolutePath());
-        try {
-            mgx.getReferenceDAO().update(newRef);
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ex.getMessage());
-        }
-
-        return MGXLong.newBuilder().setValue(newRef.getId()).build();
+        
+        String projReferenceDir = mgx.getProjectDirectory() + "/reference/";
+        UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global.getConnection(), globalRef, projReferenceDir, mgx.getProjectName()));
+        return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
     @GET
