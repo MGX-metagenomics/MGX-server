@@ -215,11 +215,6 @@ public class JobBean {
         boolean verified = false;
 
         try {
-            Job job = mgx.getJobDAO().getById(id);
-            String fname = job.getSeqrun().getDBFile();
-            if (fname == null || !new File(fname).exists()) {
-                throw new MGXException("Cannot access sequence data for sequencing run.");
-            }
             verified = js.validate(mgx, id);
         } catch (MGXInsufficientJobConfigurationException ex) {
             throw new MGXJobException(ex.getMessage());
