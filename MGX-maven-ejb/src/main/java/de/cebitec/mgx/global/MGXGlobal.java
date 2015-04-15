@@ -10,6 +10,8 @@ import de.cebitec.mgx.model.db.Term;
 import de.cebitec.mgx.model.db.Tool;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -45,6 +47,15 @@ public class MGXGlobal {
     private final static Logger logger = Logger.getLogger(MGXGlobal.class.getPackage().getName());
     //
 
+    public Connection getConnection() {
+        try {
+            return ds.getConnection();
+        } catch (SQLException ex) {
+            Logger.getLogger(MGXGlobal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
     public ToolDAO<Tool> getToolDAO() {
         return getDAO(ToolDAO.class);
     }
