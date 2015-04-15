@@ -1,6 +1,6 @@
 package de.cebitec.mgx.gpms.impl;
 
-import com.jolbox.bonecp.BoneCPDataSource;
+import com.zaxxer.hikari.HikariDataSource;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.data.DBMasterI;
 import de.cebitec.gpms.data.DBMembershipI;
@@ -22,7 +22,6 @@ public class GPMSMaster implements DBMasterI {
     private final DBMembershipI membership;
     private EntityManagerFactory emf = null;
     private final DataSource ds;
-    //private String jndiname;
     private String login = null;
 
     public GPMSMaster(DBMembershipI m, DataSource ds) {
@@ -42,22 +41,7 @@ public class GPMSMaster implements DBMasterI {
     }
 
     public void close() {
-        ((BoneCPDataSource)ds).close();
-        //ds.shutdown();
-        
-//        // unpublish the datasource
-//        Context ctx;
-//        try {
-//            ctx = new InitialContext();
-//            BoneCPDataSource bds = (BoneCPDataSource) ctx.lookup(jndiname);
-//            if (bds != null) {
-//                bds.close();
-//            }
-//            log("Closing and unbinding JNDI " + jndiname);
-//            ctx.unbind(jndiname);
-//        } catch (NamingException ex) {
-//            log(ex.getMessage());
-//        }
+        ((HikariDataSource)ds).close();
     }
 
     @Override
