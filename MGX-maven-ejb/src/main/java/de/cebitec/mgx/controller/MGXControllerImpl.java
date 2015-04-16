@@ -65,15 +65,6 @@ public class MGXControllerImpl implements MGXController {
         return em;
     }
 
-//    @Override
-//    public MGXConfiguration getConfiguration() {
-//        return config;
-//    }
-//
-//    @Override
-//    public MGXGlobal getGlobal() {
-//        return global;
-//    }
     @Override
     public String getProjectDirectory() {
         if (projectDir != null) {
