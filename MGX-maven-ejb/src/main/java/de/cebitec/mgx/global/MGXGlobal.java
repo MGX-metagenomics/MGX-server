@@ -1,30 +1,12 @@
 package de.cebitec.mgx.global;
 
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.model.dao.DAO;
-import de.cebitec.mgx.model.dao.ReferenceDAO;
-import de.cebitec.mgx.model.dao.TermDAO;
-import de.cebitec.mgx.model.dao.ToolDAO;
-import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Term;
-import de.cebitec.mgx.model.db.Tool;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.sql.DataSource;
 
 /**
@@ -35,119 +17,46 @@ import javax.sql.DataSource;
 @Startup
 public class MGXGlobal {
 
-    @EJB    //(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
-    MGXConfiguration cfg;
-    //
     @Resource(mappedName = "jdbc/MGXGlobal")
     private DataSource ds;
-    //
-    private EntityManagerFactory emf;
-    private EntityManager em;
-    private Map<Class, DAO> daos;
-    private final static Logger logger = Logger.getLogger(MGXGlobal.class.getPackage().getName());
-    //
 
-    public Connection getConnection() {
+    private final static Logger logger = Logger.getLogger(MGXGlobal.class.getName());
+
+    private final GlobalToolDAO tooldao;
+    private final GlobalTermDAO termdao;
+    private final GlobalReferenceDAO refdao;
+    private final GlobalRegionDAO regiondao;
+
+    public MGXGlobal() {
+        tooldao = new GlobalToolDAO(this);
+        termdao = new GlobalTermDAO(this);
+        refdao = new GlobalReferenceDAO(this);
+        regiondao = new GlobalRegionDAO(this);
+    }
+
+    Connection getConnection() {
         try {
             return ds.getConnection();
         } catch (SQLException ex) {
-            Logger.getLogger(MGXGlobal.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         return null;
     }
-    
-    public ToolDAO<Tool> getToolDAO() {
-        return getDAO(ToolDAO.class);
+
+    public GlobalToolDAO getToolDAO() {
+        return tooldao;
     }
 
-    public TermDAO<Term> getTermDAO() {
-        if (!daos.containsKey(TermDAO.class)) {
-            TermDAO dao = new TermDAO(ds);
-            dao.setEntityManager(em);
-            daos.put(TermDAO.class, dao);
-        }
-        return (TermDAO) daos.get(TermDAO.class);
+    public GlobalTermDAO getTermDAO() {
+        return termdao;
     }
 
-    public ReferenceDAO<Reference> getReferenceDAO() {
-        return getDAO(ReferenceDAO.class);
+    public GlobalReferenceDAO getReferenceDAO() {
+        return refdao;
     }
 
-    private <T extends DAO> T getDAO(Class<T> clazz) {
-        if (!daos.containsKey(clazz)) {
-            daos.put(clazz, createDAO(clazz));
-        }
-        return (T) daos.get(clazz);
-    }
-
-    private <T extends DAO> T createDAO(Class<T> clazz) {
-        try {
-            Constructor<T> c = clazz.getConstructor();
-            T instance = c.newInstance();
-            instance.setEntityManager(em);
-            return instance;
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        }
-        throw new UnsupportedOperationException("Could not create DAO " + clazz);
-    }
-
-    @PostConstruct
-    public void start() {
-
-//        try {
-//            ds = InitialContext.<DataSource>doLookup(DS_JNDI_NAME);
-//        } catch (NamingException ex) {
-//        }
-//
-//        if (ds == null) {
-//            BoneCPConfig bcfg = new BoneCPConfig();
-//            bcfg.setLazyInit(true);
-//            bcfg.setMaxConnectionsPerPartition(5);
-//            bcfg.setMinConnectionsPerPartition(1);
-//            bcfg.setPartitionCount(1);
-//            bcfg.setJdbcUrl(cfg.getMGXGlobalJDBCURL());
-//            bcfg.setUsername(cfg.getMGXGlobalUser());
-//            bcfg.setPassword(cfg.getMGXGlobalPassword());
-//            bcfg.setPoolName("MGX-Global");
-//            bcfg.setCloseConnectionWatch(false);
-//            bcfg.setMaxConnectionAgeInSeconds(600);
-//
-//            ds = new BoneCPDataSource(bcfg);
-//
-//            try {
-//                Context ctx = new InitialContext();
-//                ctx.bind(DS_JNDI_NAME, ds);
-//            } catch (NamingException ex) {
-//                log(ex.getMessage());
-//            }
-//        } else {
-//            log("Re-using old datasource for global zone.");
-//        }
-
-        Map<String, String> globalCfg = new HashMap<>(1);
-        globalCfg.put("javax.persistence.jtaDataSource", "jdbc/MGXGlobal");
-
-        emf = Persistence.createEntityManagerFactory("MGX-global", globalCfg);
-        em = emf.createEntityManager();
-
-        daos = new HashMap<>(15);
-
-        log("MGX global zone ready.");
-    }
-
-    @PreDestroy
-    public void stop() {
-        if (em != null && em.isOpen()) {
-            em.close();
-            em = null;
-        }
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-            emf = null;
-        }
-
-        log("MGX global zone exiting..");
+    public GlobalRegionDAO getRegionDAO() {
+        return regiondao;
     }
 
     public void log(String msg) {
