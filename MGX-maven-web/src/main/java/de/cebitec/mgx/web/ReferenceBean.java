@@ -22,7 +22,6 @@ import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
@@ -125,7 +124,11 @@ public class ReferenceBean {
     @Path("listGlobalReferences")
     @Produces("application/x-protobuf")
     public ReferenceDTOList listGlobalReferences() {
-        return ReferenceDTOFactory.getInstance().toDTOList(global.getReferenceDAO().getAll());
+        try {
+            return ReferenceDTOFactory.getInstance().toDTOList(global.getReferenceDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
@@ -134,20 +137,8 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString installGlobalReference(@PathParam("refid") Long globalId) {
-        Reference globalRef = null;
-        try {
-            globalRef = global.getReferenceDAO().getById(globalId);
-            File refData = new File(globalRef.getFile());
-            if (!refData.exists()) {
-                throw new MGXException("Cannot access file containing reference sequence for global ID " + globalId + ". Please report this error.");
-            }
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ex.getMessage());
-        }
-        
         String projReferenceDir = mgx.getProjectDirectory() + "/reference/";
-        UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global.getConnection(), globalRef, projReferenceDir, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -171,8 +162,7 @@ public class ReferenceBean {
     public MGXString getSequence(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
         String subseq = null;
         try {
-            Reference ref = mgx.getReferenceDAO().getById(id);
-            subseq = mgx.getReferenceDAO().getSequence(ref, from, to);
+            subseq = mgx.getReferenceDAO().getSequence(id, from, to);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
