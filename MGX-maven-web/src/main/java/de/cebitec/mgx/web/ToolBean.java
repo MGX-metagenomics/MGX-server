@@ -92,7 +92,11 @@ public class ToolBean {
     @Path("listGlobalTools")
     @Produces("application/x-protobuf")
     public ToolDTOList listGlobalTools() {
-        return ToolDTOFactory.getInstance().toDTOList(global.getToolDAO().getAll());
+        try {
+            return ToolDTOFactory.getInstance().toDTOList(global.getToolDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET

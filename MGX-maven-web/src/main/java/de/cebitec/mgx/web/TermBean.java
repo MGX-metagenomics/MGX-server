@@ -1,7 +1,5 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.controller.MGX;
-import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTOList;
@@ -12,7 +10,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -26,9 +23,6 @@ import javax.ws.rs.Produces;
 @Stateless
 public class TermBean {
 
-    @Inject
-    @MGX
-    MGXController mgx;
     @EJB
     MGXGlobal global;
 
@@ -36,7 +30,11 @@ public class TermBean {
     @Path("byCategory/{term}")
     @Produces("application/x-protobuf")
     public TermDTOList byCategory(@PathParam("term") String cat) {
-        return TermDTOFactory.getInstance().toDTOList(global.getTermDAO().byCategory(cat));
+        try {
+            return TermDTOFactory.getInstance().toDTOList(global.getTermDAO().byCategory(cat));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
