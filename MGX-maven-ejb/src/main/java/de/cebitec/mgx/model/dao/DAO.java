@@ -11,12 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
-import org.hibernate.Session;
-import org.hibernate.internal.SessionFactoryImpl;
 
 /**
  *
@@ -25,50 +21,22 @@ import org.hibernate.internal.SessionFactoryImpl;
  */
 public abstract class DAO<T extends Identifiable> {
 
-    private MGXControllerImpl ctx;
-    private EntityManager em;
+    private  MGXControllerImpl ctx;
 
     public void setController(MGXControllerImpl ctx) {
         this.ctx = ctx;
-        this.em = ctx.getEntityManager();
     }
 
     public MGXController getController() {
         return ctx;
     }
 
-    public void setEntityManager(EntityManager e) {
-        this.em = e;
-    }
-
     public EntityManager getEntityManager() {
-        if (ctx != null) {
-            return ctx.getEntityManager();
-        } else {
-            return em;
-        }
+        return ctx.getEntityManager();
     }
 
     public Connection getConnection() {
-        if (ctx != null) {
-            // MGX application
-            return ctx.getConnection();
-        } else {
-            // MGX global
-            // FIXME find better way to obtain connection
-
-            // hibernate 3
-            //return getEntityManager().unwrap(Session.class).connection();
-
-            // hibernate 4
-            SessionFactoryImpl impl = (SessionFactoryImpl) getEntityManager().unwrap(Session.class).getSessionFactory();
-            try {
-                return impl.getConnectionProvider().getConnection();
-            } catch (SQLException ex) {
-                Logger.getLogger(DAO.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            return null;
-        }
+        return ctx.getConnection();
     }
 
     abstract Class getType();
@@ -95,8 +63,8 @@ public abstract class DAO<T extends Identifiable> {
 
     public AutoCloseableIterator<T> getAll() {
         Iterator<T> iterator = getEntityManager().createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType())
-                                    .getResultList()
-                                    .iterator();
+                .getResultList()
+                .iterator();
         return new ForwardingIterator<>(iterator);
     }
 
@@ -166,21 +134,6 @@ public abstract class DAO<T extends Identifiable> {
             } catch (SQLException ex) {
             }
         }
-    }
-
-    /*
-     * from http://snippets.dzone.com/posts/show/91
-     */
-    protected static String join(Iterable< ? extends Object> pColl, String separator) {
-        Iterator< ? extends Object> oIter;
-        if (pColl == null || (!(oIter = pColl.iterator()).hasNext())) {
-            return "";
-        }
-        StringBuilder oBuilder = new StringBuilder(String.valueOf(oIter.next()));
-        while (oIter.hasNext()) {
-            oBuilder.append(separator).append(oIter.next());
-        }
-        return oBuilder.toString();
     }
 
     protected static String toSQLTemplateString(List l) {
