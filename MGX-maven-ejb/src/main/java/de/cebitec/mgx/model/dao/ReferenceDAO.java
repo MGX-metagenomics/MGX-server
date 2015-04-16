@@ -23,13 +23,33 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         return Reference.class;
     }
 
-    public String getSequence(final Reference ref, int from, int to) throws MGXException {
-        if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
-            throw new MGXException("Invalid coordinates: " + from + " " + to + ", reference length is " + ref.getLength());
+    public String getSequence(long refId, int from, int to) throws MGXException {
+        int refLen = -1;
+        String filePath = null;
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT ref_length, ref_filepath FROM reference WHERE id=?")) {
+                stmt.setLong(1, refId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        refLen = rs.getInt(1);
+                        filePath = rs.getString(2);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
+        if (refLen == -1 || filePath == null) {
+            throw new MGXException("Cannot read data for project reference id " + refId);
+        }
+
+        if (from > to || from < 0 || to < 0 || from == to || to > refLen) {
+            throw new MGXException("Invalid coordinates: " + from + " " + to + ", reference length is " + refLen);
         }
         int len = to - from + 1;
         char[] buf = new char[len];
-        try (BufferedReader br = new BufferedReader(new FileReader(ref.getFile()))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             br.readLine(); // skip header line
             br.skip(from);
             if (len != br.read(buf)) {
