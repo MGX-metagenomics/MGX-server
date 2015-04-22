@@ -4,11 +4,13 @@ import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.AutoCloseableSAMRecordIterator;
-import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
+import htsjdk.samtools.SamReader;
+import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,19 +34,18 @@ public class MappingDataSession {
     private final int refLength;
     private final String projName;
     private long lastAccessed;
-    private final String samFile;
-    private final SAMFileReader samReader;
+    private final File samFile;
+    private final SamReader samReader;
     private final Lock lock;
     private long maxCov = -1;
 
-    public MappingDataSession(long refId, int refLen, String projName, String samFile) {
+    public MappingDataSession(long refId, int refLen, String projName, File samFile) {
         this.refId = refId;
         this.refLength = refLen;
         this.projName = projName;
         this.samFile = samFile;
         lastAccessed = System.currentTimeMillis();
-        samReader = new SAMFileReader(new File(samFile));
-        samReader.setValidationStringency(ValidationStringency.STRICT);
+        samReader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.STRICT).open(samFile);
         lock = new ReentrantLock();
     }
 
@@ -66,15 +67,18 @@ public class MappingDataSession {
         }
     }
 
-    public long getMaxCoverage(Connection conn) {
-        if (maxCov == -1) {
+    public long getMaxCoverage(Connection conn) throws MGXException {
+        if (maxCov == -1L) {
             ForkJoinPool pool = new ForkJoinPool();
             // sam-jdk wants 1-based positions - ARGH
-            GetCoverage getCov = new GetCoverage(conn, samFile, 1, refLength, refId);
+            GetCoverage getCov = new GetCoverage(conn, samFile, 1, refLength, String.valueOf(refId));
             maxCov = pool.invoke(getCov);
             pool.shutdown();
         }
         lastAccessed = System.currentTimeMillis();
+        if (maxCov == -1L) {
+            throw new MGXException("Unable to compute coverage, internal error.");
+        }
         return maxCov;
     }
 
@@ -87,15 +91,19 @@ public class MappingDataSession {
     }
 
     public void close() {
-        samReader.close();
+        try {
+            samReader.close();
+        } catch (IOException ex) {
+            Logger.getLogger(MappingDataSession.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public static class GetCoverage extends RecursiveTask<Long> {
 
-        private final String samFile;
+        private final File samFile;
         private final int from;  // 1-based
         private final int to; // 1-based
-        private final long refId;
+        private final String refId;
         private final Connection conn;
 
         private final static int THRESHOLD = 5000;
@@ -103,7 +111,7 @@ public class MappingDataSession {
         /*
          * 1-based positions !!!
          */
-        public GetCoverage(Connection conn, String samFile, int from, int to, long refId) {
+        public GetCoverage(Connection conn, File samFile, int from, int to, String refId) {
             this.samFile = samFile;
             this.from = from;
             this.to = to;
@@ -125,44 +133,52 @@ public class MappingDataSession {
 
                 long maxLeft = left.join();
                 long maxRight = right.compute();
+                if (maxLeft == -1L || maxRight == -1L) {
+                    return -1L; // failure in subtask
+                }
                 return Math.max(maxLeft, maxRight);
             }
 
             int[] coverage = new int[to - from + 1];
             Arrays.fill(coverage, 0);
-            SAMFileReader samReader = new SAMFileReader(new File(samFile));
-            SAMRecordIterator iter = samReader.queryOverlapping(String.valueOf(refId), from, to);
+            SamReader samReader = SamReaderFactory.makeDefault().open(samFile);
+            //SAMFileReader samReader = new SAMFileReader(new File(samFile));
+            SAMRecordIterator iter = samReader.queryOverlapping(refId, from, to);
 
-            while (iter.hasNext()) {
-                SAMRecord record = iter.next();
-                assert record.getAlignmentStart() < record.getAlignmentEnd();
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT discard FROM read WHERE id=?")) {
 
-                boolean discard = false;
-                long seqId = Long.parseLong(record.getReadName());
+                while (iter.hasNext()) {
+                    SAMRecord record = iter.next();
+                    //assert record.getAlignmentStart() < record.getAlignmentEnd();
 
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT discard FROM read WHERE id=?")) {
+                    boolean discard = false;
+                    long seqId = Long.parseLong(record.getReadName());
+
                     stmt.setLong(1, seqId);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             discard = rs.getBoolean(1);
                         }
                     }
-                } catch (SQLException ex) {
-                    Logger.getLogger(getClass().getName()).log(Level.INFO, null, ex);
-                }
 
-                if (!discard) {
-                    for (int i = record.getAlignmentStart(); i <= record.getAlignmentEnd(); i++) {
-                        // we need to check extra since we also receive mappings
-                        // which only partially overlap with the interval
-                        if (i >= from && i <= to) {
-                            coverage[i - from]++;
+                    if (!discard) {
+                        for (int i = record.getAlignmentStart(); i <= record.getAlignmentEnd(); i++) {
+                            // we need to check extra since we also receive mappings
+                            // which only partially overlap with the interval
+                            if (i >= from && i <= to) {
+                                coverage[i - from]++;
+                            }
                         }
                     }
                 }
+                iter.close();
+                samReader.close();
+
+            } catch (SQLException | IOException ex) {
+                Logger.getLogger(getClass().getName()).log(Level.INFO, null, ex);
+                return -1L;
             }
-            iter.close();
-            samReader.close();
+
             long max = 0;
             for (int i : coverage) {
                 if (i > max) {

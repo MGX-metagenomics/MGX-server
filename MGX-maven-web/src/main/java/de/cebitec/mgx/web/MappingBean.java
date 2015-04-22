@@ -19,6 +19,7 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.UUID;
@@ -101,7 +102,7 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), m.getBAMFile()));
+            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), new File(m.getBAMFile())));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
