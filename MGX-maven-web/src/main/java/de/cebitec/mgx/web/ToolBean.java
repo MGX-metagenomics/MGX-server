@@ -89,6 +89,26 @@ public class ToolBean {
     }
 
     @GET
+    @Path("getXML/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString getXML(@PathParam("id") Long tool_id) {
+        Tool obj = null;
+        try {
+            obj = mgx.getToolDAO().getById(tool_id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        File f = new File(obj.getXMLFile());
+        String xmlData = null;
+        try {
+            xmlData = Util.readFile(f);
+        } catch (MGXException ex) {
+            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return MGXString.newBuilder().setValue(xmlData).build();
+    }
+
+    @GET
     @Path("listGlobalTools")
     @Produces("application/x-protobuf")
     public ToolDTOList listGlobalTools() {
