@@ -21,7 +21,8 @@ public class DataSourceFactory {
         HikariConfig cfg = new HikariConfig();
         cfg.setPoolName(poolname);
         //cfg.setMinimumPoolSize(5);
-        cfg.setMaximumPoolSize(50);
+        cfg.setMaximumPoolSize(20); 
+        cfg.setMinimumIdle(2);
         cfg.setDataSourceClassName("org.postgresql.ds.PGSimpleDataSource");
         cfg.addDataSourceProperty("user", m.getRole().getDBUser());
         cfg.addDataSourceProperty("password", m.getRole().getDBPassword());
