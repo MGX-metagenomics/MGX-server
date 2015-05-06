@@ -9,7 +9,6 @@ import javax.annotation.PostConstruct;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.ejb.Timer;
 import javax.sql.DataSource;
 
 /**
@@ -28,7 +27,7 @@ public class GPMSSessions {
         sessions = Collections.synchronizedMap(new HashMap<DBMembershipI, GPMSMaster>());
     }
 
-    public GPMSMaster getMaster(DBMembershipI m) {
+    public synchronized GPMSMaster getMaster(DBMembershipI m) {
 
         GPMSMaster master;
 
@@ -43,8 +42,8 @@ public class GPMSSessions {
         return master;
     }
 
-    @Schedule(hour = "*", minute = "0", second = "0", persistent = false)
-    public void timeout(Timer timer) {
+    @Schedule(hour = "*", minute = "*/15", second = "0", persistent = false)
+    public void cleanup() {
         Set<DBMembershipI> remove = new HashSet<>();
 
         for (DBMembershipI m : sessions.keySet()) {
