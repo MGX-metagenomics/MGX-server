@@ -3,7 +3,7 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTO.Builder;
 import de.cebitec.mgx.dto.dto.TermDTOList;
-import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
