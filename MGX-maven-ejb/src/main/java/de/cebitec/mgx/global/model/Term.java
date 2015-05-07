@@ -1,5 +1,6 @@
-package de.cebitec.mgx.model.db;
+package de.cebitec.mgx.global.model;
 
+import de.cebitec.mgx.model.db.Identifiable;
 import java.io.Serializable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -8,20 +9,12 @@ import javax.validation.constraints.NotNull;
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Term")
 public class Term implements Identifiable, Serializable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Basic
     private Long parent_id;
-    @Basic
-    @NotNull
     private String name;
-    @Basic
     private String description;
 
     @Override
