@@ -10,6 +10,7 @@ import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,9 +45,6 @@ public class GlobalReferenceDAO {
                         ref.setName(rs.getString(1));
                         ref.setLength(rs.getInt(2));
                         ref.setFile(rs.getString(3));
-
-                        Collection<Region> regions = global.getRegionDAO().byReference(ref);
-                        ref.setRegions(regions);
                     }
                 }
             }
@@ -54,6 +52,13 @@ public class GlobalReferenceDAO {
         } catch (SQLException ex) {
             Logger.getLogger(GlobalReferenceDAO.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
+        }
+
+        if (ref != null) {
+            File seqFile = new File(ref.getFile());
+            if (!seqFile.exists()) {
+                throw new MGXException("Reference sequence data for " + ref.getName() + " is missing.");
+            }
         }
         return ref;
     }
@@ -69,10 +74,6 @@ public class GlobalReferenceDAO {
                         ref.setName(rs.getString(2));
                         ref.setLength(rs.getInt(3));
                         ref.setFile(rs.getString(4));
-
-                        Collection<Region> regions = global.getRegionDAO().byReference(ref);
-                        ref.setRegions(regions);
-
                         refs.add(ref);
                     }
                 }
