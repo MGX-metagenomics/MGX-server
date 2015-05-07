@@ -5,6 +5,7 @@ import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.util.DBIterator;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
@@ -42,6 +43,10 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
 
         if (refLen == -1 || filePath == null) {
             throw new MGXException("Cannot read data for project reference id " + refId);
+        }
+        
+        if (!new File(filePath).exists()) {
+            throw new MGXException("Sequence data file for ID "+ refId + " is missing.");
         }
 
         if (from > to || from < 0 || to < 0 || from == to || to > refLen) {
