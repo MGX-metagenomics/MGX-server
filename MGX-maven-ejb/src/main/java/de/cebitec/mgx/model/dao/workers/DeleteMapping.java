@@ -40,6 +40,10 @@ public class DeleteMapping extends TaskI {
                     if (bamIdx.exists()) {
                         bamIdx.delete();
                     }
+                    File covFile = new File(bamName + ".maxCov");
+                    if (covFile.exists()) {
+                        covFile.delete();
+                    }
                     jobs.add(rs.getLong(2));
                 }
             }
