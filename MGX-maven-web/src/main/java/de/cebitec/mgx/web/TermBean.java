@@ -5,7 +5,7 @@ import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTOList;
 import de.cebitec.mgx.dtoadapter.TermDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.EJB;

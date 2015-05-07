@@ -25,7 +25,7 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
-import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;

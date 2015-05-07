@@ -1,7 +1,7 @@
 package de.cebitec.mgx.global;
 
 import de.cebitec.mgx.controller.MGXException;
-import de.cebitec.mgx.model.db.Term;
+import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;
