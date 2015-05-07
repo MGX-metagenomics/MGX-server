@@ -2,7 +2,6 @@ package de.cebitec.mgx.model.db;
 
 
 import java.io.Serializable;
-import java.util.Collection;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
@@ -20,8 +19,8 @@ public class Reference implements Serializable, Identifiable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @OneToMany(mappedBy = "reference", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
-    private Collection<Region> regions;
+//    @OneToMany(mappedBy = "reference", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+//    private Collection<Region> regions;
 
     @Basic
     @NotNull
@@ -38,13 +37,13 @@ public class Reference implements Serializable, Identifiable {
     private String filePath;
     
     
-    public Collection<Region> getRegions() {
-        return regions;
-    }
-
-    public void setRegions(Collection<Region> regions) {
-        this.regions = regions;
-    }
+//    public Collection<Region> getRegions() {
+//        return regions;
+//    }
+//
+//    public void setRegions(Collection<Region> regions) {
+//        this.regions = regions;
+//    }
     
     public String getFile() {
         return filePath;
