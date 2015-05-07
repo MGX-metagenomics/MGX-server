@@ -29,10 +29,10 @@ public class GlobalRegionDAO {
         this.global = global;
     }
 
-    Collection<Region> byReference(Reference ref) throws MGXException {
+    public Collection<Region> byReference(Reference ref) throws MGXException {
         Collection<Region> regions = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop FROM region WHERE id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop FROM region WHERE ref_id=?")) {
                 stmt.setLong(1, ref.getId());
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

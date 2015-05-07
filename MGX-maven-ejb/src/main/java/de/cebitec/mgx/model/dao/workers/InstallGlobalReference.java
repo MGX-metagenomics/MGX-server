@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.cebitec.mgx.model.dao.workers;
 
 import de.cebitec.mgx.controller.MGXException;
@@ -46,9 +41,9 @@ public class InstallGlobalReference extends TaskI {
             UnixHelper.createDirectory(referencesDir);
         }
 
-        Reference ref;
+        Reference globalRef;
         try {
-            ref = global.getReferenceDAO().getById(globalId);
+            globalRef = global.getReferenceDAO().getById(globalId);
         } catch (MGXException ex) {
             Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, ex.getMessage());
@@ -58,8 +53,8 @@ public class InstallGlobalReference extends TaskI {
         // create reference in project to obtain an id
         long newRefId = -1;
         try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
-            stmt.setString(1, ref.getName());
-            stmt.setInt(2, ref.getLength());
+            stmt.setString(1, globalRef.getName());
+            stmt.setInt(2, globalRef.getLength());
             stmt.setString(3, "");
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -77,15 +72,14 @@ public class InstallGlobalReference extends TaskI {
 
         File targetFile = new File(projRefDir + newRefId + ".fas");
         try {
-            UnixHelper.copyFile(new File(ref.getFile()), targetFile);
+            UnixHelper.copyFile(new File(globalRef.getFile()), targetFile);
         } catch (IOException ex) {
             Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, "Could not copy DNA sequence");
-            return;
-        } finally {
             if (targetFile.exists()) {
                 targetFile.delete();
             }
+            return;
         }
 
         // update filepath on reference
@@ -102,7 +96,14 @@ public class InstallGlobalReference extends TaskI {
         setStatus(TaskI.State.PROCESSING, "Copying subregions");
 
         // transfer regions
-        Collection<Region> regions = ref.getRegions();
+        Collection<Region> regions = null;
+        try {
+            regions = global.getRegionDAO().byReference(globalRef);
+        } catch (MGXException ex) {
+            Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
+            setStatus(State.FAILED, ex.getMessage());
+        }
+
         try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
             for (Region r : regions) {
                 stmt.setString(1, r.getName());
