@@ -54,7 +54,7 @@ public class MappingBean {
         try {
             obj = mgx.getMappingDAO().getById(id);
         } catch (MGXException ex) {
-            throw new MGXWebException("No such Sample");
+            throw new MGXWebException(ex.getMessage());
         }
         return MappingDTOFactory.getInstance().toDTO(obj);
     }
