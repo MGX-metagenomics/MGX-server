@@ -88,7 +88,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 throw new MGXException(ex.getMessage());
             }
         }
-        reference.setRegions(regions);
+        //reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
             stmt.setString(1, reference.getFile());

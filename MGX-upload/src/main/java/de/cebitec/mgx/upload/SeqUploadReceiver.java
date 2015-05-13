@@ -38,6 +38,7 @@ import javax.ejb.TransactionAttributeType;
 public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
 //
 //    @EJB // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+
     MGXConfiguration mgxconfig;
     //
     protected final String projectName;
@@ -150,6 +151,10 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath().toString());
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
+                stmt.setLong(1, runId);
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
                 stmt.setLong(1, runId);
                 stmt.executeUpdate();
             }
