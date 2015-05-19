@@ -17,14 +17,21 @@ import javax.ejb.TransactionAttributeType;
 public class FileUploadReceiver implements UploadReceiverI<byte[]> {
 
     protected FileOutputStream writer = null;
-    protected final String targetFile;
+    protected final File targetFile;
     protected final String projectName;
     protected long lastAccessed;
 
-    public FileUploadReceiver(String target, String projectName) {
+    public FileUploadReceiver(File target, String projectName) throws MGXException {
         this.targetFile = target;
         this.projectName = projectName;
         lastAccessed = System.currentTimeMillis();
+        try {
+            if (!target.createNewFile()) {
+                throw new MGXException("Could not create file");
+            }
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
     }
 
     @Override
@@ -37,9 +44,8 @@ public class FileUploadReceiver implements UploadReceiverI<byte[]> {
                 writer = null;
             }
         }
-        File file = new File(targetFile);
-        if (file.exists()) {
-            file.delete();
+        if (targetFile.exists()) {
+            targetFile.delete();
         }
 
         lastAccessed = System.currentTimeMillis();
@@ -51,7 +57,7 @@ public class FileUploadReceiver implements UploadReceiverI<byte[]> {
             if (writer != null) {
                 writer.close();
             }
-            UnixHelper.makeFileGroupWritable(targetFile);
+            UnixHelper.makeFileGroupWritable(targetFile.getAbsolutePath());
         } catch (IOException ex) {
             throw new MGXException(ex);
         } finally {
