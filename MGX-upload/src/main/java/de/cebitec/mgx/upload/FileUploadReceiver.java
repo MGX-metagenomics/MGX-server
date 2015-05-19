@@ -48,7 +48,9 @@ public class FileUploadReceiver implements UploadReceiverI<byte[]> {
     @Override
     public void close() throws MGXException {
         try {
-            writer.close();
+            if (writer != null) {
+                writer.close();
+            }
             UnixHelper.makeFileGroupWritable(targetFile);
         } catch (IOException ex) {
             throw new MGXException(ex);
