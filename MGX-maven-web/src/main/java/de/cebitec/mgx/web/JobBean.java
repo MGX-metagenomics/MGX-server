@@ -400,6 +400,8 @@ public class JobBean {
         while (apIter.hasNext()) {
             availableParams.add(apIter.next());
         }
+        
+        final String projectFileDir = mgx.getProjectDirectory() + "files" + File.separator;
 
         for (JobParameter jp : job.getParameters()) {
             for (JobParameter candidate : availableParams) {
@@ -409,6 +411,11 @@ public class JobBean {
                     jp.setType(candidate.getType());
                     jp.setDisplayName(candidate.getDisplayName());
                 }
+            }
+            
+            // do not expose internal path names
+            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
+                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
             }
         }
     }
