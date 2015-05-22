@@ -30,9 +30,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
     @Override
     public void delete(long id) throws MGXException {
-        String sb = new StringBuilder(getController().getProjectDirectory())
-                .append(File.separator)
-                .append("jobs")
+        String sb = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
                 .append(File.separator)
                 .append(id).toString();
 
@@ -102,8 +100,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
         if (job.getStatus() != JobState.FAILED) {
             return "Job is not in FAILED state.";
         }
-        String fname = new StringBuilder(getController().getProjectDirectory())
-                .append(File.separator).append("jobs")
+        String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
                 .append(File.separator).append(job.getId())
                 .append(".stderr").toString();
         StringBuilder ret = new StringBuilder();

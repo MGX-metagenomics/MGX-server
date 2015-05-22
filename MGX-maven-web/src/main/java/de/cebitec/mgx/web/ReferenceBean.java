@@ -22,6 +22,7 @@ import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
@@ -137,7 +138,7 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString installGlobalReference(@PathParam("refid") Long globalId) {
-        String projReferenceDir = mgx.getProjectDirectory() + "/reference/";
+        String projReferenceDir = mgx.getProjectDirectory() + File.separator + "reference" + File.separator;
         UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
@@ -179,7 +180,7 @@ public class ReferenceBean {
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
             mgx.log(mgx.getCurrentUser() + " creating reference importer session for " + ref.getName());
-            ref.setFile(mgx.getProjectDirectory() + "/reference/" + ref.getId() + ".fas");
+            ref.setFile(mgx.getProjectDirectory() + File.separator + "reference" + File.separator + ref.getId() + ".fas");
             ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
             uuid = upSessions.registerUploadSession(recv);
         } catch (MGXException ex) {

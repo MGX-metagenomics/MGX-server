@@ -3,6 +3,7 @@ package de.cebitec.mgx.controller;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
+import java.io.File;
 import java.sql.Connection;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -57,9 +58,13 @@ public interface MGXController extends AutoCloseable {
 
     public Connection getConnection();
 
-    public String getProjectDirectory();
+    public File getProjectDirectory();
 
-    public String getProjectQCDirectory();
+    public File getProjectQCDirectory();
+
+    public File getProjectFileDirectory();
+
+    public File getProjectJobDirectory();
 
     public String getDatabaseHost();
 

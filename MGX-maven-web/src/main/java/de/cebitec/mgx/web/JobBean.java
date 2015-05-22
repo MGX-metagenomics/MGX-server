@@ -110,7 +110,7 @@ public class JobBean {
             String value = userParam.getParameterValue();
 
             if (defaultParam.getType().equals("ConfigFile")) {
-                String fullPath = mgx.getProjectDirectory() + "files" + File.separator
+                String fullPath = mgx.getProjectFileDirectory() + File.separator
                         + userParam.getParameterValue().substring(2).replace("|", File.separator);
                 if (!new File(fullPath).exists()) {
                     throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
@@ -195,7 +195,7 @@ public class JobBean {
                 jp.setJob(job);
 
                 if (jp.getType().equals("ConfigFile")) {
-                    String fullPath = mgx.getProjectDirectory() + "files" + File.separator
+                    String fullPath = mgx.getProjectFileDirectory() + File.separator
                             + jp.getParameterValue().substring(2).replace("|", File.separator);
                     jp.setParameterValue(fullPath);
                 }
@@ -401,7 +401,7 @@ public class JobBean {
             availableParams.add(apIter.next());
         }
         
-        final String projectFileDir = mgx.getProjectDirectory() + "files" + File.separator;
+        final String projectFileDir = mgx.getProjectFileDirectory().getAbsolutePath();
 
         for (JobParameter jp : job.getParameters()) {
             for (JobParameter candidate : availableParams) {

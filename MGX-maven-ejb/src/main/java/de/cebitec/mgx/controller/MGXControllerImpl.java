@@ -29,8 +29,10 @@ public class MGXControllerImpl implements MGXController {
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
     private final Map<Class, DAO> daos = new HashMap<>();
-    private String projectDir = null;
-    private String projectQCDir = null;
+    private File projectDir = null;
+    private File projectQCDir = null;
+    private File projectFileDir = null;
+    private File projectJobDir = null;
     //
     //private final MGXConfiguration config;
     private final String persistentDir;
@@ -65,8 +67,8 @@ public class MGXControllerImpl implements MGXController {
         return em;
     }
 
-    @Override
-    public String getProjectDirectory() {
+    //@Override
+    public File getProjectDirectory() {
         if (projectDir != null) {
             return projectDir;
         }
@@ -85,28 +87,59 @@ public class MGXControllerImpl implements MGXController {
         if (!UnixHelper.isGroupWritable(targetDir)) {
             UnixHelper.makeDirectoryGroupWritable(targetDir.getAbsolutePath());
         }
-        projectDir = ret;
-
+        projectDir = targetDir;
         return projectDir;
-
     }
 
     @Override
-    public String getProjectQCDirectory() {
+    public File getProjectQCDirectory() {
         if (projectQCDir != null) {
             return projectQCDir;
         }
-        
-        File qcDir = new File(getProjectDirectory() + "QC");
-        qcDir = new File(qcDir.toString());
+
+        File qcDir = new File(getProjectDirectory().getAbsoluteFile() + File.separator + "QC");
         if (!qcDir.exists()) {
             UnixHelper.createDirectory(qcDir);
         }
         if (!UnixHelper.isGroupWritable(qcDir)) {
             UnixHelper.makeDirectoryGroupWritable(qcDir.getAbsolutePath());
         }
-        projectQCDir = qcDir.getAbsolutePath();
+        projectQCDir = qcDir;
         return projectQCDir;
+    }
+
+    @Override
+    public File getProjectFileDirectory() {
+        if (projectFileDir != null) {
+            return projectFileDir;
+        }
+
+        File fileDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "files");
+        if (!fileDir.exists()) {
+            UnixHelper.createDirectory(fileDir);
+        }
+        if (!UnixHelper.isGroupWritable(fileDir)) {
+            UnixHelper.makeDirectoryGroupWritable(fileDir.getAbsolutePath());
+        }
+        projectFileDir = fileDir;
+        return projectFileDir;
+    }
+
+    @Override
+    public File getProjectJobDirectory() {
+        if (projectJobDir != null) {
+            return projectJobDir;
+        }
+
+        File jobDir = new File(getProjectDirectory().getAbsoluteFile() + File.separator + "jobs");
+        if (!jobDir.exists()) {
+            UnixHelper.createDirectory(jobDir);
+        }
+        if (!UnixHelper.isGroupWritable(jobDir)) {
+            UnixHelper.makeDirectoryGroupWritable(jobDir.getAbsolutePath());
+        }
+        projectJobDir = jobDir;
+        return projectJobDir;
     }
 
     @Override
@@ -274,4 +307,5 @@ public class MGXControllerImpl implements MGXController {
         }
         return true;
     }
+
 }

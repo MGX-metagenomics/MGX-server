@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.dao.workers;
 
 import de.cebitec.mgx.sessions.TaskI;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,9 +18,9 @@ import java.util.logging.Logger;
 public final class DeleteDNAExtract extends TaskI {
 
     private final long id;
-    private final String projectDir;
+    private final File projectDir;
 
-    public DeleteDNAExtract(long id, Connection conn, String projName, String projectDir) {
+    public DeleteDNAExtract(long id, Connection conn, String projName, File projectDir) {
         super(projName, conn);
         this.id = id;
         this.projectDir = projectDir;

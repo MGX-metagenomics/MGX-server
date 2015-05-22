@@ -208,13 +208,7 @@ public class ToolBean {
             if (!validator.isValid(dto.getXml())) {
                 throw new MGXWebException("XML is not Valid");
             }
-        } catch (SAXException ex) {
-            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXWebException("XML is not valid: " + ex.getMessage());
-        } catch (IOException ex) {
-            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXWebException("XML is not valid: " + ex.getMessage());
-        } catch (ParserConfigurationException ex) {
+        } catch (SAXException | IOException | ParserConfigurationException ex) {
             Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXWebException("XML is not valid: " + ex.getMessage());
         }
