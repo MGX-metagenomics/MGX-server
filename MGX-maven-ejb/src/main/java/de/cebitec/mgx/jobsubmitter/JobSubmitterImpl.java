@@ -72,7 +72,7 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, String projDir) throws MGXInsufficientJobConfigurationException, MGXException {
+    public boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, File projDir) throws MGXInsufficientJobConfigurationException, MGXException {
         if (!createJobConfigFile(config, dbHost, dbName, projDir, job)) {
             throw new MGXException("Failed to write job configuration.");
         }
@@ -157,29 +157,19 @@ public class JobSubmitterImpl implements JobSubmitter {
         delete("delete/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
     }
 
-    private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, String projectDir, Job j) throws MGXException {
-        StringBuilder jobconfig = new StringBuilder(projectDir)
+    private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, File projectDir, Job j) throws MGXException {
+        String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
-                .append("jobs");
-
-        File f = new File(jobconfig.toString());
-        if (!f.exists()) {
-            UnixHelper.createDirectory(f);
-        }
-
-        if (!UnixHelper.isGroupWritable(f)) {
-            UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
-        }
-
-        jobconfig.append(File.separator);
-        jobconfig.append(j.getId().toString());
+                .append("jobs")
+                .append(File.separator)
+                .append(j.getId().toString()).toString();
 
         Collection<JobParameter> params = j.getParameters();
 
         FileWriter fw = null;
         BufferedWriter cfgFile = null;
         try {
-            fw = new FileWriter(jobconfig.toString(), false);
+            fw = new FileWriter(jobconfigFile, false);
             cfgFile = new BufferedWriter(fw);
 
             cfgFile.write("mgx.username=" + mgxcfg.getMGXUser());
@@ -214,7 +204,7 @@ public class JobSubmitterImpl implements JobSubmitter {
                 throw new MGXException(ex.getMessage());
             }
         }
-        UnixHelper.makeFileGroupWritable(jobconfig.toString());
+        UnixHelper.makeFileGroupWritable(jobconfigFile);
         return true;
     }
 

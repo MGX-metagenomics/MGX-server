@@ -268,7 +268,7 @@ public class SequenceBean {
     }
 
     private void createDirs() {
-        StringBuilder dir = new StringBuilder(mgx.getProjectDirectory())
+        StringBuilder dir = new StringBuilder(mgx.getProjectDirectory().getAbsolutePath())
                 .append(File.separator)
                 .append("seqruns");
         File f = new File(dir.toString());
@@ -279,10 +279,7 @@ public class SequenceBean {
             UnixHelper.makeDirectoryGroupWritable(f.getAbsolutePath());
         }
 
-        StringBuilder qcDir = new StringBuilder(mgx.getProjectDirectory())
-                .append(File.separator)
-                .append("QC");
-        f = new File(qcDir.toString());
+        f = mgx.getProjectQCDirectory();
         if (!f.exists()) {
             UnixHelper.createDirectory(f);
         }

@@ -28,12 +28,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         Long id = super.create(obj);
 
-        File jobDir = new File(getController().getProjectDirectory() + "jobs");
-        if (!jobDir.exists()) {
-            UnixHelper.createDirectory(jobDir);
-        }
-
-        String fname = getController().getProjectDirectory() + "jobs" + File.separator + id.toString() + ".xml";
+        String fname = getController().getProjectJobDirectory() + File.separator + id.toString() + ".xml";
         try {
             try (Writer fw = new BufferedWriter(new FileWriter(fname))) {
                 fw.write(xmldata);
@@ -51,7 +46,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
         return id;
     }
 
-    public <U extends T> long installGlobalTool(Tool global, Class<U> clazz, String projectDir) throws MGXException {
+    public <U extends T> long installGlobalTool(Tool global, Class<U> clazz, File projectDir) throws MGXException {
 
         U t;
         try {
@@ -76,7 +71,7 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
          * consistent project state even if the global tool is updated; the
          * project directory is created on demand
          */
-        StringBuilder targetName = new StringBuilder(projectDir).append("jobs");
+        StringBuilder targetName = new StringBuilder(projectDir.getAbsolutePath()).append("jobs");
         File targetDir = new File(targetName.toString());
         if (!targetDir.exists()) {
             UnixHelper.createDirectory(targetDir);

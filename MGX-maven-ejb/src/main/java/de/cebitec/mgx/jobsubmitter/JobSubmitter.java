@@ -5,6 +5,7 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.model.db.Job;
+import java.io.File;
 import java.sql.Connection;
 
 /**
@@ -22,7 +23,7 @@ public interface JobSubmitter {
 
     boolean validate(MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException;
 
-    boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, String projDir) throws MGXInsufficientJobConfigurationException, MGXException;
+    boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, File projDir) throws MGXInsufficientJobConfigurationException, MGXException;
 
     void shutdown(MGXController mgx) throws MGXDispatcherException;
 

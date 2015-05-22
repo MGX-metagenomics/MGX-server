@@ -61,7 +61,7 @@ public class FileBean {
     @Path("fetchall/{baseDir}")
     @Produces("application/x-protobuf")
     public FileDTOList fetchall(@PathParam("baseDir") String baseDir) {
-        File targetDir = new File(mgx.getProjectDirectory() + "files");
+        File targetDir = new File(mgx.getProjectDirectory().getAbsolutePath() + File.separator + "files");
         if (!targetDir.exists()) {
             UnixHelper.createDirectory(targetDir);
         }
@@ -91,7 +91,7 @@ public class FileBean {
         }
 
         String name = dto.getName().substring(2).replace("|", File.separator);
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separator + name);
+        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + name);
         if (target.exists()) {
             throw new MGXWebException(dto.getName().substring(2) + " already exists.");
         }
@@ -118,7 +118,7 @@ public class FileBean {
         }
 
         path = path.replace("|", File.separator);
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separator + path);
+        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
@@ -146,7 +146,7 @@ public class FileBean {
             path = path.substring(2);
         }
 
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
         if (!target.exists()) {
             mgx.log("tried to download non-existing path " + path);
             throw new MGXWebException("File does not exist: " + path);
@@ -214,12 +214,7 @@ public class FileBean {
             path = path.substring(2);
         }
 
-        File targetDir = new File(mgx.getProjectDirectory() + "files");
-        if (!targetDir.exists()) {
-            UnixHelper.createDirectory(targetDir);
-        }
-
-        File target = new File(mgx.getProjectDirectory() + "files" + File.separatorChar + path);
+        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
         if (target.exists()) {
             throw new MGXWebException("File already exists: " + path);
         }
@@ -303,12 +298,12 @@ public class FileBean {
         }
 
         // validate project directory
-        File basedir = new File(mgx.getProjectDirectory() + "files");
+        File basedir = mgx.getProjectFileDirectory();
         if (!basedir.isDirectory()) {
             throw new MGXWebException("File storage subsystem corrupted. Contact server admin.");
         }
 
-        basedir = new File(mgx.getProjectDirectory() + "files" + File.separator + path);
+        basedir = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
         if (!basedir.isDirectory()) {
             throw new MGXWebException(basedir.getAbsolutePath() + " is not a directory.");
         }
@@ -316,7 +311,7 @@ public class FileBean {
     }
 
     private String stripProjectDir(String input) {
-        String projectDirectory = mgx.getProjectDirectory() + "files/";
+        String projectDirectory = mgx.getProjectFileDirectory().getAbsolutePath() + File.separator;
         if (input.startsWith(projectDirectory)) {
             input = input.substring(projectDirectory.length());
         } else {

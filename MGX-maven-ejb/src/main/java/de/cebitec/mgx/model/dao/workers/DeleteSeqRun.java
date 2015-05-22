@@ -19,9 +19,9 @@ import java.util.logging.Logger;
 public final class DeleteSeqRun extends TaskI {
 
     private final long id;
-    private final String projectDir;
+    private final File projectDir;
 
-    public DeleteSeqRun(long id, Connection conn, String projName, String projectDir) {
+    public DeleteSeqRun(long id, Connection conn, String projName, File projectDir) {
         super(projName, conn);
         this.id = id;
         this.projectDir = projectDir;
@@ -82,7 +82,7 @@ public final class DeleteSeqRun extends TaskI {
                 stmt.execute();
             }
             
-            File qcDir = new File(projectDir + "QC");
+            File qcDir = new File(projectDir.getAbsolutePath() + File.separator + "QC");
             File[] listFiles = qcDir.listFiles();
             if (listFiles != null) {
                 for (File f : listFiles) {

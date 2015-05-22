@@ -27,7 +27,7 @@ public class RestartJob extends TaskI {
     private final MGXConfiguration mgxcfg;
     private final String dbHost;
     private final String dbName;
-    private final String projDir;
+    private final File projDir;
 
     public RestartJob(MGXController mgx, MGXConfiguration cfg, Job job, Connection conn, String projName, String dispatcherHost, JobSubmitter js) {
         super(projName, conn);

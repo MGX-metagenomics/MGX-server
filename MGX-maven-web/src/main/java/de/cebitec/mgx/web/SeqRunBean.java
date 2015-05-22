@@ -204,7 +204,7 @@ public class SeqRunBean {
         List<QCResultI> qcList = new ArrayList<>();
 
         if (analyzers != null && analyzers.length > 0) {
-            File qcDir = new File(mgx.getProjectQCDirectory());
+            File qcDir = mgx.getProjectQCDirectory();
             final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
             final SeqRun run = sr;
             for (final Analyzer a : analyzers) {
