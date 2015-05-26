@@ -3,37 +3,25 @@ package de.cebitec.mgx.controller;
 import java.sql.SQLException;
 import java.sql.Types;
 import javax.persistence.PersistenceException;
-import org.hibernate.dialect.PostgreSQLDialect;
+import org.hibernate.dialect.PostgreSQL82Dialect;
 import org.hibernate.exception.spi.TemplatedViolatedConstraintNameExtracter;
 import org.hibernate.exception.spi.ViolatedConstraintNameExtracter;
 import org.hibernate.id.SequenceIdentityGenerator;
-//import org.hibernate.dialect.PostgreSQLDialect;
-import org.hibernate.internal.util.JdbcExceptionHelper;
-//import org.hibernate.exception.TemplatedViolatedConstraintNameExtracter;
-//import org.hibernate.exception.ViolatedConstraintNameExtracter;
-//import org.hibernate.id.SequenceIdentityGenerator;
 
 /**
  *
  * @author sjaenick
  */
-public class PG9Dialect extends PostgreSQLDialect {
+public class PG9Dialect extends PostgreSQL82Dialect {
 
     public PG9Dialect() {
         super();
-        //registerColumnType(Types.BIGINT, "serial8");
+        registerColumnType(Types.BIGINT, "serial8");
     }
 
     @Override
     public Class getNativeIdentifierGeneratorClass() {
         return SequenceIdentityGenerator.class;
-    }
-
-    @Override
-    public String getIdentityColumnString(int type) {
-        return type == Types.BIGINT
-                ? "bigserial not null"
-                : "serial not null";
     }
 
     @Override
@@ -46,7 +34,7 @@ public class PG9Dialect extends PostgreSQLDialect {
         public String extractConstraintName(SQLException sqle) {
 
             try {
-                int sqlState = Integer.valueOf(JdbcExceptionHelper.extractSqlState(sqle));
+                int sqlState = Integer.valueOf(extractSqlState(sqle));
                 switch (sqlState) {
                     // CHECK VIOLATION
                     case 23514:
@@ -77,4 +65,24 @@ public class PG9Dialect extends PostgreSQLDialect {
             }
         }
     };
+
+    /**
+     * For the given SQLException, locates the X/Open-compliant SQLState.
+     *
+     * @param sqlException The exception from which to extract the SQLState
+     * @return The SQLState code, or null.
+     * 
+     * Code duplicated from Hibernate's JdbcExceptionHelper since it resides
+     * within an internal package.
+     * 
+     */
+    private static String extractSqlState(SQLException sqlException) {
+        String sqlState = sqlException.getSQLState();
+        SQLException nested = sqlException.getNextException();
+        while (sqlState == null && nested != null) {
+            sqlState = nested.getSQLState();
+            nested = nested.getNextException();
+        }
+        return sqlState;
+    }
 }
