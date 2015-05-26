@@ -6,7 +6,6 @@ import de.cebitec.mgx.model.db.*;
 import java.io.File;
 import java.sql.Connection;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 
 /**
  *
@@ -54,7 +53,7 @@ public interface MGXController extends AutoCloseable {
     //public MGXGlobal getGlobal();
     public EntityManager getEntityManager();
 
-    public EntityManagerFactory getEMF();
+    //public EntityManagerFactory getEMF();
 
     public Connection getConnection();
 

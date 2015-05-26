@@ -17,7 +17,6 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 
 /**
  *
@@ -34,7 +33,6 @@ public class MGXControllerImpl implements MGXController {
     private File projectFileDir = null;
     private File projectJobDir = null;
     //
-    //private final MGXConfiguration config;
     private final String persistentDir;
 
     public MGXControllerImpl(DBMasterI gpmsmaster, MGXConfiguration cfg) {
@@ -56,18 +54,18 @@ public class MGXControllerImpl implements MGXController {
         log(String.format(msg, args));
     }
 
-    @Override
-    public EntityManagerFactory getEMF() {
-        assert false;
-        return null; //return this.emf;
-    }
+//    @Override
+//    public EntityManagerFactory getEMF() {
+//        assert false;
+//        return null; //return this.emf;
+//    }
 
     @Override
     public EntityManager getEntityManager() {
         return em;
     }
 
-    //@Override
+    @Override
     public File getProjectDirectory() {
         if (projectDir != null) {
             return projectDir;
@@ -97,7 +95,7 @@ public class MGXControllerImpl implements MGXController {
             return projectQCDir;
         }
 
-        File qcDir = new File(getProjectDirectory().getAbsoluteFile() + File.separator + "QC");
+        File qcDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "QC");
         if (!qcDir.exists()) {
             UnixHelper.createDirectory(qcDir);
         }
@@ -131,7 +129,7 @@ public class MGXControllerImpl implements MGXController {
             return projectJobDir;
         }
 
-        File jobDir = new File(getProjectDirectory().getAbsoluteFile() + File.separator + "jobs");
+        File jobDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "jobs");
         if (!jobDir.exists()) {
             UnixHelper.createDirectory(jobDir);
         }
