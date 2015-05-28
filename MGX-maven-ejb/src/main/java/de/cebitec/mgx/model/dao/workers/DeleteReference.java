@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao.workers;
 
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -18,10 +19,12 @@ import java.util.logging.Logger;
 public class DeleteReference extends TaskI {
 
     private final long id;
+    private final MappingSessions sessions;
 
-    public DeleteReference(Connection conn, long id, String projName) {
+    public DeleteReference(Connection conn, long id, String projName, MappingSessions sessions) {
         super(projName, conn);
         this.id = id;
+        this.sessions = sessions;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class DeleteReference extends TaskI {
 
         // delete mappings
         for (Long mapId : mappings) {
-            TaskI delJob = new DeleteMapping(mapId, conn, getProjectName());
+            TaskI delJob = new DeleteMapping(mapId, conn, getProjectName(), sessions);
             delJob.addPropertyChangeListener(this);
             delJob.run();
             delJob.removePropertyChangeListener(this);

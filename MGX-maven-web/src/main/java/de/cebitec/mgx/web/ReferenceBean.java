@@ -16,6 +16,7 @@ import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.dao.workers.DeleteReference;
 import de.cebitec.mgx.model.dao.workers.InstallGlobalReference;
 import de.cebitec.mgx.model.db.Reference;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
 import de.cebitec.mgx.upload.UploadReceiverI;
@@ -25,8 +26,6 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -55,6 +54,8 @@ public class ReferenceBean {
     TaskHolder taskHolder;
     @EJB
     UploadSessions upSessions;
+    @EJB
+    MappingSessions mappingSessions;
     @EJB
     MGXGlobal global;
 
@@ -112,7 +113,7 @@ public class ReferenceBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 

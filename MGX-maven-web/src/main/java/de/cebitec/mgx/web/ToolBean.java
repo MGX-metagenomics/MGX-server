@@ -19,6 +19,7 @@ import de.cebitec.mgx.model.dao.workers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
@@ -57,6 +58,8 @@ public class ToolBean {
     MGXConfiguration mgxconfig;
     @EJB
     MGXGlobal global;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -154,7 +157,7 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 

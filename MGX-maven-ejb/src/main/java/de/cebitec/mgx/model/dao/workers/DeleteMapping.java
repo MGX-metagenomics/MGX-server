@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao.workers;
 
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -18,14 +19,20 @@ import java.util.logging.Logger;
 public class DeleteMapping extends TaskI {
 
     private final long id;
+    private final MappingSessions sessions;
 
-    public DeleteMapping(Long mapId, Connection conn, String projName) {
+    public DeleteMapping(Long mapId, Connection conn, String projName, MappingSessions sessions) {
         super(projName, conn);
+        this.sessions = sessions;
         id = mapId;
     }
 
     @Override
     public void run() {
+        
+        // abort any sessions referring to this mapping
+        sessions.abort(id);
+        
         Set<Long> jobs = new HashSet<>();
         try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file, job_id")) {
             stmt.setLong(1, id);
@@ -50,7 +57,7 @@ public class DeleteMapping extends TaskI {
 
             // delete jobs
             for (Long jobId : jobs) {
-                TaskI delJob = new DeleteJob(jobId, conn, getProjectName());
+                TaskI delJob = new DeleteJob(jobId, conn, getProjectName(), sessions);
                 delJob.addPropertyChangeListener(this);
                 delJob.run();
                 delJob.removePropertyChangeListener(this);

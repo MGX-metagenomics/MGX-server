@@ -12,13 +12,12 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
 import de.cebitec.mgx.model.dao.workers.DeleteHabitat;
 import de.cebitec.mgx.model.db.Habitat;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -45,6 +44,8 @@ public class HabitatBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -103,7 +104,7 @@ public class HabitatBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName(), mgx.getProjectDirectory()));
+            taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
