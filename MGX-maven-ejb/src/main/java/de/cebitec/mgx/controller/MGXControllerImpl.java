@@ -7,6 +7,7 @@ import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -32,6 +33,7 @@ public class MGXControllerImpl implements MGXController {
     private File projectQCDir = null;
     private File projectFileDir = null;
     private File projectJobDir = null;
+    private File projectReferencesDir = null;
     //
     private final String persistentDir;
 
@@ -59,14 +61,13 @@ public class MGXControllerImpl implements MGXController {
 //        assert false;
 //        return null; //return this.emf;
 //    }
-
     @Override
     public EntityManager getEntityManager() {
         return em;
     }
 
     @Override
-    public File getProjectDirectory() {
+    public File getProjectDirectory() throws IOException {
         if (projectDir != null) {
             return projectDir;
         }
@@ -90,7 +91,7 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public File getProjectQCDirectory() {
+    public File getProjectQCDirectory() throws IOException {
         if (projectQCDir != null) {
             return projectQCDir;
         }
@@ -107,7 +108,24 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public File getProjectFileDirectory() {
+    public File getProjectReferencesDirectory() throws IOException {
+        if (projectReferencesDir != null) {
+            return projectReferencesDir;
+        }
+
+        File refDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "reference");
+        if (!refDir.exists()) {
+            UnixHelper.createDirectory(refDir);
+        }
+        if (!UnixHelper.isGroupWritable(refDir)) {
+            UnixHelper.makeDirectoryGroupWritable(refDir.getAbsolutePath());
+        }
+        projectReferencesDir = refDir;
+        return projectReferencesDir;
+    }
+
+    @Override
+    public File getProjectFileDirectory() throws IOException {
         if (projectFileDir != null) {
             return projectFileDir;
         }
@@ -124,7 +142,7 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public File getProjectJobDirectory() {
+    public File getProjectJobDirectory() throws IOException {
         if (projectJobDir != null) {
             return projectJobDir;
         }

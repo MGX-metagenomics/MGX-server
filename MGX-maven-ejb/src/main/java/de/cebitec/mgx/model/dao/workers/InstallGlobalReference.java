@@ -38,7 +38,12 @@ public class InstallGlobalReference extends TaskI {
 
         File referencesDir = new File(projRefDir);
         if (!referencesDir.exists()) {
-            UnixHelper.createDirectory(referencesDir);
+            try {
+                UnixHelper.createDirectory(referencesDir);
+            } catch (IOException ex) {
+                setStatus(State.FAILED, ex.getMessage());
+                return;
+            }
         }
 
         Reference globalRef;

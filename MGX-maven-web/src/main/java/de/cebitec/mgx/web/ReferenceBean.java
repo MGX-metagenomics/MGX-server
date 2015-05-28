@@ -25,6 +25,8 @@ import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -138,7 +140,12 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString installGlobalReference(@PathParam("refid") Long globalId) {
-        String projReferenceDir = mgx.getProjectDirectory() + File.separator + "reference" + File.separator;
+        String projReferenceDir;
+        try {
+            projReferenceDir = mgx.getProjectReferencesDirectory().getAbsolutePath();
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
@@ -179,11 +186,11 @@ public class ReferenceBean {
         UUID uuid = null;
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
-            mgx.log(mgx.getCurrentUser() + " creating reference importer session for " + ref.getName());
-            ref.setFile(mgx.getProjectDirectory() + File.separator + "reference" + File.separator + ref.getId() + ".fas");
+            mgx.log("creating reference importer session for " + ref.getName());
+            ref.setFile(mgx.getProjectReferencesDirectory() + File.separator + ref.getId() + ".fas");
             ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
             uuid = upSessions.registerUploadSession(recv);
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(uuid.toString()).build();

@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -30,9 +32,15 @@ public class JobDAO<T extends Job> extends DAO<T> {
 
     @Override
     public void delete(long id) throws MGXException {
-        String sb = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
-                .append(File.separator)
-                .append(id).toString();
+        String sb;
+        try {
+            sb = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
+                    .append(File.separator)
+                    .append(id).toString();
+        } catch (IOException ex) {
+            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
+        }
 
         for (String suffix : suffices) {
             File f = new File(sb.toString() + suffix);
@@ -100,17 +108,19 @@ public class JobDAO<T extends Job> extends DAO<T> {
         if (job.getStatus() != JobState.FAILED) {
             return "Job is not in FAILED state.";
         }
-        String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
-                .append(File.separator).append(job.getId())
-                .append(".stderr").toString();
         StringBuilder ret = new StringBuilder();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                ret.append(line).append(System.lineSeparator());
+        try {
+            String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
+                    .append(File.separator).append(job.getId())
+                    .append(".stderr").toString();
+            try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    ret.append(line).append(System.lineSeparator());
+                }
             }
         } catch (IOException ex) {
+            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ret.toString();
     }

@@ -24,11 +24,12 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import de.cebitec.mgx.web.helper.Util;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -94,7 +95,7 @@ public class JobBean {
         // fetch default parameters for the referenced tool
         Set<JobParameter> defaultParams = new HashSet<>();
         try {
-            String toolXMLData = Util.readFile(new File(j.getTool().getXMLFile()));
+            String toolXMLData = UnixHelper.readFile(new File(j.getTool().getXMLFile()));
             AutoCloseableIterator<JobParameter> jpIter = paramHelper.getParameters(toolXMLData);
             while (jpIter.hasNext()) {
                 defaultParams.add(jpIter.next());
@@ -110,8 +111,13 @@ public class JobBean {
             String value = userParam.getParameterValue();
 
             if (defaultParam.getType().equals("ConfigFile")) {
-                String fullPath = mgx.getProjectFileDirectory() + File.separator
-                        + userParam.getParameterValue().substring(2).replace("|", File.separator);
+                String fullPath;
+                try {
+                    fullPath = mgx.getProjectFileDirectory() + File.separator
+                            + userParam.getParameterValue().substring(2).replace("|", File.separator);
+                } catch (IOException ex) {
+                    throw new MGXWebException(ex.getMessage());
+                }
                 if (!new File(fullPath).exists()) {
                     throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
                 }
@@ -147,7 +153,7 @@ public class JobBean {
             Job job = mgx.getJobDAO().getById(id);
             fixParameters(job);
             return JobDTOFactory.getInstance().toDTO(job);
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -164,7 +170,7 @@ public class JobBean {
                 fixParameters(j);
                 jobs.add(j);
             }
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return JobDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(jobs.iterator()));
@@ -202,7 +208,7 @@ public class JobBean {
                 job.getParameters().add(jp);
             }
             mgx.getJobDAO().update(job);
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -260,7 +266,7 @@ public class JobBean {
             RestartJob dJob = new RestartJob(mgx, mgxconfig, job, mgx.getConnection(), mgx.getProjectName(), mgxconfig.getDispatcherHost(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
-        } catch (MGXException | MGXDispatcherException ex) {
+        } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -375,7 +381,7 @@ public class JobBean {
                 fixParameters(j);
                 jobs.add(j);
             }
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return JobDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(jobs.iterator()));
@@ -393,8 +399,8 @@ public class JobBean {
         }
     }
 
-    private void fixParameters(Job job) throws MGXException {
-        String toolXMLData = Util.readFile(new File(job.getTool().getXMLFile()));
+    private void fixParameters(Job job) throws MGXException, IOException {
+        String toolXMLData = UnixHelper.readFile(new File(job.getTool().getXMLFile()));
         List<JobParameter> availableParams = new ArrayList<>();
         AutoCloseableIterator<JobParameter> apIter = paramHelper.getParameters(toolXMLData);
         while (apIter.hasNext()) {

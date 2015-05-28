@@ -18,7 +18,6 @@ import java.io.*;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.logging.Level;
@@ -34,7 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 @Stateless(mappedName = "JobSubmitter")
 public class JobSubmitterImpl implements JobSubmitter {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB  // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
     MGXConfiguration mgxconfig;
 
     private Client client = null;
@@ -55,16 +54,15 @@ public class JobSubmitterImpl implements JobSubmitter {
     public boolean validate(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
         Job job = mgx.getJobDAO().getById(jobId);
         Connection conn = mgx.getConnection();
+        File projectDir;
         try {
-            conn.setClientInfo("ApplicationName", "validate-" + jobId);
-        } catch (SQLClientInfoException ex) {
-            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+            projectDir = mgx.getProjectDirectory();
+        } catch (IOException ex) {
+            throw new MGXException(ex);
         }
-        boolean ret = validate(mgx.getProjectName(), conn, job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgx.getProjectDirectory());
+        boolean ret = validate(mgx.getProjectName(), conn, job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), projectDir);
         try {
-            conn.setClientInfo("ApplicationName", "");
             conn.close();
-            assert conn.isClosed();
         } catch (SQLException ex) {
             Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -83,13 +81,13 @@ public class JobSubmitterImpl implements JobSubmitter {
             throw new MGXException(ex.getMessage());
         }
 
-        try {
-            if (conn.isClosed()) {
-                throw new MGXException("Cannot validate with closed database connection.");
-            }
-        } catch (SQLException ex) {
-            throw new MGXException(ex);
-        }
+//        try {
+//            if (conn.isClosed()) {
+//                throw new MGXException("Cannot validate with closed database connection.");
+//            }
+//        } catch (SQLException ex) {
+//            throw new MGXException(ex);
+//        }
 
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
             stmt.setInt(1, JobState.VERIFIED.getValue());
@@ -105,15 +103,9 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     @Override
     public boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXException, MGXDispatcherException {
-        try {
-            conn.setClientInfo("ApplicationName", "submit-" + job.getId());
-        } catch (SQLClientInfoException ex) {
-            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
-
         try {
             if (conn.isClosed()) {
                 throw new MGXException("Cannot submit with closed database connection.");
@@ -138,9 +130,7 @@ public class JobSubmitterImpl implements JobSubmitter {
         // and send to dispatcher
         Boolean ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
         try {
-            conn.setClientInfo("ApplicationName", "submit-" + job.getId());
             conn.close();
-            assert conn.isClosed();
         } catch (SQLException ex) {
             Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -166,12 +156,7 @@ public class JobSubmitterImpl implements JobSubmitter {
 
         Collection<JobParameter> params = j.getParameters();
 
-        FileWriter fw = null;
-        BufferedWriter cfgFile = null;
-        try {
-            fw = new FileWriter(jobconfigFile, false);
-            cfgFile = new BufferedWriter(fw);
-
+        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("mgx.username=" + mgxcfg.getMGXUser());
             cfgFile.newLine();
             cfgFile.write("mgx.password=" + mgxcfg.getMGXPassword());
@@ -189,22 +174,16 @@ public class JobSubmitterImpl implements JobSubmitter {
                 cfgFile.write(jp.getNodeId() + "." + jp.getParameterName() + "=" + jp.getParameterValue());
                 cfgFile.newLine();
             }
-
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            try {
-                if (cfgFile != null) {
-                    cfgFile.close();
-                }
-                if (fw != null) {
-                    fw.close();
-                }
-            } catch (IOException ex) {
-                throw new MGXException(ex.getMessage());
-            }
         }
-        UnixHelper.makeFileGroupWritable(jobconfigFile);
+        
+        try {
+            UnixHelper.makeFileGroupWritable(jobconfigFile);
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+        
         return true;
     }
 
@@ -229,21 +208,18 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     protected final <U> U put(final String path, Object obj, Class<U> c) throws MGXDispatcherException {
-        //System.err.println("PUT uri: " + getWebResource().path(path).getURI().toASCIIString());
         ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).put(ClientResponse.class, obj);
         catchException(res);
         return res.<U>getEntity(c);
     }
 
     protected final <U> U get(String dispatcherHost, final String path, Class<U> c) throws MGXDispatcherException {
-        //System.err.println("GET uri: " +getWebResource().path(path).getURI().toASCIIString());
         ClientResponse res = getWebResource(dispatcherHost).path(path).get(ClientResponse.class);
         catchException(res);
         return res.<U>getEntity(c);
     }
 
     protected final void delete(final String path) throws MGXDispatcherException {
-        //System.err.println("DELETE uri: " +getWebResource().path(path).getURI().toASCIIString());
         ClientResponse res = getWebResource(mgxconfig.getDispatcherHost()).path(path).delete(ClientResponse.class);
         catchException(res);
     }
@@ -255,17 +231,13 @@ public class JobSubmitterImpl implements JobSubmitter {
 
     protected final void catchException(final ClientResponse res) throws MGXDispatcherException {
         if (Status.fromStatusCode(res.getStatus()) != Status.OK) {
-            InputStreamReader isr = new InputStreamReader(res.getEntityInputStream());
-            BufferedReader r = new BufferedReader(isr);
             StringBuilder msg = new StringBuilder();
             String buf;
-            try {
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(res.getEntityInputStream()))) {
                 while ((buf = r.readLine()) != null) {
                     msg.append(buf);
                     msg.append(System.lineSeparator());
                 }
-                r.close();
-                isr.close();
             } catch (IOException ex) {
                 Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
             }

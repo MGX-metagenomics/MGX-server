@@ -177,7 +177,12 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+        UUID taskId;
+        try {
+            taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+        } catch (IOException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -204,7 +209,12 @@ public class SeqRunBean {
         List<QCResultI> qcList = new ArrayList<>();
 
         if (analyzers != null && analyzers.length > 0) {
-            File qcDir = mgx.getProjectQCDirectory();
+            File qcDir;
+            try {
+                qcDir = mgx.getProjectQCDirectory();
+            } catch (IOException ex) {
+                throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            }
             final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
             final SeqRun run = sr;
             for (final Analyzer a : analyzers) {

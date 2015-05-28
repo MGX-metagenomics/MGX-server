@@ -61,6 +61,10 @@ public final class DeleteJob extends TaskI {
                         if (bamIdx.exists()) {
                             bamIdx.delete();
                         }
+                        File maxCov = new File(bamName + ".maxCov");
+                        if (maxCov.exists()) {
+                            maxCov.delete();
+                        }
                     }
                 }
             }

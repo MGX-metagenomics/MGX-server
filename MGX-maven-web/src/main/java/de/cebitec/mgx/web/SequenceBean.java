@@ -25,6 +25,7 @@ import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -74,19 +75,16 @@ public class SequenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString initUpload(@PathParam("id") Long seqrun_id, @PathParam("hasQual") Boolean hasQual) {
-
-        createDirs();
-
-        SeqUploadReceiver recv = null;
         UUID uuid = null;
         try {
+            createDirs();
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
+            SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -96,7 +94,7 @@ public class SequenceBean {
 
     /*
      * backward compability for old clients
-    */
+     */
     @GET
     @Path("initUpload/{id}")
     @Produces("application/x-protobuf")
@@ -267,7 +265,7 @@ public class SequenceBean {
         return SequenceDTOFactory.getInstance().toDTOList(objs);
     }
 
-    private void createDirs() {
+    private void createDirs() throws IOException {
         StringBuilder dir = new StringBuilder(mgx.getProjectDirectory().getAbsolutePath())
                 .append(File.separator)
                 .append("seqruns");

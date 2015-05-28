@@ -1,11 +1,13 @@
 package de.cebitec.mgx.util;
 
+import de.cebitec.mgx.controller.MGXException;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,29 +15,22 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author sjaenick
  */
 public class UnixHelper {
-    
-    public static boolean isGroupWritable(final File f) {
+
+    public static boolean isGroupWritable(final File f) throws IOException {
         if (!f.exists()) {
             return false;
         }
-        try {
-            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
-            return perms.contains(PosixFilePermission.GROUP_WRITE);
-        } catch (IOException ex) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return false;
+        Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
+        return perms.contains(PosixFilePermission.GROUP_WRITE);
     }
 
-    public static void createDirectory(final File targetDir) {
+    public static void createDirectory(final File targetDir) throws IOException {
         if (targetDir.exists()) {
             return;
         }
@@ -46,14 +41,10 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_READ,
                 PosixFilePermission.GROUP_WRITE,
                 PosixFilePermission.GROUP_EXECUTE);
-        try {
-            Files.createDirectory(path, PosixFilePermissions.asFileAttribute(perms));
-        } catch (IOException ex) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Files.createDirectory(path, PosixFilePermissions.asFileAttribute(perms));
     }
 
-    public static void createFile(final File targetDir) {
+    public static void createFile(final File targetDir) throws IOException {
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -61,14 +52,10 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_READ,
                 PosixFilePermission.GROUP_WRITE,
                 PosixFilePermission.GROUP_EXECUTE);
-        try {
-            Files.createFile(path, PosixFilePermissions.asFileAttribute(perms));
-        } catch (IOException ex) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Files.createFile(path, PosixFilePermissions.asFileAttribute(perms));
     }
 
-    public static void makeDirectoryGroupWritable(final String file) {
+    public static void makeDirectoryGroupWritable(final String file) throws IOException {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
@@ -76,26 +63,16 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_READ,
                 PosixFilePermission.GROUP_WRITE,
                 PosixFilePermission.GROUP_EXECUTE);
-        try {
-            Files.setPosixFilePermissions(path, perms);
-        } catch (IOException ex) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Files.setPosixFilePermissions(path, perms);
     }
 
-    public static void makeFileGroupWritable(final String file) {
+    public static void makeFileGroupWritable(final String file) throws IOException {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.GROUP_READ,
                 PosixFilePermission.GROUP_WRITE);
-        try {
-            Files.setPosixFilePermissions(path, perms);
-        } catch (FileSystemException fse) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, fse.getMessage());
-        } catch (IOException ex) {
-            Logger.getLogger(UnixHelper.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Files.setPosixFilePermissions(path, perms);
     }
 
     public static void copyFile(final File in, final File out) throws IOException {
@@ -117,5 +94,22 @@ public class UnixHelper {
             fis.close();
             fos.close();
         }
+    }
+
+    public static String readFile(File f) throws MGXException {
+        if (!f.exists() && f.canRead()) {
+            throw new MGXException("File " + f.getAbsolutePath() + " missing or unreadable.");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException ex) {
+            throw new MGXException(ex);
+        }
+        return sb.toString();
     }
 }
