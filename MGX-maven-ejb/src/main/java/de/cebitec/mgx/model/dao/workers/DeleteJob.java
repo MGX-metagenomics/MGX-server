@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao.workers;
 
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -15,10 +16,12 @@ import java.util.logging.Logger;
 public final class DeleteJob extends TaskI {
 
     private final long id;
+    private final MappingSessions mapSessions;
 
-    public DeleteJob(long id, Connection conn, String projName) {
+    public DeleteJob(long id, Connection conn, String projName, MappingSessions mapSessions) {
         super(projName, conn);
         this.id = id;
+        this.mapSessions = mapSessions;
     }
 
     @Override
@@ -48,11 +51,17 @@ public final class DeleteJob extends TaskI {
 
             // delete mappings
             setStatus(TaskI.State.PROCESSING, "Deleting mapping data for job " + id);
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING id, bam_file")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        String bamName = rs.getString(1);
+                        
+                        // abort any sessions that might use this mapping
+                        long mappingId = rs.getLong(1);
+                        mapSessions.abort(mappingId);
+                        
+                        // remove persistent data
+                        String bamName = rs.getString(2);
                         File bamFile = new File(bamName);
                         if (bamFile.exists()) {
                             bamFile.delete();

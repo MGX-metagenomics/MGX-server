@@ -34,6 +34,7 @@ import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -80,6 +81,8 @@ public class SeqRunBean {
     MGXGlobal global;
     @EJB
     Executor executor;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -179,7 +182,7 @@ public class SeqRunBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+            taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
         } catch (IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

@@ -3,6 +3,7 @@ package de.cebitec.mgx.sessions;
 import de.cebitec.mgx.configuration.MGXConfiguration;
 import de.cebitec.mgx.controller.MGXException;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +47,19 @@ public class MappingSessions {
         if (tasks.containsKey(uuid)) {
             MappingDataSession old = tasks.remove(uuid);
             old.close();
+        }
+    }
+    
+    public synchronized void abort(long mappingId) {
+        // called to abort an open session when a mapping object is deleted
+        Set<UUID> toRemove = new HashSet<>();
+        for (Entry<UUID, MappingDataSession> e : tasks.entrySet()) {
+            if (e.getValue().getMappingId() == mappingId) {
+                toRemove.add(e.getKey());
+            }
+        }
+        for (UUID uuid : toRemove) {
+            removeSession(uuid);
         }
     }
 

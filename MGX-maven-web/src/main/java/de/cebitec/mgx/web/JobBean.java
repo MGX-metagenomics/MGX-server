@@ -21,6 +21,7 @@ import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.dao.workers.DeleteJob;
 import de.cebitec.mgx.model.dao.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -61,6 +62,8 @@ public class JobBean {
     TaskHolder taskHolder;
     @EJB
     MGXConfiguration mgxconfig;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -355,7 +358,7 @@ public class JobBean {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        DeleteJob dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName());
+        DeleteJob dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName(), mappingSessions);
         UUID taskId = taskHolder.addTask(dJob);
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }

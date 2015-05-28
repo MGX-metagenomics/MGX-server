@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.dao.workers;
 
 import de.cebitec.mgx.sequence.SeqReaderFactory;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -20,11 +21,13 @@ public final class DeleteSeqRun extends TaskI {
 
     private final long id;
     private final File projectDir;
+    private final MappingSessions mappingSessions;
 
-    public DeleteSeqRun(long id, Connection conn, String projName, File projectDir) {
+    public DeleteSeqRun(long id, Connection conn, String projName, File projectDir, MappingSessions mappingSessions) {
         super(projName, conn);
         this.id = id;
         this.projectDir = projectDir;
+        this.mappingSessions = mappingSessions;
     }
 
     @Override
@@ -47,7 +50,7 @@ public final class DeleteSeqRun extends TaskI {
 
         // delete jobs
         for (Long jobId : jobs) {
-            TaskI delJob = new DeleteJob(jobId, conn, getProjectName());
+            TaskI delJob = new DeleteJob(jobId, conn, getProjectName(), mappingSessions);
             delJob.addPropertyChangeListener(this);
             delJob.run();
             delJob.removePropertyChangeListener(this);

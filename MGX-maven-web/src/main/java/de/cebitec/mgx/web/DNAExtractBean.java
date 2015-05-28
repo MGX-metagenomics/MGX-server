@@ -13,13 +13,12 @@ import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.model.dao.workers.DeleteDNAExtract;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -46,6 +45,8 @@ public class DNAExtractBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -126,7 +127,7 @@ public class DNAExtractBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+            taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }

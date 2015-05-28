@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao.workers;
 
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -18,10 +19,12 @@ import java.util.logging.Logger;
 public final class DeleteTool extends TaskI {
 
     private final long id;
+    private final MappingSessions mappingSessions;
 
-    public DeleteTool(Connection conn, long id, String projName) {
+    public DeleteTool(Connection conn, long id, String projName, MappingSessions mappingSessions) {
         super(projName, conn);
         this.id = id;
+        this.mappingSessions = mappingSessions;
     }
 
     @Override
@@ -42,7 +45,7 @@ public final class DeleteTool extends TaskI {
 
         // delete jobs
         for (Long jobId : jobs) {
-            TaskI delJob = new DeleteJob(jobId, conn, getProjectName());
+            TaskI delJob = new DeleteJob(jobId, conn, getProjectName(), mappingSessions);
             delJob.addPropertyChangeListener(this);
             delJob.run();
             delJob.removePropertyChangeListener(this);

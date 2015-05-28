@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao.workers;
 
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -19,11 +20,13 @@ public final class DeleteSample extends TaskI {
 
     private final long id;
     private final File projectDir;
+    private final MappingSessions mappingSessions;
 
-    public DeleteSample(long id, Connection conn, String projName, File projectDir) {
+    public DeleteSample(long id, Connection conn, String projName, File projectDir, MappingSessions mappingSessions) {
         super(projName, conn);
         this.id = id;
         this.projectDir = projectDir;
+        this.mappingSessions = mappingSessions;
     }
 
     @Override
@@ -46,7 +49,7 @@ public final class DeleteSample extends TaskI {
 
         // delete seqruns
         for (Long extId : extracts) {
-            TaskI t = new DeleteDNAExtract(extId, conn, getProjectName(), projectDir);
+            TaskI t = new DeleteDNAExtract(extId, conn, getProjectName(), projectDir, mappingSessions);
             t.addPropertyChangeListener(this);
             t.run();
             t.removePropertyChangeListener(this);

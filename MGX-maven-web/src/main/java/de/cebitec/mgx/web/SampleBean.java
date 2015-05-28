@@ -13,6 +13,7 @@ import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
 import de.cebitec.mgx.model.dao.workers.DeleteSample;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -44,6 +45,8 @@ public class SampleBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB
+    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -128,7 +131,7 @@ public class SampleBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
         } catch (IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

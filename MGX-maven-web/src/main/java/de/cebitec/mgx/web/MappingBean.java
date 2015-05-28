@@ -43,7 +43,7 @@ public class MappingBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MappingSessions")
+    @EJB  //(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MappingSessions")
     MappingSessions mapSessions;
 
     @GET
@@ -102,7 +102,7 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), new File(m.getBAMFile())));
+            uuid = mapSessions.addSession(new MappingDataSession(mapid, m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), new File(m.getBAMFile())));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
