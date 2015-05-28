@@ -23,7 +23,10 @@ import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -61,17 +64,17 @@ public class FileBean {
     @Path("fetchall/{baseDir}")
     @Produces("application/x-protobuf")
     public FileDTOList fetchall(@PathParam("baseDir") String baseDir) {
-        File targetDir = new File(mgx.getProjectDirectory().getAbsolutePath() + File.separator + "files");
-        if (!targetDir.exists()) {
-            UnixHelper.createDirectory(targetDir);
-        }
-
         if (!baseDir.startsWith(".")) {
             throw new MGXWebException("Invalid path.");
         }
 
-        File currentDirectory = getCurrentDirectory(baseDir);
-        return listDir(currentDirectory);
+        File currentDirectory;
+        try {
+            currentDirectory = getCurrentDirectory(baseDir);
+            return listDir(currentDirectory);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
     }
 
     @PUT
@@ -91,11 +94,20 @@ public class FileBean {
         }
 
         String name = dto.getName().substring(2).replace("|", File.separator);
-        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + name);
+        File target;
+        try {
+            target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + name);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         if (target.exists()) {
             throw new MGXWebException(dto.getName().substring(2) + " already exists.");
         }
-        UnixHelper.createDirectory(target);
+        try {
+            UnixHelper.createDirectory(target);
+        } catch (IOException ex) {
+            throw new MGXWebException("Could not create " + dto.getName() + ", " + ex.getMessage());
+        }
         if (!target.exists()) {
             throw new MGXWebException("Could not create " + dto.getName());
         }
@@ -118,7 +130,12 @@ public class FileBean {
         }
 
         path = path.replace("|", File.separator);
-        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        File target;
+        try {
+            target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
@@ -146,7 +163,12 @@ public class FileBean {
             path = path.substring(2);
         }
 
-        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        File target;
+        try {
+            target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         if (!target.exists()) {
             mgx.log("tried to download non-existing path " + path);
             throw new MGXWebException("File does not exist: " + path);
@@ -214,7 +236,12 @@ public class FileBean {
             path = path.substring(2);
         }
 
-        File target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        File target;
+        try {
+            target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         if (target.exists()) {
             throw new MGXWebException("File already exists: " + path);
         }
@@ -267,7 +294,7 @@ public class FileBean {
         return Response.ok().build();
     }
 
-    private FileDTOList listDir(File baseDir) {
+    private FileDTOList listDir(File baseDir) throws IOException {
         //
         // This is ugly - application logic shouldn't exist on the
         // presentation (web/REST) layer. On the other hand, the 
@@ -287,7 +314,7 @@ public class FileBean {
         return list.build();
     }
 
-    private File getCurrentDirectory(String path) {
+    private File getCurrentDirectory(String path) throws IOException {
 
         path = path.substring(1); // remove leading ".|";
         path = path.replace("|", File.separator);
@@ -310,7 +337,7 @@ public class FileBean {
         return basedir;
     }
 
-    private String stripProjectDir(String input) {
+    private String stripProjectDir(String input) throws IOException {
         String projectDirectory = mgx.getProjectFileDirectory().getAbsolutePath() + File.separator;
         if (input.startsWith(projectDirectory)) {
             input = input.substring(projectDirectory.length());

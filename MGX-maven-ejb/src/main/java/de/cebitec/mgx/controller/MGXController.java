@@ -4,6 +4,7 @@ import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import javax.persistence.EntityManager;
 
@@ -54,16 +55,17 @@ public interface MGXController extends AutoCloseable {
     public EntityManager getEntityManager();
 
     //public EntityManagerFactory getEMF();
-
     public Connection getConnection();
 
-    public File getProjectDirectory();
+    public File getProjectDirectory() throws IOException;
 
-    public File getProjectQCDirectory();
+    public File getProjectQCDirectory() throws IOException;
 
-    public File getProjectFileDirectory();
+    public File getProjectFileDirectory() throws IOException;
 
-    public File getProjectJobDirectory();
+    public File getProjectReferencesDirectory() throws IOException;
+
+    public File getProjectJobDirectory() throws IOException;
 
     public String getDatabaseHost();
 

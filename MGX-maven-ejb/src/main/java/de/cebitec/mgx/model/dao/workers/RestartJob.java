@@ -8,6 +8,7 @@ import de.cebitec.mgx.jobsubmitter.JobSubmitter;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.sessions.TaskI;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,7 +30,7 @@ public class RestartJob extends TaskI {
     private final String dbName;
     private final File projDir;
 
-    public RestartJob(MGXController mgx, MGXConfiguration cfg, Job job, Connection conn, String projName, String dispatcherHost, JobSubmitter js) {
+    public RestartJob(MGXController mgx, MGXConfiguration cfg, Job job, Connection conn, String projName, String dispatcherHost, JobSubmitter js) throws IOException {
         super(projName, conn);
         this.job = job;
         this.dispatcherHost = dispatcherHost;

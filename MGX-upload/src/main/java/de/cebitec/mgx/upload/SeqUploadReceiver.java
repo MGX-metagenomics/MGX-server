@@ -186,7 +186,11 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         File dirTree = new File(fname.toString());
         if (!dirTree.exists()) {
             dirTree.mkdirs();
-            UnixHelper.makeDirectoryGroupWritable(fname.toString());
+            try {
+                UnixHelper.makeDirectoryGroupWritable(fname.toString());
+            } catch (IOException ex) {
+                throw new MGXException(ex);
+            }
         }
 
         fname.append(run_id);

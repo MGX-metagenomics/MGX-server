@@ -21,10 +21,10 @@ import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.UnixHelper;
+import de.cebitec.mgx.util.XMLValidator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import de.cebitec.mgx.web.helper.Util;
-import de.cebitec.mgx.web.helper.XMLValidator;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -101,7 +101,7 @@ public class ToolBean {
         File f = new File(obj.getXMLFile());
         String xmlData = null;
         try {
-            xmlData = Util.readFile(f);
+            xmlData = UnixHelper.readFile(f);
         } catch (MGXException ex) {
             Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -177,7 +177,7 @@ public class ToolBean {
         long id;
         try {
             id = mgx.getToolDAO().installGlobalTool(globalTool, globalTool.getClass(), mgx.getProjectDirectory());
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
@@ -190,7 +190,7 @@ public class ToolBean {
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
             Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
-            String toolXMLData = Util.readFile(new File(tool.getXMLFile()));
+            String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
             return getParams(toolXMLData);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());

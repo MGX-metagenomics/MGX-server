@@ -28,8 +28,9 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
 
         Long id = super.create(obj);
 
-        String fname = getController().getProjectJobDirectory() + File.separator + id.toString() + ".xml";
+        String fname = null;
         try {
+            fname = getController().getProjectJobDirectory() + File.separator + id.toString() + ".xml";
             try (Writer fw = new BufferedWriter(new FileWriter(fname))) {
                 fw.write(xmldata);
                 fw.flush();
@@ -71,15 +72,15 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
          * consistent project state even if the global tool is updated; the
          * project directory is created on demand
          */
-        StringBuilder targetName = new StringBuilder(projectDir.getAbsolutePath()).append("jobs");
-        File targetDir = new File(targetName.toString());
-        if (!targetDir.exists()) {
-            UnixHelper.createDirectory(targetDir);
-        }
-
-        targetName.append(File.separator).append(id).append(".xml");
-
+        StringBuilder targetName = null;
         try {
+            targetName = new StringBuilder(projectDir.getAbsolutePath()).append("jobs");
+            File targetDir = new File(targetName.toString());
+            if (!targetDir.exists()) {
+                UnixHelper.createDirectory(targetDir);
+            }
+            targetName.append(File.separator).append(id).append(".xml");
+
             File src = new File(global.getXMLFile());
             File dest = new File(targetName.toString());
             UnixHelper.copyFile(src, dest);

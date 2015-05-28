@@ -17,6 +17,7 @@ import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -125,7 +126,12 @@ public class SampleBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+        UUID taskId;
+        try {
+            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory()));
+        } catch (IOException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 }
