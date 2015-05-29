@@ -7,7 +7,6 @@ package de.cebitec.mgx.global;
 
 import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.File;
@@ -16,7 +15,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;

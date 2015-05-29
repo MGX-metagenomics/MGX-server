@@ -57,8 +57,6 @@ public class JobBean {
     @EJB
     JobSubmitter js;
     @EJB
-    JobParameterHelper paramHelper;
-    @EJB
     TaskHolder taskHolder;
     @EJB
     MGXConfiguration mgxconfig;
@@ -99,7 +97,7 @@ public class JobBean {
         Set<JobParameter> defaultParams = new HashSet<>();
         try {
             String toolXMLData = UnixHelper.readFile(new File(j.getTool().getXMLFile()));
-            AutoCloseableIterator<JobParameter> jpIter = paramHelper.getParameters(toolXMLData);
+            AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
             while (jpIter.hasNext()) {
                 defaultParams.add(jpIter.next());
             }
@@ -405,7 +403,7 @@ public class JobBean {
     private void fixParameters(Job job) throws MGXException, IOException {
         String toolXMLData = UnixHelper.readFile(new File(job.getTool().getXMLFile()));
         List<JobParameter> availableParams = new ArrayList<>();
-        AutoCloseableIterator<JobParameter> apIter = paramHelper.getParameters(toolXMLData);
+        AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
         while (apIter.hasNext()) {
             availableParams.add(apIter.next());
         }

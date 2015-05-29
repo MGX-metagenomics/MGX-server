@@ -51,8 +51,6 @@ public class ToolBean {
     @MGX
     MGXController mgx;
     @EJB
-    JobParameterHelper paramHelper;
-    @EJB
     TaskHolder taskHolder;
     @EJB
     MGXConfiguration mgxconfig;
@@ -220,7 +218,12 @@ public class ToolBean {
     }
 
     private JobParameterListDTO getParams(String XMLData) {
-        AutoCloseableIterator<JobParameter> params = paramHelper.getParameters(XMLData);
+        AutoCloseableIterator<JobParameter> params;
+        try {
+            params = JobParameterHelper.getParameters(XMLData, mgxconfig.getPluginDump());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         return JobParameterDTOFactory.getInstance().toDTOList(params);
     }
 
