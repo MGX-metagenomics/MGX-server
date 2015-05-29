@@ -77,6 +77,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 b.addJob(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+            return null;
         }
         return b.build();
     }
