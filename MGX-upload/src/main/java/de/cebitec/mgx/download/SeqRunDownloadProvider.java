@@ -36,7 +36,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     MGXConfiguration mgxconfig;
     protected final String projectName;
     protected final Connection conn;
-    protected SeqReaderI<DNASequenceI> reader;
+    protected SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int bulksize;
 
@@ -44,7 +44,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         this(pConn, projName);
         File file = getStorageFile(run_id);
         try {
-            reader = SeqReaderFactory.getReader(file.getAbsolutePath());
+            reader = SeqReaderFactory.<DNASequenceI>getReader(file.getAbsolutePath());
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }

@@ -56,7 +56,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             }
         }
         try {
-            reader = SeqReaderFactory.getReader(fName);
+            reader = SeqReaderFactory.<DNASequenceI>getReader(fName);
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
