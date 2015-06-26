@@ -8,6 +8,7 @@ import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.seqstorage.CSFWriter;
+import de.cebitec.mgx.seqstorage.CSQFWriter;
 import de.cebitec.mgx.seqstorage.DNASequence;
 import de.cebitec.mgx.seqstorage.QualityDNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
@@ -36,8 +37,6 @@ import javax.ejb.TransactionAttributeType;
  */
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
-//
-//    @EJB // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
 
     MGXConfiguration mgxconfig;
     //
@@ -59,9 +58,10 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         mgxconfig = mgxcfg;
 
         try {
-            //mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
             file = getStorageFile(run_id);
-            SeqWriterI writer = new CSFWriter(file);
+            SeqWriterI writer;
+            // restrict to MGX_Patrick for now
+            writer = hasQuality && projName.equals("MGX_Patrick") ? new CSQFWriter(file) : new CSFWriter(file);
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
             qcAnalyzers = QCFactory.getQCAnalyzers(hasQuality);
@@ -149,7 +149,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     public void cancel() {
         try {
             flush.complete();
-            SeqReaderFactory.delete(file.getCanonicalPath().toString());
+            SeqReaderFactory.delete(file.getCanonicalPath());
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
                 stmt.setLong(1, runId);
                 stmt.executeUpdate();
