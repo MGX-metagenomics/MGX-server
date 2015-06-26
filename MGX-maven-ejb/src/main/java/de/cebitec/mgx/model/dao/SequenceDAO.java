@@ -53,8 +53,8 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         seq.setName(seqName);
 
         // read sequence data
-        try (SeqReaderI<DNASequenceI> reader = SeqReaderFactory.getReader(dbFile)) {
-            Iterator<DNASequenceI> iter = reader.fetch(new long[]{id}).iterator();
+        try (SeqReaderI<? extends DNASequenceI> reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile)) {
+            Iterator<? extends DNASequenceI> iter = reader.fetch(new long[]{id}).iterator();
             assert iter.hasNext();
             byte[] seqdata = iter.next().getSequence();
             String seqString = new String(seqdata).toUpperCase();
