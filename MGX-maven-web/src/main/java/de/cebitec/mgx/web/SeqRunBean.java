@@ -230,7 +230,7 @@ public class SeqRunBean {
                         @Override
                         public void run() {
                             try {
-                                SeqReaderI<DNASequenceI> r = SeqReaderFactory.getReader(run.getDBFile());
+                                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.<DNASequenceI>getReader(run.getDBFile());
 
                                 while (r != null && r.hasMoreElements()) {
                                     DNASequenceI h = r.nextElement();
