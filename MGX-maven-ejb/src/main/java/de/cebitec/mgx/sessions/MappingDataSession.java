@@ -12,7 +12,6 @@ import htsjdk.samtools.ValidationStringency;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -203,11 +202,15 @@ public class MappingDataSession {
                     }
                 }
                 iter.close();
-                samReader.close();
-
-            } catch (SQLException | IOException ex) {
+            } catch (SQLException ex) {
                 Logger.getLogger(getClass().getName()).log(Level.INFO, null, ex);
                 return -1L;
+            } finally {
+                try {
+                    samReader.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(MappingDataSession.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
 
             long max = 0;

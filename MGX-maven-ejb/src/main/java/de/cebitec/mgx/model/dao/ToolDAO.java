@@ -74,7 +74,8 @@ public class ToolDAO<T extends Tool> extends DAO<T> {
          */
         StringBuilder targetName = null;
         try {
-            targetName = new StringBuilder(projectDir.getAbsolutePath()).append("jobs");
+            targetName = new StringBuilder(projectDir.getAbsolutePath())
+                    .append(File.separator).append("jobs");
             File targetDir = new File(targetName.toString());
             if (!targetDir.exists()) {
                 UnixHelper.createDirectory(targetDir);

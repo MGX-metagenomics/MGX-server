@@ -33,7 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 @Stateless(mappedName = "JobSubmitter")
 public class JobSubmitterImpl implements JobSubmitter {
 
-    @EJB  // (lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
+    @EJB
     MGXConfiguration mgxconfig;
 
     private Client client = null;
@@ -42,25 +42,28 @@ public class JobSubmitterImpl implements JobSubmitter {
     private final static String MGX_CLASS = "MGX/";
 
     @Override
-    public void shutdown(MGXController mgx) throws MGXDispatcherException {
-        String token = mgxconfig.getDispatcherToken();
-        boolean success = get(mgxconfig.getDispatcherHost(), "shutdown/" + token, Boolean.class);
+    public void shutdown(String dispatcherHost, String token) throws MGXDispatcherException {
+        boolean success = get(dispatcherHost, "shutdown/" + token, Boolean.class);
         if (!success) {
             throw new MGXDispatcherException("Could not shutdown dispatcher.");
         }
     }
 
     @Override
-    public boolean validate(final MGXController mgx, long jobId) throws MGXInsufficientJobConfigurationException, MGXException {
-        Job job = mgx.getJobDAO().getById(jobId);
-        Connection conn = mgx.getConnection();
+    public boolean validate(final MGXController mgx, Connection conn, String projName, long jobId) throws MGXInsufficientJobConfigurationException, MGXDispatcherException {
+        Job job;
+        try {
+            job = mgx.getJobDAO().getById(jobId);
+        } catch (MGXException ex) {
+            throw new MGXDispatcherException(ex);
+        }
         File projectDir;
         try {
             projectDir = mgx.getProjectDirectory();
         } catch (IOException ex) {
-            throw new MGXException(ex);
+            throw new MGXDispatcherException(ex);
         }
-        boolean ret = validate(mgx.getProjectName(), conn, job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), projectDir);
+        boolean ret = validate(projName, conn, job, mgxconfig, mgx.getDatabaseHost(), mgx.getDatabaseName(), projectDir);
         try {
             conn.close();
         } catch (SQLException ex) {
@@ -70,24 +73,12 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, File projDir) throws MGXInsufficientJobConfigurationException, MGXException {
-        if (!createJobConfigFile(config, dbHost, dbName, projDir, job)) {
-            throw new MGXException("Failed to write job configuration.");
-        }
-        boolean ret = false;
-        try {
-            ret = get(config.getDispatcherHost(), "validate/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
-        } catch (MGXDispatcherException ex) {
-            throw new MGXException(ex.getMessage());
+    public boolean validate(String projName, Connection conn, final Job job, MGXConfiguration config, String dbHost, String dbName, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException {
+        if (!createJobConfigFile(config, dbHost, dbName, projDir, job.getParameters(), job.getId())) {
+            throw new MGXDispatcherException("Failed to write job configuration.");
         }
 
-//        try {
-//            if (conn.isClosed()) {
-//                throw new MGXException("Cannot validate with closed database connection.");
-//            }
-//        } catch (SQLException ex) {
-//            throw new MGXException(ex);
-//        }
+        boolean ret = get(config.getDispatcherHost(), "validate/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
 
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
             stmt.setInt(1, JobState.VERIFIED.getValue());
@@ -96,22 +87,22 @@ public class JobSubmitterImpl implements JobSubmitter {
             stmt.close();
             job.setStatus(JobState.VERIFIED);
         } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
+            throw new MGXDispatcherException(ex.getMessage());
         }
         return ret;
     }
 
     @Override
-    public boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXException, MGXDispatcherException {
+    public boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXDispatcherException {
         if (job.getStatus() != JobState.VERIFIED) {
-            throw new MGXException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
+            throw new MGXDispatcherException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
         try {
             if (conn.isClosed()) {
-                throw new MGXException("Cannot submit with closed database connection.");
+                throw new MGXDispatcherException("Cannot submit with closed database connection.");
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            throw new MGXDispatcherException(ex);
         }
 
         // set job to submitted
@@ -122,10 +113,10 @@ public class JobSubmitterImpl implements JobSubmitter {
             int numRows = stmt.executeUpdate();
             stmt.close();
             if (numRows != 1) {
-                throw new MGXException("Could not update job state.");
+                throw new MGXDispatcherException("Could not update job state.");
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
+            throw new MGXDispatcherException(ex.getMessage());
         }
         // and send to dispatcher
         Boolean ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
@@ -138,23 +129,21 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public void cancel(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete("cancel/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
+    public void cancel(String projectName, long jobId) throws MGXDispatcherException {
+        delete("cancel/" + MGX_CLASS + projectName + "/" + jobId);
     }
 
     @Override
-    public void delete(MGXController mgx, long jobId) throws MGXDispatcherException, MGXException {
-        delete("delete/" + MGX_CLASS + mgx.getProjectName() + "/" + jobId);
+    public void delete(String projectName, long jobId) throws MGXDispatcherException {
+        delete("delete/" + MGX_CLASS + projectName + "/" + jobId);
     }
 
-    private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, File projectDir, Job j) throws MGXException {
+    private boolean createJobConfigFile(MGXConfiguration mgxcfg, String dbHost, String dbName, File projectDir, Collection<JobParameter> params, long jobId) throws MGXDispatcherException {
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
                 .append("jobs")
                 .append(File.separator)
-                .append(j.getId().toString()).toString();
-
-        Collection<JobParameter> params = j.getParameters();
+                .append(jobId).toString();
 
         try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("mgx.username=" + mgxcfg.getMGXUser());
@@ -165,7 +154,7 @@ public class JobSubmitterImpl implements JobSubmitter {
             cfgFile.newLine();
             cfgFile.write("mgx.database=" + dbName);
             cfgFile.newLine();
-            cfgFile.write("mgx.job_id=" + j.getId());
+            cfgFile.write("mgx.job_id=" + jobId);
             cfgFile.newLine();
             cfgFile.write("mgx.projectDir=" + projectDir);
             cfgFile.newLine();
@@ -175,15 +164,15 @@ public class JobSubmitterImpl implements JobSubmitter {
                 cfgFile.newLine();
             }
         } catch (IOException ex) {
-            throw new MGXException(ex.getMessage());
+            throw new MGXDispatcherException(ex.getMessage());
         }
-        
+
         try {
             UnixHelper.makeFileGroupWritable(jobconfigFile);
         } catch (IOException ex) {
-            throw new MGXException(ex.getMessage());
+            throw new MGXDispatcherException(ex.getMessage());
         }
-        
+
         return true;
     }
 

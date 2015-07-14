@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
@@ -35,6 +36,14 @@ public class MappingSessions {
     @PostConstruct
     public void start() {
         timeout = 60 * 60 * 24; // a day
+    }
+    
+    @PreDestroy
+    public synchronized void stop() {
+        for (MappingDataSession mds : tasks.values()) {
+            mds.close();
+        }
+        tasks.clear();
     }
 
     public synchronized UUID addSession(final MappingDataSession task) {

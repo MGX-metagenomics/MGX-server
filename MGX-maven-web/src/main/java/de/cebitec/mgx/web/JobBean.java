@@ -33,8 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.ejb.EJB;
@@ -222,11 +224,9 @@ public class JobBean {
         boolean verified = false;
 
         try {
-            verified = js.validate(mgx, id);
-        } catch (MGXInsufficientJobConfigurationException ex) {
+            verified = js.validate(mgx, mgx.getConnection(), mgx.getProjectName(), id);
+        } catch (MGXInsufficientJobConfigurationException | MGXDispatcherException ex) {
             throw new MGXJobException(ex.getMessage());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
         return MGXBoolean.newBuilder().setValue(verified).build();
@@ -280,15 +280,14 @@ public class JobBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean cancel(@PathParam("id") Long id) {
         boolean isActive = true;
+        Job job = null;
         try {
-            Job job = mgx.getJobDAO().getById(id);
+            job = mgx.getJobDAO().getById(id);
             JobState status = job.getStatus();
             // check if job has already reached a terminal state
             if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
                 isActive = false;
             }
-//            job.setStatus(JobState.IN_DELETION);
-//            mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -298,12 +297,23 @@ public class JobBean {
             throw new MGXWebException("Job is not being processed, cannot cancel.");
         }
 
+        mgx.log("Cancelling job " + id + " on user request");
+
         try {
-            js.cancel(mgx, id);
-        } catch (MGXException | MGXDispatcherException ex) {
+            js.cancel(mgx.getProjectName(), id);
+        } catch (MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            throw new MGXWebException(ex.getMessage());
         }
+
+        // update job state
+        try {
+            job.setStatus(JobState.ABORTED);
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
         return MGXBoolean.newBuilder().setValue(true).build();
     }
 
@@ -343,9 +353,9 @@ public class JobBean {
         if (isActive) {
             // notify dispatcher
             try {
-                js.delete(mgx, id);
-            } catch (MGXDispatcherException | MGXException ex) {
-                //mgx.log(ex.getMessage());
+                js.delete(mgx.getProjectName(), id);
+            } catch (MGXDispatcherException ex) {
+                mgx.log(ex.getMessage());
             }
         }
 
@@ -400,14 +410,24 @@ public class JobBean {
         }
     }
 
+    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
+
     private void fixParameters(Job job) throws MGXException, IOException {
-        String toolXMLData = UnixHelper.readFile(new File(job.getTool().getXMLFile()));
-        List<JobParameter> availableParams = new ArrayList<>();
-        AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
-        while (apIter.hasNext()) {
-            availableParams.add(apIter.next());
+        String fName = job.getTool().getXMLFile();
+        List<JobParameter> availableParams = null;
+
+        if (paramCache.containsKey(fName)) {
+            availableParams = paramCache.get(fName);
+        } else {
+            String toolXMLData = UnixHelper.readFile(new File(fName));
+            availableParams = new ArrayList<>();
+            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
+            while (apIter.hasNext()) {
+                availableParams.add(apIter.next());
+            }
+            paramCache.put(fName, availableParams);
         }
-        
+
         final String projectFileDir = mgx.getProjectFileDirectory().getAbsolutePath();
 
         for (JobParameter jp : job.getParameters()) {
@@ -419,7 +439,7 @@ public class JobBean {
                     jp.setDisplayName(candidate.getDisplayName());
                 }
             }
-            
+
             // do not expose internal path names
             if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
                 jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
