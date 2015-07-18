@@ -111,6 +111,10 @@ public class SeqFlusher implements Runnable {
     protected synchronized void flushChunk() {
 
         final List<? extends DNASequenceI> commitList = fetchChunk();
+        
+        if (commitList.isEmpty()) {
+            return;
+        }
 
         String sql = createSQLBulkStatement(commitList.size());
         // insert sequence names and fetch list of generated ids
@@ -135,6 +139,7 @@ public class SeqFlusher implements Runnable {
             }
         } catch (SQLException ex) {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, "Failed statement was: {0}", sql);
             error = ex;
             return;
         }
