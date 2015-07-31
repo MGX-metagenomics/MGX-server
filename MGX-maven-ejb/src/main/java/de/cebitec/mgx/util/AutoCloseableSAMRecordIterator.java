@@ -86,7 +86,7 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
         }
     }
 
-    private int getIdentity(Cigar c) {
+    private float getIdentity(Cigar c) {
         int matched = 0;
         int alnLen = 0;
         for (CigarElement elem : c.getCigarElements()) {
@@ -98,7 +98,7 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
                 matched += elem.getLength();
             }
         }
-        return (int) (matched * 100.0d / (alnLen));
+        return (float) (matched * 100.0d / (alnLen));
     }
 
     @Override
