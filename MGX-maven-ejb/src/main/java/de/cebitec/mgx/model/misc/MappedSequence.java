@@ -9,9 +9,9 @@ public class MappedSequence {
     
     private final long seq_id;
     private final int[] coords = new int[2];
-    private final int identity; // range 0-255
+    private final float identity;
 
-    public MappedSequence(long seq_id, int start, int stop, int identity) {
+    public MappedSequence(long seq_id, int start, int stop, float identity) {
         this.seq_id = seq_id;
         this.coords[0] = start;
         this.coords[1] = stop;
@@ -30,7 +30,7 @@ public class MappedSequence {
         return coords[1];
     }
 
-    public int getIdentity() {
+    public float getIdentity() {
         return identity;
     }
 }
