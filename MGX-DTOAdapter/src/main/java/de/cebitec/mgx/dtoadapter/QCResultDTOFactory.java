@@ -8,7 +8,6 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.DataRowDTO;
 import de.cebitec.mgx.dto.dto.QCResultDTO;
 import de.cebitec.mgx.dto.dto.QCResultDTOList;
-import de.cebitec.mgx.qc.DataRow;
 import de.cebitec.mgx.qc.DataRowI;
 import de.cebitec.mgx.qc.QCResult;
 import de.cebitec.mgx.qc.QCResultI;
@@ -36,6 +35,7 @@ public class QCResultDTOFactory extends DTOConversionBase<QCResultI, QCResultDTO
     public QCResultDTO toDTO(QCResultI a) {
         QCResultDTO.Builder b = QCResultDTO.newBuilder();
         b.setName(a.getName());
+        b.setDescription(a.getDescription());
         for (DataRowI dr : a.getData()) {
             DataRowDTO.Builder drdb = DataRowDTO.newBuilder();
             drdb.setName(dr.getName());
