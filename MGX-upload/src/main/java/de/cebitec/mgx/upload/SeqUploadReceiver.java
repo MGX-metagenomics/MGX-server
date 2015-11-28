@@ -80,25 +80,25 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
         //
         throwIfError();
         //
-        for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext();) {
-            SequenceDTO s = iter.next();
-            DNASequenceI d;
-            if (s.hasQuality()) {
-                QualityDNASequence qd = new QualityDNASequence();
-                qd.setQuality(s.getQuality().toByteArray());
-                d = qd;
-            } else {
-                d = new DNASequence();
-            }
-            d.setName(s.getName().getBytes());
-            d.setSequence(s.getSequence().getBytes());
-            try {
+        try {
+            for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext();) {
+                SequenceDTO s = iter.next();
+                DNASequenceI d;
+                if (s.hasQuality()) {
+                    QualityDNASequence qd = new QualityDNASequence();
+                    qd.setQuality(s.getQuality().toByteArray());
+                    d = qd;
+                } else {
+                    d = new DNASequence();
+                }
+                d.setName(s.getName().getBytes());
+                d.setSequence(s.getSequence().getBytes());
                 queue.put(d);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-                throw new MGXException(ex);
+                total_num_sequences++;
             }
-            total_num_sequences++;
+        } catch (SeqStoreException | InterruptedException ex) {
+            Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
         }
 
         lastAccessed = System.currentTimeMillis();
