@@ -1,6 +1,6 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -9,15 +9,15 @@ import de.cebitec.mgx.dto.dto.PointDTOList;
 import de.cebitec.mgx.dtoadapter.MatrixDTOFactory;
 import de.cebitec.mgx.dtoadapter.PCAResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
-import de.cebitec.mgx.model.misc.Matrix;
-import de.cebitec.mgx.model.misc.NamedVector;
-import de.cebitec.mgx.model.misc.PCAResult;
 import de.cebitec.mgx.statistics.Clustering;
 import de.cebitec.mgx.statistics.PCA;
 import de.cebitec.mgx.statistics.PCoA;
 import de.cebitec.mgx.statistics.Rarefaction;
+import de.cebitec.mgx.statistics.data.Matrix;
+import de.cebitec.mgx.statistics.data.NamedVector;
+import de.cebitec.mgx.statistics.data.PCAResult;
+import de.cebitec.mgx.statistics.data.Point;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.Point;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;

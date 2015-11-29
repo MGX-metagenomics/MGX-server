@@ -2,8 +2,8 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.PointDTO;
 import de.cebitec.mgx.dto.dto.PointDTOList;
+import de.cebitec.mgx.statistics.data.Point;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.Point;
 
 /**
  *

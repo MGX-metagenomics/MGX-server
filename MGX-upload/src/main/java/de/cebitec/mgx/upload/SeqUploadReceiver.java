@@ -1,7 +1,7 @@
 package de.cebitec.mgx.upload;
 
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.qc.Analyzer;
@@ -36,9 +36,9 @@ import javax.ejb.TransactionAttributeType;
  * @author sjaenick
  */
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
-public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
+public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiverI<SequenceDTOList> {
 
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
     //
     protected final String projectName;
     protected final long runId;
@@ -46,13 +46,14 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     protected File file;
     protected long total_num_sequences = 0;
     protected long lastAccessed;
-    protected final Analyzer[] qcAnalyzers;
+    protected final Analyzer<T>[] qcAnalyzers;
     protected final int bulksize;
     //
-    private final BlockingQueue<DNASequenceI> queue = new LinkedBlockingQueue<>(10000);
-    private final SeqFlusher flush;
+    private final BlockingQueue<T> queue = new LinkedBlockingQueue<>(10000);
+    private final SeqFlusher<T> flush;
 
-    public SeqUploadReceiver(Executor executor, MGXConfiguration mgxcfg, Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
+    @SuppressWarnings("unchecked")
+    public SeqUploadReceiver(Executor executor, MGXConfigurationI mgxcfg, Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
         projectName = projName;
         runId = run_id;
         mgxconfig = mgxcfg;
@@ -64,9 +65,9 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
             writer = hasQuality && projName.equals("MGX_Patrick") ? new CSQFWriter(file) : new CSFWriter(file);
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
-            qcAnalyzers = QCFactory.getQCAnalyzers(hasQuality);
+            qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
             bulksize = mgxconfig.getSQLBulkInsertSize();
-            flush = new SeqFlusher(run_id, queue, conn, writer, qcAnalyzers, bulksize);
+            flush = new SeqFlusher<T>(run_id, queue, conn, writer, qcAnalyzers, bulksize);
             executor.execute(flush);
         } catch (MGXException | IOException | SeqStoreException | SQLClientInfoException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -76,6 +77,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public synchronized void add(SequenceDTOList seqs) throws MGXException {
         //
         throwIfError();
@@ -93,7 +95,7 @@ public class SeqUploadReceiver implements UploadReceiverI<SequenceDTOList> {
                 }
                 d.setName(s.getName().getBytes());
                 d.setSequence(s.getSequence().getBytes());
-                queue.put(d);
+                queue.put((T)d);
                 total_num_sequences++;
             }
         } catch (SeqStoreException | InterruptedException ex) {

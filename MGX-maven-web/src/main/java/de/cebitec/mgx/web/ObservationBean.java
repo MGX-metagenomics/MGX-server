@@ -2,9 +2,11 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.ObservationDTOList;
 import de.cebitec.mgx.dtoadapter.ObservationDTOFactory;
+import de.cebitec.mgx.model.misc.SequenceObservation;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.Stateless;
@@ -31,7 +33,8 @@ public class ObservationBean {
     @Produces("application/x-protobuf")
     public ObservationDTOList byRead(@PathParam("id") Long id) {
         try {
-            return ObservationDTOFactory.getInstance().toDTOList(mgx.getObservationDAO().byRead(id));
+            DBIterator<SequenceObservation> iter = mgx.getObservationDAO().byRead(id);
+            return ObservationDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

@@ -3,8 +3,8 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTO;
@@ -13,8 +13,9 @@ import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.model.dao.workers.DeleteReference;
-import de.cebitec.mgx.model.dao.workers.InstallGlobalReference;
+import de.cebitec.mgx.global.MGXGlobalException;
+import de.cebitec.mgx.global.worker.InstallGlobalReference;
+import de.cebitec.mgx.workers.DeleteReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -25,7 +26,10 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -108,12 +112,13 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+        UUID taskId;
         try {
             mgx.getReferenceDAO().getById(id);
-        } catch (MGXException ex) {
+            taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
+        } catch (MGXException | SQLException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        UUID taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -130,7 +135,7 @@ public class ReferenceBean {
     public ReferenceDTOList listGlobalReferences() {
         try {
             return ReferenceDTOFactory.getInstance().toDTOList(global.getReferenceDAO().getAll());
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -147,7 +152,12 @@ public class ReferenceBean {
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
-        UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
+        UUID taskId = null;
+        try {
+            taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
+        } catch (SQLException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -191,7 +201,7 @@ public class ReferenceBean {
             ref.setFile(mgx.getProjectReferencesDirectory() + File.separator + ref.getId() + ".fas");
             ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
             uuid = upSessions.registerUploadSession(recv);
-        } catch (MGXException | IOException ex) {
+        } catch (MGXException | IOException | SQLException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(uuid.toString()).build();
@@ -203,7 +213,7 @@ public class ReferenceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         try {
-            ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.getSession(session_id);
+            ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.<RegionDTOList>getSession(session_id);
             recv.addSequenceData(chunkDNA.getValue().toUpperCase());
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());

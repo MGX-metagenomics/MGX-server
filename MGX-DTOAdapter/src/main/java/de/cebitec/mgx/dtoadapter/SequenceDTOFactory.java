@@ -63,7 +63,7 @@ public class SequenceDTOFactory extends DTOConversionBase<Sequence, SequenceDTO,
     @Override
     public SequenceDTOList toDTOList(AutoCloseableIterator<Sequence> acit) {
         if (acit instanceof LimitingIterator) {
-            return convertLimited((LimitingIterator) acit, UUID.randomUUID().toString());
+            return convertLimited((LimitingIterator<Sequence>) acit, UUID.randomUUID().toString());
         } else {
             return convert(acit);
         }

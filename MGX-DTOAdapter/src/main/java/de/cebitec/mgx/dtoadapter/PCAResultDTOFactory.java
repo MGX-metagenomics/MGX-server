@@ -1,9 +1,9 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.PCAResultDTO;
-import de.cebitec.mgx.model.misc.PCAResult;
+import de.cebitec.mgx.statistics.data.PCAResult;
+import de.cebitec.mgx.statistics.data.Point;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.Point;
 
 /**
  *

@@ -1,6 +1,6 @@
 package de.cebitec.mgx.upload;
 
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.RegionDTO;
 import de.cebitec.mgx.dto.dto.RegionDTOList;
 import de.cebitec.mgx.model.db.Reference;

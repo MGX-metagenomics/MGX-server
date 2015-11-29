@@ -2,11 +2,11 @@ package de.cebitec.mgx.web;
 
 import com.google.protobuf.ByteString;
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.FileDownloadProvider;
@@ -16,7 +16,7 @@ import de.cebitec.mgx.dto.dto.FileDTOList;
 import de.cebitec.mgx.dto.dto.FileDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
-import de.cebitec.mgx.model.dao.workers.DeleteFile;
+import de.cebitec.mgx.workers.DeleteFile;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.FileUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -24,9 +24,8 @@ import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -58,7 +57,7 @@ public class FileBean {
     @EJB
     TaskHolder taskHolder;
     @EJB
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
 
     @GET
     @Path("fetchall/{baseDir}")
@@ -131,16 +130,16 @@ public class FileBean {
 
         path = path.replace("|", File.separator);
         File target;
+        UUID taskId = null;
         try {
             target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
-        } catch (IOException ex) {
+            taskId = taskHolder.addTask(new DeleteFile(mgx.getConnection(), target, mgx.getProjectName()));
+        } catch (IOException | SQLException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         if (!target.exists()) {
             throw new MGXWebException("Nonexisting path: " + path);
         }
-
-        UUID taskId = taskHolder.addTask(new DeleteFile(mgx.getConnection(), target, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 

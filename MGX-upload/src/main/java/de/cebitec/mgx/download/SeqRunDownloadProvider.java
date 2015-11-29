@@ -1,8 +1,8 @@
 package de.cebitec.mgx.download;
 
 import com.google.protobuf.ByteString;
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
@@ -32,8 +32,8 @@ import javax.naming.NamingException;
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList> {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
-    MGXConfiguration mgxconfig;
+    @EJB
+    MGXConfigurationI mgxconfig;
     protected final String projectName;
     protected final Connection conn;
     protected SeqReaderI<? extends DNASequenceI> reader;
@@ -54,7 +54,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         projectName = projName;
 
         try {
-            mgxconfig = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration");
+            assert mgxconfig == null;
+            mgxconfig = InitialContext.<MGXConfigurationI>doLookup("java:global/MGX-maven-ear/MGX-configuration-1.0-SNAPSHOT/MGXConfiguration!de.cebitec.mgx.configuration.api.MGXConfigurationI");
 
             conn = pConn;
             conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");

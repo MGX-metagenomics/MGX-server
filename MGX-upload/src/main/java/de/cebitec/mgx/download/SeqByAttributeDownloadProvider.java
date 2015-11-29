@@ -1,7 +1,7 @@
 package de.cebitec.mgx.download;
 
 import com.google.protobuf.ByteString;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.model.db.Attribute;

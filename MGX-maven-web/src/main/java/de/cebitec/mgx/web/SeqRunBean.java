@@ -1,11 +1,11 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -20,7 +20,8 @@ import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.QCResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.model.dao.workers.DeleteSeqRun;
+import de.cebitec.mgx.global.MGXGlobalException;
+import de.cebitec.mgx.workers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
@@ -42,6 +43,7 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +78,7 @@ public class SeqRunBean {
     @EJB
     TaskHolder taskHolder;
     @EJB
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
     @EJB
     MGXGlobal global;
     @EJB
@@ -120,7 +122,7 @@ public class SeqRunBean {
             orig = mgx.getSeqRunDAO().getById(dto.getId());
             seqMethod = global.getTermDAO().getById(dto.getSequencingMethod().getId());
             seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException | MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
@@ -183,7 +185,7 @@ public class SeqRunBean {
         UUID taskId;
         try {
             taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException ex) {
+        } catch (IOException | SQLException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -193,14 +195,14 @@ public class SeqRunBean {
     @Path("getQC/{id}")
     @Produces("application/x-protobuf")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
-        Analyzer[] analyzers = null;
+        Analyzer<? extends DNASequenceI>[] analyzers = null;
         SeqRun sr = null;
         try {
             sr = mgx.getSeqRunDAO().getById(id);
             if (sr.getDBFile() != null && !sr.getDBFile().isEmpty()) {
                 SeqReaderI r = SeqReaderFactory.getReader(sr.getDBFile());
                 if (r != null) {
-                    analyzers = QCFactory.getQCAnalyzers(r.hasQuality());
+                    analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality());
                     r.close();
                 }
             }
@@ -220,11 +222,11 @@ public class SeqRunBean {
             }
             final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
             final SeqRun run = sr;
-            for (final Analyzer a : analyzers) {
-                File outFile = new File(prefix + a.getName());
+            for (final Analyzer analyzer : analyzers) {
+                File outFile = new File(prefix + analyzer.getName());
 
                 if (!outFile.exists()) {
-                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Starting QC analyzer {0} for run {1}", new Object[]{a.getName(), run.getName()});
+                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Starting QC analyzer {0} for run {1}", new Object[]{analyzer.getName(), run.getName()});
                     executor.execute(new Runnable() {
 
                         @Override
@@ -235,17 +237,17 @@ public class SeqRunBean {
                                 while (r != null && r.hasMoreElements()) {
                                     DNASequenceI h = r.nextElement();
                                     try {
-                                        a.add(h);
+                                        analyzer.add(h);
                                     } catch (Exception ex) {
-                                        Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{a.getName(), new String(h.getSequence())});
+                                        Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{analyzer.getName(), new String(h.getSequence())});
                                         Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                 }
                                 r.close();
-                                if (a.getNumberOfSequences() == run.getNumberOfSequences()) {
-                                    Persister.persist(prefix, a);
+                                if (analyzer.getNumberOfSequences() == run.getNumberOfSequences()) {
+                                    Persister.persist(prefix, analyzer);
                                 } else {
-                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{a.getName(), run.getName(), a.getNumberOfSequences()});
+                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{analyzer.getName(), run.getName(), analyzer.getNumberOfSequences()});
                                 }
                             } catch (Exception ex) {
                                 Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);

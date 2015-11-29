@@ -1,8 +1,8 @@
 package de.cebitec.mgx.dtoadapter;
 
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.TaskDTO;
 import de.cebitec.mgx.dto.dto.TaskDTOList;
-import de.cebitec.mgx.sessions.TaskI;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**

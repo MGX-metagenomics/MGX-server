@@ -26,24 +26,24 @@ import java.util.logging.Logger;
  *
  * @author sjaenick
  */
-public class SeqFlusher implements Runnable {
+public class SeqFlusher<T extends DNASequenceI> implements Runnable {
 
     private volatile boolean mayTerminate = false;
     private final long seqrunId;
-    private final BlockingQueue<DNASequenceI> in;
+    private final BlockingQueue<T> in;
     private final Connection conn;
-    private final SeqWriterI writer;
-    private final Analyzer[] analyzers;
+    private final SeqWriterI<T> writer;
+    private final Analyzer<T>[] analyzers;
     private Exception error = null;
     private final int bulkSize;
     //
-    private final List<DNASequenceI> holder = new ArrayList<>();
+    private final List<T> holder = new ArrayList<>();
     //
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
     private int waitMs = 5;
 
-    public SeqFlusher(long seqrunId, BlockingQueue<DNASequenceI> in, Connection conn, SeqWriterI writer, Analyzer[] analyzers, int bulkSize) {
+    public SeqFlusher(long seqrunId, BlockingQueue<T> in, Connection conn, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
         this.seqrunId = seqrunId;
         this.in = in;
         this.conn = conn;
@@ -54,7 +54,7 @@ public class SeqFlusher implements Runnable {
 
     @Override
     public void run() {
-        DNASequenceI seq = null;
+        T seq = null;
         while (!mayTerminate) {
             try {
                 seq = in.poll(waitMs, TimeUnit.NANOSECONDS);
@@ -90,9 +90,9 @@ public class SeqFlusher implements Runnable {
         allDone.countDown();
     }
 
-    private void process(DNASequenceI seq) {
+    private void process(T seq) {
         holder.add(seq);
-        for (Analyzer a : analyzers) {
+        for (Analyzer<T> a : analyzers) {
             a.add(seq);
         }
         if (holder.size() >= bulkSize) {
@@ -100,17 +100,17 @@ public class SeqFlusher implements Runnable {
         }
     }
 
-    private synchronized List<? extends DNASequenceI> fetchChunk() {
+    private synchronized List<T> fetchChunk() {
         int chunk = holder.size() < bulkSize ? holder.size() : bulkSize;
-        List<? extends DNASequenceI> sub = holder.subList(0, chunk);
-        List<? extends DNASequenceI> subList = new ArrayList<>(sub);
+        List<T> sub = holder.subList(0, chunk);
+        List<T> subList = new ArrayList<>(sub);
         sub.clear(); // since sub is backed by holder, this removes all sub-list items from holder
         return subList;
     }
 
     protected synchronized void flushChunk() {
 
-        final List<? extends DNASequenceI> commitList = fetchChunk();
+        final List<T> commitList = fetchChunk();
         
         if (commitList.isEmpty()) {
             return;
@@ -149,11 +149,11 @@ public class SeqFlusher implements Runnable {
         //
         curPos = 0;
         try {
-            for (Iterator<? extends DNASequenceI> iter = commitList.iterator(); iter.hasNext();) {
+            for (Iterator<T> iter = commitList.iterator(); iter.hasNext();) {
                 // add the generated IDs
-                DNASequenceI s = iter.next();
-                s.setId(generatedIDs[curPos++]);
-                writer.addSequence(s);
+                T seq = iter.next();
+                seq.setId(generatedIDs[curPos++]);
+                writer.addSequence(seq);
             }
         } catch (IOException ex) {
             error = ex;

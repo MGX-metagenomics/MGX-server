@@ -2,11 +2,11 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
+import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.core.TaskI.State;
 import de.cebitec.mgx.dto.dto.TaskDTO;
 import de.cebitec.mgx.dtoadapter.TaskDTOFactory;
 import de.cebitec.mgx.sessions.TaskHolder;
-import de.cebitec.mgx.sessions.TaskI;
-import de.cebitec.mgx.sessions.TaskI.State;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.util.UUID;
 import javax.ejb.EJB;

@@ -2,7 +2,7 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
@@ -147,7 +147,7 @@ public class AttributeBean {
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
         }
-        LimitingIterator liter = new LimitingIterator(50000, ret);
+        LimitingIterator<Sequence> liter = new LimitingIterator<>(50000, ret);
         SequenceDTOList dtos = SequenceDTOFactory.getInstance().toDTOList(liter);
 
         if (!dtos.getComplete()) {
@@ -166,7 +166,7 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     public SequenceDTOList continueSearch(@PathParam("uuid") String uuid) {
         UUID tmp = UUID.fromString(uuid);
-        LimitingIterator acit = resultHolder.get(tmp);
+        LimitingIterator<Sequence> acit = resultHolder.get(tmp);
         if (acit == null) {
             throw new MGXWebException("Unknown UUID.");
         }

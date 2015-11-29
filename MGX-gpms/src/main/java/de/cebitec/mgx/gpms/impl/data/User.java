@@ -45,6 +45,7 @@ public class User implements UserI {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<MembershipI> getMemberships(ProjectClassI projClass) {
 
 

@@ -1,7 +1,7 @@
 package de.cebitec.mgx.download;
 
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.upload.*;
 import java.util.*;
 import java.util.logging.Level;
@@ -26,9 +26,9 @@ import javax.ejb.Timer;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class DownloadSessions {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
-    MGXConfiguration mgxconfig;
-    private Map<UUID, DownloadProviderI> sessions = null;
+    @EJB
+    MGXConfigurationI mgxconfig;
+    private Map<UUID, DownloadProviderI<?>> sessions = null;
     private int timeout;
 
     @PostConstruct
@@ -50,11 +50,12 @@ public class DownloadSessions {
         return uuid;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> DownloadProviderI<T> getSession(UUID uuid) throws MGXException {
         if (!sessions.containsKey(uuid)) {
             throw new MGXException("No such session: " + uuid.toString());
         }
-        return sessions.get(uuid);
+        return (DownloadProviderI<T>)sessions.get(uuid);
     }
 
     @Asynchronous
