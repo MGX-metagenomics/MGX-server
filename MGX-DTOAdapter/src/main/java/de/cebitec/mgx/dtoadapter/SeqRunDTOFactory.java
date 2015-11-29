@@ -1,11 +1,11 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTO.Builder;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.global.MGXGlobal;
+import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -40,7 +40,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
         try {
             seqMethod = global.getTermDAO().getById(s.getSequencingMethod());
             seqTech = global.getTermDAO().getById(s.getSequencingTechnology());
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             Logger.getLogger(SeqRunDTOFactory.class.getName()).log(Level.SEVERE, null, ex);
         }
 

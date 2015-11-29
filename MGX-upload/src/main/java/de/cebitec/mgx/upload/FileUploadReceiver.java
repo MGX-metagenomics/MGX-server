@@ -1,6 +1,6 @@
 package de.cebitec.mgx.upload;
 
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.FileNotFoundException;

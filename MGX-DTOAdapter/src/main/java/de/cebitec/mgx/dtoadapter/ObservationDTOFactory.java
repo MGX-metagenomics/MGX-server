@@ -3,8 +3,8 @@ package de.cebitec.mgx.dtoadapter;
 import de.cebitec.mgx.dto.dto.ObservationDTO;
 import de.cebitec.mgx.dto.dto.ObservationDTOList;
 import de.cebitec.mgx.dto.dto.ObservationDTOList.Builder;
+import de.cebitec.mgx.model.misc.SequenceObservation;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.SequenceObservation;
 
 /**
  *

@@ -2,7 +2,7 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.MappedSequenceDTOList;
@@ -117,7 +117,7 @@ public class MappingBean {
         try {
             MappingDataSession session = mapSessions.getSession(uuid);
             iter = session.get(mgx.getConnection(), from, to);
-        } catch (MGXException ex) {
+        } catch (MGXException | SQLException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MappedSequenceDTOFactory.getInstance().toDTOList(iter);
@@ -128,18 +128,11 @@ public class MappingBean {
     @Produces("application/x-protobuf")
     public MGXLong getMaxCoverage(@PathParam("uuid") UUID uuid) {
         long maxCov = -1;
-        Connection conn = mgx.getConnection();
-        try {
+        try (Connection conn = mgx.getConnection()) {
             MappingDataSession session = mapSessions.getSession(uuid);
             maxCov = session.getMaxCoverage(conn);
-        } catch (MGXException ex) {
+        } catch (MGXException | SQLException ex) {
             throw new MGXWebException(ex.getMessage());
-        } finally {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                throw new MGXWebException(ex.getMessage());
-            }
         }
         return MGXLong.newBuilder().setValue(maxCov).build();
     }

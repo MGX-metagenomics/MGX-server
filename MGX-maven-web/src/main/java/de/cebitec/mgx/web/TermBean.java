@@ -1,10 +1,10 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.dto.dto.TermDTOList;
 import de.cebitec.mgx.dtoadapter.TermDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
+import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -32,7 +32,7 @@ public class TermBean {
     public TermDTOList byCategory(@PathParam("term") String cat) {
         try {
             return TermDTOFactory.getInstance().toDTOList(global.getTermDAO().byCategory(cat));
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -44,7 +44,7 @@ public class TermBean {
         Term obj = null;
         try {
             obj = global.getTermDAO().getById(id);
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return TermDTOFactory.getInstance().toDTO(obj);

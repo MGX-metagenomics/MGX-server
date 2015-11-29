@@ -1,11 +1,13 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.conveyor.JobParameterHelper;
+import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dispatcher.client.MGXDispatcherConfiguration;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
@@ -15,11 +17,10 @@ import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
-import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
-import de.cebitec.mgx.jobsubmitter.JobSubmitter;
-import de.cebitec.mgx.jobsubmitter.MGXInsufficientJobConfigurationException;
-import de.cebitec.mgx.model.dao.workers.DeleteJob;
-import de.cebitec.mgx.model.dao.workers.RestartJob;
+import de.cebitec.mgx.dispatcher.common.MGXInsufficientJobConfigurationException;
+import de.cebitec.mgx.jobsubmitter.api.JobSubmitter;
+import de.cebitec.mgx.workers.DeleteJob;
+import de.cebitec.mgx.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -31,6 +32,7 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -61,7 +65,9 @@ public class JobBean {
     @EJB
     TaskHolder taskHolder;
     @EJB
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
+    @EJB
+    MGXDispatcherConfiguration dispConfig;
     @EJB
     MappingSessions mappingSessions;
 
@@ -103,7 +109,7 @@ public class JobBean {
             while (jpIter.hasNext()) {
                 defaultParams.add(jpIter.next());
             }
-        } catch (MGXException ex) {
+        } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -221,11 +227,13 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean verify(@PathParam("id") Long id) {
+       
         boolean verified = false;
-
+        
         try {
-            verified = js.validate(mgx, mgx.getConnection(), mgx.getProjectName(), id);
-        } catch (MGXInsufficientJobConfigurationException | MGXDispatcherException ex) {
+            Job job = mgx.getJobDAO().getById(id);
+            verified = js.validate(mgx.getProjectName(), mgx.getConnection(), job, dispConfig.getDispatcherHost(), mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
+        } catch (MGXException | MGXDispatcherException | IOException | SQLException ex) {
             throw new MGXJobException(ex.getMessage());
         }
 
@@ -244,11 +252,11 @@ public class JobBean {
             if (job.getStatus() != JobState.VERIFIED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            submitted = js.submit(mgxconfig.getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
+            submitted = js.submit(dispConfig.getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
             mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
-        } catch (MGXException | MGXDispatcherException ex) {
+        } catch (SQLException | MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -264,10 +272,10 @@ public class JobBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(id);
-            RestartJob dJob = new RestartJob(mgx, mgxconfig, job, mgx.getConnection(), mgx.getProjectName(), mgxconfig.getDispatcherHost(), js);
+            RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getConnection(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
-        } catch (MGXException | MGXDispatcherException | IOException ex) {
+        } catch (SQLException | MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -366,7 +374,13 @@ public class JobBean {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        DeleteJob dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName(), mappingSessions);
+        DeleteJob dJob;
+        try {
+            dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName(), mappingSessions);
+        } catch (SQLException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         UUID taskId = taskHolder.addTask(dJob);
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }

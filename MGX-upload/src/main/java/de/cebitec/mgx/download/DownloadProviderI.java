@@ -1,6 +1,6 @@
 package de.cebitec.mgx.download;
 
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.core.MGXException;
 
 /**
  *

@@ -1,11 +1,11 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqByAttributeDownloadProvider;
@@ -26,6 +26,7 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class SequenceBean {
     @MGX
     MGXController mgx;
     @EJB
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
     @EJB
     UploadSessions upSessions;
     @EJB
@@ -84,7 +85,7 @@ public class SequenceBean {
             SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
-        } catch (MGXException | IOException ex) {
+        } catch (MGXException | IOException | SQLException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -160,7 +161,7 @@ public class SequenceBean {
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating download session for run ID " + seqrun_id);
             provider = new SeqRunDownloadProvider(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
-        } catch (MGXException ex) {
+        } catch (MGXException | SQLException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -182,7 +183,7 @@ public class SequenceBean {
 
             mgx.log("Creating attribute-based download session for " + mgx.getProjectName());
             provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), mgx.getAttributeDAO().getByIds(ids));
-        } catch (MGXException ex) {
+        } catch (MGXException | SQLException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }

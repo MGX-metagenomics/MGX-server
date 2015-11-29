@@ -3,20 +3,22 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.HabitatDTO;
 import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
-import de.cebitec.mgx.model.dao.workers.DeleteHabitat;
+import de.cebitec.mgx.workers.DeleteHabitat;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -103,9 +105,9 @@ public class HabitatBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
-        try {
-            taskId = taskHolder.addTask(new DeleteHabitat(mgx.getConnection(), id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException ex) {
+        try (Connection conn = mgx.getConnection()) {
+            taskId = taskHolder.addTask(new DeleteHabitat(conn, id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
+        } catch (IOException |SQLException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

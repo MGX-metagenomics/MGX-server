@@ -1,11 +1,11 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.MGXConfiguration;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXException;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -14,8 +14,8 @@ import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.jobsubmitter.JobParameterHelper;
-import de.cebitec.mgx.model.dao.workers.DeleteTool;
+import de.cebitec.mgx.global.MGXGlobalException;
+import de.cebitec.mgx.workers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
@@ -23,11 +23,13 @@ import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
-import de.cebitec.mgx.util.XMLValidator;
+import de.cebitec.mgx.conveyor.XMLValidator;
+import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,7 +55,7 @@ public class ToolBean {
     @EJB
     TaskHolder taskHolder;
     @EJB
-    MGXConfiguration mgxconfig;
+    MGXConfigurationI mgxconfig;
     @EJB
     MGXGlobal global;
     @EJB
@@ -103,7 +105,7 @@ public class ToolBean {
         String xmlData = null;
         try {
             xmlData = UnixHelper.readFile(f);
-        } catch (MGXException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
         }
         return MGXString.newBuilder().setValue(xmlData).build();
@@ -115,7 +117,7 @@ public class ToolBean {
     public ToolDTOList listGlobalTools() {
         try {
             return ToolDTOFactory.getInstance().toDTOList(global.getToolDAO().getAll());
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -155,7 +157,12 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
+        UUID taskId;
+        try {
+            taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
+        } catch (SQLException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -171,7 +178,7 @@ public class ToolBean {
         Tool globalTool = null;
         try {
             globalTool = global.getToolDAO().getById(global_id);
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
@@ -190,10 +197,10 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
-            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
+            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().<Tool>getById(id);
             String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
             return getParams(toolXMLData);
-        } catch (MGXException ex) {
+        } catch (MGXGlobalException | MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
     }

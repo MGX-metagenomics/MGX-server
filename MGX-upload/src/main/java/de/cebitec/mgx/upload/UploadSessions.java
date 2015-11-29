@@ -1,7 +1,7 @@
 package de.cebitec.mgx.upload;
 
-import de.cebitec.mgx.configuration.MGXConfiguration;
-import de.cebitec.mgx.controller.MGXException;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.mgx.core.MGXException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,8 +25,8 @@ import javax.ejb.Timer;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class UploadSessions {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MGXConfiguration")
-    MGXConfiguration mgxconfig;
+    @EJB
+    MGXConfigurationI mgxconfig;
     private Map<UUID, UploadReceiverI> sessions = null;
     private int uploadTimeout;
 
@@ -54,11 +54,12 @@ public class UploadSessions {
         return uuid;
     }
 
-    public UploadReceiverI getSession(UUID uuid) throws MGXException {
+    @SuppressWarnings("unchecked")
+    public <T> UploadReceiverI<T> getSession(UUID uuid) throws MGXException {
         if (!sessions.containsKey(uuid)) {
             throw new MGXException("No session for " + uuid);
         }
-        return sessions.get(uuid);
+        return (UploadReceiverI<T>) sessions.get(uuid);
     }
 
     //@Asynchronous -- not here
