@@ -28,8 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -115,8 +113,8 @@ public class ReferenceBean {
         UUID taskId;
         try {
             mgx.getReferenceDAO().getById(id);
-            taskId = taskHolder.addTask(new DeleteReference(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
-        } catch (MGXException | SQLException ex) {
+            taskId = taskHolder.addTask(new DeleteReference(mgx.getDataSource(), id, mgx.getProjectName(), mappingSessions));
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -152,12 +150,8 @@ public class ReferenceBean {
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
-        UUID taskId = null;
-        try {
-            taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getConnection(), global, globalId, projReferenceDir, mgx.getProjectName()));
-        } catch (SQLException ex) {
-            throw new MGXWebException(ex.getMessage());
-        }
+        
+        UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getDataSource(), global, globalId, projReferenceDir, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 

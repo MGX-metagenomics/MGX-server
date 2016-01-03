@@ -18,7 +18,6 @@ import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -128,8 +127,8 @@ public class DNAExtractBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException | SQLException ex) {
+            taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
+        } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
