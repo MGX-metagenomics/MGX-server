@@ -15,7 +15,6 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,6 +23,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.sql.DataSource;
 
 /**
  *
@@ -35,13 +35,13 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     @EJB
     MGXConfigurationI mgxconfig;
     protected final String projectName;
-    protected final Connection conn;
+    protected final DataSource dataSource;
     protected SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int bulksize;
 
-    public SeqRunDownloadProvider(Connection pConn, String projName, long run_id) throws MGXException {
-        this(pConn, projName);
+    public SeqRunDownloadProvider(DataSource dataSource, String projName, long run_id) throws MGXException {
+        this(dataSource, projName);
         File file = getStorageFile(run_id);
         try {
             reader = SeqReaderFactory.<DNASequenceI>getReader(file.getAbsolutePath());
@@ -50,16 +50,16 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         }
     }
 
-    protected SeqRunDownloadProvider(Connection pConn, String projName) throws MGXException {
+    protected SeqRunDownloadProvider(DataSource dataSource, String projName) throws MGXException {
         projectName = projName;
 
         try {
             assert mgxconfig == null;
             mgxconfig = InitialContext.<MGXConfigurationI>doLookup("java:global/MGX-maven-ear/MGX-configuration-1.0-SNAPSHOT/MGXConfiguration!de.cebitec.mgx.configuration.api.MGXConfigurationI");
 
-            conn = pConn;
-            conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");
-        } catch (NamingException | SQLClientInfoException ex) {
+            this.dataSource = dataSource;
+            //conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");
+        } catch (NamingException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
 
@@ -74,8 +74,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                 reader.close();
                 reader = null;
             }
-            conn.setClientInfo("ApplicationName", "");
-            conn.close();
+//            conn.setClientInfo("ApplicationName", "");
+//            conn.close();
         } catch (Exception ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -88,8 +88,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                 reader.close();
                 reader = null;
             }
-            conn.setClientInfo("ApplicationName", "");
-            conn.close();
+//            conn.setClientInfo("ApplicationName", "");
+//            conn.close();
         } catch (Exception ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -161,19 +161,20 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     }
 
     private String getSequenceName(long seqId) throws MGXException {
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT name from read WHERE id=?")) {
-            stmt.setLong(1, seqId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString(1);
-                } else {
-                    throw new MGXException("No name for read id " + seqId + " in project " + projectName);
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT name from read WHERE id=?")) {
+                stmt.setLong(1, seqId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString(1);
+                    } else {
+                        throw new MGXException("No name for read id " + seqId + " in project " + projectName);
+                    }
                 }
             }
         } catch (SQLException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
-        //return null;
     }
 }

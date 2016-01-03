@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.sql.DataSource;
 
 /**
  *
@@ -42,7 +43,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     //
     protected final String projectName;
     protected final long runId;
-    protected final Connection conn;
+    protected final DataSource dataSource;
     protected File file;
     protected long total_num_sequences = 0;
     protected long lastAccessed;
@@ -53,7 +54,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
-    public SeqUploadReceiver(Executor executor, MGXConfigurationI mgxcfg, Connection pConn, String projName, long run_id, boolean hasQuality) throws MGXException {
+    public SeqUploadReceiver(Executor executor, MGXConfigurationI mgxcfg, DataSource dataSource, String projName, long run_id, boolean hasQuality) throws MGXException {
         projectName = projName;
         runId = run_id;
         mgxconfig = mgxcfg;
@@ -63,13 +64,13 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             SeqWriterI writer;
             // restrict to MGX_Patrick for now
             writer = hasQuality && projName.equals("MGX_Patrick") ? new CSQFWriter(file) : new CSFWriter(file);
-            conn = pConn;
-            conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
+            this.dataSource = dataSource;
+            //conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
             bulksize = mgxconfig.getSQLBulkInsertSize();
-            flush = new SeqFlusher<T>(run_id, queue, conn, writer, qcAnalyzers, bulksize);
+            flush = new SeqFlusher<T>(run_id, queue, dataSource, writer, qcAnalyzers, bulksize);
             executor.execute(flush);
-        } catch (MGXException | IOException | SeqStoreException | SQLClientInfoException ex) {
+        } catch (MGXException | IOException | SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
         }
 
@@ -95,7 +96,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 }
                 d.setName(s.getName().getBytes());
                 d.setSequence(s.getSequence().getBytes());
-                queue.put((T)d);
+                queue.put((T) d);
                 total_num_sequences++;
             }
         } catch (SeqStoreException | InterruptedException ex) {
@@ -115,24 +116,20 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             flush.complete();
 
             String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, file.getCanonicalPath());
-                stmt.setLong(2, total_num_sequences);
-                stmt.setLong(3, runId);
-                stmt.executeUpdate();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setString(1, file.getCanonicalPath());
+                    stmt.setLong(2, total_num_sequences);
+                    stmt.setLong(3, runId);
+                    stmt.executeUpdate();
+                }
             }
             //
-            conn.setClientInfo("ApplicationName", "");
+            //conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             cancel();
             throw new MGXException(ex.getMessage());
-        } finally {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
 
         // write QC stats
@@ -152,24 +149,20 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
-                stmt.setLong(1, runId);
-                stmt.executeUpdate();
-            }
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
-                stmt.setLong(1, runId);
-                stmt.executeUpdate();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
+                    stmt.setLong(1, runId);
+                    stmt.executeUpdate();
+                }
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
+                    stmt.setLong(1, runId);
+                    stmt.executeUpdate();
+                }
             }
             //
-            conn.setClientInfo("ApplicationName", "");
+            //conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-            }
         }
     }
 

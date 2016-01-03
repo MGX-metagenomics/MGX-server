@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
@@ -31,7 +32,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private volatile boolean mayTerminate = false;
     private final long seqrunId;
     private final BlockingQueue<T> in;
-    private final Connection conn;
+    private final DataSource dataSource;
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
     private Exception error = null;
@@ -43,10 +44,10 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     //
     private int waitMs = 5;
 
-    public SeqFlusher(long seqrunId, BlockingQueue<T> in, Connection conn, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
+    public SeqFlusher(long seqrunId, BlockingQueue<T> in, DataSource dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
         this.seqrunId = seqrunId;
         this.in = in;
-        this.conn = conn;
+        this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
         this.bulkSize = bulkSize;
@@ -62,7 +63,8 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                 Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (seq != null) {
-                waitMs-- ; waitMs = waitMs < 1 ? 1 : waitMs;
+                waitMs--;
+                waitMs = waitMs < 1 ? 1 : waitMs;
                 process(seq);
             }
         }
@@ -111,7 +113,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     protected synchronized void flushChunk() {
 
         final List<T> commitList = fetchChunk();
-        
+
         if (commitList.isEmpty()) {
             return;
         }
@@ -122,19 +124,20 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         int curPos = 0;
         long[] generatedIDs = new long[commitList.size()];
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                int i = 1;
+                for (DNASequenceI s : commitList) {
+                    stmt.setLong(i, seqrunId);
+                    stmt.setString(i + 1, new String(s.getName()));
+                    stmt.setInt(i + 2, s.getSequence().length);
+                    i += 3;
+                }
 
-            int i = 1;
-            for (DNASequenceI s : commitList) {
-                stmt.setLong(i, seqrunId);
-                stmt.setString(i + 1, new String(s.getName()));
-                stmt.setInt(i + 2, s.getSequence().length);
-                i += 3;
-            }
-
-            try (ResultSet res = stmt.executeQuery()) {
-                while (res.next()) {
-                    generatedIDs[curPos++] = res.getLong(1);
+                try (ResultSet res = stmt.executeQuery()) {
+                    while (res.next()) {
+                        generatedIDs[curPos++] = res.getLong(1);
+                    }
                 }
             }
         } catch (SQLException ex) {
