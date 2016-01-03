@@ -18,7 +18,7 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
     public AttributeTypeDAO(MGXControllerImpl ctx) {
         super(ctx);
     }
-    
+
     @Override
     Class<AttributeType> getType() {
         return AttributeType.class;
@@ -39,10 +39,10 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
                 + "GROUP BY atype.id, atype.name, atype.value_type, atype.structure "
                 + "ORDER BY atype.name ASC";
 
-        Connection c = getConnection();
         PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
+            Connection c = getConnection();
             stmt = c.prepareStatement(sql);
             stmt.setLong(1, jobId);
             stmt.setInt(2, JobState.FINISHED.getValue());
@@ -76,10 +76,10 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
                 + "JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
                 + "WHERE job.job_state=? AND job.seqrun_id=?";
 
-        Connection c = getConnection();
         PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
+            Connection c = getConnection();
             stmt = c.prepareStatement(sql);
             stmt.setInt(1, JobState.FINISHED.getValue());
             stmt.setLong(2, seqrunId);

@@ -8,16 +8,13 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.EntityManager;
+import javax.sql.DataSource;
 
 /**
  *
@@ -26,6 +23,10 @@ import javax.persistence.EntityManager;
 public class MGXControllerImpl implements MGXController {
 
     private final static Logger logger = Logger.getLogger(MGXController.class.getName());
+    //
+    private final String projectName;
+    private final String userLogin;
+    //
     private final DBMasterI gpmsmaster;
     private final EntityManager em;
     private File projectDir = null;
@@ -35,9 +36,14 @@ public class MGXControllerImpl implements MGXController {
     private File projectReferencesDir = null;
     //
     private final String persistentDir;
+    //
+    //
+    private final static String DOUBLE_SEPARATOR = File.separator + File.separator;
 
     public MGXControllerImpl(DBMasterI gpmsmaster, MGXConfigurationI cfg) {
         this.gpmsmaster = gpmsmaster;
+        this.projectName = gpmsmaster.getProject().getName();
+        this.userLogin = gpmsmaster.getLogin();
         this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
         persistentDir = cfg.getPersistentDirectory();
     }
@@ -67,8 +73,8 @@ public class MGXControllerImpl implements MGXController {
         }
 
         String ret = new StringBuilder(persistentDir).append(File.separator).append(getProjectName()).append(File.separator).toString();
-        while (ret.contains(File.separator + File.separator)) {
-            ret = ret.replaceAll(File.separator + File.separator, File.separator);
+        while (ret.contains(DOUBLE_SEPARATOR)) {
+            ret = ret.replaceAll(DOUBLE_SEPARATOR, File.separator);
         }
         // 
         File targetDir = new File(ret);
@@ -153,30 +159,29 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public Connection getConnection() {
-        Connection connection = null;
-        try {
-            connection = gpmsmaster.getDataSource().getConnection();
-        } catch (SQLException ex) {
-            Logger.getLogger(MGXControllerImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return connection;
+    public final DataSource getDataSource() {
+        return gpmsmaster.getDataSource();
     }
 
     @Override
-    public String getDatabaseHost() {
-        return gpmsmaster.getProject().getDBConfig().getDatabaseHost();
+    public final Connection getConnection() throws SQLException {
+        return getDataSource().getConnection();
     }
 
-    @Override
-    public String getDatabaseName() {
-        return gpmsmaster.getProject().getDBConfig().getDatabaseName();
-    }
-
-    @Override
-    public String getJDBCUrl() {
-        return gpmsmaster.getProject().getDBConfig().getURI();
-    }
+//    @Override
+//    public String getDatabaseHost() {
+//        return gpmsmaster.getProject().getDBConfig().getDatabaseHost();
+//    }
+//
+//    @Override
+//    public String getDatabaseName() {
+//        return gpmsmaster.getProject().getDBConfig().getDatabaseName();
+//    }
+//
+//    @Override
+//    public String getJDBCUrl() {
+//        return gpmsmaster.getProject().getDBConfig().getURI();
+//    }
 
     @Override
     public void close() {
@@ -252,12 +257,12 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getProjectName() {
-        return gpmsmaster.getProject().getName();
+        return projectName;
     }
 
     @Override
     public String getCurrentUser() {
-        return gpmsmaster.getLogin();
+        return userLogin;
     }
 
     @Override
@@ -293,7 +298,6 @@ public class MGXControllerImpl implements MGXController {
 //        }
 //        throw new UnsupportedOperationException("Could not create DAO " + clazz);
 //    }
-
     @Override
     public int hashCode() {
         int hash = 3;

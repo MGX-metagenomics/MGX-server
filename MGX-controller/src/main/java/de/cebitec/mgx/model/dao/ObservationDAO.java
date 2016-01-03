@@ -35,12 +35,7 @@ public class ObservationDAO<T extends Observation> {
             iter = new DBIterator<SequenceObservation>(rset, stmt, conn) {
                 @Override
                 public SequenceObservation convert(ResultSet rs) throws SQLException {
-                    SequenceObservation obs = new SequenceObservation();
-                    obs.setStart(rs.getInt(1));
-                    obs.setStop(rs.getInt(2));
-                    obs.setAttributeName(rs.getString(3));
-                    obs.setAttributeTypeName(rs.getString(4));
-                    return obs;
+                    return new SequenceObservation(rs.getInt(1), rs.getInt(2), rs.getString(3), rs.getString(4));
                 }
             };
 
@@ -49,12 +44,4 @@ public class ObservationDAO<T extends Observation> {
         }
         return iter;
     }
-
-    public MGXController getController() {
-        return ctx;
-    }
-
-//    public Connection getConnection() throws SQLException {
-//        return ctx.getConnection();
-//    }
 }

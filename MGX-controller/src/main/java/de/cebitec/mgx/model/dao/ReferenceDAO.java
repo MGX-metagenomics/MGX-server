@@ -49,9 +49,9 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         if (refLen == -1 || filePath == null) {
             throw new MGXException("Cannot read data for project reference id " + refId);
         }
-        
+
         if (!new File(filePath).exists()) {
-            throw new MGXException("Sequence data file for ID "+ refId + " is missing.");
+            throw new MGXException("Sequence data file for ID " + refId + " is missing.");
         }
 
         if (from > to || from < 0 || to < 0 || from == to || to > refLen) {
@@ -77,11 +77,11 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
             throw new MGXException("Invalid coordinates: " + from + " " + to);
         }
         DBIterator<Region> iter = null;
-        Connection conn = getConnection();
         ResultSet rset;
         PreparedStatement stmt;
 
         try {
+            Connection conn = getConnection();
             stmt = conn.prepareStatement("SELECT * from getRegions(?,?,?)");
             stmt.setLong(1, ref.getId());
             stmt.setInt(2, from);
