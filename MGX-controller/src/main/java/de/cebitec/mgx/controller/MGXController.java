@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.persistence.EntityManager;
+import javax.sql.DataSource;
 
 /**
  *
@@ -51,11 +52,10 @@ public interface MGXController extends AutoCloseable {
 
     public RoleI getCurrentRole();
 
-    //public MGXConfiguration getConfiguration();
-    //public MGXGlobal getGlobal();
     public EntityManager getEntityManager();
 
-    //public EntityManagerFactory getEMF();
+    public DataSource getDataSource();
+    
     public Connection getConnection() throws SQLException;
 
     public File getProjectDirectory() throws IOException;
@@ -68,11 +68,11 @@ public interface MGXController extends AutoCloseable {
 
     public File getProjectJobDirectory() throws IOException;
 
-    public String getDatabaseHost();
-
-    public String getDatabaseName();
-
-    public String getJDBCUrl();
+//    public String getDatabaseHost();
+//
+//    public String getDatabaseName();
+//
+//    public String getJDBCUrl();
 
     //public void close();
 }

@@ -31,7 +31,7 @@ public abstract class DAO<T extends Identifiable> {
 //        this.ctx = ctx;
 //    }
 
-    public MGXController getController() {
+    public final MGXController getController() {
         return ctx;
     }
 
@@ -39,7 +39,7 @@ public abstract class DAO<T extends Identifiable> {
         return ctx.getEntityManager();
     }
 
-    public Connection getConnection() {
+    public Connection getConnection() throws SQLException {
         return ctx.getConnection();
     }
 
