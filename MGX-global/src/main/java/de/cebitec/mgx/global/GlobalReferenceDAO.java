@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 public class GlobalReferenceDAO {
 
     private final MGXGlobal global;
+    private final boolean validate = true;
 
     public GlobalReferenceDAO(MGXGlobal global) {
         this.global = global;
@@ -51,7 +52,7 @@ public class GlobalReferenceDAO {
             throw new MGXGlobalException(ex);
         }
 
-        if (ref != null) {
+        if (validate && ref != null) {
             File seqFile = new File(ref.getFile());
             if (!seqFile.exists()) {
                 throw new MGXGlobalException("Reference sequence data for " + ref.getName() + " is missing.");
@@ -71,6 +72,14 @@ public class GlobalReferenceDAO {
                         ref.setName(rs.getString(2));
                         ref.setLength(rs.getInt(3));
                         ref.setFile(rs.getString(4));
+
+                        if (validate) {
+                            File seqFile = new File(ref.getFile());
+                            if (!seqFile.exists()) {
+                                throw new MGXGlobalException("Reference sequence data for " + ref.getName() + " is missing.");
+                            }
+                        }
+                        
                         refs.add(ref);
                     }
                 }
