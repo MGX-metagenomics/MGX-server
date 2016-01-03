@@ -82,10 +82,10 @@ public class SequenceBean {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getConnection(), mgx.getProjectName(), seqrun_id, hasQual);
+            SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgxconfig, mgx.getDataSource(), mgx.getProjectName(), seqrun_id, hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
-        } catch (MGXException | IOException | SQLException ex) {
+        } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -160,8 +160,8 @@ public class SequenceBean {
             // make sure requested run exists
             mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating download session for run ID " + seqrun_id);
-            provider = new SeqRunDownloadProvider(mgx.getConnection(), mgx.getProjectName(), seqrun_id);
-        } catch (MGXException | SQLException ex) {
+            provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), seqrun_id);
+        } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -170,7 +170,7 @@ public class SequenceBean {
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
-    @POST
+    @PUT
     @Path("initDownloadforAttributes/")
     @Produces("application/x-protobuf")
     public MGXString initDownloadforAttributes(AttributeDTOList attrdtos) {
@@ -182,8 +182,8 @@ public class SequenceBean {
             }
 
             mgx.log("Creating attribute-based download session for " + mgx.getProjectName());
-            provider = new SeqByAttributeDownloadProvider(mgx.getConnection(), mgx.getProjectName(), mgx.getAttributeDAO().getByIds(ids));
-        } catch (MGXException | SQLException ex) {
+            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), mgx.getAttributeDAO().getByIds(ids));
+        } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }

@@ -19,7 +19,6 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -132,8 +131,8 @@ public class SampleBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getConnection(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException | SQLException ex) {
+            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
+        } catch (IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

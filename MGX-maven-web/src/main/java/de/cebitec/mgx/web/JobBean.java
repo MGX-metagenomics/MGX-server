@@ -32,7 +32,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -227,13 +224,12 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean verify(@PathParam("id") Long id) {
-       
+
         boolean verified = false;
-        
         try {
             Job job = mgx.getJobDAO().getById(id);
-            verified = js.validate(mgx.getProjectName(), mgx.getConnection(), job, dispConfig.getDispatcherHost(), mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
-        } catch (MGXException | MGXDispatcherException | IOException | SQLException ex) {
+            verified = js.validate(mgx.getProjectName(), mgx.getDataSource(), job, dispConfig.getDispatcherHost(), mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
+        } catch (MGXException | MGXDispatcherException | IOException ex) {
             throw new MGXJobException(ex.getMessage());
         }
 
@@ -252,11 +248,11 @@ public class JobBean {
             if (job.getStatus() != JobState.VERIFIED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            submitted = js.submit(dispConfig.getDispatcherHost(), mgx.getConnection(), mgx.getProjectName(), job);
+            submitted = js.submit(dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
             mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
-        } catch (SQLException | MGXException | MGXDispatcherException ex) {
+        } catch (MGXException | MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -272,10 +268,10 @@ public class JobBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(id);
-            RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getConnection(), mgx.getProjectName(), js);
+            RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
-        } catch (SQLException | MGXException | MGXDispatcherException | IOException ex) {
+        } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -374,13 +370,8 @@ public class JobBean {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        DeleteJob dJob;
-        try {
-            dJob = new DeleteJob(id, mgx.getConnection(), mgx.getProjectName(), mappingSessions);
-        } catch (SQLException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
+        
+        DeleteJob dJob = new DeleteJob(id, mgx.getDataSource(), mgx.getProjectName(), mappingSessions);
         UUID taskId = taskHolder.addTask(dJob);
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }

@@ -17,8 +17,6 @@ import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -105,9 +103,9 @@ public class HabitatBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
-        try (Connection conn = mgx.getConnection()) {
-            taskId = taskHolder.addTask(new DeleteHabitat(conn, id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException |SQLException ex) {
+        try {
+            taskId = taskHolder.addTask(new DeleteHabitat(mgx.getDataSource(), id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
+        } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

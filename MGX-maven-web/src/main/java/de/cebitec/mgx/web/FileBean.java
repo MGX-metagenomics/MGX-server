@@ -24,7 +24,6 @@ import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -133,8 +132,8 @@ public class FileBean {
         UUID taskId = null;
         try {
             target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
-            taskId = taskHolder.addTask(new DeleteFile(mgx.getConnection(), target, mgx.getProjectName()));
-        } catch (IOException | SQLException ex) {
+            taskId = taskHolder.addTask(new DeleteFile(mgx.getDataSource(), target, mgx.getProjectName()));
+        } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         if (!target.exists()) {

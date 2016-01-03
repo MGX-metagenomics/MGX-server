@@ -29,7 +29,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -157,12 +156,7 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
-        try {
-            taskId = taskHolder.addTask(new DeleteTool(mgx.getConnection(), id, mgx.getProjectName(), mappingSessions));
-        } catch (SQLException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
+        UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getDataSource(), id, mgx.getProjectName(), mappingSessions));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
