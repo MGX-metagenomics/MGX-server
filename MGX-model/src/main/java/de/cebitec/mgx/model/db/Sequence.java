@@ -90,6 +90,6 @@ public class Sequence implements Serializable, Identifiable {
 
     @Override
     public String toString() {
-        return "de.cebitec.mgx.ejb.Sequence[id=" + id + "]";
+        return "de.cebitec.mgx.model.db.Sequence[id=" + id + "]";
     }
 }
