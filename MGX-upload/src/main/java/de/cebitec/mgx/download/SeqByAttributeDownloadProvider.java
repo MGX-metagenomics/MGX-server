@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import javax.sql.DataSource;
 
 /**
  *
@@ -33,8 +34,8 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     private boolean have_more_data = true;
     private Map<Long, String> readnames = null;
 
-    public SeqByAttributeDownloadProvider(Connection connection, String projectName, Iterator<Attribute> attrIter) throws MGXException {
-        super(connection, projectName);
+    public SeqByAttributeDownloadProvider(DataSource dataSource, String projectName, Iterator<Attribute> attrIter) throws MGXException {
+        super(dataSource, projectName);
 
         if (!attrIter.hasNext()) {
             throw new MGXException("No attributes provided.");
@@ -62,7 +63,17 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         }
 
         readnames = new HashMap<>(bulksize);
-
+        
+        // we cant use try-with-resources here, since the connection (and the
+        // resultset) is kept alive across multiple invocations
+        //
+        Connection conn;
+        try {
+            conn = dataSource.getConnection();
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+        
         try {
             String sql = buildSQLTemplate(attributes.size());
             stmt = conn.prepareStatement(sql);
