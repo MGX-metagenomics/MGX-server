@@ -51,9 +51,9 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         }
 
         if (dbFile == null || seqName == null) {
-            throw new MGXException("No sequence for ID "+ id);
+            throw new MGXException("No sequence for ID " + id);
         }
-        
+
         Sequence seq = new Sequence();
         seq.setId(id);
         seq.setName(seqName);
@@ -61,14 +61,16 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         // read sequence data
         try (SeqReaderI<? extends DNASequenceI> reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile)) {
             Iterator<? extends DNASequenceI> iter = reader.fetch(new long[]{id}).iterator();
-            assert iter.hasNext();
-            byte[] seqdata = iter.next().getSequence();
-            String seqString = new String(seqdata).toUpperCase();
-            seq.setSequence(seqString);
-            seq.setLength(seqString.length());
+            if (iter.hasNext()) {
+                DNASequenceI dnaSeq = iter.next();
+                byte[] seqdata = dnaSeq.getSequence();
+                String seqString = new String(seqdata).toUpperCase();
+                seq.setSequence(seqString);
+                seq.setLength(seqString.length());
+            }
         } catch (Exception ex) {
             throw new MGXException(ex);
         }
-        return (T)seq;
+        return (T) seq;
     }
 }
