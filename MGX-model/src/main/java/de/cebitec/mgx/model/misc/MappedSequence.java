@@ -8,13 +8,13 @@ package de.cebitec.mgx.model.misc;
 public class MappedSequence {
     
     private final long seq_id;
-    private final int[] coords = new int[2];
+    private final int start, stop;
     private final float identity;
 
     public MappedSequence(long seq_id, int start, int stop, float identity) {
         this.seq_id = seq_id;
-        this.coords[0] = start;
-        this.coords[1] = stop;
+        this.start = start;
+        this.stop = stop;
         this.identity = identity;
     }
 
@@ -23,11 +23,11 @@ public class MappedSequence {
     }
 
     public int getStart() {
-        return coords[0];
+        return start;
     }
 
     public int getStop() {
-        return coords[1];
+        return stop;
     }
 
     public float getIdentity() {
