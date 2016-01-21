@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
@@ -22,8 +23,8 @@ public final class DeleteDNAExtract extends TaskI {
     private final File projectDir;
     private final MappingSessions mappingSessions;
 
-    public DeleteDNAExtract(long id, Connection conn, String projName, File projectDir, MappingSessions mappingSessions) {
-        super(projName, conn);
+    public DeleteDNAExtract(long id, DataSource dataSource, String projName, File projectDir, MappingSessions mappingSessions) {
+        super(projName, dataSource);
         this.id = id;
         this.projectDir = projectDir;
         this.mappingSessions = mappingSessions;
@@ -34,11 +35,13 @@ public final class DeleteDNAExtract extends TaskI {
 
         // fetch seqruns for this extract
         List<Long> seqruns = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM seqrun WHERE dnaextract_id=?")) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    seqruns.add(rs.getLong(1));
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM seqrun WHERE dnaextract_id=?")) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        seqruns.add(rs.getLong(1));
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -49,7 +52,7 @@ public final class DeleteDNAExtract extends TaskI {
 
         // delete seqruns
         for (Long runId : seqruns) {
-            TaskI delRun = new DeleteSeqRun(runId, conn, getProjectName(), projectDir, mappingSessions);
+            TaskI delRun = new DeleteSeqRun(runId, dataSource, getProjectName(), projectDir, mappingSessions);
             delRun.addPropertyChangeListener(this);
             delRun.run();
             delRun.removePropertyChangeListener(this);
@@ -57,11 +60,13 @@ public final class DeleteDNAExtract extends TaskI {
 
         try {
             String extractName = null;
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM dnaextract WHERE id=?")) {
-                stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        extractName = rs.getString(1);
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM dnaextract WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            extractName = rs.getString(1);
+                        }
                     }
                 }
             }
@@ -69,9 +74,11 @@ public final class DeleteDNAExtract extends TaskI {
             if (extractName != null) {
                 setStatus(TaskI.State.PROCESSING, "Deleting DNA extract " + extractName);
             }
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
-                stmt.setLong(1, id);
-                stmt.execute();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
             }
             if (extractName != null) {
                 setStatus(TaskI.State.FINISHED, extractName + " deleted");

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
@@ -21,8 +22,8 @@ public class DeleteReference extends TaskI {
     private final long id;
     private final MappingSessions sessions;
 
-    public DeleteReference(Connection conn, long id, String projName, MappingSessions sessions) {
-        super(projName, conn);
+    public DeleteReference(DataSource dataSource, long id, String projName, MappingSessions sessions) {
+        super(projName, dataSource);
         this.id = id;
         this.sessions = sessions;
     }
@@ -30,11 +31,13 @@ public class DeleteReference extends TaskI {
     @Override
     public void run() {
         List<Long> mappings = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM mapping WHERE ref_id=?")) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    mappings.add(rs.getLong(1));
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM mapping WHERE ref_id=?")) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        mappings.add(rs.getLong(1));
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -44,7 +47,7 @@ public class DeleteReference extends TaskI {
 
         // delete mappings
         for (Long mapId : mappings) {
-            TaskI delJob = new DeleteMapping(mapId, conn, getProjectName(), sessions);
+            TaskI delJob = new DeleteMapping(mapId, dataSource, getProjectName(), sessions);
             delJob.addPropertyChangeListener(this);
             delJob.run();
             delJob.removePropertyChangeListener(this);
@@ -53,12 +56,14 @@ public class DeleteReference extends TaskI {
         try {
             String refName = null;
             String fileName = null;
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT name, ref_filepath FROM reference WHERE id=?")) {
-                stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        refName = rs.getString(1);
-                        fileName = rs.getString(2);
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT name, ref_filepath FROM reference WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            refName = rs.getString(1);
+                            fileName = rs.getString(2);
+                        }
                     }
                 }
             }
@@ -72,15 +77,20 @@ public class DeleteReference extends TaskI {
                 }
             }
 
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
-                stmt.setLong(1, id);
-                stmt.executeUpdate();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.executeUpdate();
+                }
             }
 
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
-                stmt.setLong(1, id);
-                stmt.executeUpdate();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.executeUpdate();
+                }
             }
+
             setStatus(TaskI.State.FINISHED, refName + " deleted");
         } catch (SQLException e) {
             Logger.getLogger(DeleteReference.class.getName()).log(Level.SEVERE, null, e);

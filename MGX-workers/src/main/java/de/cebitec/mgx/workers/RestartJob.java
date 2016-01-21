@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
@@ -29,8 +30,8 @@ public class RestartJob extends TaskI {
     private final String dbName;
     private final File projDir;
 
-    public RestartJob(MGXController mgx, String dispatcherHost, MGXConfigurationI cfg, Job job, Connection conn, String projName, JobSubmitter js) throws IOException, MGXDispatcherException {
-        super(projName, conn);
+    public RestartJob(MGXController mgx, String dispatcherHost, MGXConfigurationI cfg, Job job, DataSource dataSource, String projName, JobSubmitter js) throws IOException, MGXDispatcherException {
+        super(projName, dataSource);
         this.job = job;
         this.dispatcherHost = dispatcherHost;
         this.js = js;
@@ -46,39 +47,47 @@ public class RestartJob extends TaskI {
 
             // delete observations
             setStatus(TaskI.State.PROCESSING, "Deleting observations");
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
-                stmt.setLong(1, job.getId());
-                stmt.execute();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                }
             }
 
             // delete attributecounts
             setStatus(TaskI.State.PROCESSING, "Deleting attributes");
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
-                    + "(SELECT id FROM attribute WHERE job_id=?)")) {
-                stmt.setLong(1, job.getId());
-                stmt.execute();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+                        + "(SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                }
             }
 
             // delete attributes
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
-                stmt.setLong(1, job.getId());
-                stmt.execute();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                }
             }
 
             // delete mappings
             setStatus(TaskI.State.PROCESSING, "Deleting mappings");
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
-                stmt.setLong(1, job.getId());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String name = rs.getString(1);
-                        File bam = new File(name);
-                        if (bam.exists()) {
-                            bam.delete();
-                        }
-                        File bai = new File(name);
-                        if (bai.exists()) {
-                            bai.delete();
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
+                    stmt.setLong(1, job.getId());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            String name = rs.getString(1);
+                            File bam = new File(name);
+                            if (bam.exists()) {
+                                bam.delete();
+                            }
+                            File bai = new File(name);
+                            if (bai.exists()) {
+                                bai.delete();
+                            }
                         }
                     }
                 }
@@ -86,12 +95,12 @@ public class RestartJob extends TaskI {
 
             setStatus(TaskI.State.PROCESSING, "Validating job configuration");
             boolean verified = false;
-            
-            verified = js.validate(projName, conn, job, dispatcherHost, dbHost, dbName, mgxcfg.getMGXUser(), mgxcfg.getMGXPassword(), projDir);
+
+            verified = js.validate(projName, dataSource, job, dispatcherHost, dbHost, dbName, mgxcfg.getMGXUser(), mgxcfg.getMGXPassword(), projDir);
 
             if (verified) {
                 setStatus(TaskI.State.PROCESSING, "Resubmitting job..");
-                if (js.submit(dispatcherHost, conn, projName, job)) {
+                if (js.submit(dispatcherHost, dataSource, projName, job)) {
                     setStatus(TaskI.State.FINISHED, "Job " + job.getId() + " restarted");
                 } else {
                     setStatus(TaskI.State.FAILED, "submit failed");
@@ -100,20 +109,12 @@ public class RestartJob extends TaskI {
                 setStatus(TaskI.State.FAILED, "Verification failed");
             }
 
-            conn.close();
-            conn = null;
-
+//            conn.close();
+//            conn = null;
         } catch (MGXDispatcherException | SQLException e) {
             System.err.println("Could not restart job " + job.getId() + ": " + e.getMessage());
             Logger.getLogger(RestartJob.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (SQLException ex) {
-                }
-            }
         }
     }
 }

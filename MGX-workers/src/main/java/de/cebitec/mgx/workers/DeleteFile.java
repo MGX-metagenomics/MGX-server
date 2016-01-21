@@ -2,7 +2,7 @@ package de.cebitec.mgx.workers;
 
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
-import java.sql.Connection;
+import javax.sql.DataSource;
 
 /**
  *
@@ -12,8 +12,8 @@ public class DeleteFile extends TaskI {
 
     private final File file;
     
-    public DeleteFile(Connection conn, File f, String projName) {
-        super(projName, conn);
+    public DeleteFile(DataSource dataSource, File f, String projName) {
+        super(projName, dataSource);
         this.file = f;
     }
 
