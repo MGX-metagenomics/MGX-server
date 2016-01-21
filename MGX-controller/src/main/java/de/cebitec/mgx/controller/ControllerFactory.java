@@ -1,6 +1,7 @@
 package de.cebitec.mgx.controller;
 
 import de.cebitec.gpms.data.DBGPMSI;
+import de.cebitec.gpms.data.JPAMasterI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ public class ControllerFactory {
     @MGX
     @RequestScoped
     MGXController getController() {
-        return new MGXControllerImpl(gpms.getCurrentMaster(), mgxconfig);
+        return new MGXControllerImpl(gpms.<JPAMasterI>getCurrentMaster(), mgxconfig);
     }
 
     public void dispose(@Disposes MGXController c) {
