@@ -1,7 +1,9 @@
 package de.cebitec.mgx.controller;
 
+import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
-import de.cebitec.gpms.data.DBMasterI;
+import de.cebitec.gpms.core.UserI;
+import de.cebitec.gpms.data.JPAMasterI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
@@ -25,9 +27,9 @@ public class MGXControllerImpl implements MGXController {
     private final static Logger logger = Logger.getLogger(MGXController.class.getName());
     //
     private final String projectName;
-    private final String userLogin;
+    private final UserI user;
     //
-    private final DBMasterI gpmsmaster;
+    private final JPAMasterI gpmsmaster;
     private final EntityManager em;
     private File projectDir = null;
     private File projectQCDir = null;
@@ -40,10 +42,11 @@ public class MGXControllerImpl implements MGXController {
     //
     private final static String DOUBLE_SEPARATOR = File.separator + File.separator;
 
-    public MGXControllerImpl(DBMasterI gpmsmaster, MGXConfigurationI cfg) {
+    public MGXControllerImpl(JPAMasterI gpmsmaster, MGXConfigurationI cfg) {
         this.gpmsmaster = gpmsmaster;
-        this.projectName = gpmsmaster.getProject().getName();
-        this.userLogin = gpmsmaster.getLogin();
+        ProjectI gpmsProject = gpmsmaster.getProject();
+        this.projectName = gpmsProject.getName();
+        this.user = gpmsmaster.getUser();
         this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
         persistentDir = cfg.getPersistentDirectory();
     }
@@ -168,15 +171,15 @@ public class MGXControllerImpl implements MGXController {
         return getDataSource().getConnection();
     }
 
-//    @Override
-//    public String getDatabaseHost() {
-//        return gpmsmaster.getProject().getDBConfig().getDatabaseHost();
-//    }
-//
-//    @Override
-//    public String getDatabaseName() {
-//        return gpmsmaster.getProject().getDBConfig().getDatabaseName();
-//    }
+    @Override
+    public String getDatabaseHost() {
+        return gpmsmaster.getGPMSDatasource().getHost().getHostName();
+    }
+
+    @Override
+    public String getDatabaseName() {
+        return gpmsmaster.getGPMSDatasource().getName();
+    }
 //
 //    @Override
 //    public String getJDBCUrl() {
@@ -262,7 +265,7 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public String getCurrentUser() {
-        return userLogin;
+        return user.getLogin();
     }
 
     @Override

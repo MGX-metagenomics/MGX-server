@@ -68,11 +68,10 @@ public interface MGXController extends AutoCloseable {
 
     public File getProjectJobDirectory() throws IOException;
 
-//    public String getDatabaseHost();
-//
-//    public String getDatabaseName();
-//
-//    public String getJDBCUrl();
+    public String getDatabaseHost();
 
-    //public void close();
+    public String getDatabaseName();
+
+    @Override
+    public void close();
 }
