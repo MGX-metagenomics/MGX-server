@@ -4,7 +4,7 @@ import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dispatcher.common.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.model.db.Job;
 import java.io.File;
-import java.sql.Connection;
+import javax.sql.DataSource;
 
 /**
  *
@@ -16,9 +16,9 @@ public interface JobSubmitter {
 
     void delete(String projectName, long jobId) throws MGXDispatcherException;
 
-    boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXDispatcherException;
+    boolean submit(String dispatcherHost, DataSource dataSource, String projName, Job job) throws MGXDispatcherException;
 
-    boolean validate(String projName, Connection conn, final Job job, String dispatcherHost, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException;
+    boolean validate(String projName, DataSource dataSource, final Job job, String dispatcherHost, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException;
 
     void shutdown(String dispatcherHost, String token) throws MGXDispatcherException;
 

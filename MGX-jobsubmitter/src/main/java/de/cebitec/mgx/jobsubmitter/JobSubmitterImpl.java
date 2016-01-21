@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.sql.DataSource;
 import javax.ws.rs.core.UriBuilder;
 
 /**
@@ -71,21 +72,22 @@ public class JobSubmitterImpl implements JobSubmitter {
 //        }
 //        return ret;
 //    }
-
     @Override
-    public boolean validate(String projName, Connection conn, final Job job, String dispatcherHost, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException {
+    public boolean validate(String projName, DataSource dataSource, final Job job, String dispatcherHost, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException {
         if (!createJobConfigFile(dbHost, dbName, dbUser, dbPass, projDir, job.getParameters(), job.getId())) {
             throw new MGXDispatcherException("Failed to write job configuration.");
         }
 
         boolean ret = get(dispatcherHost, "validate/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
 
-        try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
-            stmt.setInt(1, JobState.VERIFIED.getValue());
-            stmt.setLong(2, job.getId());
-            stmt.execute();
-            stmt.close();
-            job.setStatus(JobState.VERIFIED);
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
+                stmt.setInt(1, JobState.VERIFIED.getValue());
+                stmt.setLong(2, job.getId());
+                stmt.execute();
+                stmt.close();
+                job.setStatus(JobState.VERIFIED);
+            }
         } catch (SQLException ex) {
             throw new MGXDispatcherException(ex.getMessage());
         }
@@ -93,38 +95,36 @@ public class JobSubmitterImpl implements JobSubmitter {
     }
 
     @Override
-    public boolean submit(String dispatcherHost, Connection conn, String projName, Job job) throws MGXDispatcherException {
+    public boolean submit(String dispatcherHost, DataSource dataSource, String projName, Job job) throws MGXDispatcherException {
         if (job.getStatus() != JobState.VERIFIED) {
             throw new MGXDispatcherException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
         }
-        try {
-            if (conn.isClosed()) {
-                throw new MGXDispatcherException("Cannot submit with closed database connection.");
-            }
-        } catch (SQLException ex) {
-            throw new MGXDispatcherException(ex);
-        }
+//        try {
+//            if (conn.isClosed()) {
+//                throw new MGXDispatcherException("Cannot submit with closed database connection.");
+//            }
+//        } catch (SQLException ex) {
+//            throw new MGXDispatcherException(ex);
+//        }
 
         // set job to submitted
         job.setStatus(JobState.SUBMITTED);
-        try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
-            stmt.setInt(1, JobState.SUBMITTED.getValue());
-            stmt.setLong(2, job.getId());
-            int numRows = stmt.executeUpdate();
-            stmt.close();
-            if (numRows != 1) {
-                throw new MGXDispatcherException("Could not update job state.");
+        try (Connection conn = dataSource.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
+                stmt.setInt(1, JobState.SUBMITTED.getValue());
+                stmt.setLong(2, job.getId());
+                int numRows = stmt.executeUpdate();
+                stmt.close();
+                if (numRows != 1) {
+                    throw new MGXDispatcherException("Could not update job state.");
+                }
             }
         } catch (SQLException ex) {
             throw new MGXDispatcherException(ex.getMessage());
         }
+
         // and send to dispatcher
         Boolean ret = get(dispatcherHost, "submit/" + MGX_CLASS + projName + "/" + job.getId(), Boolean.class);
-        try {
-            conn.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
-        }
         return ret;
     }
 
