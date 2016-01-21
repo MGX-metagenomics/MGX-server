@@ -4,9 +4,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 /**
@@ -18,7 +22,7 @@ import javax.sql.DataSource;
 public class MGXGlobal {
 
     @Resource(mappedName = "jdbc/MGXGlobal")
-    private DataSource ds;
+    private DataSource globalDS;
 
     private final static Logger logger = Logger.getLogger(MGXGlobal.class.getName());
 
@@ -34,13 +38,24 @@ public class MGXGlobal {
         regiondao = new GlobalRegionDAO(this);
     }
 
-    Connection getConnection() {
-        try {
-            return ds.getConnection();
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, null, ex);
+    @PostConstruct
+    public void init() {
+        if (globalDS == null) {
+            try {
+                Context ctx = new InitialContext();
+                globalDS = (DataSource) ctx.lookup("jdbc/MGXGlobal");
+            } catch (NamingException ex) {
+                Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
+            }
         }
-        return null;
+    }
+
+    public DataSource getDataSource() {
+        return globalDS;
+    }
+
+    Connection getConnection() throws SQLException {
+        return globalDS.getConnection();
     }
 
     public GlobalToolDAO getToolDAO() {
