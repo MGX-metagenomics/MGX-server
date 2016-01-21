@@ -1,15 +1,18 @@
 package de.cebitec.mgx.gpms.impl;
 
-import de.cebitec.gpms.data.DBMembershipI;
-import de.cebitec.mgx.gpms.util.DataSourceFactory;
-import java.util.*;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import de.cebitec.gpms.core.MasterI;
+import de.cebitec.gpms.core.MembershipI;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.sql.DataSource;
 
 /**
  *
@@ -20,47 +23,45 @@ import javax.sql.DataSource;
 public class GPMSSessions {
 
     private final static Logger logger = Logger.getLogger(GPMSSessions.class.getPackage().getName());
-    private Map<DBMembershipI, GPMSMaster> sessions = null;
+    private final Cache<MembershipI, MasterI> sessionsCache;
 
-    @PostConstruct
-    public void startup() {
-        sessions = Collections.synchronizedMap(new HashMap<DBMembershipI, GPMSMaster>());
+    public GPMSSessions() {
+        sessionsCache = CacheBuilder.newBuilder()
+                .expireAfterAccess(5, TimeUnit.MINUTES)
+                .removalListener(new RemovalListener<MembershipI, MasterI>() {
+
+                    @Override
+                    public void onRemoval(RemovalNotification<MembershipI, MasterI> notification) {
+                        MasterI master = notification.getValue();
+                        log("Removing " + master.getRole().getName() + " session for " + master.getProject().getName());
+                        master.close();
+                    }
+                })
+                .build();
     }
 
-    public synchronized GPMSMaster getMaster(DBMembershipI m) {
-
-        GPMSMaster master;
-
-        if (!sessions.containsKey(m)) {
-            DataSource ds = DataSourceFactory.createDataSource(m);
-            master = new GPMSMaster(m, ds);
-            sessions.put(m, master);
-        }
-
-        master = sessions.get(m);
-        master.lastObtained(System.currentTimeMillis());
-        return master;
+    @PreDestroy
+    public void stop() {
+        sessionsCache.invalidateAll();
     }
 
-    @Schedule(hour = "*", minute = "*/15", second = "0", persistent = false)
+    @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
     public void cleanup() {
-        Set<DBMembershipI> remove = new HashSet<>();
+        //
+        // If expireAfterWrite or expireAfterAccess is requested entries may be evicted 
+        // on each cache modification, on occasional cache accesses, or on calls to 
+        // Cache.cleanUp(). Expired entries may be counted in Cache.size(), but will never
+        // be visible to read or write operations.
+        //
+        sessionsCache.cleanUp();
+    }
 
-        for (DBMembershipI m : sessions.keySet()) {
-            GPMSMaster master = sessions.get(m);
+    public MasterI getMaster(MembershipI m) {
+        return sessionsCache.getIfPresent(m);
+    }
 
-            long IdleTime = (System.currentTimeMillis() - master.lastObtained()) / 1000;
-            if (IdleTime > 60) {
-                log("Removing session for " + master.getProject().getName() + " due to timeout (" + IdleTime + ")");
-                remove.add(m);
-            }
-        }
-
-        for (DBMembershipI m : remove) {
-            GPMSMaster master = sessions.get(m);
-            sessions.remove(m);
-            master.close();
-        }
+    public void registerMaster(MembershipI m, MasterI master) {
+        sessionsCache.put(m, master);
     }
 
     private void log(String msg) {

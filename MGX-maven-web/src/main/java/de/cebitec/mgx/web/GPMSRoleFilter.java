@@ -6,11 +6,11 @@ import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import com.sun.jersey.spi.container.ContainerResponseFilter;
 import com.sun.jersey.spi.container.ResourceFilter;
+import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
-import de.cebitec.gpms.data.DBMasterI;
-import de.cebitec.gpms.data.DBProjectI;
+import de.cebitec.gpms.data.JPAMasterI;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.lang.reflect.Method;
@@ -71,7 +71,7 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
             if (rights.length == 0) {
                 return cr;
             }
-            DBMasterI master = gpmslocal.getCurrentMaster();
+            JPAMasterI master = gpmslocal.getCurrentMaster();
             if (master == null) {
                 throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No master object for this request");
             }
@@ -83,7 +83,7 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
             if (role == null) {
                 throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No roles assigned for " + user.getLogin());
             }
-            DBProjectI project = master.getProject();
+            ProjectI project = master.getProject();
             if (project == null) {
                 throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No project selected");
             }
@@ -93,7 +93,7 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
                     return cr;
                 }
             }
-            master.log("Denied access to " + cr.getPath() + " to user " + master.getLogin() + " in " + project.getName());
+            master.log("Denied access to " + cr.getPath() + " to user " + master.getUser().getLogin() + " in " + project.getName());
             throw new MGXWebException(Response.Status.FORBIDDEN, "Resource access denied.");
         }
     }
