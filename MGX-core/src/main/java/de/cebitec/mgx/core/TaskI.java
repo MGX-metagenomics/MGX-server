@@ -3,10 +3,9 @@ package de.cebitec.mgx.core;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sql.DataSource;
 
 /**
  *
@@ -32,15 +31,15 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
     private final PropertyChangeSupport pcs;
     protected final String projName;
-    protected Connection conn;
+    protected DataSource dataSource;
     private String statusMessage = "";
     protected long timeStamp;
     private State state;
     private boolean isSubTask = true;
 
-    public TaskI(final String pName, final Connection c) {
+    public TaskI(final String pName, final DataSource dataSource) {
         projName = pName;
-        conn = c;
+        this.dataSource = dataSource;
         timeStamp = System.currentTimeMillis();
         state = State.INIT;
         pcs = new PropertyChangeSupport(this);
@@ -55,25 +54,25 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
 
     public void cancel() {
-        try {
-            if (conn != null && !isSubTask) {
-                conn.close();
-                conn = null;
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            if (conn != null && !isSubTask) {
+//                conn.close();
+//                conn = null; dataSource.
+//            }
+//        } catch (SQLException ex) {
+//            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     public void close() {
-        try {
-            if (conn != null && !isSubTask) {
-                conn.close();
-                conn = null;
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            if (conn != null && !isSubTask) {
+//                conn.close();
+//                conn = null;
+//            }
+//        } catch (SQLException ex) {
+//            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     public String getProjectName() {
