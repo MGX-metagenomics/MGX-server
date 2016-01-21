@@ -12,7 +12,7 @@ import de.cebitec.gpms.dto.impl.MembershipDTO;
 import de.cebitec.gpms.dto.impl.MembershipDTOList;
 import de.cebitec.gpms.dto.impl.ProjectClassDTOList;
 import de.cebitec.mgx.util.ForwardingIterator;
-import java.util.List;
+import java.util.Collection;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.GET;
@@ -27,7 +27,7 @@ import javax.ws.rs.Produces;
 @Path("GPMSBean")
 public class ProjectBean {
 
-    @EJB(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
+    @EJB //(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
     DBGPMSI gpms;
 
     @GET
@@ -56,17 +56,17 @@ public class ProjectBean {
     public MembershipDTOList listMemberships() {
         MembershipDTOList.Builder ret = MembershipDTOList.newBuilder();
 
-        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
-            if ("MGX".equals(pc.getName())) {
-                List<? extends MembershipI> memberships = gpms.getCurrentUser().getMemberships(pc);
-                for (MembershipI m : memberships) {
-                    MembershipDTO dto = MembershipDTO.newBuilder()
-                            .setProject(ProjectDTOFactory.getInstance().toDTO(m.getProject()))
-                            .setRole(RoleDTOFactory.getInstance().toDTO(m.getRole()))
-                            .build();
-                    ret.addMembership(dto);
-                }
-            }
+//        for (ProjectClassI pc : gpms.getSupportedProjectClasses()) {
+//            if ("MGX".equals(pc.getName())) {
+        Collection<MembershipI> memberships = gpms.getCurrentUser().getMemberships();
+        for (MembershipI m : memberships) {
+            MembershipDTO dto = MembershipDTO.newBuilder()
+                    .setProject(ProjectDTOFactory.getInstance().toDTO(m.getProject()))
+                    .setRole(RoleDTOFactory.getInstance().toDTO(m.getRole()))
+                    .build();
+            ret.addMembership(dto);
+//                }
+//            }
         }
         return ret.build();
     }
