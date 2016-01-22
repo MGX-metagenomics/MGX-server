@@ -55,7 +55,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
         try {
             assert mgxconfig == null;
-            mgxconfig = InitialContext.<MGXConfigurationI>doLookup("java:global/MGX-maven-ear/MGX-configuration-1.0-SNAPSHOT/MGXConfiguration!de.cebitec.mgx.configuration.api.MGXConfigurationI");
+            mgxconfig = InitialContext.<MGXConfigurationI>doLookup("java:global/MGX-maven-ear/MGX-configuration/MGXConfiguration!de.cebitec.mgx.configuration.api.MGXConfigurationI");
 
             this.dataSource = dataSource;
             //conn.setClientInfo("ApplicationName", "MGX-SeqDownload (" + projName + ")");
