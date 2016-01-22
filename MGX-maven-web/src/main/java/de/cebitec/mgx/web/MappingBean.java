@@ -26,7 +26,6 @@ import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -44,7 +43,7 @@ public class MappingBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB  //(lookup = "java:global/MGX-maven-ear/MGX-maven-ejb/MappingSessions")
+    @EJB
     MappingSessions mapSessions;
 
     @GET
@@ -142,7 +141,11 @@ public class MappingBean {
     @Path("closeMapping/{uuid}")
     @Produces("application/x-protobuf")
     public Response closeMapping(@PathParam("uuid") UUID uuid) {
-        mapSessions.removeSession(uuid);
+        try {
+            mapSessions.removeSession(uuid);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
         return Response.ok().build();
     }
 }

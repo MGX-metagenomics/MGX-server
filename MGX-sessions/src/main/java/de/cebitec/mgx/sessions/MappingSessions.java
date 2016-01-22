@@ -32,12 +32,12 @@ public class MappingSessions {
     MGXConfigurationI mgxconfig;
     private int timeout;
     private final ConcurrentMap<UUID, MappingDataSession> tasks = new ConcurrentHashMap<>();
-    
+
     @PostConstruct
     public void start() {
         timeout = 60 * 60 * 24; // a day
     }
-    
+
     @PreDestroy
     public synchronized void stop() {
         for (MappingDataSession mds : tasks.values()) {
@@ -52,13 +52,14 @@ public class MappingSessions {
         return uuid;
     }
 
-    public synchronized void removeSession(UUID uuid) {
-        if (tasks.containsKey(uuid)) {
-            MappingDataSession old = tasks.remove(uuid);
-            old.close();
+    public synchronized void removeSession(UUID uuid) throws MGXException {
+        if (!tasks.containsKey(uuid)) {
+            throw new MGXException("No mapping session for " + uuid);
         }
+        MappingDataSession old = tasks.remove(uuid);
+        old.close();
     }
-    
+
     public synchronized void abort(long mappingId) {
         // called to abort an open session when a mapping object is deleted
         Set<UUID> toRemove = new HashSet<>();
@@ -68,7 +69,8 @@ public class MappingSessions {
             }
         }
         for (UUID uuid : toRemove) {
-            removeSession(uuid);
+            MappingDataSession old = tasks.remove(uuid);
+            old.close();
         }
     }
 
