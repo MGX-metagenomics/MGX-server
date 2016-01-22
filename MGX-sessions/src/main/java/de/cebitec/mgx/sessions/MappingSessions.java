@@ -83,19 +83,21 @@ public class MappingSessions {
 
     @Schedule(hour = "*", minute = "*", second = "30", persistent = false)
     public void timeout() {
-        Set<UUID> toRemove = new HashSet<>();
-        for (UUID uuid : tasks.keySet()) {
-            MappingDataSession s = tasks.get(uuid);
-            long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
-            if (sessionIdleTime > timeout) {
-                Logger.getLogger(MappingSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting mapping data session for {1}", new Object[]{timeout, s.getProjectName()});
-                toRemove.add(uuid);
-                s.close();
+        if (!tasks.isEmpty()) {
+            Set<UUID> toRemove = new HashSet<>();
+            for (UUID uuid : tasks.keySet()) {
+                MappingDataSession s = tasks.get(uuid);
+                long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
+                if (sessionIdleTime > timeout) {
+                    Logger.getLogger(MappingSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting mapping data session for {1}", new Object[]{timeout, s.getProjectName()});
+                    toRemove.add(uuid);
+                    s.close();
+                }
             }
-        }
 
-        for (UUID uuid : toRemove) {
-            tasks.remove(uuid);
+            for (UUID uuid : toRemove) {
+                tasks.remove(uuid);
+            }
         }
     }
 }
