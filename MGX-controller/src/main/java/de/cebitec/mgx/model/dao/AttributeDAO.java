@@ -9,6 +9,10 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.util.Triple;
+import gnu.trove.map.TLongLongMap;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongLongHashMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -74,9 +78,9 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
     public Map<Attribute, Long> getHierarchy(long attrTypeId, Job job) throws MGXException {
 
         Map<Attribute, Long> ret = new HashMap<>();
-        Map<Long, AttributeType> aTypeCache = new HashMap<>();
-        Map<Long, Attribute> attrCache = new HashMap<>();
-        Map<Long, Long> attr2parent = new HashMap<>();
+        TLongObjectMap<AttributeType> aTypeCache = new TLongObjectHashMap<>();
+        TLongObjectMap<Attribute> attrCache = new TLongObjectHashMap<>();
+        TLongLongMap attr2parent = new TLongLongHashMap();
 
         try (Connection conn = getController().getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?)")) {
@@ -86,7 +90,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                     while (rs.next()) {
                         //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count
                         AttributeType aType;
-                        Long aTypeID = rs.getLong(1);
+                        long aTypeID = rs.getLong(1);
                         if (aTypeCache.containsKey(aTypeID)) {
                             aType = aTypeCache.get(aTypeID);
                         } else {
@@ -104,7 +108,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                         attr.setId(rs.getLong(5));
                         attr.setValue(rs.getString(6));
 
-                        Long parentId = rs.getLong(7);
+                        long parentId = rs.getLong(7);
                         attr2parent.put(attr.getId(), parentId);
                         attrCache.put(attr.getId(), attr);
 
@@ -118,8 +122,8 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         }
 
         for (Attribute a : ret.keySet()) {
-            Long parentID = attr2parent.get(a.getId());
-            if (parentID != null) {
+            long parentID = attr2parent.get(a.getId());
+            if (parentID != 0) {
                 Attribute parent = attrCache.get(parentID);
                 a.setParent(parent);
             }
