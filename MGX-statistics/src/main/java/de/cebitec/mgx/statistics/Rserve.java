@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,8 +44,6 @@ public class Rserve {
             return ret;
         }
         try {
-            //ret.eval("options(error=function() NULL)"); //disable exit on error
-            //REXP ev = ret.eval("source('" + scriptFile.getAbsolutePath() + "')");
             return new RWrappedConnection(ret);
         } catch (RserveException ex) {
             Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
@@ -56,12 +56,42 @@ public class Rserve {
     private Thread err = null;
     private Thread out = null;
 
+    // "typical" locations for the R installation; this currently reflects the
+    // environment found in Bielefeld and Giessen
+    private final static String[] Rbinaries = new String[]{"/vol/r-2.15/bin/R", "/usr/bin/R"};
+
     @PostConstruct
     public void start() {
         try {
+
+            // check for a local R installation
+            File R = null;
+            for (String maybeR : Rbinaries) {
+                File f = new File(maybeR);
+                if (f.exists() && f.canExecute()) {
+                    R = f;
+                    break;
+                }
+            }
+            if (R == null) {
+                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, "No R installation found.");
+                return;
+            }
+
+            //
+            // JLU workaround for missing R packages
+            //
+            List<String> envp = new ArrayList<>();
+            if (new File("/vol/mgx/lib/R/Rserve/libs").isDirectory()) {
+                String pathEnv = System.getenv("PATH") + ":/vol/mgx/lib/R/Rserve/libs";
+                envp.add("PATH=" + pathEnv);
+                envp.add("R_LIBS=/vol/mgx/lib/R");
+            }
+
             scriptFile = createScript();
-            String rserveStartCommand = "/vol/r-2.15/bin/R CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
-            p = Runtime.getRuntime().exec(rserveStartCommand);
+
+            String rserveStartCommand = R.getAbsolutePath() + " CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
+            p = Runtime.getRuntime().exec(rserveStartCommand, envp.toArray(new String[]{}));
             //
             err = new Thread(new RStreamReader(p.getErrorStream()));
             err.setName("R error logger thread");
