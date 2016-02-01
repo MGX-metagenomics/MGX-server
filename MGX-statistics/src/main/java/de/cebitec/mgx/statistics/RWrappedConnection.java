@@ -18,7 +18,7 @@ import org.rosuda.REngine.Rserve.RserveException;
  */
 public class RWrappedConnection extends RConnection {
 
-    private RConnection conn;
+    private final RConnection conn;
 
     public RWrappedConnection(RConnection conn) throws RserveException {
         this.conn = conn;
@@ -28,7 +28,6 @@ public class RWrappedConnection extends RConnection {
     public void finalize() {
         conn.finalize();
         super.finalize();
-        conn = null;
     }
 
     @Override
@@ -41,7 +40,6 @@ public class RWrappedConnection extends RConnection {
         boolean ret = true;
         if (conn != null) {
             ret = conn.close();
-            conn = null;
         }
         return ret;
     }
