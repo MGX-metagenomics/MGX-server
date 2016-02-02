@@ -58,7 +58,7 @@
                 <configuration>
                     <version>6</version>
                     <defaultLibBundleDir>lib</defaultLibBundleDir>
-                    <fileNameMapping>no-version</fileNameMapping>
+                    <fileNameMapping>no-version-for-ejb</fileNameMapping>
                 </configuration>
             </plugin>
         </plugins>
