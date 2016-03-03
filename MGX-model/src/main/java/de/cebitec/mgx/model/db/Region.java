@@ -27,6 +27,10 @@ public class Region implements Serializable, Identifiable {
     @NotNull
     @Column(name = "description")
     private String description;
+    @Basic
+    @NotNull
+    @Column(name = "type")
+    private String type;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ref_id", nullable = false)
     private Reference reference;
@@ -70,6 +74,14 @@ public class Region implements Serializable, Identifiable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public int getStart() {
