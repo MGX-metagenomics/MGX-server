@@ -31,7 +31,7 @@ public class GlobalRegionDAO {
     public Collection<Region> byReference(Reference ref) throws MGXGlobalException {
         Collection<Region> regions = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop FROM region WHERE ref_id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop, type FROM region WHERE ref_id=?")) {
                 stmt.setLong(1, ref.getId());
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -41,6 +41,7 @@ public class GlobalRegionDAO {
                         r.setDescription(rs.getString(3));
                         r.setStart(rs.getInt(4));
                         r.setStop(rs.getInt(5));
+                        r.setType(rs.getString(6));
                         r.setReference(ref);
                         regions.add(r);
                     }
