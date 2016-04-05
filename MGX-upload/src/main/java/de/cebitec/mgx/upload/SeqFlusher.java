@@ -7,8 +7,8 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.sequence.DNASequenceI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -158,7 +158,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                 seq.setId(generatedIDs[curPos++]);
                 writer.addSequence(seq);
             }
-        } catch (IOException ex) {
+        } catch (SeqStoreException ex) {
             error = ex;
         }
 
