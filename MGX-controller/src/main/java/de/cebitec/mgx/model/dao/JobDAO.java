@@ -103,13 +103,13 @@ public class JobDAO<T extends Job> extends DAO<T> {
         return ret;
     }
 
-    public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) {
+    public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) throws MGXException {
         Iterator<Job> iterator = getEntityManager().<Job>createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun", Job.class).
                 setParameter("seqrun", sr).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }
 
-    public String getError(Job job) {
+    public String getError(Job job) throws MGXException {
         if (job.getStatus() != JobState.FAILED) {
             return "Job is not in FAILED state.";
         }

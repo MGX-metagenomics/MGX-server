@@ -23,6 +23,8 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -63,7 +65,11 @@ public class MappingBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public MappingDTOList fetchall() {
-        return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().getAll());
+        try {
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
     }
 
     @GET
@@ -73,11 +79,10 @@ public class MappingBean {
         SeqRun run;
         try {
             run = mgx.getSeqRunDAO().getById(run_id);
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().bySeqRun(run));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        AutoCloseableIterator<Mapping> mappings = mgx.getMappingDAO().bySeqRun(run);
-        return MappingDTOFactory.getInstance().toDTOList(mappings);
     }
 
     @GET
@@ -87,11 +92,10 @@ public class MappingBean {
         Reference ref;
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().byReference(ref));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        AutoCloseableIterator<Mapping> mappings = mgx.getMappingDAO().byReference(ref);
-        return MappingDTOFactory.getInstance().toDTOList(mappings);
     }
 
     // access to mapping details, session-based

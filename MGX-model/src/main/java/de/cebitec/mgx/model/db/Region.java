@@ -43,13 +43,13 @@ public class Region implements Serializable, Identifiable {
     @Column(name = "reg_stop")
     private int stop;
 
-    public Reference getReference() {
-        return reference;
-    }
-
-    public void setReference(Reference reference) {
-        this.reference = reference;
-    }
+//    public Reference getReference() {
+//        return reference;
+//    }
+//
+//    public void setReference(Reference reference) {
+//        this.reference = reference;
+//    }
 
     @Override
     public Long getId() {

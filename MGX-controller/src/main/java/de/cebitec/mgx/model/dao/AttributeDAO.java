@@ -5,8 +5,12 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.util.Triple;
 import gnu.trove.map.TLongLongMap;
@@ -59,7 +63,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                         // 
                         // read the parent attributes id, if present
                         Long parentId = rs.getLong(4);
-                        if (parentId.longValue() == 0) {
+                        if (parentId == 0) {
                             parentId = -1L;
                         }
 
@@ -177,9 +181,80 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         return ret;
     }
 
-    private final static String SQL_FIND = "SELECT attr.id, value, attrtype_id, job_id, parent_id from attribute attr "
+    private final static String SQL_BYJOB = "SELECT attr.id, attr.value, attr.attrtype_id, attr.parent_id FROM attribute attr "
             + "LEFT JOIN job ON (attr.job_id = job.id) "
-            + "WHERE job.seqrun_id = ANY(?) AND job.job_state=5 "
+            + "WHERE job_id=? AND job.job_state=?";
+
+    public AutoCloseableIterator<Attribute> ByJob(long jobId) throws MGXException {
+
+        // pre-collect attribute types
+        final TLongObjectMap<AttributeType> attrTypes = new TLongObjectHashMap<>();
+        try (DBIterator<AttributeType> aTypes = getController().getAttributeTypeDAO().ByJob(jobId)) {
+            while (aTypes.hasNext()) {
+                AttributeType attrType = aTypes.next();
+                attrTypes.put(attrType.getId(), attrType);
+            }
+        }
+
+        List<Attribute> attrs = new ArrayList<>();
+
+        try (Connection conn = getController().getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_BYJOB)) {
+                stmt.setLong(1, jobId);
+                stmt.setInt(2, JobState.FINISHED.getValue());
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        Attribute attr = new Attribute();
+                        attr.setId(rs.getLong(1));
+                        attr.setValue(rs.getString(2));
+
+                        AttributeType aType = attrTypes.get(rs.getLong(3));
+                        attr.setAttributeType(aType);
+
+                        // fetch parent, if present
+                        long parentId = rs.getLong(4);
+                        if (parentId != 0) {
+                            Attribute parent = getController().getAttributeDAO().getById(parentId);
+                            attr.setParent(parent);
+                        }
+
+                        attrs.add(attr);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+
+        attrTypes.clear();
+
+        return new ForwardingIterator<>(attrs.iterator());
+    }
+
+    public AutoCloseableIterator<Attribute> BySeqRun(Long runId) throws MGXException {
+
+        SeqRun run = getController().getSeqRunDAO().getById(runId);
+
+        List<Attribute> attrs = new ArrayList<>();
+
+        try (AutoCloseableIterator<Job> jobIter = getController().getJobDAO().BySeqRun(run)) {
+            while (jobIter.hasNext()) {
+                Job job = jobIter.next();
+                try (AutoCloseableIterator<Attribute> attrIter = getController().getAttributeDAO().ByJob(job.getId())) {
+                    while (attrIter.hasNext()) {
+                        attrs.add(attrIter.next());
+                    }
+                }
+            }
+        }
+
+        return new ForwardingIterator<>(attrs.iterator());
+    }
+
+    private final static String SQL_FIND = "SELECT attr.id, value, attrtype_id, job_id, parent_id FROM attribute attr "
+            + "LEFT JOIN job ON (attr.job_id = job.id) "
+            + "WHERE job.seqrun_id = ANY(?) AND job.job_state=? "
             + "AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')";
 
     public DBIterator<String> find(String term, List<Long> seqrunIdList) throws MGXException {
@@ -192,7 +267,8 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
             Connection conn = getController().getConnection();
             PreparedStatement stmt = conn.prepareStatement(SQL_FIND);
             stmt.setArray(1, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
-            stmt.setString(2, term);
+            stmt.setInt(2, JobState.FINISHED.getValue());
+            stmt.setString(3, term);
             ResultSet rset = stmt.executeQuery();
             final ResultSet rs = rset;
 
@@ -237,4 +313,5 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
         }
         return iter;
     }
+
 }

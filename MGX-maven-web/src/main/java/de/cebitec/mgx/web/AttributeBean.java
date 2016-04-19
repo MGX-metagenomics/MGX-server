@@ -7,6 +7,7 @@ import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
 import de.cebitec.mgx.dto.dto.CorrelatedAttributeCount;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -61,6 +62,32 @@ public class AttributeBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return AttributeDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @GET
+    @Path("BySeqSun/{runid}")
+    @Produces("application/x-protobuf")
+    public AttributeDTOList BySeqRun(@PathParam("runid") Long runid) {
+        AutoCloseableIterator<Attribute> iter = null;
+        try {
+            iter = mgx.getAttributeDAO().BySeqRun(runid);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return AttributeDTOFactory.getInstance().toDTOList(iter);
+    }
+
+    @GET
+    @Path("ByJob/{jid}")
+    @Produces("application/x-protobuf")
+    public AttributeDTOList ByJob(@PathParam("jid") Long jid) {
+        AutoCloseableIterator<Attribute> iter = null;
+        try {
+            iter = mgx.getAttributeDAO().ByJob(jid);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return AttributeDTOFactory.getInstance().toDTOList(iter);
     }
 
     @GET

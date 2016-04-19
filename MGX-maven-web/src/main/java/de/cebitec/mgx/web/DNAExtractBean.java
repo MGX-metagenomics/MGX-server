@@ -104,7 +104,11 @@ public class DNAExtractBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList fetchall() {
-        return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().getAll());
+        try {
+            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
@@ -114,10 +118,10 @@ public class DNAExtractBean {
         Sample sample;
         try {
             sample = mgx.getSampleDAO().getById(sample_id);
+            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample));
     }
 
     @DELETE

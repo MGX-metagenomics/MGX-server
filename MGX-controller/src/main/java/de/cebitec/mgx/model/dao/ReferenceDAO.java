@@ -71,7 +71,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         }
     }
 
-    public DBIterator<Region> byReferenceInterval(final Reference ref, int from, int to) throws MGXException {
+    public DBIterator<Region> byReferenceInterval(long refId, final Reference ref, int from, int to) throws MGXException {
 
         if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
             throw new MGXException("Invalid coordinates: " + from + " " + to);
@@ -83,7 +83,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         try {
             Connection conn = getConnection();
             stmt = conn.prepareStatement("SELECT * from getRegions(?,?,?)");
-            stmt.setLong(1, ref.getId());
+            stmt.setLong(1, refId);
             stmt.setInt(2, from);
             stmt.setInt(3, to);
             rset = stmt.executeQuery();
@@ -92,7 +92,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
                 @Override
                 public Region convert(ResultSet rs) throws SQLException {
                     Region r = new Region();
-                    r.setReference(ref);
+                    //r.setReference(ref);
                     r.setId(rs.getLong(1));
                     r.setName(rs.getString(2));
                     r.setDescription(rs.getString(3));

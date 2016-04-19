@@ -25,13 +25,13 @@ public class MappingDAO<T extends Mapping> extends DAO<T> {
         return Mapping.class;
     }
 
-    public AutoCloseableIterator<Mapping> bySeqRun(SeqRun sr) {
+    public AutoCloseableIterator<Mapping> bySeqRun(SeqRun sr) throws MGXException {
         Iterator<Mapping> iterator = getEntityManager().<Mapping>createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.seqrun = :run", Mapping.class).
                 setParameter("run", sr).getResultList().iterator();
         return new ForwardingIterator<>(iterator);
     }
 
-    public AutoCloseableIterator<Mapping> byReference(Reference ref) {
+    public AutoCloseableIterator<Mapping> byReference(Reference ref) throws MGXException {
         Iterator<Mapping> iterator = getEntityManager().<Mapping>createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.reference = :ref", Mapping.class).
                 setParameter("ref", ref).getResultList().iterator();
         return new ForwardingIterator<>(iterator);

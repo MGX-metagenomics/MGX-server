@@ -42,7 +42,7 @@ public class GlobalRegionDAO {
                         r.setStart(rs.getInt(4));
                         r.setStop(rs.getInt(5));
                         r.setType(rs.getString(6));
-                        r.setReference(ref);
+                        //r.setReference(ref);
                         regions.add(r);
                     }
                 }

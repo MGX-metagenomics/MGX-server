@@ -30,7 +30,7 @@ public class ForwardingIterator<T> implements AutoCloseableIterator<T> {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // no-op
     }
 }

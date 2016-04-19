@@ -45,20 +45,32 @@ public class AttributeTypeBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public AttributeTypeDTOList fetchall() {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().getAll());
+        try {
+            return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
     @Path("ByJob/{jobId}")
     @Produces("application/x-protobuf")
-    public AttributeTypeDTOList listTypesByJob(@PathParam("jobId") Long jobId) {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().ByJob(jobId));
+    public AttributeTypeDTOList ByJob(@PathParam("jobId") Long jobId) {
+        try {
+            return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().ByJob(jobId));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
     @Path("BySeqRun/{seqrunId}")
     @Produces("application/x-protobuf")
     public AttributeTypeDTOList BySeqRun(@PathParam("seqrunId") Long seqrunId) {
-        return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().BySeqRun(seqrunId));
+        try {
+            return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().BySeqRun(seqrunId));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 }

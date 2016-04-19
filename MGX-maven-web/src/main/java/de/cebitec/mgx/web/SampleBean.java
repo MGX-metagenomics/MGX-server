@@ -20,6 +20,8 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -107,7 +109,11 @@ public class SampleBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SampleDTOList fetchall() {
-        return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().getAll());
+        try {
+            return SampleDTOFactory.getInstance().toDTOList(mgx.getSampleDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
@@ -115,12 +121,13 @@ public class SampleBean {
     @Produces("application/x-protobuf")
     public SampleDTOList byHabitat(@PathParam("id") Long hab_id) {
         Habitat habitat;
+        AutoCloseableIterator<Sample> samples;
         try {
             habitat = mgx.getHabitatDAO().getById(hab_id);
+            samples = mgx.getSampleDAO().byHabitat(habitat);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        AutoCloseableIterator<Sample> samples = mgx.getSampleDAO().byHabitat(habitat);
         return SampleDTOFactory.getInstance().toDTOList(samples);
     }
 

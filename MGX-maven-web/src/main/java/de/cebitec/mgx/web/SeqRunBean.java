@@ -160,20 +160,23 @@ public class SeqRunBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().getAll());
+        try {
+            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
     @Path("byExtract/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTOList byExtract(@PathParam("id") Long extract_id) {
-        DNAExtract extract = null;
         try {
-            extract = mgx.getDNAExtractDAO().getById(extract_id);
+            DNAExtract extract = mgx.getDNAExtractDAO().getById(extract_id);
+            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
     }
 
     @DELETE

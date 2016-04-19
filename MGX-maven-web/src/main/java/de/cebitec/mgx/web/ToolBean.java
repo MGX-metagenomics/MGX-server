@@ -125,7 +125,11 @@ public class ToolBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ToolDTOList fetchall() {
-        return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
+        try {
+            return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET

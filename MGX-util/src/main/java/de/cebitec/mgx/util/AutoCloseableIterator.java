@@ -8,5 +8,8 @@ import java.util.Iterator;
  * @param <T>
  */
 public interface AutoCloseableIterator<T> extends Iterator<T>, AutoCloseable {
+
+    @Override
+    public void close();
     
 }

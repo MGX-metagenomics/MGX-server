@@ -107,9 +107,13 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         iterator.close();
-        conn.close();
+        try {
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(AutoCloseableSAMRecordIterator.class.getName()).log(Level.SEVERE, null, ex);
+        }
         lock.unlock();
     }
 }

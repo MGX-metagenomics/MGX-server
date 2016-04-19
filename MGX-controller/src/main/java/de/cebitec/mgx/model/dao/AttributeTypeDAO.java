@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.DBIterator;
@@ -27,7 +28,7 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
     /*
      *  returns attribute types for a job, if it's in FINISHED state
      */
-    public DBIterator<AttributeType> ByJob(long jobId) {
+    public DBIterator<AttributeType> ByJob(long jobId) throws MGXException {
 
         DBIterator<AttributeType> iter = null;
 
@@ -66,7 +67,7 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
         return iter;
     }
 
-    public DBIterator<AttributeType> BySeqRun(long seqrunId) {
+    public DBIterator<AttributeType> BySeqRun(long seqrunId) throws MGXException {
 
         DBIterator<AttributeType> iter = null;
 

@@ -69,7 +69,7 @@ public abstract class DAO<T extends Identifiable> {
     }
 
     @SuppressWarnings("unchecked")
-    public AutoCloseableIterator<T> getAll() {
+    public AutoCloseableIterator<T> getAll() throws MGXException {
         Iterator<T> iterator = getEntityManager().<T>createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType())
                 .getResultList()
                 .iterator();
