@@ -51,7 +51,7 @@ public class LimitingIterator<T> implements AutoCloseableIterator<T> {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (!limitReached()) {
             iter.close();
         }

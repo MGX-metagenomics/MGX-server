@@ -94,7 +94,11 @@ public class HabitatBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public HabitatDTOList fetchall() {
-        return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
+        try {
+            return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @DELETE

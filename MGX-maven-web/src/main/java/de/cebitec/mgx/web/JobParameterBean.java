@@ -73,9 +73,9 @@ public class JobParameterBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(job_id);
+            return JobParameterDTOFactory.getInstance().toDTOList(mgx.getJobParameterDAO().ByJob(job));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return JobParameterDTOFactory.getInstance().toDTOList(mgx.getJobParameterDAO().ByJob(job));
     }
 }

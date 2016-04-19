@@ -26,6 +26,10 @@ import javax.ejb.TransactionAttributeType;
 public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
 
     private final Reference reference;
+    private final long referenceId;
+    private final String refFile;
+    private final String refName;
+    //
     private final String projectName;
     private final Connection conn;
     //
@@ -37,6 +41,9 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
 
     public ReferenceUploadReceiver(Reference reference, String projectName, Connection conn) {
         this.reference = reference;
+        this.refFile = reference.getFile();
+        this.referenceId = reference.getId();
+        this.refName = reference.getName();
         this.projectName = projectName;
         this.conn = conn;
         lastAccessed = System.currentTimeMillis();
@@ -44,9 +51,9 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
 
     public void addSequenceData(String dna) throws IOException {
         if (fasta == null) {
-            fasta = new File(reference.getFile());
+            fasta = new File(refFile);
             writer = new FileWriter(fasta);
-            writer.append(">lcl|" + reference.getId() + " " + reference.getName() + "\n");
+            writer.append(">lcl|" + referenceId + " " + refName + "\n");
         }
         writer.append(dna.toUpperCase());
         dnaSize += dna.length();
@@ -91,8 +98,8 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         //reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
         try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
-            stmt.setString(1, reference.getFile());
-            stmt.setLong(2, reference.getId());
+            stmt.setString(1, refFile);
+            stmt.setLong(2, referenceId);
             stmt.execute();
         } catch (SQLException ex) {
             cancel();
@@ -104,7 +111,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 stmt.setString(2, r.getDescription());
                 stmt.setInt(3, r.getStart());
                 stmt.setInt(4, r.getStop());
-                stmt.setLong(5, reference.getId());
+                stmt.setLong(5, referenceId);
                 stmt.addBatch();
             }
             stmt.executeBatch();

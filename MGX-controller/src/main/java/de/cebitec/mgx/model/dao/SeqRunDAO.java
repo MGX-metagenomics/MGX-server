@@ -91,7 +91,7 @@ public class SeqRunDAO<T extends SeqRun> extends DAO<T> {
         e.flush();
     }
 
-    public AutoCloseableIterator<SeqRun> byDNAExtract(DNAExtract extract) {
+    public AutoCloseableIterator<SeqRun> byDNAExtract(DNAExtract extract) throws MGXException {
         Iterator<SeqRun> iterator = getEntityManager().<SeqRun>createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract", SeqRun.class).
                                     setParameter("extract", extract).getResultList().iterator();
         return new ForwardingIterator<>(iterator);

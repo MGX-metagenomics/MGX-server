@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -384,9 +386,13 @@ public class JobBean {
         try {
             run = mgx.getSeqRunDAO().getById(seqrun_id);
         } catch (MGXException ex) {
-            // we don't fail for non-existing seqruns; instead, an empty
-            // result is returned
-            return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
+            try {
+                // we don't fail for non-existing seqruns; instead, an empty
+                // result is returned
+                return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
+            } catch (MGXException ex1) {
+                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex1);
+            }
         }
 
         List<Job> jobs = new ArrayList<>();

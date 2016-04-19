@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -124,7 +126,11 @@ public class ReferenceBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ReferenceDTOList fetchall() {
-        return ReferenceDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().getAll());
+        try {
+            return ReferenceDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().getAll());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @GET
@@ -158,11 +164,11 @@ public class ReferenceBean {
     @GET
     @Path("byReferenceInterval/{refid}/{from}/{to}")
     @Produces("application/x-protobuf")
-    public RegionDTOList byReferenceInterval(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
+    public RegionDTOList byReferenceInterval(@PathParam("refid") Long refid, @PathParam("from") int from, @PathParam("to") int to) {
         RegionDTOList ret = null;
         try {
-            Reference ref = mgx.getReferenceDAO().getById(id);
-            ret = RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(ref, from, to));
+            Reference ref = mgx.getReferenceDAO().getById(refid);
+            ret = RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(refid, ref, from, to));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
