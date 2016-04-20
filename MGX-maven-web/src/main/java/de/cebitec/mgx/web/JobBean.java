@@ -372,7 +372,7 @@ public class JobBean {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        
+
         DeleteJob dJob = new DeleteJob(id, mgx.getDataSource(), mgx.getProjectName(), mappingSessions);
         UUID taskId = taskHolder.addTask(dJob);
         return MGXString.newBuilder().setValue(taskId.toString()).build();
