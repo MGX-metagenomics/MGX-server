@@ -34,7 +34,16 @@ public class AttributeTypeDTOFactory extends DTOConversionBase<AttributeType, At
 
     @Override
     public final AttributeType toDB(AttributeTypeDTO dto) {
-        throw new UnsupportedOperationException("Not supported");
+        AttributeType at = new AttributeType()
+                .setName(dto.getName())
+                .setStructure(dto.getStructure().charAt(0))
+                .setValueType(dto.getValueType().charAt(0));
+
+        if (dto.hasId()) {
+            at.setId(dto.getId());
+        }
+
+        return at;
     }
 
     @Override
