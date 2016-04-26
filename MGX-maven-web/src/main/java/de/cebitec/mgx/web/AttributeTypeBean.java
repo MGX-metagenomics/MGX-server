@@ -1,17 +1,22 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
+import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -27,6 +32,21 @@ public class AttributeTypeBean {
     @Inject
     @MGX
     MGXController mgx;
+
+    @PUT
+    @Path("create")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLong create(AttributeTypeDTO dto) {
+        AttributeType h = AttributeTypeDTOFactory.getInstance().toDB(dto);
+        try {
+            long id = mgx.getAttributeTypeDAO().create(h);
+            return MGXLong.newBuilder().setValue(id).build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
 
     @GET
     @Path("fetch/{id}")

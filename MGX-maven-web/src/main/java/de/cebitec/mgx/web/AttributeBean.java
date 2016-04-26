@@ -1,8 +1,11 @@
 package de.cebitec.mgx.web;
 
+import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
+import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
@@ -10,6 +13,7 @@ import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.AttributeDistribution;
 import de.cebitec.mgx.dto.dto.CorrelatedAttributeCount;
+import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.MGXStringList;
 import de.cebitec.mgx.dto.dto.SearchRequestDTO;
@@ -50,6 +54,21 @@ public class AttributeBean {
     //
     @EJB
     ResultHolder resultHolder;
+
+    @PUT
+    @Path("create")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLong create(AttributeDTO dto) {
+        Attribute h = AttributeDTOFactory.getInstance().toDB(dto);
+        try {
+            long id = mgx.getAttributeDAO().create(h);
+            return MGXLong.newBuilder().setValue(id).build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
 
     @GET
     @Path("fetch/{id}")
