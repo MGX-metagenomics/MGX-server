@@ -5,7 +5,6 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
@@ -23,6 +22,7 @@ import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
+import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.Sequence;
@@ -35,6 +35,8 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -61,9 +63,20 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(AttributeDTO dto) {
-        Attribute h = AttributeDTOFactory.getInstance().toDB(dto);
         try {
-            long id = mgx.getAttributeDAO().create(h);
+            AttributeType attrType = mgx.getAttributeTypeDAO().getById(dto.getAttributeTypeId());
+            Job job = mgx.getJobDAO().getById(dto.getJobid());
+
+            Attribute attr = AttributeDTOFactory.getInstance().toDB(dto);
+            attr.setJob(job);
+            attr.setAttributeType(attrType);
+
+            if (dto.hasParentId()) {
+                Attribute parent = mgx.getAttributeDAO().getById(dto.getParentId());
+                attr.setParent(parent);
+            }
+
+            long id = mgx.getAttributeDAO().create(attr);
             return MGXLong.newBuilder().setValue(id).build();
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
