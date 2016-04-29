@@ -5,6 +5,8 @@ import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.conveyor.JobParameterHelper;
+import de.cebitec.mgx.conveyor.XMLValidator;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -15,7 +17,6 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
-import de.cebitec.mgx.workers.DeleteTool;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
@@ -23,10 +24,9 @@ import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
-import de.cebitec.mgx.conveyor.XMLValidator;
-import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import de.cebitec.mgx.workers.DeleteTool;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -207,6 +207,7 @@ public class ToolBean {
     @Path("getAvailableParameters")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
+    @Deprecated
     public JobParameterListDTO getAvailableParameters(ToolDTO dto) {
 
         XMLValidator validator = new XMLValidator();
@@ -220,6 +221,25 @@ public class ToolBean {
         }
 
         return getParams(dto.getXml());
+    }
+
+    @PUT
+    @Path("getAvailableParameters")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public JobParameterListDTO getAvailableParameters(MGXString dto) {
+
+        XMLValidator validator = new XMLValidator();
+        try {
+            if (!validator.isValid(dto.getValue())) {
+                throw new MGXWebException("XML is not Valid");
+            }
+        } catch (SAXException | IOException | ParserConfigurationException ex) {
+            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXWebException("XML is not valid: " + ex.getMessage());
+        }
+
+        return getParams(dto.getValue());
     }
 
     private JobParameterListDTO getParams(String XMLData) {
