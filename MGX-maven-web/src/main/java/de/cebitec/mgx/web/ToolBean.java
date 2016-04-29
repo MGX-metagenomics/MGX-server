@@ -224,10 +224,10 @@ public class ToolBean {
     }
 
     @PUT
-    @Path("getAvailableParameters")
+    @Path("getParameters")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public JobParameterListDTO getAvailableParameters(MGXString dto) {
+    public JobParameterListDTO getParameters(MGXString dto) {
 
         XMLValidator validator = new XMLValidator();
         try {
