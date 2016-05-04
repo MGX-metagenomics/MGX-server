@@ -50,7 +50,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             throw new MGXException(ex);
         }
 
-        if (dbFile == null || seqName == null) {
+        if (dbFile == null || dbFile.isEmpty() || seqName == null || seqName.isEmpty()) {
             throw new MGXException("No sequence for ID " + id);
         }
 
@@ -72,5 +72,26 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             throw new MGXException(ex);
         }
         return (T) seq;
+    }
+
+    public Sequence byName(Long runId, String seqName) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, length FROM read WHERE seqrun_id=? AND name=?")) {
+                stmt.setLong(1, runId);
+                stmt.setString(2, seqName);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Sequence seq = new Sequence();
+                        seq.setId(rs.getLong(1));
+                        seq.setName(seqName);
+                        seq.setLength(rs.getInt(2));
+                        return seq;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+        throw new MGXException("Not found.");
     }
 }

@@ -26,7 +26,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -242,6 +241,19 @@ public class SequenceBean {
         Sequence obj;
         try {
             obj = mgx.getSequenceDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return SequenceDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @GET
+    @Path("byName/{runId}/{seqName}")
+    @Produces("application/x-protobuf")
+    public SequenceDTO byName(@PathParam("runId") Long runId, @PathParam("seqName") String seqName) {
+        Sequence obj;
+        try {
+            obj = mgx.getSequenceDAO().byName(runId, seqName);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
