@@ -22,11 +22,11 @@ import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
-import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sessions.ResultHolder;
+import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.LimitingIterator;
 import de.cebitec.mgx.util.Pair;
@@ -35,8 +35,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -56,6 +54,8 @@ public class AttributeBean {
     //
     @EJB
     ResultHolder resultHolder;
+    @EJB
+    TaskHolder taskHolder;
 
     @PUT
     @Path("create")

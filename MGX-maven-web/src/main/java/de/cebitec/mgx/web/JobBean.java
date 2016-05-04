@@ -425,7 +425,7 @@ public class JobBean {
 
     private void fixParameters(Job job) throws MGXException, IOException {
         String fName = job.getTool().getXMLFile();
-        List<JobParameter> availableParams = null;
+        List<JobParameter> availableParams;
 
         if (paramCache.containsKey(fName)) {
             availableParams = paramCache.get(fName);
