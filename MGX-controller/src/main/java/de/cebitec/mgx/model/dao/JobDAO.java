@@ -12,6 +12,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +39,42 @@ public class JobDAO<T extends Job> extends DAO<T> {
     }
 
     @Override
+    public void update(T job) throws MGXException {
+        super.update(job);
+        if (job.getStatus().equals(JobState.FINISHED)) {
+            try (Connection conn = getConnection()) {
+                // set finished date
+                try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET finishdate=NOW() WHERE id=?")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.executeUpdate();
+                    stmt.close();
+                }
+
+                // remove attribute counts
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                    stmt.close();
+                }
+                
+                // create assignment counts for attributes belonging to this job
+                String sql = "INSERT INTO attributecount "
+                        + "SELECT attribute.id, count(attribute.id) FROM attribute "
+                        + "LEFT JOIN observation ON (attribute.id = observation.attr_id) "
+                        + "WHERE job_id=? GROUP BY attribute.id ORDER BY attribute.id";
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                    stmt.close();
+                }
+                conn.close();
+            } catch (SQLException ex) {
+                throw new MGXException(ex.getMessage());
+            }
+        }
+    }
+
+    @Override
     public void delete(long id) throws MGXException {
         String sb;
         try {
@@ -48,7 +87,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
         }
 
         for (String suffix : suffices) {
-            File f = new File(sb.toString() + suffix);
+            File f = new File(sb + suffix);
             if (f.exists()) {
                 f.delete();
             }
@@ -74,7 +113,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
         // muster: nodeid.configname "wert"    
         String[] tempSplit = in.split("\\.");
         JobParameter parameter;
-        String tempString = "";
+        String tempString;
         long nodeId = 0;
 
         for (int i = 0; i < tempSplit.length; i++) {
