@@ -327,9 +327,13 @@ public class JobBean {
     @Path("update")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(JobDTO dto) {
-        Job h = JobDTOFactory.getInstance().toDB(dto);
+        Job job = JobDTOFactory.getInstance().toDB(dto);
         try {
-            mgx.getJobDAO().update(h);
+            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
+            SeqRun run = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
+            job.setTool(tool);
+            job.setSeqrun(run);
+            mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
