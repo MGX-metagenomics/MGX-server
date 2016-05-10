@@ -36,6 +36,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.Encoded;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -247,14 +248,19 @@ public class SequenceBean {
         return SequenceDTOFactory.getInstance().toDTO(obj);
     }
 
-    @GET
-    @Path("byName/{runId}/{seqName}")
+    //
+    // this should be @GET, but GF has problems with encoded slashes (%2F)
+    //
+    @PUT
+    @Path("byName/{runId}")
     @Produces("application/x-protobuf")
-    public SequenceDTO byName(@PathParam("runId") Long runId, @PathParam("seqName") String seqName) {
+    public SequenceDTO byName(@PathParam("runId") Long runId, MGXString seqName) {
+        mgx.log("fetching seq by name "+seqName+" for run id "+ runId);
         Sequence obj;
         try {
-            obj = mgx.getSequenceDAO().byName(runId, seqName);
+            obj = mgx.getSequenceDAO().byName(runId, seqName.getValue());
         } catch (MGXException ex) {
+            mgx.log(ex.toString());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTO(obj);
