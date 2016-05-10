@@ -36,7 +36,7 @@ public class ObservationDTOFactory extends DTOConversionBase<SequenceObservation
 
     @Override
     public SequenceObservation toDB(ObservationDTO dto) {
-        throw new UnsupportedOperationException("Not supported.");
+        return new SequenceObservation(dto.getStart(), dto.getStop(), dto.getAttributeName(), dto.getAttributeTypeValue());
     }
 
     @Override
