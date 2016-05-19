@@ -215,7 +215,6 @@ public class AttributeBean {
             resultHolder.add(uuid, liter);
         }
 
-        mgx.log("search for " + req.getTerm() + " produced " + dtos.getSeqCount() + " results");
         return dtos;
     }
 
