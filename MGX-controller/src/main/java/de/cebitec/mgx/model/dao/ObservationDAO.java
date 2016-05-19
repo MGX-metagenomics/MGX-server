@@ -42,8 +42,10 @@ public class ObservationDAO<T extends Observation> {
         DBIterator<SequenceObservation> iter = null;
         PreparedStatement stmt = null;
         ResultSet rset = null;
+        Connection conn = null;
 
-        try (Connection conn = ctx.getConnection()) {
+        try {
+            conn = ctx.getConnection();
             stmt = conn.prepareStatement("SELECT * from getObservations(?)");
             stmt.setLong(1, seqId);
             rset = stmt.executeQuery();
