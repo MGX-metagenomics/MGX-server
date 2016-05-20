@@ -16,7 +16,7 @@ public enum JobState {
     ABORTED(7),
     IN_DELETION(8);
 
-    private int code;
+    private final int code;
 
     private JobState(int c) {
         code = c;
