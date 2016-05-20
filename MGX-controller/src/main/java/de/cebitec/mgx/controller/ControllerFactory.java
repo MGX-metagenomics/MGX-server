@@ -25,7 +25,11 @@ public class ControllerFactory {
     @MGX
     @RequestScoped
     MGXController getController() {
-        return new MGXControllerImpl(gpms.<JPAMasterI>getCurrentMaster(), mgxconfig);
+        JPAMasterI jpaMaster = gpms.<JPAMasterI>getCurrentMaster();
+        if (jpaMaster == null) {
+            throw new IllegalArgumentException("GPMS did not provide a valid master!");
+        }
+        return new MGXControllerImpl(jpaMaster, mgxconfig);
     }
 
     public void dispose(@Disposes MGXController c) {
