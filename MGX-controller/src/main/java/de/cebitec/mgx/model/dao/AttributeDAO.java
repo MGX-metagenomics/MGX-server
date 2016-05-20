@@ -187,6 +187,8 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
 
     public AutoCloseableIterator<Attribute> ByJob(long jobId) throws MGXException {
 
+        Job job = getController().getJobDAO().getById(jobId);
+        
         // pre-collect attribute types
         final TLongObjectMap<AttributeType> attrTypes = new TLongObjectHashMap<>();
         try (DBIterator<AttributeType> aTypes = getController().getAttributeTypeDAO().ByJob(jobId)) {
@@ -207,6 +209,7 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
                     while (rs.next()) {
                         Attribute attr = new Attribute();
                         attr.setId(rs.getLong(1));
+                        attr.setJob(job);
                         attr.setValue(rs.getString(2));
 
                         AttributeType aType = attrTypes.get(rs.getLong(3));
@@ -286,19 +289,16 @@ public class AttributeDAO<T extends Attribute> extends DAO<T> {
 
     public DBIterator<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
         DBIterator<Sequence> iter = null;
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
 
         try {
             Connection conn = getController().getConnection();
-            stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?,?)");
+            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?,?)");
             stmt.setString(1, term);
             stmt.setBoolean(2, exact);
             stmt.setArray(3, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
-            rset = stmt.executeQuery();
-            final ResultSet rs = rset;
+            ResultSet rset = stmt.executeQuery();
 
-            iter = new DBIterator<Sequence>(rs, stmt, conn) {
+            iter = new DBIterator<Sequence>(rset, stmt, conn) {
                 @Override
                 public Sequence convert(ResultSet rs) throws SQLException {
                     Sequence s = new Sequence();

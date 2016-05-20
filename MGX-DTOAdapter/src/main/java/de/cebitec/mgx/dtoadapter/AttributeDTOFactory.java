@@ -64,6 +64,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
                 b.addAttribute(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
         return b.build();
     }
