@@ -1,7 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -21,15 +20,11 @@ import javax.persistence.PersistenceException;
  */
 public abstract class DAO<T extends Identifiable> {
 
-    private final MGXControllerImpl ctx;
+    private final MGXController ctx;
 
-    public DAO(MGXControllerImpl ctx) {
+    public DAO(MGXController ctx) {
         this.ctx = ctx;
     }
-    
-//    public void setController(MGXControllerImpl ctx) {
-//        this.ctx = ctx;
-//    }
 
     public final MGXController getController() {
         return ctx;
@@ -53,7 +48,7 @@ public abstract class DAO<T extends Identifiable> {
         Class<T> type = getType();
         T ret = (T) getEntityManager().<T>find(type, id);
         if (ret == null) {
-            throw new MGXException("No object of type " + getType().getSimpleName() + " for ID " + id + ".");
+            throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
         }
         return ret;
     }
@@ -108,11 +103,11 @@ public abstract class DAO<T extends Identifiable> {
         }
     }
 
-    final protected String getClassName() {
+    protected final String getClassName() {
         return getType().getSimpleName();
     }
 
-    protected void close(Connection c, Statement s, ResultSet r) {
+    protected final void close(Connection c, Statement s, ResultSet r) {
         try {
             if (r != null) {
                 r.close();
@@ -144,7 +139,7 @@ public abstract class DAO<T extends Identifiable> {
         }
     }
 
-    protected static String toSQLTemplateString(List l) {
+    protected final static String toSQLTemplateString(List l) {
         if ((l == null) || (l.isEmpty())) {
             return "";
         }
