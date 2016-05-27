@@ -18,7 +18,8 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dispatcher.common.MGXInsufficientJobConfigurationException;
-import de.cebitec.mgx.jobsubmitter.api.JobSubmitter;
+import de.cebitec.mgx.jobsubmitter.api.Host;
+import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.workers.DeleteJob;
 import de.cebitec.mgx.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
@@ -60,7 +61,7 @@ public class JobBean {
     @MGX
     MGXController mgx;
     @EJB
-    JobSubmitter js;
+    JobSubmitterI js;
     @EJB
     TaskHolder taskHolder;
     @EJB
@@ -230,7 +231,9 @@ public class JobBean {
         boolean verified = false;
         try {
             Job job = mgx.getJobDAO().getById(id);
-            verified = js.validate(mgx.getProjectName(), mgx.getDataSource(), job, dispConfig.getDispatcherHost(), mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
+            
+            Host h = new Host(dispConfig.getDispatcherHost());
+            verified = js.validate(h, mgx.getProjectName(), mgx.getDataSource(), job, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
         } catch (MGXException | MGXDispatcherException | IOException ex) {
             throw new MGXJobException(ex.getMessage());
         }
@@ -250,7 +253,8 @@ public class JobBean {
             if (job.getStatus() != JobState.VERIFIED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            submitted = js.submit(dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), job);
+            Host h = new Host(dispConfig.getDispatcherHost());
+            submitted = js.submit(h, mgx.getProjectName(), mgx.getDataSource(), job);
         } catch (MGXInsufficientJobConfigurationException ex) {
             mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
@@ -306,7 +310,8 @@ public class JobBean {
         mgx.log("Cancelling job " + id + " on user request");
 
         try {
-            js.cancel(mgx.getProjectName(), id);
+            Host h = new Host(dispConfig.getDispatcherHost());
+            js.cancel(h, mgx.getProjectName(), id);
         } catch (MGXDispatcherException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
@@ -363,7 +368,8 @@ public class JobBean {
         if (isActive) {
             // notify dispatcher
             try {
-                js.delete(mgx.getProjectName(), id);
+                Host h = new Host(dispConfig.getDispatcherHost());
+                js.delete(h, mgx.getProjectName(), id);
             } catch (MGXDispatcherException ex) {
                 mgx.log(ex.getMessage());
             }
