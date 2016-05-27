@@ -5,7 +5,8 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.core.TaskI;
-import de.cebitec.mgx.jobsubmitter.api.JobSubmitter;
+import de.cebitec.mgx.jobsubmitter.api.Host;
+import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -23,14 +24,14 @@ import javax.sql.DataSource;
 public class RestartJob extends TaskI {
 
     private final Job job;
-    private final JobSubmitter js;
+    private final JobSubmitterI js;
     private final String dispatcherHost;
     private final MGXConfigurationI mgxcfg;
     private final String dbHost;
     private final String dbName;
     private final File projDir;
 
-    public RestartJob(MGXController mgx, String dispatcherHost, MGXConfigurationI cfg, Job job, DataSource dataSource, String projName, JobSubmitter js) throws IOException, MGXDispatcherException {
+    public RestartJob(MGXController mgx, String dispatcherHost, MGXConfigurationI cfg, Job job, DataSource dataSource, String projName, JobSubmitterI js) throws IOException, MGXDispatcherException {
         super(projName, dataSource);
         this.job = job;
         this.dispatcherHost = dispatcherHost;
@@ -96,11 +97,11 @@ public class RestartJob extends TaskI {
             setStatus(TaskI.State.PROCESSING, "Validating job configuration");
             boolean verified = false;
 
-            verified = js.validate(projName, dataSource, job, dispatcherHost, dbHost, dbName, mgxcfg.getMGXUser(), mgxcfg.getMGXPassword(), projDir);
+            verified = js.validate(new Host(dispatcherHost), projName, dataSource, job, dbHost, dbName, mgxcfg.getMGXUser(), mgxcfg.getMGXPassword(), projDir);
 
             if (verified) {
                 setStatus(TaskI.State.PROCESSING, "Resubmitting job..");
-                if (js.submit(dispatcherHost, dataSource, projName, job)) {
+                if (js.submit(new Host(dispatcherHost), projName, dataSource, job)) {
                     setStatus(TaskI.State.FINISHED, "Job " + job.getId() + " restarted");
                 } else {
                     setStatus(TaskI.State.FAILED, "submit failed");
