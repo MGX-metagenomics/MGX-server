@@ -1,7 +1,6 @@
 package de.cebitec.mgx.jobsubmitter;
 
 import com.sun.jersey.api.client.Client;
-import de.cebitec.mgx.dispatcher.common.MGXInsufficientJobConfigurationException;
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
@@ -11,7 +10,6 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import de.cebitec.mgx.dispatcher.client.MGXDispatcherConfiguration;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.UnixHelper;
@@ -30,6 +28,7 @@ import javax.sql.DataSource;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
+import de.cebitec.mgx.model.db.Job;
 
 /**
  *
@@ -40,6 +39,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
 
     @EJB
     MGXDispatcherConfiguration dispConfig;
+    //
+    private Host currentHost = null;
+    private Client currentClient = null;
 
     private final static String MGX_CLASS = "MGX";
 
@@ -52,7 +54,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
     }
 
     @Override
-    public boolean validate(Host dispatcherHost, String projName, DataSource dataSource, final Job job, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXInsufficientJobConfigurationException, MGXDispatcherException {
+    public boolean validate(Host dispatcherHost, String projName, DataSource dataSource, final Job job, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXDispatcherException {
         if (!createJobConfigFile(dbHost, dbName, dbUser, dbPass, projDir, job.getParameters(), job.getId())) {
             throw new MGXDispatcherException("Failed to write job configuration.");
         }
@@ -63,9 +65,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
             try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
                 stmt.setInt(1, JobState.VERIFIED.getValue());
                 stmt.setLong(2, job.getId());
-                stmt.execute();
-                stmt.close();
+                stmt.executeUpdate();
                 job.setStatus(JobState.VERIFIED);
+                stmt.close();
             }
         } catch (SQLException ex) {
             throw new MGXDispatcherException(ex.getMessage());
@@ -148,27 +150,23 @@ public class JobSubmitterImpl implements JobSubmitterI {
         return true;
     }
 
-//    private WebResource getWebResource(final String dispHost) {
-//        if (dispatcherHost != null && dispatcherHost.equals(dispHost)) {
-//            return client.resource(getBaseURI());
-//        } else {
-//            dispatcherHost = dispHost;
-//            ClientConfig cc = new DefaultClientConfig();
-//            cc.getClasses().add(TextPlainReader.class);
-//            client = Client.create(cc);
-//            return client.resource(getBaseURI());
-//        }
-//    }
     private WebResource getWebResource(Host target) throws MGXDispatcherException {
-        ClientConfig cc = new DefaultClientConfig();
-        cc.getClasses().add(TextPlainReader.class);
-        cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, 5000); // in ms
-        cc.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, 20000); // in ms
-        Client client = Client.create(cc);
-        return client.resource(getBaseURI(target));
+        if (target == null) {
+            throw new MGXDispatcherException("Invalid null target!");
+        }
+
+        if (currentHost != null && !currentHost.equals(target)) {
+            currentHost = target;
+            ClientConfig cc = new DefaultClientConfig();
+            cc.getClasses().add(TextPlainReader.class);
+            cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, 5000); // in ms
+            cc.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, 20000); // in ms
+            currentClient = Client.create(cc);
+        }
+        return currentClient.resource(getBaseURI(target));
     }
 
-    private URI getBaseURI(Host target) throws MGXDispatcherException {
+    private static URI getBaseURI(Host target) throws MGXDispatcherException {
         String uri = new StringBuilder("http://")
                 .append(target.getName())
                 .append(":4444/MGX-dispatcher-web/webresources/Job/")
@@ -183,9 +181,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
             return res.<U>getEntity(c);
         } catch (ClientHandlerException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause());
+                throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
-                throw new MGXDispatcherException(che);
+                throw new MGXDispatcherException(che.getMessage());
             }
         }
     }
@@ -197,9 +195,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
             return res.<U>getEntity(c);
         } catch (ClientHandlerException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause());
+                throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
-                throw new MGXDispatcherException(che);
+                throw new MGXDispatcherException(che.getMessage());
             }
         }
     }
@@ -210,9 +208,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
             catchException(res);
         } catch (ClientHandlerException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause());
+                throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
-                throw new MGXDispatcherException(che);
+                throw new MGXDispatcherException(che.getMessage());
             }
         }
     }
@@ -223,9 +221,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
             catchException(res);
         } catch (ClientHandlerException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause());
+                throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
-                throw new MGXDispatcherException(che);
+                throw new MGXDispatcherException(che.getMessage());
             }
         }
     }
@@ -256,7 +254,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
                 wr = wr.path(URLEncoder.encode(s, "UTF-8"));
             }
         } catch (UnsupportedEncodingException ex) {
-            throw new ClientHandlerException(ex);
+            throw new MGXDispatcherException(ex.getMessage());
         }
         return wr.accept(MediaType.TEXT_PLAIN_TYPE);
     }
