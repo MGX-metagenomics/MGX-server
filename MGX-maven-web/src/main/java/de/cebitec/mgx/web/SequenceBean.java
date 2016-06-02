@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -254,7 +256,7 @@ public class SequenceBean {
     @Path("byName/{runId}")
     @Produces("application/x-protobuf")
     public SequenceDTO byName(@PathParam("runId") Long runId, MGXString seqName) {
-        mgx.log("fetching seq by name "+seqName+" for run id "+ runId);
+        mgx.log("fetching seq by name " + seqName + " for run id " + runId);
         Sequence obj;
         try {
             obj = mgx.getSequenceDAO().byName(runId, seqName.getValue());
@@ -281,6 +283,22 @@ public class SequenceBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTOList(objs);
+    }
+
+    @GET
+    @Path("fetchSequenceIDs/{attrId}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLongList fetchSequenceIDs(@PathParam("attrId") Long attrId) {
+        try (AutoCloseableIterator<Long> lIter = mgx.getSequenceDAO().getSeqIDs(attrId)) {
+            MGXLongList.Builder b = MGXLongList.newBuilder();
+            while (lIter.hasNext()) {
+                b.addLong(lIter.next());
+            }
+            return b.build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     private void createDirs() throws IOException {

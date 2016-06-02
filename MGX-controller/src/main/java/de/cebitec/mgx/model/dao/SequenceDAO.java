@@ -6,6 +6,8 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -93,5 +95,22 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             throw new MGXException(ex);
         }
         throw new MGXException("Not found.");
+    }
+
+    public AutoCloseableIterator<Long> getSeqIDs(Long attrId) throws MGXException {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement("SELECT seq_id FROM observation WHERE attr_id=?");
+            stmt.setLong(1, attrId);
+            ResultSet rs = stmt.executeQuery();
+            return new DBIterator<Long>(rs, stmt, conn) {
+                @Override
+                public Long convert(ResultSet rs) throws SQLException {
+                    return rs.getLong(1);
+                }
+            };
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
     }
 }
