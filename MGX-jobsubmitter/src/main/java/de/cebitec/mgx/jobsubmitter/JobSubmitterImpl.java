@@ -155,7 +155,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
             throw new MGXDispatcherException("Invalid null target!");
         }
 
-        if (currentHost != null && !currentHost.equals(target)) {
+        if (currentClient == null || (currentHost != null && !currentHost.equals(target))) {
             currentHost = target;
             ClientConfig cc = new DefaultClientConfig();
             cc.getClasses().add(TextPlainReader.class);
