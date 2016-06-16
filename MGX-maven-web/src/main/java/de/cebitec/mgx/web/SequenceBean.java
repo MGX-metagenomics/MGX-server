@@ -28,12 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -256,7 +252,6 @@ public class SequenceBean {
     @Path("byName/{runId}")
     @Produces("application/x-protobuf")
     public SequenceDTO byName(@PathParam("runId") Long runId, MGXString seqName) {
-        mgx.log("fetching seq by name " + seqName + " for run id " + runId);
         Sequence obj;
         try {
             obj = mgx.getSequenceDAO().byName(runId, seqName.getValue());
@@ -268,16 +263,12 @@ public class SequenceBean {
     }
 
     @PUT
-    @Path("fetchall/{ids}")
+    @Path("fetchByIds")
     @Produces("application/x-protobuf")
-    public SequenceDTOList fetchall(MGXLongList ids) {
-        Set<Long> idlist = new HashSet<>();
-        for (long l : ids.getLongList()) {
-            idlist.add(l);
-        }
+    public SequenceDTOList fetchByIds(MGXLongList ids) {
         AutoCloseableIterator<Sequence> objs;
         try {
-            objs = mgx.getSequenceDAO().getByIds(idlist);
+            objs = mgx.getSequenceDAO().getByIds(ids.getLongList());
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
