@@ -5,6 +5,8 @@ import de.cebitec.mgx.dto.dto.ObservationDTOList;
 import de.cebitec.mgx.dto.dto.ObservationDTOList.Builder;
 import de.cebitec.mgx.model.misc.SequenceObservation;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -37,6 +39,14 @@ public class ObservationDTOFactory extends DTOConversionBase<SequenceObservation
     @Override
     public SequenceObservation toDB(ObservationDTO dto) {
         return new SequenceObservation(dto.getStart(), dto.getStop(), dto.getAttributeName(), dto.getAttributeTypeValue());
+    }
+    
+    public List<SequenceObservation> toDBList(ObservationDTOList dtoList) {
+        List<SequenceObservation> obs = new ArrayList<>(dtoList.getObservationCount());
+        for (ObservationDTO dto : dtoList.getObservationList()) {
+            obs.add(toDB(dto));
+        }
+        return obs;
     }
 
     @Override
