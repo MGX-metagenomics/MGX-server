@@ -330,7 +330,8 @@ public class FileBean {
 
         basedir = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
         if (!basedir.isDirectory()) {
-            throw new MGXWebException(basedir.getAbsolutePath() + " is not a directory.");
+            // do not expose absolute file system path
+            throw new MGXWebException(path + " is not a directory.");
         }
         return basedir;
     }
