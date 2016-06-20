@@ -38,6 +38,20 @@ public class ObservationDAO<T extends Observation> {
         }
     }
 
+    public void create(long seqId, long attrId, int start, int stop) throws MGXException {
+        try (Connection conn = ctx.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO observation (start, stop, seq_id, attr_id) VALUES (?,?,?,?)")) {
+                stmt.setInt(1, start);
+                stmt.setInt(2, stop);
+                stmt.setLong(3, seqId);
+                stmt.setLong(4, attrId);
+                stmt.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+    }
+
     public DBIterator<SequenceObservation> byRead(long seqId) throws MGXException {
         DBIterator<SequenceObservation> iter = null;
         PreparedStatement stmt = null;

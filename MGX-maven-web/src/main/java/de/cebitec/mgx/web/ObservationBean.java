@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dto.dto.BulkObservationDTO;
+import de.cebitec.mgx.dto.dto.BulkObservationDTOList;
 import de.cebitec.mgx.dto.dto.ObservationDTO;
 import de.cebitec.mgx.dto.dto.ObservationDTOList;
 import de.cebitec.mgx.dtoadapter.ObservationDTOFactory;
@@ -47,6 +49,22 @@ public class ObservationBean {
             Attribute attr = mgx.getAttributeDAO().getById(attrId);
             SequenceObservation obs = ObservationDTOFactory.getInstance().toDB(dto);
             mgx.getObservationDAO().create(obs, seq, attr);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("createBulk")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response createBulk(BulkObservationDTOList dtoList) {
+        try {
+            for (BulkObservationDTO bDTO : dtoList.getBulkObservationList()) {
+                mgx.getObservationDAO().create(bDTO.getSeqId(), bDTO.getAttributeId(), bDTO.getStart(), bDTO.getStop());
+            }
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
