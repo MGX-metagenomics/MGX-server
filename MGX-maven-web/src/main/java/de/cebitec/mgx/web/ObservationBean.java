@@ -5,6 +5,7 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.BulkObservationDTO;
 import de.cebitec.mgx.dto.dto.BulkObservationDTOList;
 import de.cebitec.mgx.dto.dto.ObservationDTO;
@@ -12,13 +13,22 @@ import de.cebitec.mgx.dto.dto.ObservationDTOList;
 import de.cebitec.mgx.dtoadapter.ObservationDTOFactory;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.model.misc.BulkObservation;
 import de.cebitec.mgx.model.misc.SequenceObservation;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import de.cebitec.mgx.workers.DeleteHabitat;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -62,9 +72,11 @@ public class ObservationBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response createBulk(BulkObservationDTOList dtoList) {
         try {
+            List<BulkObservation> bObs = new ArrayList<>(dtoList.getBulkObservationCount());
             for (BulkObservationDTO bDTO : dtoList.getBulkObservationList()) {
-                mgx.getObservationDAO().create(bDTO.getSeqId(), bDTO.getAttributeId(), bDTO.getStart(), bDTO.getStop());
+                bObs.add(new BulkObservation(bDTO.getSeqrunId(), bDTO.getSeqName(), bDTO.getAttributeId(), bDTO.getStart(), bDTO.getStop()));
             }
+            mgx.getObservationDAO().createBulk(bObs);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -81,5 +93,18 @@ public class ObservationBean {
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+    }
+
+    @DELETE
+    @Path("delete/{seqId}/{attrId}/{start}/{stop}")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response delete(@PathParam("seqId") Long seqId, @PathParam("attrId") Long attrId, @PathParam("start") Integer start, @PathParam("stop") Integer stop) {
+        try {
+            mgx.getObservationDAO().delete(seqId, attrId, start, stop);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return Response.ok().build();
     }
 }

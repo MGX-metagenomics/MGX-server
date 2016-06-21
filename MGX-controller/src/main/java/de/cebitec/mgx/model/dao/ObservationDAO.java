@@ -5,12 +5,14 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Observation;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.model.misc.BulkObservation;
 import de.cebitec.mgx.model.misc.SequenceObservation;
 import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 /**
  *
@@ -52,6 +54,68 @@ public class ObservationDAO<T extends Observation> {
         }
     }
 
+    public void delete(long seqId, long attrId, int start, int stop) throws MGXException {
+        try (Connection conn = ctx.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE seq_id=? AND attr_id=? AND start=? AND stop=?")) {
+                stmt.setLong(1, seqId);
+                stmt.setLong(2, attrId);
+                stmt.setInt(3, start);
+                stmt.setInt(4, stop);
+                stmt.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+    }
+
+    private final static String SQL_BULK_OBS
+            = "INSERT INTO observation (start, stop, attr_id, seq_id) SELECT ?, ?, ?, id FROM read WHERE seqrun_id=? AND name=?";
+
+    public void createBulk(List<BulkObservation> data) throws MGXException {
+
+        long duration = System.currentTimeMillis();
+
+        try (Connection conn = ctx.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_BULK_OBS)) {
+                for (BulkObservation obs : data) {
+                    stmt.setInt(1, obs.getStart());
+                    stmt.setInt(2, obs.getStop());
+                    stmt.setLong(3, obs.getAttributeId());
+                    stmt.setLong(4, obs.getSeqRunId());
+                    stmt.setString(5, obs.getSequenceName());
+                    stmt.addBatch();
+                }
+                int[] status = stmt.executeBatch();
+
+                if (status == null || status.length != data.size()) {
+                    throw new MGXException("Database batch update failed. Expected " + data.size()
+                            + ", got " + (status == null ? "null" : String.valueOf(status.length)));
+                }
+
+                // check number of affected rows for each batch; as each batch entry
+                // represents a single new observation to add, we expect int[]{1,1,1..}
+                int idx = 0;
+                for (int i : status) {
+                    if (i != 1) {
+                        throw new MGXException("Database batch updated failed. First failing read was " + data.get(idx).getSequenceName()
+                                + " with status " + String.valueOf(i) + ".");
+                    }
+                    idx++;
+                }
+
+            }
+        } catch (SQLException ex) {
+            ctx.log(ex.getMessage());
+            while (ex.getNextException() != null) {
+                ex = ex.getNextException();
+                ctx.log(ex.getMessage());
+            }
+            throw new MGXException(ex.getMessage());
+        }
+        duration = System.currentTimeMillis() - duration;
+        ctx.log("wrote bulk obs: " + data.size() + " in " + duration + "ms");
+    }
+
     public DBIterator<SequenceObservation> byRead(long seqId) throws MGXException {
         DBIterator<SequenceObservation> iter = null;
         PreparedStatement stmt = null;
@@ -76,4 +140,5 @@ public class ObservationDAO<T extends Observation> {
         }
         return iter;
     }
+
 }
