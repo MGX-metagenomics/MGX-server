@@ -76,7 +76,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         return (T) seq;
     }
 
-    public Sequence byName(Long runId, String seqName) throws MGXException {
+    public Sequence byName(long runId, String seqName) throws MGXException {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id, length FROM read WHERE seqrun_id=? AND name=?")) {
                 stmt.setLong(1, runId);
@@ -97,7 +97,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         throw new MGXException("Not found.");
     }
 
-    public AutoCloseableIterator<Long> getSeqIDs(Long attrId) throws MGXException {
+    public AutoCloseableIterator<Long> getSeqIDs(long attrId) throws MGXException {
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement("SELECT seq_id FROM observation WHERE attr_id=?");
