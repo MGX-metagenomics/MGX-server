@@ -73,8 +73,6 @@ public class ObservationDAO<T extends Observation> {
 
     public void createBulk(List<BulkObservation> data) throws MGXException {
 
-        long duration = System.currentTimeMillis();
-
         try (Connection conn = ctx.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BULK_OBS)) {
                 for (BulkObservation obs : data) {
@@ -112,8 +110,6 @@ public class ObservationDAO<T extends Observation> {
             }
             throw new MGXException(ex.getMessage());
         }
-        duration = System.currentTimeMillis() - duration;
-        ctx.log("wrote bulk obs: " + data.size() + " in " + duration + "ms");
     }
 
     public DBIterator<SequenceObservation> byRead(long seqId) throws MGXException {
@@ -121,6 +117,11 @@ public class ObservationDAO<T extends Observation> {
         PreparedStatement stmt = null;
         ResultSet rset = null;
         Connection conn = null;
+        
+        //
+        // no try-with-resources here; the DBIterator will take care of
+        // closing the database resources
+        //
 
         try {
             conn = ctx.getConnection();
