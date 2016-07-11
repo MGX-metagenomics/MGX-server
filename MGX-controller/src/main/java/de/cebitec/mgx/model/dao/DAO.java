@@ -139,13 +139,12 @@ public abstract class DAO<T extends Identifiable> {
         }
     }
 
-    protected final static String toSQLTemplateString(List l) {
-        if ((l == null) || (l.isEmpty())) {
+    protected final static String toSQLTemplateString(int size) {
+        if (size == 0) {
             return "";
         }
 
         StringBuilder oBuilder = new StringBuilder("?");
-        int size = l.size();
         for (int i = 2; i <= size; i++) {
             oBuilder.append(",?");
         }

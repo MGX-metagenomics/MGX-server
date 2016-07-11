@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -74,6 +75,39 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             throw new MGXException(ex);
         }
         return (T) seq;
+    }
+
+    @Override
+    public AutoCloseableIterator<T> getByIds(Collection<Long> ids) throws MGXException {
+        if (ids.size() > 10_000) {
+            throw new MGXException("Chunk too large, please do not request more than 10k sequences.");
+        }
+        
+        String GET_BY_IDS = "SELECT id, name, length FROM read WHERE id IN (" + toSQLTemplateString(ids.size()) + ")";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(GET_BY_IDS);
+            int idx = 1;
+            for (Long id : ids) {
+                stmt.setLong(idx++, id);
+            }
+            ResultSet rs = stmt.executeQuery();
+
+            return new DBIterator<T>(rs, stmt, conn) {
+                @Override
+                public T convert(ResultSet rs) throws SQLException {
+                    Sequence seq = new Sequence();
+                    seq.setId(rs.getLong(1));
+                    seq.setName(rs.getString(2));
+                    seq.setLength(rs.getInt(3));
+                    return (T) seq;
+                }
+            };
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
     }
 
     public Sequence byName(long runId, String seqName) throws MGXException {
