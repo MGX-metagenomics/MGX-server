@@ -35,6 +35,7 @@ import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -208,7 +209,7 @@ public class SeqRunBean {
                     r.close();
                 }
             }
-        } catch (Exception ex) {
+        } catch (MGXException | SeqStoreException ex) {
             Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -245,7 +246,9 @@ public class SeqRunBean {
                                         Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                 }
-                                r.close();
+                                if (r != null) {
+                                    r.close();
+                                }
                                 if (analyzer.getNumberOfSequences() == run.getNumberOfSequences()) {
                                     Persister.persist(prefix, analyzer);
                                 } else {
