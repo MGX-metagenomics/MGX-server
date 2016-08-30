@@ -8,9 +8,8 @@ import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
-import java.io.BufferedReader;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,8 +17,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -56,7 +53,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     stmt.execute();
                     stmt.close();
                 }
-                
+
                 // create assignment counts for attributes belonging to this job
                 String sql = "INSERT INTO attributecount "
                         + "SELECT attribute.id, count(attribute.id) FROM attribute "
@@ -82,7 +79,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     .append(File.separator)
                     .append(id).toString();
         } catch (IOException ex) {
-            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
+            getController().log(ex.getMessage());
             throw new MGXException(ex);
         }
 
@@ -152,20 +149,14 @@ public class JobDAO<T extends Job> extends DAO<T> {
         if (job.getStatus() != JobState.FAILED) {
             return "Job is not in FAILED state.";
         }
-        StringBuilder ret = new StringBuilder();
         try {
             String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
                     .append(File.separator).append(job.getId())
                     .append(".stderr").toString();
-            try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    ret.append(line).append(System.lineSeparator());
-                }
-            }
+            return UnixHelper.readFile(new File(fname));
         } catch (IOException ex) {
-            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
+            getController().log(ex.getMessage());
         }
-        return ret.toString();
+        return "";
     }
 }
