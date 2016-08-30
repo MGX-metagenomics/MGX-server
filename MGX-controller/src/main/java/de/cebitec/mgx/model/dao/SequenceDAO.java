@@ -79,10 +79,13 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
 
     @Override
     public AutoCloseableIterator<T> getByIds(Collection<Long> ids) throws MGXException {
+        if (ids == null || ids.isEmpty()) {
+            throw new MGXException("Null/empty ID list.");
+        }
         if (ids.size() > 10_000) {
             throw new MGXException("Chunk too large, please do not request more than 10k sequences.");
         }
-        
+
         String GET_BY_IDS = "SELECT id, name, length FROM read WHERE id IN (" + toSQLTemplateString(ids.size()) + ")";
 
         try {
@@ -105,6 +108,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 }
             };
         } catch (SQLException ex) {
+            getController().log("SQL statement failed: " + GET_BY_IDS);
             throw new MGXException(ex);
         }
 
