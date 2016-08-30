@@ -279,7 +279,6 @@ public class SequenceBean {
     @GET
     @Path("fetchSequenceIDs/{attrId}")
     @Produces("application/x-protobuf")
-    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLongList fetchSequenceIDs(@PathParam("attrId") Long attrId) {
         try (AutoCloseableIterator<Long> lIter = mgx.getSequenceDAO().getSeqIDs(attrId)) {
             MGXLongList.Builder b = MGXLongList.newBuilder();
