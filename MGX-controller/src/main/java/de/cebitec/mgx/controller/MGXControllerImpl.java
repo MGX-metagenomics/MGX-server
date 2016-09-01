@@ -29,6 +29,7 @@ public class MGXControllerImpl implements MGXController {
     private final String projectName;
     private final UserI user;
     //
+    private final MGXConfigurationI cfg;
     private final JPAMasterI gpmsmaster;
     private final EntityManager em;
     private File projectDir = null;
@@ -49,6 +50,12 @@ public class MGXControllerImpl implements MGXController {
         this.user = gpmsmaster.getUser();
         this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
         persistentDir = cfg.getPersistentDirectory();
+        this.cfg = cfg;
+    }
+
+    @Override
+    public MGXConfigurationI getConfiguration() {
+        return cfg;
     }
 
     @Override
@@ -180,16 +187,15 @@ public class MGXControllerImpl implements MGXController {
     public String getDatabaseName() {
         return gpmsmaster.getGPMSDatasource().getName();
     }
-//
-//    @Override
-//    public String getJDBCUrl() {
-//        return gpmsmaster.getProject().getDBConfig().getURI();
-//    }
 
     @Override
     public void close() {
         if (em.isOpen()) {
             em.close();
+        }
+        if (jobDAO != null) {
+            jobDAO.dispose();
+            jobDAO = null;
         }
     }
 
@@ -233,9 +239,14 @@ public class MGXControllerImpl implements MGXController {
         return new ToolDAO<>(this);
     }
 
+    private JobDAO<Job> jobDAO = null;
+    
     @Override
     public JobDAO<Job> getJobDAO() {
-        return new JobDAO<>(this);
+        if (jobDAO == null) {
+            jobDAO = new JobDAO<>(this);
+        }
+        return jobDAO;
     }
 
     @Override
@@ -273,34 +284,6 @@ public class MGXControllerImpl implements MGXController {
         return gpmsmaster.getRole();
     }
 
-//    private <T extends DAO> T getDAO(Class<T> clazz) {
-//        if (!daos.containsKey(clazz)) {
-//            daos.put(clazz, createDAO(clazz));
-//        }
-//        return (T) daos.get(clazz);
-//    }
-//
-//    private <T extends DAO> T createDAO(Class<T> clazz) {
-//        try {
-//            Constructor<T> c = clazz.getConstructor();
-//            T instance = c.newInstance(this);
-//            //instance.setController(this);
-//            return instance;
-//        } catch (InstantiationException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        } catch (IllegalArgumentException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        } catch (InvocationTargetException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        } catch (NoSuchMethodException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        } catch (SecurityException ex) {
-//            logger.log(Level.SEVERE, null, ex);
-//        }
-//        throw new UnsupportedOperationException("Could not create DAO " + clazz);
-//    }
     @Override
     public int hashCode() {
         int hash = 3;

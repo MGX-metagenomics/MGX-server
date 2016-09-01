@@ -1,6 +1,7 @@
 package de.cebitec.mgx.controller;
 
 import de.cebitec.gpms.core.RoleI;
+import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.model.db.*;
 import java.io.File;
@@ -19,6 +20,8 @@ public interface MGXController extends AutoCloseable {
     public void log(String msg);
 
     public void log(String msg, Object... args);
+    
+    public MGXConfigurationI getConfiguration();
 
     public HabitatDAO<Habitat> getHabitatDAO();
 

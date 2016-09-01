@@ -37,12 +37,6 @@
             <version>1.1</version>
             <scope>provided</scope>
         </dependency>
-        <!--<dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>MGX-maven-ejb</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency> -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>MGX-upload</artifactId>
@@ -128,11 +122,13 @@
             <artifactId>MGX-workers</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-conveyor</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        -->
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-web-api</artifactId>
