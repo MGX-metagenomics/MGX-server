@@ -19,7 +19,7 @@ import javax.ejb.Startup;
 @Startup
 public class Installer {
 
-    @EJB //(lookup = "java:global/MGX-maven-ear/MGX-gpms/GPMS")
+    @EJB
     private DBGPMSI gpms;
     private final EMFNameResolver resolver = new MGXPUResolver();
     private final MGXDataSourceSelector dsSelector = new MGXDataSourceSelector();
