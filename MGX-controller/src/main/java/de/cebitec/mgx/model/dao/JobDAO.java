@@ -1,7 +1,9 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
@@ -11,12 +13,15 @@ import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -33,6 +38,23 @@ public class JobDAO<T extends Job> extends DAO<T> {
     @Override
     Class getType() {
         return Job.class;
+    }
+
+    @Override
+    public <T extends Identifiable> T getById(Long id) throws MGXException {
+        Job job = super.getById(id);
+        fixParameters(job);
+        return (T) job;
+    }
+
+    @SuppressWarnings("unchecked")
+    public AutoCloseableIterator<T> getAll() throws MGXException {
+        List<T> jobs = getEntityManager().<T>createQuery("SELECT DISTINCT o FROM " + getClassName() + " o", getType())
+                .getResultList();
+        for (Job j : jobs) {
+            fixParameters(j);
+        }
+        return new ForwardingIterator<>(jobs.iterator());
     }
 
     @Override
@@ -84,9 +106,10 @@ public class JobDAO<T extends Job> extends DAO<T> {
         }
 
         for (String suffix : suffices) {
-            File f = new File(sb + suffix);
-            if (f.exists()) {
-                f.delete();
+            try {
+                Files.deleteIfExists(Paths.get(sb + suffix));
+            } catch (IOException ex) {
+                getController().log(ex.getMessage());
             }
         }
     }
@@ -140,9 +163,12 @@ public class JobDAO<T extends Job> extends DAO<T> {
     }
 
     public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) throws MGXException {
-        Iterator<Job> iterator = getEntityManager().<Job>createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun", Job.class).
-                setParameter("seqrun", sr).getResultList().iterator();
-        return new ForwardingIterator<>(iterator);
+        List<Job> jobs = getEntityManager().<Job>createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun", Job.class).
+                setParameter("seqrun", sr).getResultList();
+        for (Job j : jobs) {
+            fixParameters(j);
+        }
+        return new ForwardingIterator<>(jobs.iterator());
     }
 
     public String getError(Job job) throws MGXException {
@@ -158,5 +184,61 @@ public class JobDAO<T extends Job> extends DAO<T> {
             getController().log(ex.getMessage());
         }
         return "";
+    }
+
+    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
+
+    private void fixParameters(Job job) throws MGXException {
+        String fName = job.getTool().getXMLFile();
+        List<JobParameter> availableParams;
+
+        if (paramCache.containsKey(fName)) {
+            availableParams = paramCache.get(fName);
+        } else {
+            String toolXMLData;
+            try {
+                toolXMLData = UnixHelper.readFile(new File(fName));
+            } catch (IOException ex) {
+                throw new MGXException(ex);
+            }
+            availableParams = new ArrayList<>();
+            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, getController().getConfiguration().getPluginDump());
+            while (apIter.hasNext()) {
+                availableParams.add(apIter.next());
+            }
+            paramCache.put(fName, availableParams);
+        }
+
+        final String projectFileDir;
+        try {
+            projectFileDir = getController().getProjectFileDirectory().getAbsolutePath();
+        } catch (IOException ex) {
+            throw new MGXException(ex);
+        }
+
+        for (JobParameter jp : job.getParameters()) {
+            for (JobParameter candidate : availableParams) {
+                // can't compare by ID field here
+                if (jp.getNodeId() == candidate.getNodeId() && jp.getParameterName().equals(candidate.getParameterName())) {
+                    jp.setClassName(candidate.getClassName());
+                    jp.setType(candidate.getType());
+                    jp.setDisplayName(candidate.getDisplayName());
+                }
+            }
+
+            // do not expose internal path names
+            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir + File.separator)) {
+                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir + File.separator, ""));
+            }
+            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
+                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
+            }
+        }
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        paramCache.clear();
     }
 }

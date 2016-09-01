@@ -30,11 +30,11 @@ public abstract class DAO<T extends Identifiable> {
         return ctx;
     }
 
-    public EntityManager getEntityManager() {
+    public final EntityManager getEntityManager() {
         return ctx.getEntityManager();
     }
 
-    public Connection getConnection() throws SQLException {
+    public final Connection getConnection() throws SQLException {
         return ctx.getConnection();
     }
 
@@ -105,6 +105,9 @@ public abstract class DAO<T extends Identifiable> {
 
     protected final String getClassName() {
         return getType().getSimpleName();
+    }
+    
+    public void dispose() {
     }
 
     protected final void close(Connection c, Statement s, ResultSet r) {
