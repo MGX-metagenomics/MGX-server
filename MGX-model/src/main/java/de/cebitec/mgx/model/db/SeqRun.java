@@ -93,6 +93,11 @@ public class SeqRun implements Serializable, Identifiable {
         this.database_accession = database_accession;
         return this;
     }
+    
+    public SeqRun setNumberOfSequences(long num) {
+        num_sequences = num;
+        return this;
+    }
 
     public Collection<Sequence> getSequences() {
         return sequences;
