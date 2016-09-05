@@ -118,10 +118,9 @@ public class SampleBean {
     @Path("byHabitat/{id}")
     @Produces("application/x-protobuf")
     public SampleDTOList byHabitat(@PathParam("id") Long hab_id) {
-        Habitat habitat;
         AutoCloseableIterator<Sample> samples;
         try {
-            habitat = mgx.getHabitatDAO().getById(hab_id);
+            Habitat habitat = mgx.getHabitatDAO().getById(hab_id);
             samples = mgx.getSampleDAO().byHabitat(habitat);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
