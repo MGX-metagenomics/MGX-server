@@ -115,12 +115,14 @@ public class Rserve {
             try {
                 conn = new RConnection();
             } catch (RserveException ex) {
+                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (conn != null) {
                 try {
                     conn.shutdown();
                     conn.close();
                 } catch (RserveException ex) {
+                    Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             try {
@@ -137,6 +139,12 @@ public class Rserve {
         }
         if (err != null) {
             err.interrupt();
+        }
+        if (out != null) {
+            out.interrupt();
+        }
+
+        if (err != null) {
             try {
                 err.join();
             } catch (InterruptedException ex) {
@@ -144,7 +152,6 @@ public class Rserve {
             }
         }
         if (out != null) {
-            out.interrupt();
             try {
                 out.join();
             } catch (InterruptedException ex) {
@@ -169,8 +176,7 @@ public class Rserve {
             return scriptFile;
         }
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("de/cebitec/mgx/statistics/Rfunctions.r")) {
-            StringBuffer tmpRFileName = new StringBuffer('.').append("RSource").append(".R");
-            File tmpRFile = File.createTempFile(String.valueOf(System.currentTimeMillis()), tmpRFileName.toString());
+            File tmpRFile = File.createTempFile(String.valueOf(System.currentTimeMillis()), "RSource.R");
 
             byte[] buffer = new byte[1024];
             try (FileOutputStream rOut = new FileOutputStream(tmpRFile)) {
@@ -191,7 +197,7 @@ public class Rserve {
     }
     private static volatile boolean exiting = false;
 
-    private static class RStreamReader implements Runnable {
+    private final static class RStreamReader implements Runnable {
 
         private final InputStream err;
 
@@ -203,9 +209,14 @@ public class Rserve {
         public void run() {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(err))) {
                 String line;
-                while (!exiting && ((line = in.readLine()) != null)) {
+                while (!exiting && in.ready() && ((line = in.readLine()) != null)) {
                     if (!line.trim().isEmpty()) {
                         Logger.getLogger(Rserve.class.getName()).log(Level.INFO, "R: {0}", line);
+                    } else {
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException ex) {
+                        }
                     }
                 }
             } catch (IOException ex) {
