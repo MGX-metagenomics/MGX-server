@@ -3,10 +3,9 @@ package de.cebitec.mgx.controller;
 import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
-import de.cebitec.gpms.data.JPAMasterI;
+import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.model.dao.*;
-import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.sql.SQLException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.persistence.EntityManager;
 import javax.sql.DataSource;
 
 /**
@@ -30,8 +28,8 @@ public class MGXControllerImpl implements MGXController {
     private final UserI user;
     //
     private final MGXConfigurationI cfg;
-    private final JPAMasterI gpmsmaster;
-    private final EntityManager em;
+    private final JDBCMasterI gpmsmaster;
+    //private final EntityManager em;
     private File projectDir = null;
     private File projectQCDir = null;
     private File projectFileDir = null;
@@ -43,12 +41,12 @@ public class MGXControllerImpl implements MGXController {
     //
     private final static String DOUBLE_SEPARATOR = File.separator + File.separator;
 
-    public MGXControllerImpl(JPAMasterI gpmsmaster, MGXConfigurationI cfg) {
+    public MGXControllerImpl(JDBCMasterI gpmsmaster, MGXConfigurationI cfg) {
         this.gpmsmaster = gpmsmaster;
         ProjectI gpmsProject = gpmsmaster.getProject();
         this.projectName = gpmsProject.getName();
         this.user = gpmsmaster.getUser();
-        this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
+        //this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
         persistentDir = cfg.getPersistentDirectory();
         this.cfg = cfg;
     }
@@ -56,6 +54,11 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public MGXConfigurationI getConfiguration() {
         return cfg;
+    }
+
+    @Override
+    public final void log(Exception ex) {
+        logger.log(Level.INFO, "{0}/{1}: {2}", new Object[]{gpmsmaster.getProject().getName(), getCurrentUser(), ex});
     }
 
     @Override
@@ -71,10 +74,10 @@ public class MGXControllerImpl implements MGXController {
         log(String.format(msg, args));
     }
 
-    @Override
-    public EntityManager getEntityManager() {
-        return em;
-    }
+//    @Override
+//    public EntityManager getEntityManager() {
+//        return em;
+//    }
 
     @Override
     public File getProjectDirectory() throws IOException {
@@ -190,9 +193,9 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public void close() {
-        if (em.isOpen()) {
-            em.close();
-        }
+//        if (em.isOpen()) {
+//            em.close();
+//        }
         if (jobDAO != null) {
             jobDAO.dispose();
             jobDAO = null;
@@ -200,58 +203,58 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public HabitatDAO<Habitat> getHabitatDAO() {
-        return new HabitatDAO<>(this);
+    public HabitatDAO getHabitatDAO() {
+        return new HabitatDAO(this);
     }
 
     @Override
-    public AttributeTypeDAO<AttributeType> getAttributeTypeDAO() {
-        return new AttributeTypeDAO<>(this);
+    public AttributeTypeDAO getAttributeTypeDAO() {
+        return new AttributeTypeDAO(this);
     }
 
     @Override
-    public AttributeDAO<Attribute> getAttributeDAO() {
-        return new AttributeDAO<>(this);
+    public AttributeDAO getAttributeDAO() {
+        return new AttributeDAO(this);
     }
 
     @Override
-    public SampleDAO<Sample> getSampleDAO() {
-        return new SampleDAO<>(this);
+    public SampleDAO getSampleDAO() {
+        return new SampleDAO(this);
     }
 
     @Override
-    public DNAExtractDAO<DNAExtract> getDNAExtractDAO() {
-        return new DNAExtractDAO<>(this);
+    public DNAExtractDAO getDNAExtractDAO() {
+        return new DNAExtractDAO(this);
     }
 
     @Override
-    public SeqRunDAO<SeqRun> getSeqRunDAO() {
-        return new SeqRunDAO<>(this);
+    public SeqRunDAO getSeqRunDAO() {
+        return new SeqRunDAO(this);
     }
 
     @Override
-    public SequenceDAO<Sequence> getSequenceDAO() {
-        return new SequenceDAO<>(this);
+    public SequenceDAO getSequenceDAO() {
+        return new SequenceDAO(this);
     }
 
     @Override
-    public ToolDAO<Tool> getToolDAO() {
-        return new ToolDAO<>(this);
+    public ToolDAO getToolDAO() {
+        return new ToolDAO(this);
     }
 
-    private JobDAO<Job> jobDAO = null;
-    
+    private JobDAO jobDAO = null;
+
     @Override
-    public JobDAO<Job> getJobDAO() {
+    public JobDAO getJobDAO() {
         if (jobDAO == null) {
-            jobDAO = new JobDAO<>(this);
+            jobDAO = new JobDAO(this);
         }
         return jobDAO;
     }
 
     @Override
-    public JobParameterDAO<JobParameter> getJobParameterDAO() {
-        return new JobParameterDAO<>(this);
+    public JobParameterDAO getJobParameterDAO() {
+        return new JobParameterDAO(this);
     }
 
     @Override
@@ -260,13 +263,13 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public ReferenceDAO<Reference> getReferenceDAO() {
-        return new ReferenceDAO<>(this);
+    public ReferenceDAO getReferenceDAO() {
+        return new ReferenceDAO(this);
     }
 
     @Override
-    public MappingDAO<Mapping> getMappingDAO() {
-        return new MappingDAO<>(this);
+    public MappingDAO getMappingDAO() {
+        return new MappingDAO(this);
     }
 
     @Override

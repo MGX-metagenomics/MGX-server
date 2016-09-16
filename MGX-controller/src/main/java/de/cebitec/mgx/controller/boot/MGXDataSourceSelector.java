@@ -5,7 +5,7 @@ import de.cebitec.gpms.core.DataSource_DBI;
 import de.cebitec.gpms.core.GPMSException;
 import de.cebitec.gpms.core.MasterI;
 import de.cebitec.gpms.core.MembershipI;
-import de.cebitec.gpms.data.JPAMasterI;
+import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.gpms.util.GPMSDataSourceSelector;
 
 /**
@@ -20,8 +20,8 @@ public class MGXDataSourceSelector extends GPMSDataSourceSelector {
     @Override
     public <T extends MasterI> DataSourceI selectFromDataSources(MembershipI mbr, Class<T> masterClass) throws GPMSException {
 
-        if (!JPAMasterI.class.isAssignableFrom(masterClass)) {
-            throw new GPMSException("MGX requires JPA as a master class.");
+        if (!JDBCMasterI.class.isAssignableFrom(masterClass)) {
+            throw new GPMSException("MGX requires JDBC as a master class.");
         }
         if (mbr.getProject().getDataSources().isEmpty()) {
             throw new GPMSException(mbr.getProject().getName() + " has no Datasources.");

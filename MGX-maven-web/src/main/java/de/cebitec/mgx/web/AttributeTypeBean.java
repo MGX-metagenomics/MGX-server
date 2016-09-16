@@ -77,7 +77,7 @@ public class AttributeTypeBean {
     @Produces("application/x-protobuf")
     public AttributeTypeDTOList ByJob(@PathParam("jobId") Long jobId) {
         try {
-            return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().ByJob(jobId));
+            return AttributeTypeDTOFactory.getInstance().toDTOList(mgx.getAttributeTypeDAO().byJob(jobId));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

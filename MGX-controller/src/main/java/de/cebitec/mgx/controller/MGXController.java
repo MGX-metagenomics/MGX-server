@@ -3,12 +3,10 @@ package de.cebitec.mgx.controller;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.model.dao.*;
-import de.cebitec.mgx.model.db.*;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.persistence.EntityManager;
 import javax.sql.DataSource;
 
 /**
@@ -17,37 +15,39 @@ import javax.sql.DataSource;
  */
 public interface MGXController extends AutoCloseable {
 
+    public void log(Exception ex);
+
     public void log(String msg);
 
     public void log(String msg, Object... args);
-    
+
     public MGXConfigurationI getConfiguration();
 
-    public HabitatDAO<Habitat> getHabitatDAO();
+    public HabitatDAO getHabitatDAO();
 
-    public AttributeTypeDAO<AttributeType> getAttributeTypeDAO();
+    public AttributeTypeDAO getAttributeTypeDAO();
 
-    public AttributeDAO<Attribute> getAttributeDAO();
+    public AttributeDAO getAttributeDAO();
 
-    public SampleDAO<Sample> getSampleDAO();
+    public SampleDAO getSampleDAO();
 
-    public DNAExtractDAO<DNAExtract> getDNAExtractDAO();
+    public DNAExtractDAO getDNAExtractDAO();
 
-    public SeqRunDAO<SeqRun> getSeqRunDAO();
+    public SeqRunDAO getSeqRunDAO();
 
-    public SequenceDAO<Sequence> getSequenceDAO();
+    public SequenceDAO getSequenceDAO();
 
-    public ToolDAO<Tool> getToolDAO();
+    public ToolDAO getToolDAO();
 
-    public JobDAO<Job> getJobDAO();
+    public JobDAO getJobDAO();
 
-    public JobParameterDAO<JobParameter> getJobParameterDAO();
+    public JobParameterDAO getJobParameterDAO();
 
     public ObservationDAO getObservationDAO();
 
-    public ReferenceDAO<Reference> getReferenceDAO();
+    public ReferenceDAO getReferenceDAO();
 
-    public MappingDAO<Mapping> getMappingDAO();
+    public MappingDAO getMappingDAO();
 
     public String getProjectName();
 
@@ -55,10 +55,10 @@ public interface MGXController extends AutoCloseable {
 
     public RoleI getCurrentRole();
 
-    public EntityManager getEntityManager();
+//    public EntityManager getEntityManager();
 
     public DataSource getDataSource();
-    
+
     public Connection getConnection() throws SQLException;
 
     public File getProjectDirectory() throws IOException;

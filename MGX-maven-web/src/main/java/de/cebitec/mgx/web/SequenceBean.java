@@ -17,6 +17,9 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
+import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -26,8 +29,8 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import javax.ejb.EJB;
@@ -173,13 +176,33 @@ public class SequenceBean {
     public MGXString initDownloadforAttributes(AttributeDTOList attrdtos) {
         SeqByAttributeDownloadProvider provider = null;
         try {
-            Collection<Long> ids = new ArrayList<>();
+            long[] ids = new long[attrdtos.getAttributeCount()];
+            int i = 0;
             for (AttributeDTO dto : attrdtos.getAttributeList()) {
-                ids.add(dto.getId());
+                ids[i++] = dto.getId();
             }
 
             mgx.log("Creating attribute-based download session for " + mgx.getProjectName());
-            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), mgx.getAttributeDAO().getByIds(ids));
+            Set<Attribute> attributes = new HashSet<>();
+            AutoCloseableIterator<Attribute> iter = mgx.getAttributeDAO().getByIds(ids);
+            if (!iter.hasNext()) {
+                throw new MGXException("No attributes provided.");
+            }
+            while (iter.hasNext()) {
+                attributes.add(iter.next());
+            }
+
+            SeqRun seqrun = null;
+            for (Attribute a : attributes) {
+                Job job = mgx.getJobDAO().getById(a.getJobId());
+                if (seqrun == null) {
+                    seqrun = mgx.getSeqRunDAO().getById(job.getSeqrunId());
+                } else if (seqrun.getId() != job.getSeqrunId()) {
+                    throw new MGXException("Selected attributes refer to different sequencing runs.");
+                }
+            }
+
+            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), attributes, seqrun.getDBFile());
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());

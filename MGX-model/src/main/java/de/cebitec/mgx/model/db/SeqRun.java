@@ -1,69 +1,31 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.File;
-import java.io.Serializable;
 import java.util.Collection;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "SeqRun")
-public class SeqRun implements Serializable, Identifiable {
+public class SeqRun extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Basic
-    @NotNull
     protected String name;
-    @Basic
     protected String DBFile;
-    @Basic
     protected String database_accession;
-    @Basic
-    @NotNull
     protected Boolean submitted_to_insdc;
-    @Basic
-    @NotNull
     protected Long sequencing_technology;
-    @Basic
-    @NotNull
     protected Long sequencing_method;
-    @Basic
-    @NotNull
     protected Long num_sequences = Long.valueOf(0);
-    //
-    @OneToMany(mappedBy = "seqrun", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<Sequence> sequences;
-    //
-    @ManyToOne
-    @JoinColumn(name = "dnaextract_id", nullable = false)
-    protected DNAExtract dnaextract;
-    //
-    @OneToMany(mappedBy = "seqrun", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
+    protected long dnaextract;
     protected Collection<Job> jobs;
 
-    public DNAExtract getExtract() {
+    public long getExtractId() {
         return dnaextract;
     }
 
-    public SeqRun setExtract(DNAExtract dnaextract) {
+    public SeqRun setExtractId(long dnaextract) {
         this.dnaextract = dnaextract;
-        return this;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public SeqRun setId(Long id) {
-        this.id = id;
         return this;
     }
 
@@ -93,7 +55,7 @@ public class SeqRun implements Serializable, Identifiable {
         this.database_accession = database_accession;
         return this;
     }
-    
+
     public SeqRun setNumberOfSequences(long num) {
         num_sequences = num;
         return this;
@@ -142,7 +104,7 @@ public class SeqRun implements Serializable, Identifiable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 
@@ -152,24 +114,17 @@ public class SeqRun implements Serializable, Identifiable {
             return false;
         }
         SeqRun other = (SeqRun) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER) 
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.seqrun[id=" + id + "]";
-    }
-
-    @PreRemove
-    public void removeDBFile() {
-        if (DBFile != null) {
-            File dbf = new File(DBFile);
-            if (dbf.exists()) {
-                dbf.delete();
-            }
-        }
-    }
+//    @PreRemove
+//    public void removeDBFile() {
+//        if (DBFile != null) {
+//            File dbf = new File(DBFile);
+//            if (dbf.exists()) {
+//                dbf.delete();
+//            }
+//        }
+//    }
 }

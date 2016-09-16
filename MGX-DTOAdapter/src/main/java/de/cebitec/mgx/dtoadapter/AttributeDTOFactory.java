@@ -4,6 +4,7 @@ import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTO.Builder;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 
 /**
@@ -26,10 +27,10 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         Builder b = AttributeDTO.newBuilder();
         b.setId(attr.getId())
                 .setValue(attr.getValue())
-                .setJobid(attr.getJob().getId())
-                .setAttributeTypeId(attr.getAttributeType().getId());
-        if (attr.getParent() != null) {
-            b.setParentId(attr.getParent().getId());
+                .setJobid(attr.getJobId())
+                .setAttributeTypeId(attr.getAttributeTypeId());
+        if (attr.getParentId()!= Identifiable.INVALID_IDENTIFIER) {
+            b.setParentId(attr.getParentId());
         }
         return b.build();
     }
@@ -38,8 +39,8 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         Builder b = AttributeDTO.newBuilder();
         b.setId(attr.getId())
                 .setValue(attr.getValue())
-                .setJobid(attr.getJob().getId())
-                .setAttributeTypeId(attr.getAttributeType().getId());
+                .setJobid(attr.getJobId())
+                .setAttributeTypeId(attr.getAttributeTypeId());
         b.setParentId(parentId);
         return b.build();
     }

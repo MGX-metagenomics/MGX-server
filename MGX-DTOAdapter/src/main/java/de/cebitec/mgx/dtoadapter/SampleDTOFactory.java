@@ -29,7 +29,7 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, Sampl
 
         return SampleDTO.newBuilder()
                 .setId(s.getId())
-                .setHabitatId(s.getHabitat().getId())
+                .setHabitatId(s.getHabitatId())
                 .setTemperature(s.getTemperature())
                 .setMaterial(s.getMaterial())
                 .setVolume(s.getVolume())
@@ -45,7 +45,8 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, Sampl
                 .setMaterial(dto.getMaterial())
                 .setTemperature(dto.getTemperature())
                 .setVolume(dto.getVolume())
-                .setVolumeUnit(dto.getVolumeUnit());
+                .setVolumeUnit(dto.getVolumeUnit())
+                .setHabitatId(dto.getHabitatId());
 
         if (dto.hasId()) {
             s.setId(dto.getId());

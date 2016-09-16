@@ -36,9 +36,9 @@ public class JobParameterDTOFactory extends DTOConversionBase<JobParameter, JobP
                 .setNodeId(p.getNodeId())
                 .setParameterName(p.getParameterName());
 
-        if (p.getId() != null) {
-            b = b.setId(p.getId());
-        }
+        //if (p.getId() != JobParameter.INVALID_IDENTIFIER) {
+        b = b.setId(p.getId());
+        //}
 
         //if (p.getUserName() != null) {
         b.setUserName(p.getUserName());

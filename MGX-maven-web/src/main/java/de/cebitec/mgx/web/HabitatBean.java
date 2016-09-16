@@ -106,6 +106,13 @@ public class HabitatBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        try {
+            mgx.getHabitatDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+
         UUID taskId;
         try {
             taskId = taskHolder.addTask(new DeleteHabitat(mgx.getDataSource(), id, mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
