@@ -27,10 +27,10 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
     @Override
     public final DNAExtractDTO toDTO(DNAExtract d) {
         Builder b = DNAExtractDTO.newBuilder();
-        if (d.getId() != null) {
+        if (d.getId() != DNAExtract.INVALID_IDENTIFIER) {
             b.setId(d.getId());
         }
-        b = b.setSampleId(d.getSample().getId());
+        b = b.setSampleId(d.getSampleId());
         b = b.setName(d.getName());
         b = b.setMethod(d.getMethod());
         b = b.setProtocolName(d.getProtocol());
@@ -66,6 +66,8 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
         if (dto.hasId()) {
             d.setId(dto.getId());
         }
+        
+        d.setSampleId(dto.getSampleId());
 
         d.setName(dto.getName());
         d.setMethod(dto.getMethod());

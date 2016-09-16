@@ -54,11 +54,11 @@ public class DNAExtractBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(DNAExtractDTO dto) {
-        Long DNAExtract_id = null;
+        long DNAExtract_id = -1;
         try {
-            Sample s = mgx.getSampleDAO().getById(dto.getSampleId());
+            //Sample s = mgx.getSampleDAO().getById(dto.getSampleId());
             DNAExtract d = DNAExtractDTOFactory.getInstance().toDB(dto);
-            s.addDNAExtract(d);
+            //s.addDNAExtract(d);
             DNAExtract_id = mgx.getDNAExtractDAO().create(d);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -71,14 +71,7 @@ public class DNAExtractBean {
     @Consumes("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(DNAExtractDTO dto) {
-        Sample s = null;
-        try {
-            s = mgx.getSampleDAO().getById(dto.getSampleId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
         DNAExtract extract = DNAExtractDTOFactory.getInstance().toDB(dto);
-        extract.setSample(s);
         try {
             mgx.getDNAExtractDAO().update(extract);
         } catch (MGXException ex) {
@@ -115,10 +108,8 @@ public class DNAExtractBean {
     @Path("bySample/{id}")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList bySample(@PathParam("id") Long sample_id) {
-        Sample sample;
         try {
-            sample = mgx.getSampleDAO().getById(sample_id);
-            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample));
+            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample_id));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -129,6 +120,13 @@ public class DNAExtractBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        try {
+            mgx.getDNAExtractDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+
         UUID taskId;
         try {
             taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));

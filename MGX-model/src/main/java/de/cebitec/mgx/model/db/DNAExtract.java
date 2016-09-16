@@ -1,55 +1,26 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
 import java.util.Collection;
-import javax.persistence.*;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "DNAExtract")
-public class DNAExtract implements Serializable, Identifiable {
+public class DNAExtract extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Basic
-    @Column(nullable=false)
     private String name;
-    @Basic
     protected String method;
-    @Basic
     protected String protocol;
-    @Basic
     protected String fivePrimer;
-    @Basic
     protected String threePrimer;
-    @Basic
     protected String targetGene;
-    @Basic
     protected String targetFragment;
-    @Basic
-    @Column(name = "description")
     protected String description;
     //
-    @OneToMany(mappedBy = "dnaextract", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     protected Collection<SeqRun> seqruns;
     //
-    @ManyToOne
-    @JoinColumn(name = "sample_id", nullable = false)
-    protected Sample sample;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    protected long sample;
 
     public String getName() {
         return name;
@@ -122,11 +93,11 @@ public class DNAExtract implements Serializable, Identifiable {
         return this;
     }
 
-    public Sample getSample() {
+    public long getSampleId() {
         return sample;
     }
-
-    public void setSample(Sample sample) {
+    
+    public void setSampleId(long sample) {
         this.sample = sample;
     }
 
@@ -140,13 +111,13 @@ public class DNAExtract implements Serializable, Identifiable {
 
     public void addSeqRun(SeqRun s) {
         getSeqruns().add(s);
-        s.setExtract(this);
+        s.setExtractId(getId());
     }
 
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 
@@ -156,14 +127,7 @@ public class DNAExtract implements Serializable, Identifiable {
             return false;
         }
         DNAExtract other = (DNAExtract) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.DNAExtract[id=" + id + "]";
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER) 
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 }

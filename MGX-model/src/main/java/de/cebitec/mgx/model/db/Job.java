@@ -1,57 +1,28 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
-import javax.persistence.*;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Job")
-public class Job implements Serializable, Identifiable {
+public class Job extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     //
-    @ManyToOne
-    @JoinColumn(name = "seqrun_id", nullable = false)
-    protected SeqRun seqrun;
+    protected long seqrun_id;
     //
-    @ManyToOne
-    @JoinColumn(name = "tool_id", nullable = false)
-    protected Tool tool;
-    @Basic
+    protected long tool_id;
     protected String created_by;
     //
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = true, insertable = false)
     protected Date startDate = null;
     //
-    @Column(nullable = true, insertable = false)
-    @Temporal(TemporalType.TIMESTAMP)
     protected Date finishDate = null;
     //
-    @OneToMany(mappedBy = "job", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
     protected Collection<JobParameter> params;
     
-    @Basic
-    @Column(name = "job_state")
     private int jobstate;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public Job setId(Long id) {
-        this.id = id;
-        return this;
-    }
 
     public JobState getStatus() {
         return JobState.values()[jobstate];
@@ -62,12 +33,12 @@ public class Job implements Serializable, Identifiable {
         return this;
     }
 
-    public Tool getTool() {
-        return tool;
+    public long getToolId() {
+        return tool_id;
     }
 
-    public Job setTool(Tool tool) {
-        this.tool = tool;
+    public Job setToolId(long tool) {
+        this.tool_id = tool;
         return this;
     }
 
@@ -98,12 +69,12 @@ public class Job implements Serializable, Identifiable {
         return this;
     }
 
-    public SeqRun getSeqrun() {
-        return seqrun;
+    public long getSeqrunId() {
+        return seqrun_id;
     }
 
-    public Job setSeqrun(SeqRun seqrun) {
-        this.seqrun = seqrun;
+    public Job setSeqrunId(long seqrun) {
+        this.seqrun_id = seqrun;
         return this;
     }
 
@@ -119,7 +90,7 @@ public class Job implements Serializable, Identifiable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 
@@ -129,14 +100,8 @@ public class Job implements Serializable, Identifiable {
             return false;
         }
         Job other = (Job) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER) 
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.Job[id=" + id + "]";
-    }
 }

@@ -1,65 +1,33 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Sample")
-public class Sample implements Serializable, Identifiable {
+public class Sample extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Basic
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "collectiondate")
     protected Date collectiondate = null;
-    @Basic
-    @NotNull
-    @Column(name = "material")
     protected String material;
-    @Basic
-    @Column(name = "temperature", precision=7, scale=2)
     protected BigDecimal temperature;
-    @Basic
-    @Column(name = "volume")
     protected int volume;
-    @Basic
-    @Column(name = "volume_unit")
     protected String volume_unit;
     //
-    @OneToMany(mappedBy = "sample", fetch = FetchType.LAZY, cascade = {CascadeType.REMOVE})
     protected Collection<DNAExtract> extracts;
     //
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "habitat_id", nullable = false)
-    protected Habitat habitat;
+    protected long habitat;
 
-    public Habitat getHabitat() {
+    public long getHabitatId() {
         return habitat;
     }
 
-    public Sample setHabitat(Habitat h) {
+    public Sample setHabitatId(long h) {
         habitat = h;
-        return this;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public Sample setId(Long id) {
-        this.id = id;
         return this;
     }
 
@@ -109,6 +77,9 @@ public class Sample implements Serializable, Identifiable {
     }
 
     public Collection<DNAExtract> getDNAExtracts() {
+        if (extracts == null) {
+            extracts = new ArrayList<>();
+        }
         return extracts;
     }
 
@@ -119,14 +90,14 @@ public class Sample implements Serializable, Identifiable {
 
     public Sample addDNAExtract(DNAExtract d) {
         getDNAExtracts().add(d);
-        d.setSample(this);
+        d.setSampleId(getId());
         return this;
     }
 
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 
@@ -136,14 +107,7 @@ public class Sample implements Serializable, Identifiable {
             return false;
         }
         Sample other = (Sample) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.Sample[id=" + id + "]";
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER)
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 }

@@ -1,26 +1,17 @@
 package de.cebitec.mgx.global.model;
 
 import de.cebitec.mgx.model.db.Identifiable;
-import java.io.Serializable;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-public class Term implements Identifiable, Serializable {
+public class Term extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    private Long id;
-    private Long parent_id;
+    private long parent_id = INVALID_IDENTIFIER;
     private String name;
     private String description;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
 
     public String getDescription() {
         return description;
@@ -28,11 +19,6 @@ public class Term implements Identifiable, Serializable {
 
     public Term setDescription(String description) {
         this.description = description;
-        return this;
-    }
-
-    public Term setId(Long id) {
-        this.id = id;
         return this;
     }
 

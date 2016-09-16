@@ -4,17 +4,21 @@ import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.JobState;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author sjaenick
  */
-public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
+public class AttributeTypeDAO extends DAO<AttributeType> {
 
     public AttributeTypeDAO(MGXControllerImpl ctx) {
         super(ctx);
@@ -25,10 +29,156 @@ public class AttributeTypeDAO<T extends AttributeType> extends DAO<T> {
         return AttributeType.class;
     }
 
+    private final static String CREATE = "INSERT INTO attributetype (name, structure, value_type) "
+            + "VALUES (?,?,?) RETURNING id";
+
+    @Override
+    public long create(AttributeType obj) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+                stmt.setString(1, obj.getName());
+                stmt.setString(2, String.valueOf(obj.getStructure()));
+                stmt.setString(3, String.valueOf(obj.getValueType()));
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        obj.setId(rs.getLong(1));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+        return obj.getId();
+    }
+
+    public void delete(long id) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributetype WHERE id=?")) {
+                stmt.setLong(1, id);
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+    }
+
+    private final static String BY_ID = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
+            + "FROM attributetype atype WHERE id=?";
+
+    @Override
+    public AttributeType getById(long id) throws MGXException {
+        if (id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+                stmt.setLong(1, id);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                    }
+                    AttributeType aType = new AttributeType();
+                    aType.setId(rs.getLong(1));
+                    aType.setName(rs.getString(2));
+                    aType.setValueType(rs.getString(3).charAt(0));
+                    aType.setStructure(rs.getString(4).charAt(0));
+
+                    return aType;
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+    }
+
+    public AutoCloseableIterator<AttributeType> getByIds(long... ids) throws MGXException {
+        if (ids == null || ids.length == 0) {
+            throw new MGXException("Null/empty ID list.");
+        }
+        List<AttributeType> ret = null;
+
+        String BY_IDS = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
+                + "FROM attributetype atype WHERE id IN (" + toSQLTemplateString(ids.length) + ")";
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
+                int idx = 1;
+                for (Long id : ids) {
+                    stmt.setLong(idx++, id);
+                }
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        AttributeType aType = new AttributeType();
+                        aType.setId(rs.getLong(1));
+                        aType.setName(rs.getString(2));
+                        aType.setValueType(rs.getString(3).charAt(0));
+                        aType.setStructure(rs.getString(4).charAt(0));
+
+                        if (ret == null) {
+                            ret = new ArrayList<>(ids.length);
+                        }
+
+                        ret.add(aType);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+            throw new MGXException(ex);
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
+    private final static String FETCHALL = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
+            + "FROM attributetype atype "
+            + "LEFT JOIN attribute attr ON (atype.id = attr.attrtype_id) "
+            + "LEFT JOIN job ON (attr.job_id = job.id) "
+            + "WHERE job.job_state=? "
+            + "GROUP BY atype.id, atype.name, atype.value_type, atype.structure "
+            + "ORDER BY atype.name ASC";
+
+    public AutoCloseableIterator<AttributeType> getAll() throws MGXException {
+
+        List<AttributeType> ret = null;
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+                stmt.setInt(1, JobState.FINISHED.getValue());
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+
+                        if (ret == null) {
+                            ret = new ArrayList<>();
+                        }
+
+                        AttributeType aType = new AttributeType();
+                        aType.setId(rs.getLong(1));
+                        aType.setName(rs.getString(2));
+                        aType.setValueType(rs.getString(3).charAt(0));
+                        aType.setStructure(rs.getString(4).charAt(0));
+
+                        ret.add(aType);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
     /*
      *  returns attribute types for a job, if it's in FINISHED state
      */
-    public DBIterator<AttributeType> ByJob(long jobId) throws MGXException {
+    public DBIterator<AttributeType> byJob(long jobId) throws MGXException {
 
         DBIterator<AttributeType> iter = null;
 

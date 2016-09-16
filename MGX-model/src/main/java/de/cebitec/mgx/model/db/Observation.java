@@ -1,31 +1,19 @@
 package de.cebitec.mgx.model.db;
 
 import java.io.Serializable;
-import javax.persistence.*;
+import java.util.Objects;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Observation")
 public class Observation implements Serializable {
 
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seq_id", nullable = false)
-    private Sequence seq;
+    private long seq_id;
     //
-    @Id
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attr_id", nullable = false)
-    private Attribute attribute;
+    private long attr_id;
     //
-    @Basic
-    @Column(name = "start")
     protected int start;
-    @Basic
-    @Column(name = "stop")
     protected int stop;
 
     public int getStart() {
@@ -44,24 +32,37 @@ public class Observation implements Serializable {
         this.stop = stop;
     }
 
-    public Sequence getSeq() {
-        return seq;
+    public long getSeqId() {
+        return seq_id;
     }
 
-    public void setSeq(Sequence seq) {
-        this.seq = seq;
+    public void setSeq(long seq) {
+        this.seq_id = seq;
     }
 
-    public Attribute getAttribute() {
-        return attribute;
+    public long getAttributeId() {
+        return attr_id;
     }
 
-    public void setAttribute(Attribute attribute) {
-        this.attribute = attribute;
+    public void setAttributeId(long attribute) {
+        this.attr_id = attribute;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + (int) (this.seq_id ^ (this.seq_id >>> 32));
+        hash = 67 * hash + (int) (this.attr_id ^ (this.attr_id >>> 32));
+        hash = 67 * hash + this.start;
+        hash = 67 * hash + this.stop;
+        return hash;
     }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (obj == null) {
             return false;
         }
@@ -69,10 +70,10 @@ public class Observation implements Serializable {
             return false;
         }
         final Observation other = (Observation) obj;
-        if (this.seq != other.seq && (this.seq == null || !this.seq.equals(other.seq))) {
+        if (this.seq_id != other.seq_id) {
             return false;
         }
-        if (this.attribute != other.attribute && (this.attribute == null || !this.attribute.equals(other.attribute))) {
+        if (this.attr_id != other.attr_id) {
             return false;
         }
         if (this.start != other.start) {
@@ -83,19 +84,7 @@ public class Observation implements Serializable {
         }
         return true;
     }
+    
+    
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 89 * hash + (this.seq != null ? this.seq.hashCode() : 0);
-        hash = 89 * hash + (this.attribute != null ? this.attribute.hashCode() : 0);
-        hash = 89 * hash + this.start;
-        hash = 89 * hash + this.stop;
-        return hash;
-    }
-
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.Observation";
-    }
 }

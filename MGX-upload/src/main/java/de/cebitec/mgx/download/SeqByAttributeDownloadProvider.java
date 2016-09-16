@@ -5,6 +5,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
@@ -34,30 +35,23 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     private boolean have_more_data = true;
     private Map<Long, String> readnames = null;
 
-    public SeqByAttributeDownloadProvider(DataSource dataSource, String projectName, Iterator<Attribute> attrIter) throws MGXException {
+    public SeqByAttributeDownloadProvider(DataSource dataSource, String projectName, Set<Attribute> attributes, String dbFile) throws MGXException {
         super(dataSource, projectName);
 
-        if (!attrIter.hasNext()) {
-            throw new MGXException("No attributes provided.");
-        }
-
-        Set<Attribute> attributes = new HashSet<>();
         // all attributes are assumed to refer to the same run
-        String fName = null;
-        while (attrIter.hasNext()) {
-            Attribute a = attrIter.next();
-            attributes.add(a);
-            if (fName == null) {
-                fName = a.getJob().getSeqrun().getDBFile();
-            } else {
-                String fName2 = a.getJob().getSeqrun().getDBFile();
-                if (!fName.equals(fName2)) {
-                    throw new MGXException("Selected attributes refer to different sequencing runs.");
-                }
-            }
-        }
+//        String fName = null;
+//        for (Attribute a : attributes) {
+//            if (fName == null) {
+//                fName = a.getJob().getSeqrun().getDBFile();
+//            } else {
+//                String fName2 = a.getJob().getSeqrun().getDBFile();
+//                if (!fName.equals(fName2)) {
+//                    throw new MGXException("Selected attributes refer to different sequencing runs.");
+//                }
+//            }
+//        }
         try {
-            reader = SeqReaderFactory.<DNASequenceI>getReader(fName);
+            reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile);
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }

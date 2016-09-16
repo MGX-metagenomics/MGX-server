@@ -1,53 +1,19 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Tool")
-public class Tool implements Serializable, Identifiable {
+public class Tool extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Basic
-    @NotNull
-    @Column(name = "name", unique=true)
     protected String name;
-    @Basic
-    @NotNull
-    @Column(name = "description", length=1024)
     protected String description;
-    @Basic
-    @NotNull
-    @Column(name = "version")
     protected Float version;
-    @Basic
-    @NotNull
-    @Column(name = "author")
     protected String author;
-    @Basic
-    @Column(name = "url")
     protected String url;
-    @Basic
-    @Column(name = "xml_file")
     protected String xml_file;
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public Tool setId(Long id) {
-        this.id = id;
-        return this;
-    }
 
     public String getAuthor() {
         return author;
@@ -106,7 +72,7 @@ public class Tool implements Serializable, Identifiable {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 
@@ -116,14 +82,7 @@ public class Tool implements Serializable, Identifiable {
             return false;
         }
         Tool other = (Tool) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.Tool[id=" + id + "]";
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER) 
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 }

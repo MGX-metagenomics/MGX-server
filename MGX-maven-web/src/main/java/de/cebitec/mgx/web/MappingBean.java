@@ -12,7 +12,6 @@ import de.cebitec.mgx.dtoadapter.MappedSequenceDTOFactory;
 import de.cebitec.mgx.dtoadapter.MappingDTOFactory;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sessions.MappingDataSession;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -23,8 +22,6 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -76,10 +73,8 @@ public class MappingBean {
     @Path("bySeqRun/{id}")
     @Produces("application/x-protobuf")
     public MappingDTOList bySeqRun(@PathParam("id") Long run_id) {
-        SeqRun run;
         try {
-            run = mgx.getSeqRunDAO().getById(run_id);
-            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().bySeqRun(run));
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().bySeqRun(run_id));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -89,10 +84,19 @@ public class MappingBean {
     @Path("byReference/{id}")
     @Produces("application/x-protobuf")
     public MappingDTOList byReference(@PathParam("id") Long ref_id) {
-        Reference ref;
         try {
-            ref = mgx.getReferenceDAO().getById(ref_id);
-            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().byReference(ref));
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().byReference(ref_id));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
+
+    @GET
+    @Path("byJob/{id}")
+    @Produces("application/x-protobuf")
+    public MappingDTOList byJob(@PathParam("id") Long job_id) {
+        try {
+            return MappingDTOFactory.getInstance().toDTOList(mgx.getMappingDAO().byJob(job_id));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -106,7 +110,8 @@ public class MappingBean {
         UUID uuid = null;
         try {
             Mapping m = mgx.getMappingDAO().getById(mapid);
-            uuid = mapSessions.addSession(new MappingDataSession(mapid, m.getReference().getId(), m.getReference().getLength(), mgx.getProjectName(), new File(m.getBAMFile())));
+            Reference ref = mgx.getReferenceDAO().getById(m.getReferenceId());
+            uuid = mapSessions.addSession(new MappingDataSession(mapid, m.getReferenceId(), ref.getLength(), mgx.getProjectName(), new File(m.getBAMFile())));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

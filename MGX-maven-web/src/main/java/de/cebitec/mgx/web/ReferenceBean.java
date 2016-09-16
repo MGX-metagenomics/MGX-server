@@ -28,8 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -74,6 +72,7 @@ public class ReferenceBean {
             Reference ref = ReferenceDTOFactory.getInstance().toDB(dto);
             Reference_id = mgx.getReferenceDAO().create(ref);
         } catch (MGXException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXLong.newBuilder().setValue(Reference_id).build();

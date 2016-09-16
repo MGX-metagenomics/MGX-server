@@ -50,7 +50,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
         Builder b = SeqRunDTO.newBuilder()
                 .setId(s.getId())
                 .setName(s.getName())
-                .setExtractId(s.getExtract().getId())
+                .setExtractId(s.getExtractId())
                 .setSubmittedToInsdc(s.getSubmittedToINSDC())
                 .setSequencingMethod(methDTO)
                 .setSequencingTechnology(techDTO)
@@ -69,7 +69,8 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
                 .setName(dto.getName())
                 .setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(dto.getSequencingMethod().getId())
-                .setSequencingTechnology(dto.getSequencingTechnology().getId());
+                .setSequencingTechnology(dto.getSequencingTechnology().getId())
+                .setExtractId(dto.getExtractId());
 
         if (dto.getSubmittedToInsdc()) {
             s.setAccession(dto.getAccession());
@@ -80,7 +81,6 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
         }
 
         return s;
-        // cannot set sample here
     }
 
     @Override

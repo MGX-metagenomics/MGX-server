@@ -21,7 +21,7 @@ public class Installer {
 
     @EJB
     private DBGPMSI gpms;
-    private final EMFNameResolver resolver = new MGXPUResolver();
+    //private final EMFNameResolver resolver = new MGXPUResolver();
     private final MGXDataSourceSelector dsSelector = new MGXDataSourceSelector();
     //
     private static final Logger LOG = Logger.getLogger(Installer.class.getName());
@@ -30,7 +30,7 @@ public class Installer {
     public void start() {
         LOG.log(Level.INFO, "Starting MGX: {0}", gpms);
         //gpms.registerEMFResolver(resolver);
-        EMFNameResolver.registerResolver(resolver);
+        //EMFNameResolver.registerResolver(resolver);
         GPMSDataSourceSelector.registerSelector("MGX", dsSelector);
         //gpms.registerProjectClass("MGX");
     }
@@ -40,7 +40,7 @@ public class Installer {
         LOG.log(Level.INFO, "Exiting MGX: {0}", gpms);
         //gpms.unregisterProjectClass("MGX");
         //gpms.unregisterEMFResolver(resolver);
-        EMFNameResolver.unregisterResolver(resolver);
+        //EMFNameResolver.unregisterResolver(resolver);
         GPMSDataSourceSelector.unregisterSelector("MGX", dsSelector);
     }
 }

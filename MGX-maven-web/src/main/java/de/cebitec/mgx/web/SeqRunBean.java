@@ -23,7 +23,6 @@ import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.workers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.AttributeType;
-import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.global.model.Term;
@@ -92,12 +91,9 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(SeqRunDTO dto) {
-        DNAExtract extract;
         long run_id;
         try {
-            extract = mgx.getDNAExtractDAO().getById(dto.getExtractId());
             SeqRun seqrun = SeqRunDTOFactory.getInstance(global).toDB(dto);
-            seqrun.setExtract(extract);
             run_id = mgx.getSeqRunDAO().create(seqrun);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -128,10 +124,13 @@ public class SeqRunBean {
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(seqMethod.getId())
                 .setSequencingTechnology(seqTech.getId())
-                .setName(dto.getName());
+                .setName(dto.getName())
+                .setExtractId(dto.getExtractId());
 
         if (dto.getSubmittedToInsdc()) {
             orig.setAccession(dto.getAccession());
+        } else {
+            orig.setAccession("");
         }
 
         try {
@@ -173,8 +172,7 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     public SeqRunDTOList byExtract(@PathParam("id") Long extract_id) {
         try {
-            DNAExtract extract = mgx.getDNAExtractDAO().getById(extract_id);
-            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract));
+            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract_id));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -185,10 +183,18 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        try {
+            mgx.getSeqRunDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+
         UUID taskId;
         try {
             taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
         } catch (IOException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -210,7 +216,7 @@ public class SeqRunBean {
                 }
             }
         } catch (MGXException | SeqStoreException ex) {
-            Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
+            mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
@@ -221,6 +227,7 @@ public class SeqRunBean {
             try {
                 qcDir = mgx.getProjectQCDirectory();
             } catch (IOException ex) {
+                mgx.log(ex);
                 throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
             }
             final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
@@ -264,6 +271,7 @@ public class SeqRunBean {
                         QCResultI qcr = Loader.load(outFile.getCanonicalPath());
                         qcList.add(qcr);
                     } catch (IOException ex) {
+                        mgx.log(ex);
                         throw new MGXWebException(ex.getMessage());
                     }
                 }
@@ -278,21 +286,20 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
 
-        // TODO - too many DB roundtrips here
-        SeqRun run;
-        try {
-            run = mgx.getSeqRunDAO().getById(seqrun_id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-
+//        // TODO - too many DB roundtrips here
+//        SeqRun run;
+//        try {
+//            run = mgx.getSeqRunDAO().getById(seqrun_id);
+//        } catch (MGXException ex) {
+//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+//        }
         JobsAndAttributeTypesDTO.Builder b = JobsAndAttributeTypesDTO.newBuilder();
-        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().BySeqRun(run)) {
+        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
             while (iter.hasNext()) {
                 Job job = iter.next();
                 JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().ByJob(job.getId())) {
+                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
                     AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
                     JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
                             .setJob(jobDTO).setAttributeTypes(dtoList)
@@ -302,6 +309,7 @@ public class SeqRunBean {
 
             }
         } catch (Exception ex) {
+            mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return b.build();

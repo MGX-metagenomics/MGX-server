@@ -8,6 +8,8 @@ import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -31,11 +33,11 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
     public final JobDTO toDTO(Job j) {
         Builder b = JobDTO.newBuilder()
                 .setId(j.getId())
-                .setSeqrunId(j.getSeqrun().getId())
-                .setToolId(j.getTool().getId())
+                .setSeqrunId(j.getSeqrunId())
+                .setToolId(j.getToolId())
                 .setCreator(j.getCreator())
                 .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()));
-        
+
         AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
         b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(acit));
 
@@ -63,7 +65,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
             j.setId(dto.getId());
         }
         for (JobParameter jp : j.getParameters()) {
-            jp.setJob(j);
+            jp.setJobId(j.getId());
         }
 
         return j;
@@ -77,6 +79,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 b.addJob(toDTO(iter.next()));
             }
         } catch (Exception ex) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
             return null;
         }
         return b.build();
