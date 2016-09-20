@@ -2,10 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Mapping;
-import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.File;
@@ -60,7 +57,7 @@ public class MappingDAO extends DAO<Mapping> {
             + "FROM mapping m WHERE m.id=?";
 
     @Override
-    public Mapping getById(long id) throws MGXException {
+    public Mapping getById(final long id) throws MGXException {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
@@ -125,11 +122,13 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.run_id=s.id) "
             + "WHERE s.id=?";
 
-    public AutoCloseableIterator<Mapping> bySeqRun(Long run_id) throws MGXException {
+    public AutoCloseableIterator<Mapping> bySeqRun(final long run_id) throws MGXException {
+        if (run_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<Mapping> ret = null;
 
 //        final SeqRun sr = getController().getSeqRunDAO().getById(run_id);
-
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);
@@ -169,11 +168,13 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.ref_id=r.id) "
             + "WHERE r.id=?";
 
-    public AutoCloseableIterator<Mapping> byReference(final Long ref_id) throws MGXException {
+    public AutoCloseableIterator<Mapping> byReference(final long ref_id) throws MGXException {
+        if (ref_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<Mapping> ret = null;
 
 //        final Reference ref = getController().getReferenceDAO().getById(ref_id);
-
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_REFERENCE)) {
                 stmt.setLong(1, ref_id);
@@ -213,11 +214,13 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.job_id=j.id) "
             + "WHERE j.id=?";
 
-    public AutoCloseableIterator<Mapping> byJob(final Long job_id) throws MGXException {
+    public AutoCloseableIterator<Mapping> byJob(final long job_id) throws MGXException {
+        if (job_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<Mapping> ret = null;
 
 //        final Job job = getController().getJobDAO().getById(job_id);
-
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);

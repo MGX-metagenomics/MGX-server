@@ -96,7 +96,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
     private final static String BY_ID = "SELECT id, job_id, node_id, param_name, param_value, user_name, user_desc FROM jobparameter WHERE id=?";
 
     @Override
-    public JobParameter getById(long id) throws MGXException {
+    public JobParameter getById(final long id) throws MGXException {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
@@ -126,7 +126,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
         }
     }
 
-    public AutoCloseableIterator<JobParameter> byJob(Long job_id) throws MGXException {
+    public AutoCloseableIterator<JobParameter> byJob(final long job_id) throws MGXException {
         final Job job = getController().getJobDAO().getById(job_id);
         return new ForwardingIterator<>(job.getParameters().iterator());
     }

@@ -73,7 +73,7 @@ public class JobDAO extends DAO<Job> {
     @Override
     public Job getById(long id) throws MGXException {
 
-        if (id == 0) {
+        if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
         try (Connection conn = getConnection()) {
@@ -435,8 +435,10 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)"
             + "WHERE s.id=?";
 
-    public AutoCloseableIterator<Job> bySeqRun(Long run_id) throws MGXException {
-
+    public AutoCloseableIterator<Job> bySeqRun(final long run_id) throws MGXException {
+        if (run_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<Job> ret = null;
 
 //        SeqRun seqrun = getController().getSeqRunDAO().getById(run_id);

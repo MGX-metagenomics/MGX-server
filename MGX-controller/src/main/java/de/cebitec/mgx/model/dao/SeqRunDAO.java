@@ -58,7 +58,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     public void delete(long run_id) throws MGXException {
-        final SeqRun sr = getById(run_id);
+//        final SeqRun sr = getById(run_id);
 //        // remove persistent storage file
 //        String dBFile = sr.getDBFile();
 //        if (dBFile != null) {
@@ -208,11 +208,11 @@ public class SeqRunDAO extends DAO<SeqRun> {
             + "s.sequencing_technology, s.submitted_to_insdc "
             + "FROM dnaextract d LEFT JOIN seqrun s on (d.id=s.dnaextract_id) WHERE d.id=?";
 
-    public AutoCloseableIterator<SeqRun> byDNAExtract(final Long extract_id) throws MGXException {
-
+    public AutoCloseableIterator<SeqRun> byDNAExtract(final long extract_id) throws MGXException {
+        if (extract_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<SeqRun> ret = null;
-
-//        DNAExtract extract = getController().getDNAExtractDAO().getById(extract_id);
 
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_EXTRACT)) {
@@ -251,13 +251,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
-//    public AutoCloseableIterator<SeqRun> byDNAExtract(Long extract_id) throws MGXException {
-//        DNAExtract extract = getController().getDNAExtractDAO().getById(extract_id);
-//        Iterator<SeqRun> iterator = getEntityManager().<SeqRun>createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.dnaextract = :extract", SeqRun.class).
-//                setParameter("extract", extract).getResultList().iterator();
-//        return new ForwardingIterator<>(iterator);
-//    }
-    private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=?"
+    private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=? "
             + "WHERE id=?";
 
     public void update(SeqRun obj) throws MGXException {
