@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author sjaenick
  */
-public class DNAExtractDAO<T extends DNAExtract> extends DAO<DNAExtract> {
+public class DNAExtractDAO extends DAO<DNAExtract> {
 
     public DNAExtractDAO(MGXControllerImpl ctx) {
         super(ctx);
@@ -184,8 +184,10 @@ public class DNAExtractDAO<T extends DNAExtract> extends DAO<DNAExtract> {
             + "d.targetfragment, d.targetgene, d.threeprimer "
             + "FROM sample s LEFT JOIN dnaextract d ON (s.id=d.sample_id) WHERE s.id=?";
 
-    public AutoCloseableIterator<DNAExtract> bySample(final Long sample_id) throws MGXException {
-
+    public AutoCloseableIterator<DNAExtract> bySample(final long sample_id) throws MGXException {
+        if (sample_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         List<DNAExtract> ret = null;
 
 //        final Sample sample = getController().getSampleDAO().getById(sample_id);
