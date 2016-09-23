@@ -26,7 +26,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Alignment.Alignment`1">
             <typeParameters>
               <type position="0" name="T">
@@ -35,6 +34,7 @@
             </typeParameters>
           </type>
           <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Alignment.EmptyAlignment`1">
@@ -44,6 +44,7 @@
           </type>
         </typeParameters>
         <superclasses>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Alignment.Alignment`1">
             <typeParameters>
               <type position="0" name="T">
@@ -51,7 +52,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Alignment.SimpleAlignment`1">
@@ -61,7 +61,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Alignment.Alignment`1">
             <typeParameters>
               <type position="0" name="T">
@@ -69,6 +68,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -813,10 +813,10 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Alignment.Pairwise.AlignedDNASequence`1">
@@ -833,10 +833,10 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Alignment.Pairwise.AlignedSequence`1">
@@ -846,9 +846,9 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Alignment.Pairwise.AlignmentScoring`1">
@@ -890,12 +890,12 @@
               <type name="Conveyor.BioinformaticsTypes.AASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Alignment.Alignment`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.AASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="An alignment containing two sequences" name="Conveyor.Alignment.Pairwise.PairwiseAlignment`3">
@@ -1428,9 +1428,9 @@
     <datatypes>
       <datatype name="Conveyor.BioinformaticsTypes.AASequence">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="A sequence composed of two sub sequence" name="Conveyor.BioinformaticsTypes.ConcatenatedSequence`2">
@@ -1450,17 +1450,17 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.DNASequence">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.Homology">
@@ -1485,10 +1485,10 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
@@ -1498,10 +1498,10 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="Reverse complement of a DNA sequence" name="Conveyor.BioinformaticsTypes.ReverseComplementedSequence`1">
@@ -1518,10 +1518,10 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="Reversed sequence of a given DNA sequence" name="Conveyor.BioinformaticsTypes.ReversedSequence`1">
@@ -1538,16 +1538,16 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.Sequence">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SequenceBase`1">
@@ -1557,6 +1557,8 @@
           </type>
         </typeParameters>
         <superclasses>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type position="0" name="T">
@@ -1565,8 +1567,6 @@
             </typeParameters>
           </type>
           <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SimpleAASequence">
@@ -1576,7 +1576,7 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
@@ -1584,7 +1584,7 @@
           </type>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SimpleDNASequence">
@@ -1594,21 +1594,21 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.SixFrameTranslatable`2">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleTranslatedAASequence"/>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SimpleTranslatableSequence`1">
@@ -1619,15 +1619,15 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.Translatable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="DNA sequence with a part spliced out" name="Conveyor.BioinformaticsTypes.SplicedSequence`1">
@@ -1644,10 +1644,10 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.Translatable`1">
@@ -1657,10 +1657,10 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
@@ -1670,9 +1670,9 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SixFrameTranslatable`2">
@@ -1691,10 +1691,10 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.BackTranslatable`1">
@@ -1704,9 +1704,8 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
           <type name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -1714,7 +1713,8 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
@@ -1724,10 +1724,10 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.SimpleTranslatedAASequence">
@@ -1737,15 +1737,15 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioinformaticsTypes.TranslatedAASequenceBase`1">
@@ -1755,7 +1755,7 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -1765,7 +1765,7 @@
           </type>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -2147,7 +2147,7 @@
         </links>
         <tags/>
       </nodetype>
-      <nodetype classname="Conveyor.BioinformaticsTypes.BackTranslate`1" displayname="Conveyor.BioinformaticsTypes.BackTranslate`1" description="Translates the relative position on the AA sequence back to the DNA sequence sequence it is based on." section="processing">
+      <nodetype classname="Conveyor.BioinformaticsTypes.BackTranslate`1" displayname="BackTranslate" description="Translates the 0-based relative position on the AA sequence back to the 0-based DNA sequence position it is based on." section="processing">
         <typeParameters>
           <type position="0" name="T">
             <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
@@ -2173,7 +2173,7 @@
         </links>
         <tags/>
       </nodetype>
-      <nodetype classname="Conveyor.BioinformaticsTypes.GetTranslationSource`2" displayname="GetTranslationSource" description="six-frame-translate a nucleotide sequence" section="processing">
+      <nodetype classname="Conveyor.BioinformaticsTypes.GetTranslationSource`2" displayname="GetTranslationSource" description="returns the source DNA sequence for a translated AA sequence" section="processing">
         <typeParameters>
           <type position="0" name="U">
             <restrictedTo name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
@@ -2190,7 +2190,7 @@
         </typeParameters>
         <configurations/>
         <links>
-          <link name="input" description="aa sequence" is_input="1">
+          <link name="input" description="AA sequence" is_input="1">
             <type position="0" name="U">
               <restrictedTo name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
                 <typeParameters>
@@ -2409,16 +2409,16 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.BioIO.ParseableSequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioIO.ParseableSequence"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.SequenceBase`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
@@ -2433,6 +2433,9 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
@@ -2444,11 +2447,8 @@
               <type name="Conveyor.BioIO.FastaDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioIO.ParseableSequence"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.SequenceBase`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
@@ -2470,7 +2470,7 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type position="0" name="T">
@@ -2480,14 +2480,14 @@
           </type>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioIO.ParseableSequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioIO.ParseableSequence">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.BioIO.FastaTranslatedAASequence">
@@ -2502,10 +2502,10 @@
               <type name="Conveyor.BioIO.FastaDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -2622,15 +2622,153 @@
       </nodetype>
     </nodetypes>
   </plugin>
+  <plugin name="Conveyor.BioIO.SFF" version="" description="Conveyor plugin for reading and writing SFF files" company="">
+    <datatypes>
+      <datatype name="Conveyor.BioIO.SFF.ClippedSFFSequence">
+        <superclasses>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
+            <typeParameters>
+              <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.BioIO.SFF.FlowgramSequence">
+        <superclasses>
+          <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
+            <typeParameters>
+              <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.BioIO.SFF.SFFSequence">
+        <superclasses>
+          <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          <type name="Conveyor.BioIO.SFF.FlowgramSequence"/>
+          <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
+            <typeParameters>
+              <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+    </datatypes>
+    <nodetypes>
+      <nodetype classname="Conveyor.BioIO.SFF.ClipSFFSequence" displayname="Conveyor.BioIO.SFF.ClipSFFSequence" description="clips adapter sequences and parts with low quality from an SFF sequence (based on information in sequence header" section="processing">
+        <typeParameters/>
+        <configurations/>
+        <links>
+          <link name="input" description="" is_input="1">
+            <type name="Conveyor.BioIO.SFF.SFFSequence"/>
+          </link>
+          <link name="output" description="" is_input="0">
+            <type name="Conveyor.BioIO.SFF.ClippedSFFSequence"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.BioIO.SFF.ReadSFFFile" displayname="Conveyor.BioIO.SFF.ReadSFFFile" description="parses the given SFF file and iterates over the sequence in that file" section="input">
+        <typeParameters/>
+        <configurations>
+          <config_item name="sffFile" type="ConfigFile" description="The SFF file to parse" optional="0"/>
+        </configurations>
+        <links>
+          <link name="sequence" description="a sequence read from the SFF file" is_input="0">
+            <type name="Conveyor.BioIO.SFF.SFFSequence"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.BioIO.SFF.WriteSFFFile" displayname="WriteSFFFile" description="creates a SFF file from sequences" section="output">
+        <typeParameters/>
+        <configurations/>
+        <links>
+          <link name="sequence" description="sequence to write to SFF file" is_input="1">
+            <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.BioIO.SFF.SplitSFFPairedEndRead`2" displayname="Conveyor.BioIO.SFF.SplitSFFPairedEndRead`2" description="Detects that paired end linker sequence in a SFF read, and splits it into the forward and reverse parts" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+            <restrictedTo name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
+              <typeParameters>
+                <type position="1" name="U">
+                  <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+                </type>
+              </typeParameters>
+            </restrictedTo>
+          </type>
+          <type position="1" name="U">
+            <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="technology" type="ConfigEnumeration`1" description="the linker to use (either FLX or TITANIUM)" optional="0">
+            <choice value="FLX" description="the (older) FLX sequencing chemistry"/>
+            <choice value="TITANIUM" description="the (newer) TITANIUM sequence chemistry"/>
+          </config_item>
+          <config_item name="allowedMismatched" type="ConfigInteger" description="number of allowed mismatches" optional="0"/>
+        </configurations>
+        <links>
+          <link name="sffRead" description="the SFF read to split" is_input="1">
+            <type position="0" name="T">
+              <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+              <restrictedTo name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
+                <typeParameters>
+                  <type position="1" name="U">
+                    <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+                  </type>
+                </typeParameters>
+              </restrictedTo>
+            </type>
+          </link>
+          <link name="forward" description="the first part of a paired end read" is_input="0">
+            <type position="1" name="U">
+              <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+            </type>
+          </link>
+          <link name="reverse" description="the second part of a paired end read" is_input="0">
+            <type position="1" name="U">
+              <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+            </type>
+          </link>
+          <link name="detectedSingle" description="the complete input read in case of no detected linker sequence" is_input="0">
+            <type position="1" name="U">
+              <restrictedTo description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+    </nodetypes>
+  </plugin>
   <plugin name="Conveyor.BioIO.Solexa" version="" description="" company="">
     <datatypes>
       <datatype name="Conveyor.BioIO.Solexa.SolexaRead">
         <superclasses>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -2794,9 +2932,9 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Blast.AABlastDatabaseSequence">
@@ -2806,10 +2944,10 @@
               <type name="Conveyor.Blast.AABlastDatabaseSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Blast.DNABlastDatabaseSequence">
@@ -2819,10 +2957,10 @@
               <type name="Conveyor.Blast.DNABlastDatabaseSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Blast.DNABlastDBFile">
@@ -3571,10 +3709,10 @@
               <type name="Conveyor.Blast.ClusterMine360.ClusterMineDBSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -3598,6 +3736,148 @@
           </link>
           <link name="output" description="" is_input="0">
             <type name="Conveyor.Text.String"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+    </nodetypes>
+  </plugin>
+  <plugin name="Conveyor.Blast.DIAMOND" version="" description="" company="">
+    <datatypes>
+      <datatype description="A wrapped database that can be used with DIAMOND" name="Conveyor.Blast.DIAMOND.WrappedDIAMONDDatabase`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Blast.BlastDB`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Blast.DIAMOND.DIAMONDDatabase`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.Blast.DIAMOND.DIAMONDDatabase`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.Blast.BlastDB`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.Blast.DIAMOND.DIAMONDHit`2">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+          <type position="1" name="U">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.Blast.BlastHit`2">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+              <type position="1" name="U">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.BioinformaticsTypes.Homology"/>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+    </datatypes>
+    <nodetypes>
+      <nodetype classname="Conveyor.Blast.DIAMOND.GetWrappedDIAMONDDatabase`1" displayname="GetDIAMONDDatabase" description="Gets the database that is mapped to the input database, or aborts the workflow if no such a database is available." section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+          </type>
+        </typeParameters>
+        <configurations/>
+        <links>
+          <link name="systemDatabase" description="Database to lookup mapping for" is_input="1">
+            <type name="Conveyor.Blast.BlastDB`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="diamondDatabase" description="The DIAMOND database the system database is mapped to." is_input="0">
+            <type description="A wrapped database that can be used with DIAMOND" name="Conveyor.Blast.DIAMOND.WrappedDIAMONDDatabase`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.Blast.DIAMOND.DIAMOND`2" displayname="DIAMOND" description="DIAMOND based homology search" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+          <type position="1" name="U">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="chunkSize" type="ConfigULong" description="size of a input data chunk" default="1" optional="0"/>
+        </configurations>
+        <links>
+          <link name="query" description="sequence to search homologes for" is_input="1">
+            <type position="0" name="T">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+          <link name="database" description="database to search in" is_input="1">
+            <type name="Conveyor.Blast.DIAMOND.DIAMONDDatabase`1">
+              <typeParameters>
+                <type position="1" name="U">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="result" description="search result" is_input="0">
+            <type name="Conveyor.Blast.BlastResult`2">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+                <type position="1" name="U">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
+                </type>
+              </typeParameters>
+            </type>
           </link>
         </links>
         <tags/>
@@ -3773,14 +4053,14 @@
         </typeParameters>
         <superclasses>
           <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Blast.RAPSearch2.RAPSearch2Database`1">
+          <type name="Conveyor.Blast.BlastDB`1">
             <typeParameters>
               <type position="0" name="T">
                 <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Blast.BlastDB`1">
+          <type name="Conveyor.Blast.RAPSearch2.RAPSearch2Database`1">
             <typeParameters>
               <type position="0" name="T">
                 <restrictedTo name="Conveyor.BioinformaticsTypes.AASequence"/>
@@ -3897,7 +4177,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Blast.BlastDB`1">
             <typeParameters>
               <type position="0" name="T">
@@ -3905,6 +4184,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Blast.TeraBlast.TeraBlastDB`1">
@@ -3933,20 +4213,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Blast.BlastDB`1">
-            <typeParameters>
-              <type position="0" name="T">
-                <restrictedTo description="Base class for ASN1 database entries" name="Conveyor.Blast.BlastDatabaseSequenceBase`1">
-                  <typeParameters>
-                    <type position="0" name="T">
-                      <restrictedTo description="Base class for ASN1 database entries" name="Conveyor.Blast.BlastDatabaseSequenceBase`1"/>
-                    </type>
-                  </typeParameters>
-                </restrictedTo>
-              </type>
-            </typeParameters>
-          </type>
           <type name="Conveyor.Blast.TeraBlast.TeraBlastDatabase`1">
             <typeParameters>
               <type position="0" name="T">
@@ -3960,6 +4226,20 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Blast.BlastDB`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo description="Base class for ASN1 database entries" name="Conveyor.Blast.BlastDatabaseSequenceBase`1">
+                  <typeParameters>
+                    <type position="0" name="T">
+                      <restrictedTo description="Base class for ASN1 database entries" name="Conveyor.Blast.BlastDatabaseSequenceBase`1"/>
+                    </type>
+                  </typeParameters>
+                </restrictedTo>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Blast.TeraBlast.TeraBlastResult`2">
@@ -4030,14 +4310,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Blast.BlastDB`1">
-            <typeParameters>
-              <type position="0" name="T">
-                <restrictedTo name="Conveyor.BioinformaticsTypes.Sequence"/>
-              </type>
-            </typeParameters>
-          </type>
           <type name="Conveyor.Blast.TeraBlast.TeraBlastDatabase`1">
             <typeParameters>
               <type position="0" name="T">
@@ -4045,6 +4317,14 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Blast.BlastDB`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.Sequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -4650,7 +4930,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Database.Database`1">
             <typeParameters>
               <type position="0" name="T">
@@ -4658,6 +4937,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -4710,66 +4990,16 @@
       </nodetype>
     </nodetypes>
   </plugin>
-  <plugin name="Conveyor.Database.RefSeq" version="" description="Access to RefSeq database entries" company="JLU Giessen">
-    <datatypes>
-      <datatype description="One of the RefSeq databases (complete, bacteria, etc.)" name="Conveyor.Database.RefSeq.RefSeqDatabase">
-        <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Database.IndexedDatabase`1">
-            <typeParameters>
-              <type name="Conveyor.Database.RefSeq.RefSeqEntry"/>
-            </typeParameters>
-          </type>
-          <type name="Conveyor.Blast.BlastDB`1">
-            <typeParameters>
-              <type name="Conveyor.Database.RefSeq.RefSeqEntry"/>
-            </typeParameters>
-          </type>
-          <type name="Conveyor.Database.Database`1">
-            <typeParameters>
-              <type name="Conveyor.Database.RefSeq.RefSeqEntry"/>
-            </typeParameters>
-          </type>
-        </superclasses>
-      </datatype>
-      <datatype name="Conveyor.Database.RefSeq.RefSeqEntry">
-        <superclasses>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
-        </superclasses>
-      </datatype>
-    </datatypes>
-    <nodetypes>
-      <nodetype classname="Conveyor.Database.RefSeq.GetRefSeqDatabase" displayname="Conveyor.Database.RefSeq.GetRefSeqDatabase" description="" section="input">
-        <typeParameters/>
-        <configurations>
-          <config_item name="database" type="ConfigSelection`2" description="The database to provide by this node instance" optional="0">
-            <choice value="bacteria" description="RefSeq database bacteria"/>
-            <choice value="complete" description="RefSeq database complete"/>
-            <choice value="viral" description="RefSeq database viral"/>
-          </config_item>
-        </configurations>
-        <links>
-          <link name="db" description="The selected RefSeq database" is_input="0">
-            <type description="One of the RefSeq databases (complete, bacteria, etc.)" name="Conveyor.Database.RefSeq.RefSeqDatabase"/>
-          </link>
-        </links>
-        <tags/>
-      </nodetype>
-    </nodetypes>
-  </plugin>
   <plugin name="Conveyor.Database.UniProt" version="" description="" company="">
     <datatypes>
       <datatype description="One of the UniProt databases (SwissProt, UniProt/TrEMBL)" name="Conveyor.Database.UniProt.UniProtDatabase">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Blast.BlastDB`1">
             <typeParameters>
               <type name="Conveyor.Database.UniProt.UniProtEntry"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Database.IndexedDatabase`1">
             <typeParameters>
               <type name="Conveyor.Database.UniProt.UniProtEntry"/>
@@ -4784,10 +5014,10 @@
       </datatype>
       <datatype name="Conveyor.Database.UniProt.UniProtEntry">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="Definition of the confidence in the existence of a protein as described by a database entry" name="Conveyor.Database.UniProt.ProteinExistence">
@@ -5245,10 +5475,10 @@
               <type description="an entry of the eggNOG protein database" name="Conveyor.EggNOG.V3.EggNOGProteinSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -5552,23 +5782,23 @@
     <datatypes>
       <datatype description="A collection of enzyme carrying out a similar activity" name="Conveyor.EnzymeClassification.EnzymeClass">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type description="Common base class of leaves and branches" name="Conveyor.Tree.ITreeVertex`1">
             <typeParameters>
               <type description="A collection of enzyme carrying out a similar activity" name="Conveyor.EnzymeClassification.EnzymeClass"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="An entry of the enzyme classification database" name="Conveyor.EnzymeClassification.Enzyme">
         <superclasses>
           <type description="A collection of enzyme carrying out a similar activity" name="Conveyor.EnzymeClassification.EnzymeClass"/>
-          <type name="Conveyor.Core.Data"/>
           <type description="Common base class of leaves and branches" name="Conveyor.Tree.ITreeVertex`1">
             <typeParameters>
               <type description="A collection of enzyme carrying out a similar activity" name="Conveyor.EnzymeClassification.EnzymeClass"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.EnzymeClassification.EnzymeNumber">
@@ -5667,8 +5897,8 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Interval.Interval"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Geneprediction.SimplePredictedGene`1">
@@ -5678,7 +5908,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.Interval.Interval"/>
           <type name="Conveyor.Geneprediction.PredictedGene`1">
@@ -5688,6 +5917,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.Geneprediction.SimplePredictedrRNA`1">
@@ -5697,6 +5927,8 @@
           </type>
         </typeParameters>
         <superclasses>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.Interval.Interval"/>
           <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Geneprediction.PredictedGene`1">
             <typeParameters>
@@ -5705,8 +5937,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.Interval.Interval"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -6242,7 +6472,6 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleAASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type description="Interface for classes representing HMMs to be used with HMMER3" name="Conveyor.HMMER3.IHMM`3">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.AASequence"/>
@@ -6254,6 +6483,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="A collection of HMMs" name="Conveyor.HMMER3.HMMv3AADB">
@@ -6265,7 +6495,6 @@
               <type description="a HMM built from amino acid sequences used with the HMMER3 application suite" name="Conveyor.HMMER3.HMMv3AA"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.HMMER3.IHMMDB`4">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.AASequence"/>
@@ -6278,6 +6507,7 @@
               <type description="a HMM built from amino acid sequences used with the HMMER3 application suite" name="Conveyor.HMMER3.HMMv3AA"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="a HMM built from nucleiotide sequences used with the HMMER3 application suite" name="Conveyor.HMMER3.HMMv3DNA">
@@ -6288,7 +6518,6 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type description="Interface for classes representing HMMs to be used with HMMER3" name="Conveyor.HMMER3.IHMM`3">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
@@ -6300,6 +6529,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="A collection of nucleotide HMMs" name="Conveyor.HMMER3.HMMv3DNADB">
@@ -6338,7 +6568,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type description="Interface for classes representing HMMs to be used with HMMER3" name="Conveyor.HMMER3.IHMM`3">
             <typeParameters>
               <type position="0" name="T">
@@ -6360,6 +6589,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.HMMER3.HMMv3DBBase`3">
@@ -6388,7 +6618,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.HMMER3.IHMMDB`4">
             <typeParameters>
               <type position="0" name="T">
@@ -6424,6 +6653,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -6563,7 +6793,7 @@
         </links>
         <tags/>
       </nodetype>
-      <nodetype classname="Conveyor.HMMER3.GetQueryFromHMMERHit`5" displayname="Conveyor.HMMER3.GetQueryFromHMMERHit`5" description="Gets the original query sequence from a HMMER3 hit" section="processing">
+      <nodetype classname="Conveyor.HMMER3.GetQueryFromHMMERHit`5" displayname="GetQueryFromHMMERHit" description="Gets the original query sequence from a HMMER3 hit" section="processing">
         <typeParameters>
           <type position="0" name="T">
             <restrictedTo name="Conveyor.BioinformaticsTypes.Sequence"/>
@@ -6789,7 +7019,7 @@
         </links>
         <tags/>
       </nodetype>
-      <nodetype classname="Conveyor.HMMER3.HMMScanv3`5" displayname="Conveyor.HMMER3.HMMScanv3`5" description="Searches for (protein) domains absed on a HMM database using HMMER3" section="processing">
+      <nodetype classname="Conveyor.HMMER3.HMMScanv3`5" displayname="HMMScan" description="Searches for (protein) domains absed on a HMM database using HMMER3" section="processing">
         <typeParameters>
           <type position="0" name="T">
             <restrictedTo position="1" name="U">
@@ -7562,8 +7792,8 @@
       </datatype>
       <datatype name="Conveyor.Interval.SimpleInterval">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Interval.Interval"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -7657,6 +7887,39 @@
       </nodetype>
     </nodetypes>
   </plugin>
+  <plugin name="Conveyor.Kaiju, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" version="" description="" company="">
+    <datatypes/>
+    <nodetypes>
+      <nodetype classname="Conveyor.Kaiju.Kaiju`1" displayname="Kaiju" description="Kaiju: Fast and sensitive taxonomic classification for metagenomics" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="chunkSize" type="ConfigULong" description="size of a input data chunk" default="1" optional="0"/>
+        </configurations>
+        <links>
+          <link name="inputSequence" description="DNA read" is_input="1">
+            <type position="0" name="T">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+          <link name="classified" description="classification result" is_input="0">
+            <type name="Conveyor.Pair.Pair`2">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+                <type name="Conveyor.Taxonomy.NCBI.Taxon"/>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+    </nodetypes>
+  </plugin>
   <plugin name="Conveyor.Kraken" version="" description="" company="">
     <datatypes>
       <datatype name="Conveyor.Kraken.KrakenResult`1">
@@ -7739,6 +8002,23 @@
           </type>
         </typeParameters>
         <superclasses>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.List.ImmutableList`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.Core.Data"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.List.List`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.Core.Data"/>
+              </type>
+            </typeParameters>
+          </type>
           <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
@@ -10288,12 +10568,12 @@
               <type description="an entry of the MetaPhyler database" name="Conveyor.MetaPhyler.MetaPhylerSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Blast.BlastDB`1">
             <typeParameters>
               <type description="an entry of the MetaPhyler database" name="Conveyor.MetaPhyler.MetaPhylerSequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="an entry of the MetaPhyler database" name="Conveyor.MetaPhyler.MetaPhylerSequence">
@@ -10303,10 +10583,10 @@
               <type description="an entry of the MetaPhyler database" name="Conveyor.MetaPhyler.MetaPhylerSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -10377,20 +10657,14 @@
       </datatype>
       <datatype name="Conveyor.MGX.MGXSequence">
         <superclasses>
-          <type name="Conveyor.BioinformaticsTypes.SequenceBase`1">
-            <typeParameters>
-              <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
-            </typeParameters>
-          </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.SixFrameTranslatable`2">
             <typeParameters>
               <type name="Conveyor.MGX.MGXTranslatedAASequence`1">
@@ -10401,6 +10675,7 @@
               <type name="Conveyor.MGX.MGXSequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.MGX.MGXTranslatedAASequence`1">
@@ -10410,6 +10685,16 @@
           </type>
         </typeParameters>
         <superclasses>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
           <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.BackTranslatable`1">
             <typeParameters>
@@ -10418,16 +10703,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.TranslatedAASequence`1">
-            <typeParameters>
-              <type position="0" name="T">
-                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
-              </type>
-            </typeParameters>
-          </type>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.MGX.MGXJobI">
@@ -10442,30 +10717,29 @@
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
           <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.MGX.MGXQSequence">
         <superclasses>
           <type name="Conveyor.MGX.MGXSequence"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
             </typeParameters>
           </type>
-          <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.BioinformaticsTypes.SixFrameTranslatable`2">
             <typeParameters>
               <type name="Conveyor.MGX.MGXTranslatedAASequence`1">
@@ -10476,11 +10750,7 @@
               <type name="Conveyor.MGX.MGXSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.BioinformaticsTypes.SequenceBase`1">
-            <typeParameters>
-              <type name="Conveyor.BioinformaticsTypes.SimpleDNASequence"/>
-            </typeParameters>
-          </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -11064,6 +11334,19 @@
         </links>
         <tags/>
       </nodetype>
+      <nodetype classname="Conveyor.MGX.AnnotateSequence" displayname="AnnotateSequence" description="annotates full length sequences within MGX projects" section="processing">
+        <typeParameters/>
+        <configurations/>
+        <links>
+          <link name="seqIn" description="sequence to be annotated" is_input="1">
+            <type name="Conveyor.MGX.MGXSequence"/>
+          </link>
+          <link name="attributeIn" description="attribute to be annotated" is_input="1">
+            <type name="Conveyor.MGX.MGXAttribute"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
     </nodetypes>
   </plugin>
   <plugin name="Conveyor.Mothur" version="" description="" company="">
@@ -11156,10 +11439,10 @@
               <type description="an entry of the MVir protein database" name="MVir.MVirSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.AASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="Every entry has a defined Status." name="MVir.Status">
@@ -11428,8 +11711,8 @@
         </typeParameters>
         <configurations>
           <config_item name="database" type="ConfigSelection`2" description="classification database" optional="0">
-            <choice value="SILVA" description="mothurs version of SILVA database"/>
-            <choice value="Greengenes" description="mothurs version of Greengenes database"/>
+            <choice value="SILVA" description="qiime version of SILVA database"/>
+            <choice value="Greengenes" description="qiime version of Greengenes database"/>
           </config_item>
           <config_item name="uclust_max_accepts" type="ConfigInteger" description="Number of database hits to consider when making an assignment" default="3" optional="0"/>
           <config_item name="similarity" type="ConfigDouble" description="Minimum percent similarity (expressed as a fraction between 0 and 1) to consider a database match a hit" default="0.9" optional="0"/>
@@ -11473,16 +11756,16 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="a sequence with quality values build from two other quality sequences" name="Conveyor.QualitySequence.ConcatenatedQSequence`2">
@@ -11505,16 +11788,16 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -11544,16 +11827,16 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -11565,10 +11848,10 @@
       </datatype>
       <datatype description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="Reverse complement of a DNA quality sequence" name="Conveyor.QualitySequence.ReverseComplementedQSequence`1">
@@ -11585,16 +11868,16 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -11619,15 +11902,15 @@
             </typeParameters>
           </type>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -11639,16 +11922,16 @@
       </datatype>
       <datatype name="Conveyor.QualitySequence.SimpleDNAQSequence">
         <superclasses>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype description="part of a quality sequence" name="Conveyor.QualitySequence.SplicedQSequence`1">
@@ -11665,16 +11948,16 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.Annotation.Annotatable"/>
+          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
           <type name="Conveyor.BioinformaticsTypes.ISubSequenceable`1">
             <typeParameters>
               <type name="Conveyor.QualitySequence.SimpleDNAQSequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Annotation.Annotatable"/>
-          <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.BioinformaticsTypes.ReadOnlyDerivedSequence`1">
             <typeParameters>
               <type position="0" name="T">
@@ -12008,8 +12291,8 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
           <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.ReadMapping.ICIGARProvider">
@@ -12037,8 +12320,6 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
-          <type name="Conveyor.Core.Data"/>
           <type description="A single read mapped to a reference sequence" name="Conveyor.ReadMapping.IMappedRead`2">
             <typeParameters>
               <type position="0" name="T">
@@ -12049,6 +12330,8 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -12331,8 +12614,8 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
           <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -12454,8 +12737,8 @@
               </type>
             </typeParameters>
           </type>
-          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
           <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -12632,6 +12915,92 @@
       </nodetype>
     </nodetypes>
   </plugin>
+  <plugin name="Conveyor.ReadMapping.BlastToSAM" version="" description="" company="">
+    <datatypes>
+      <datatype name="Conveyor.ReadMapping.BlastToSAM.BlastMappedRead`2">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+          <type position="1" name="U">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.ReadMapping.CIGARMappedRead`2">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+              <type position="1" name="U">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type description="A single read mapped to a reference sequence" name="Conveyor.ReadMapping.IMappedRead`2">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+              <type position="1" name="U">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+          <type name="Conveyor.ReadMapping.ICIGARProvider"/>
+        </superclasses>
+      </datatype>
+    </datatypes>
+    <nodetypes>
+      <nodetype classname="Conveyor.ReadMapping.BlastToSAM.BlastToSAM`2" displayname="BlastToSAM" description="blastn-based read mapping" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+          <type position="1" name="U">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="identityThreshold" type="ConfigInteger" description="sequence identity threshold (in percent)" default="50" optional="0"/>
+          <config_item name="useComplexityFilter" type="ConfigBoolean" description="activate the complexity filter (default no)" default="False" optional="0"/>
+          <config_item name="wordSize" type="ConfigInteger" description="word size of initial seed kmers (min 4, default 11" default="11" optional="0"/>
+          <config_item name="evalueCutoff" type="ConfigDouble" description="evalue cut off" optional="1"/>
+          <config_item name="chunkSize" type="ConfigULong" description="size of a input data chunk" default="1" optional="0"/>
+        </configurations>
+        <links>
+          <link name="input" description="DNA read" is_input="1">
+            <type position="0" name="T">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+          <link name="references" description="DNA reference sequences" is_input="1">
+            <type position="1" name="U">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+          <link name="mappings" description="the mappings of a read" is_input="0">
+            <type name="Conveyor.List.List`1">
+              <typeParameters>
+                <type name="Conveyor.ReadMapping.BlastToSAM.BlastMappedRead`2">
+                  <typeParameters>
+                    <type position="0" name="T">
+                      <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                    </type>
+                    <type position="1" name="U">
+                      <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                    </type>
+                  </typeParameters>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+    </nodetypes>
+  </plugin>
   <plugin name="Conveyor.SequencePair" version="" description="Interfaces and processing types for pairs of sequences, e.g. paired end reads from a sequencer" company="CeBiTec, Bielefeld University">
     <datatypes>
       <datatype description="orientation of a sequence pair's sequences" name="Conveyor.SequencePair.Orientation">
@@ -12662,7 +13031,6 @@
           </type>
         </typeParameters>
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type description="A pair of sequences, e.g. a paired end read from a next generation sequencer" name="Conveyor.SequencePair.SequencePair`2">
             <typeParameters>
               <type position="0" name="T">
@@ -12673,6 +13041,7 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -12899,11 +13268,11 @@
               </type>
             </typeParameters>
           </type>
+          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
           <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Annotation.Annotatable"/>
           <type name="Conveyor.BioinformaticsTypes.DNASequence"/>
-          <type name="Conveyor.BioinformaticsTypes.Sequence"/>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
       <datatype name="Conveyor.SolexaProcessing.SequenceOverlap`2">
@@ -12935,12 +13304,12 @@
               <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
             </typeParameters>
           </type>
-          <type name="Conveyor.Core.Data"/>
           <type name="Conveyor.Alignment.Alignment`1">
             <typeParameters>
               <type description="A set of position based quality information for sequences, e.g. quality values generated by a sequencer or a base calling application" name="Conveyor.QualitySequence.IQualitySequence"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -13454,12 +13823,12 @@
       </datatype>
       <datatype description="a taxon in the bergey taxonomy" name="Conveyor.Taxonomy.Bergey.Taxon">
         <superclasses>
-          <type name="Conveyor.Core.Data"/>
           <type description="Common base class of leaves and branches" name="Conveyor.Tree.ITreeVertex`1">
             <typeParameters>
               <type description="a taxon in the bergey taxonomy" name="Conveyor.Taxonomy.Bergey.Taxon"/>
             </typeParameters>
           </type>
+          <type name="Conveyor.Core.Data"/>
         </superclasses>
       </datatype>
     </datatypes>
@@ -14117,6 +14486,220 @@
                 </typeParameters>
               </restrictedTo>
             </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+    </nodetypes>
+  </plugin>
+  <plugin name="Conveyor.UProC" version="" description="" company="">
+    <datatypes>
+      <datatype name="Conveyor.UProC.UProCDatabase">
+        <superclasses>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.UProC.UProCHit`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.UProC.UProcHitI`1">
+            <typeParameters>
+              <type position="0" name="T">
+                <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.UProC.UProCResult`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.List.List`1">
+            <typeParameters>
+              <type name="Conveyor.UProC.UProCHit`1">
+                <typeParameters>
+                  <type position="0" name="T">
+                    <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                  </type>
+                </typeParameters>
+              </type>
+            </typeParameters>
+          </type>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+      <datatype name="Conveyor.UProC.UProcHitI`1">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <superclasses>
+          <type name="Conveyor.Core.Data"/>
+        </superclasses>
+      </datatype>
+    </datatypes>
+    <nodetypes>
+      <nodetype classname="Conveyor.UProC.FilterUProCResult`1" displayname="FilterUProCResult" description="" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="minScore" type="ConfigInteger" description="score threshold" default="10" optional="0"/>
+        </configurations>
+        <links>
+          <link name="input" description="search result" is_input="1">
+            <type name="Conveyor.UProC.UProCResult`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="filtered" description="filtered hits" is_input="0">
+            <type name="Conveyor.List.List`1">
+              <typeParameters>
+                <type name="Conveyor.UProC.UProCHit`1">
+                  <typeParameters>
+                    <type position="0" name="T">
+                      <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                    </type>
+                  </typeParameters>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.UProC.PublicUProCDB" displayname="PublicUProCAADB" description="Loads public protein sequence databases from configured locations" section="input">
+        <typeParameters/>
+        <configurations>
+          <config_item name="database" type="ConfigSelection`2" description="protein sequence databases available" optional="0">
+            <choice value="Pfam27-A" description="Pfam27-A"/>
+          </config_item>
+        </configurations>
+        <links>
+          <link name="db" description="the selected database" is_input="0">
+            <type name="Conveyor.UProC.UProCDatabase"/>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="Conveyor.UProC.UProC`1" displayname="UProC" description="UProC based homology search" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations>
+          <config_item name="chunkSize" type="ConfigULong" description="size of a input data chunk" default="1" optional="0"/>
+        </configurations>
+        <links>
+          <link name="query" description="sequence to search homologes for" is_input="1">
+            <type position="0" name="T">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+          <link name="database" description="database to search in" is_input="1">
+            <type name="Conveyor.UProC.UProCDatabase"/>
+          </link>
+          <link name="result" description="search result" is_input="0">
+            <type name="Conveyor.UProC.UProCResult`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="UProcHitI`1.GetQuery" displayname="UProcHitI`1.GetQuery" description="returns the query sequence" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations/>
+        <links>
+          <link name="input" description="" is_input="1">
+            <type name="Conveyor.UProC.UProcHitI`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="output" description="" is_input="0">
+            <type position="0" name="T">
+              <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="UProcHitI`1.GetQueryRange" displayname="UProcHitI`1.GetQueryRange" description="returns the start and stop position the homologue query part, e.g. of the alignment for blast HSPs" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations/>
+        <links>
+          <link name="input" description="" is_input="1">
+            <type name="Conveyor.UProC.UProcHitI`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="output" description="" is_input="0">
+            <type name="Conveyor.Pair.Pair`2">
+              <typeParameters>
+                <type name="Conveyor.Math.Integer"/>
+                <type name="Conveyor.Math.Integer"/>
+              </typeParameters>
+            </type>
+          </link>
+        </links>
+        <tags/>
+      </nodetype>
+      <nodetype classname="UProcHitI`1.GetSubject" displayname="UProcHitI`1.GetSubject" description="returns the subject name" section="processing">
+        <typeParameters>
+          <type position="0" name="T">
+            <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+          </type>
+        </typeParameters>
+        <configurations/>
+        <links>
+          <link name="input" description="" is_input="1">
+            <type name="Conveyor.UProC.UProcHitI`1">
+              <typeParameters>
+                <type position="0" name="T">
+                  <restrictedTo name="Conveyor.BioinformaticsTypes.DNASequence"/>
+                </type>
+              </typeParameters>
+            </type>
+          </link>
+          <link name="output" description="" is_input="0">
+            <type name="Conveyor.Text.String"/>
           </link>
         </links>
         <tags/>
