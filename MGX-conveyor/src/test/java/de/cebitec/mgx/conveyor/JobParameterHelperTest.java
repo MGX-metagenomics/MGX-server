@@ -44,7 +44,7 @@ public class JobParameterHelperTest {
     @After
     public void tearDown() {
     }
-    
+
     @Test
     public void testGetParameters() throws IOException {
         System.out.println("getParameters");
@@ -58,7 +58,7 @@ public class JobParameterHelperTest {
         }
         assertNotNull(iter);
         JobParameter jp = null;
-        int cnt=0;
+        int cnt = 0;
         while (iter.hasNext()) {
             jp = iter.next();
             assertNotNull(jp);
@@ -68,6 +68,30 @@ public class JobParameterHelperTest {
             }
         }
         assertEquals(4, cnt);
+    }
+
+    @Test
+    public void testRegressionNullType() throws IOException {
+        System.out.println("testRegressionNullType");
+        String toolXml = UnixHelper.readFile(new File("src/test/resources/blastmapping.xml"));
+        File plugindump = new File("src/test/resources/plugindump.xml");
+        AutoCloseableIterator<JobParameter> iter = null;
+        try {
+            iter = JobParameterHelper.getParameters(toolXml, plugindump);
+        } catch (MGXException ex) {
+            Logger.getLogger(JobParameterHelperTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        assertNotNull(iter);
+        JobParameter jp;
+        int cnt = 0;
+        while (iter.hasNext()) {
+            jp = iter.next();
+            assertNotNull(jp);
+//            System.err.println(jp);
+            assertNotNull(jp.getType());
+            cnt++;
+        }
+        assertEquals(3, cnt);
     }
 
 }
