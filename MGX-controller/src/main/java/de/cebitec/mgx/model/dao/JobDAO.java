@@ -1,31 +1,34 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import static de.cebitec.mgx.model.dao.DAO.toSQLTemplateString;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
-import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
-import java.io.BufferedReader;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Map;
 
 /**
  *
  * @author sjaenick
  */
-public class JobDAO<T extends Job> extends DAO<T> {
+public class JobDAO extends DAO<Job> {
 
     private static final String[] suffices = {"", ".stdout", ".stderr"};
 
@@ -38,9 +41,292 @@ public class JobDAO<T extends Job> extends DAO<T> {
         return Job.class;
     }
 
+    private final static String CREATE = "INSERT INTO job (created_by, job_state, seqrun_id, tool_id) "
+            + "VALUES (?,?,?,?) RETURNING id";
+
     @Override
-    public void update(T job) throws MGXException {
-        super.update(job);
+    public long create(Job obj) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+                stmt.setString(1, obj.getCreator());
+                stmt.setInt(2, obj.getStatus().getValue());
+                stmt.setLong(3, obj.getSeqrunId());
+                stmt.setLong(4, obj.getToolId());
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        obj.setId(rs.getLong(1));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+        return obj.getId();
+    }
+
+    private final static String BY_ID = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM job j "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id=?";
+
+    @Override
+    public Job getById(long id) throws MGXException {
+
+        if (id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                    }
+
+                    Job job = new Job();
+                    job.setId(rs.getLong(1));
+                    job.setCreator(rs.getString(2));
+                    job.setStatus(JobState.values()[rs.getInt(3)]);
+                    if (rs.getTimestamp(4) != null) {
+                        job.setStartDate(rs.getTimestamp(4));
+                    }
+                    if (rs.getTimestamp(5) != null) {
+                        job.setFinishDate(rs.getTimestamp(5));
+                    }
+                    job.setToolId(rs.getLong(6));
+                    job.setSeqrunId(rs.getLong(7));
+                    job.setParameters(new ArrayList<JobParameter>());
+
+                    //
+                    do {
+                        if (rs.getLong(8) != 0) {
+                            JobParameter jp = new JobParameter();
+                            jp.setJobId(job.getId());
+                            jp.setId(rs.getLong(9));
+                            jp.setNodeId(rs.getLong(10));
+                            jp.setParameterName(rs.getString(11));
+                            jp.setParameterValue(rs.getString(12));
+                            jp.setUserName(rs.getString(13));
+                            jp.setUserDescription(rs.getString(14));
+                            job.getParameters().add(jp);
+                        }
+                    } while (rs.next());
+
+                    fixParameters(job);
+                    return job;
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+    }
+
+    public AutoCloseableIterator<Job> getByIds(long... ids) throws MGXException {
+        if (ids == null || ids.length == 0) {
+            throw new MGXException("Null/empty ID list.");
+        }
+        List<Job> ret = null;
+
+        String BY_IDS = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
+                + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+                + "FROM job j "
+                + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id IN (" + toSQLTemplateString(ids.length) + ")";
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
+                int idx = 1;
+                for (Long id : ids) {
+                    stmt.setLong(idx++, id);
+                }
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    
+                    
+                     Job currentJob = null;
+
+                    while (rs.next()) {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+                                job.setSeqrunId(rs.getLong(7));
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(9));
+                                jp.setNodeId(rs.getLong(10));
+                                jp.setParameterName(rs.getString(11));
+                                jp.setParameterValue(rs.getString(12));
+                                jp.setUserName(rs.getString(13));
+                                jp.setUserDescription(rs.getString(14));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    }
+                    
+//                    while (rs.next()) {
+//
+//                        if (ret == null) {
+//                            ret = new ArrayList<>(ids.size());
+//                        }
+//
+//                        Job job = new Job();
+//                        job.setId(rs.getLong(1));
+//                        job.setCreator(rs.getString(2));
+//                        job.setStatus(JobState.values()[rs.getInt(3)]);
+//                        if (rs.getTimestamp(4) != null) {
+//                            job.setStartDate(rs.getTimestamp(4));
+//                        }
+//                        if (rs.getTimestamp(5) != null) {
+//                            job.setFinishDate(rs.getTimestamp(5));
+//                        }
+//                        job.setToolId(rs.getLong(6));
+//                        job.setSeqrunId(rs.getLong(7));
+//                        job.setParameters(new ArrayList<JobParameter>());
+//
+//                        //
+//                        do {
+//                            if (rs.getLong(8) != 0) {
+//                                JobParameter jp = new JobParameter();
+//                                jp.setJobId(job.getId());
+//                                jp.setId(rs.getLong(9));
+//                                jp.setNodeId(rs.getLong(10));
+//                                jp.setParameterName(rs.getString(11));
+//                                jp.setParameterValue(rs.getString(12));
+//                                jp.setUserName(rs.getString(13));
+//                                jp.setUserDescription(rs.getString(14));
+//                                job.getParameters().add(jp);
+//                            }
+//                        } while (rs.next());
+//
+//                        ret.add(job);
+//                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
+    private final static String FETCHALL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM job j "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)";
+
+    @SuppressWarnings("unchecked")
+    public AutoCloseableIterator<Job> getAll() throws MGXException {
+        List<Job> ret = null;
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    Job currentJob = null;
+
+                    while (rs.next()) {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+                                job.setSeqrunId(rs.getLong(7));
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(9));
+                                jp.setNodeId(rs.getLong(10));
+                                jp.setParameterName(rs.getString(11));
+                                jp.setParameterValue(rs.getString(12));
+                                jp.setUserName(rs.getString(13));
+                                jp.setUserDescription(rs.getString(14));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
+    private final static String UPDATE = "UPDATE job SET created_by=?, job_state=?, seqrun_id=?, tool_id=? "
+            + "WHERE id=?";
+
+    public void update(Job job) throws MGXException {
+        if (job.getId() == Job.INVALID_IDENTIFIER) {
+            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+                stmt.setString(1, job.getCreator());
+                stmt.setInt(2, job.getStatus().getValue());
+                stmt.setLong(3, job.getSeqrunId());
+                stmt.setLong(4, job.getToolId());
+                stmt.setLong(5, job.getId());
+                stmt.executeUpdate();
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+//        super.update(job);
+
         if (job.getStatus().equals(JobState.FINISHED)) {
             try (Connection conn = getConnection()) {
                 // set finished date
@@ -56,7 +342,7 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     stmt.execute();
                     stmt.close();
                 }
-                
+
                 // create assignment counts for attributes belonging to this job
                 String sql = "INSERT INTO attributecount "
                         + "SELECT attribute.id, count(attribute.id) FROM attribute "
@@ -69,12 +355,11 @@ public class JobDAO<T extends Job> extends DAO<T> {
                 }
                 conn.close();
             } catch (SQLException ex) {
-                throw new MGXException(ex.getMessage());
+                throw new MGXException(ex);
             }
         }
     }
 
-    @Override
     public void delete(long id) throws MGXException {
         String sb;
         try {
@@ -82,14 +367,15 @@ public class JobDAO<T extends Job> extends DAO<T> {
                     .append(File.separator)
                     .append(id).toString();
         } catch (IOException ex) {
-            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
+            getController().log(ex.getMessage());
             throw new MGXException(ex);
         }
 
         for (String suffix : suffices) {
-            File f = new File(sb + suffix);
-            if (f.exists()) {
-                f.delete();
+            try {
+                Files.deleteIfExists(Paths.get(sb + suffix));
+            } catch (IOException ex) {
+                getController().log(ex.getMessage());
             }
         }
     }
@@ -142,30 +428,157 @@ public class JobDAO<T extends Job> extends DAO<T> {
         return ret;
     }
 
-    public AutoCloseableIterator<Job> BySeqRun(SeqRun sr) throws MGXException {
-        Iterator<Job> iterator = getEntityManager().<Job>createQuery("SELECT DISTINCT j FROM " + getClassName() + " j WHERE j.seqrun = :seqrun", Job.class).
-                setParameter("seqrun", sr).getResultList().iterator();
-        return new ForwardingIterator<>(iterator);
+    private final static String SQL_BY_SEQRUN = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM seqrun s "
+            + "LEFT JOIN job j ON (j.seqrun_id=s.id) "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)"
+            + "WHERE s.id=?";
+
+    public AutoCloseableIterator<Job> bySeqRun(final long run_id) throws MGXException {
+        if (run_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        List<Job> ret = null;
+
+//        SeqRun seqrun = getController().getSeqRunDAO().getById(run_id);
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
+                stmt.setLong(1, run_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type SeqRun for ID " + run_id + ".");
+                    }
+
+                    Job currentJob = null;
+
+                    do {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+                                job.setSeqrunId(run_id);
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(7) != 0 && rs.getLong(7) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(8));
+                                jp.setNodeId(rs.getLong(9));
+                                jp.setParameterName(rs.getString(10));
+                                jp.setParameterValue(rs.getString(11));
+                                jp.setUserName(rs.getString(12));
+                                jp.setUserDescription(rs.getString(13));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    } while (rs.next());
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     public String getError(Job job) throws MGXException {
         if (job.getStatus() != JobState.FAILED) {
+            //getController().log("state: "+job.getStatus());
             return "Job is not in FAILED state.";
         }
-        StringBuilder ret = new StringBuilder();
         try {
             String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
                     .append(File.separator).append(job.getId())
                     .append(".stderr").toString();
-            try (BufferedReader br = new BufferedReader(new FileReader(fname))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    ret.append(line).append(System.lineSeparator());
+            return UnixHelper.readFile(new File(fname));
+        } catch (IOException ex) {
+            getController().log(ex.getMessage());
+        }
+        return "";
+    }
+
+    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
+
+    private void fixParameters(Job job) throws MGXException {
+        Tool tool = getController().getToolDAO().getById(job.getToolId());
+        String fName = tool.getXMLFile();
+        List<JobParameter> availableParams;
+
+        if (paramCache.containsKey(fName)) {
+            availableParams = paramCache.get(fName);
+        } else {
+            String toolXMLData;
+            try {
+                toolXMLData = UnixHelper.readFile(new File(fName));
+            } catch (IOException ex) {
+                throw new MGXException(ex);
+            }
+            availableParams = new ArrayList<>();
+            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, getController().getConfiguration().getPluginDump());
+            while (apIter.hasNext()) {
+                availableParams.add(apIter.next());
+            }
+            paramCache.put(fName, availableParams);
+        }
+
+        if (job.getParameters() != null && !job.getParameters().isEmpty()) {
+
+            final String projectFileDir;
+            try {
+                projectFileDir = getController().getProjectFileDirectory().getAbsolutePath();
+            } catch (IOException ex) {
+                throw new MGXException(ex);
+            }
+
+            for (JobParameter jp : job.getParameters()) {
+                for (JobParameter candidate : availableParams) {
+                    // can't compare by ID field here
+                    if (jp.getNodeId() == candidate.getNodeId() && jp.getParameterName().equals(candidate.getParameterName())) {
+                        jp.setClassName(candidate.getClassName());
+                        jp.setType(candidate.getType());
+                        jp.setDisplayName(candidate.getDisplayName());
+                    }
+                }
+
+                // do not expose internal path names
+                if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir + File.separator)) {
+                    jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir + File.separator, ""));
+                }
+                if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
+                    jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
                 }
             }
-        } catch (IOException ex) {
-            Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return ret.toString();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        paramCache.clear();
     }
 }

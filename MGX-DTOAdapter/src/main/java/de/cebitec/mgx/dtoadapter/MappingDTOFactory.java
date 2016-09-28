@@ -28,9 +28,9 @@ public class MappingDTOFactory extends DTOConversionBase<Mapping, MappingDTO, Ma
     public MappingDTO toDTO(Mapping a) {
         return MappingDTO.newBuilder()
                 .setId(a.getId())
-                .setJobId(a.getJob().getId())
-                .setReferenceId(a.getReference().getId())
-                .setRunId(a.getSeqrun().getId())
+                .setJobId(a.getJobId())
+                .setReferenceId(a.getReferenceId())
+                .setRunId(a.getSeqRunId())
                 .build();
     }
 

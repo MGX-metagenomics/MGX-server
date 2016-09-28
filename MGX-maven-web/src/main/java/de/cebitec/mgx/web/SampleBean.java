@@ -11,7 +11,6 @@ import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
 import de.cebitec.mgx.workers.DeleteSample;
-import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -53,14 +52,14 @@ public class SampleBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong create(SampleDTO dto) {
-        Habitat h = null;
-        try {
-            h = mgx.getHabitatDAO().getById(dto.getHabitatId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
+//        Habitat h = null;
+//        try {
+//            h = mgx.getHabitatDAO().getById(dto.getHabitatId());
+//        } catch (MGXException ex) {
+//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+//        }
         Sample s = SampleDTOFactory.getInstance().toDB(dto);
-        h.addSample(s);
+        //h.addSample(s);
         long sample_id;
         try {
             sample_id = mgx.getSampleDAO().create(s);
@@ -74,14 +73,7 @@ public class SampleBean {
     @Path("update")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response update(SampleDTO dto) {
-        Habitat h = null;
-        try {
-            h = mgx.getHabitatDAO().getById(dto.getHabitatId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
         Sample sample = SampleDTOFactory.getInstance().toDB(dto);
-        sample.setHabitat(h);
         try {
             mgx.getSampleDAO().update(sample);
         } catch (MGXException ex) {
@@ -98,7 +90,7 @@ public class SampleBean {
         try {
             obj = mgx.getSampleDAO().getById(id);
         } catch (MGXException ex) {
-            throw new MGXWebException("No such Sample");
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SampleDTOFactory.getInstance().toDTO(obj);
     }
@@ -118,11 +110,9 @@ public class SampleBean {
     @Path("byHabitat/{id}")
     @Produces("application/x-protobuf")
     public SampleDTOList byHabitat(@PathParam("id") Long hab_id) {
-        Habitat habitat;
         AutoCloseableIterator<Sample> samples;
         try {
-            habitat = mgx.getHabitatDAO().getById(hab_id);
-            samples = mgx.getSampleDAO().byHabitat(habitat);
+            samples = mgx.getSampleDAO().byHabitat(hab_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -134,6 +124,13 @@ public class SampleBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        try {
+            mgx.getSampleDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        
         UUID taskId;
         try {
             taskId = taskHolder.addTask(new DeleteSample(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));

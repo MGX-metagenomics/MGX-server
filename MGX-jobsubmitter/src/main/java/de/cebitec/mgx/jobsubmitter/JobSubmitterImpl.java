@@ -78,7 +78,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
     @Override
     public boolean submit(Host dispatcherHost, String projName, DataSource dataSource, Job job) throws MGXDispatcherException {
         if (job.getStatus() != JobState.VERIFIED) {
-            throw new MGXDispatcherException("Job %s in invalid state %s", job.getId().toString(), job.getStatus());
+            throw new MGXDispatcherException("Job %d in invalid state %s", job.getId(), job.getStatus());
         }
 
         // set job to submitted

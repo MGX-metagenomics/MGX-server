@@ -1,39 +1,19 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
 import java.util.Collection;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Attribute")
-public class Attribute implements Serializable, Identifiable {
+public class Attribute extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
-    //
-    @Basic
-    @NotNull
-    @Column(name = "value")
+
     protected String value;
-    //
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attrtype_id", nullable = false)
-    protected AttributeType attrtype;
-    //
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false)
-    protected Job job;
-    
-    @ManyToOne
-    private Attribute parent;
-    @OneToMany(mappedBy = "parent")
+    protected long attrtype;
+    protected long job;
+    private long parent = INVALID_IDENTIFIER;
     private Collection<Attribute> children;
 
     public Collection<Attribute> getChildren() {
@@ -44,22 +24,12 @@ public class Attribute implements Serializable, Identifiable {
         this.children = children;
     }
 
-    public Attribute getParent() {
+    public long getParentId() {
         return parent;
     }
 
-    public void setParent(Attribute parent) {
+    public void setParentId(long parent) {
         this.parent = parent;
-    }
-
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public Attribute setId(Long id) {
-        this.id = id;
-        return this;
     }
 
     public String getValue() {
@@ -71,19 +41,19 @@ public class Attribute implements Serializable, Identifiable {
         return this;
     }
 
-    public AttributeType getAttributeType() {
+    public long getAttributeTypeId() {
         return attrtype;
     }
 
-    public void setAttributeType(AttributeType attrtype) {
+    public void setAttributeTypeId(long attrtype) {
         this.attrtype = attrtype;
     }
 
-    public Job getJob() {
+    public long getJobId() {
         return job;
     }
 
-    public void setJob(Job job) {
+    public void setJobId(long job) {
         this.job = job;
     }
 
@@ -96,16 +66,14 @@ public class Attribute implements Serializable, Identifiable {
             return false;
         }
         final Attribute other = (Attribute) obj;
-        if (this.id != other.id && (this.id == null || !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER)
+                || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 73 * hash + (this.id != null ? this.id.hashCode() : 0);
+        hash += (getId() != INVALID_IDENTIFIER ? Long.valueOf(getId()).hashCode() : 0);
         return hash;
     }
 }

@@ -4,12 +4,12 @@
     <parent>
         <artifactId>MGX-maven</artifactId>
         <groupId>de.cebitec.mgx</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <groupId>de.cebitec.mgx</groupId>
     <artifactId>MGX-controller</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>ejb</packaging>
 
     <name>MGX-controller</name>
@@ -24,13 +24,11 @@
             <groupId>de.cebitec.gpms</groupId>
             <artifactId>GPMS-db-api</artifactId>
             <version>1.1</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-util</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>jar</type>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -40,24 +38,32 @@
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-isequences</artifactId>
             <version>1.0</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-configuration-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>jar</type>
+            <version>1.0</version>
         </dependency>
         <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
+            <groupId>de.cebitec.mgx</groupId>
+            <artifactId>Trove-OSGi</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>de.cebitec.mgx</groupId>
+            <artifactId>MGX-conveyor</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>19.0</version>
         </dependency>
         <dependency>
             <groupId>javax</groupId>

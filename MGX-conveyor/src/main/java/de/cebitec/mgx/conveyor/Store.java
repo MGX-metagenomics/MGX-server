@@ -48,28 +48,27 @@ public class Store implements Iterable<Entry<Long, Node>> {
      */
     public final AutoCloseableIterator<JobParameter> extractJobParameters() {
         List<JobParameter> parameters = new ArrayList<>();
-        
+
         for (Entry<Long, Node> entry : nodes.entrySet()) {
-            
+
             final Long nodeId = entry.getKey();
             final Node node = entry.getValue();
-            
+
             for (Entry<String, ConfigItem> configItementry : node.entrySet()) {
                 final ConfigItem configItem = configItementry.getValue();
 
-                JobParameter jobParameter = new JobParameter()
-                        .setId(-1L)
-                    .setParameterName(configItementry.getKey())
-                    .setParameterValue(configItem.getAnswer())
-                    .setClassName(node.getClassName())
-                    .setDisplayName(node.getDisplayName())
-                    .setDefaultValue(configItem.getDefaultValue())
-                    .setNodeId(nodeId)
-                    .setOptional(configItem.isOptional())
-                    .setType(configItem.getConfigType())
-                    .setUserDescription(configItem.getUserDescription())
-                    .setUserName(configItem.getUserName())
-                    .setChoices(configItem.getChoice().getChoices());
+                JobParameter jobParameter = new JobParameter();
+                jobParameter.setParameterName(configItementry.getKey())
+                        .setParameterValue(configItem.getAnswer())
+                        .setClassName(node.getClassName())
+                        .setDisplayName(node.getDisplayName())
+                        .setDefaultValue(configItem.getDefaultValue())
+                        .setNodeId(nodeId)
+                        .setOptional(configItem.isOptional())
+                        .setType(configItem.getConfigType())
+                        .setUserDescription(configItem.getUserDescription())
+                        .setUserName(configItem.getUserName())
+                        .setChoices(configItem.getChoice().getChoices());
 
                 parameters.add(jobParameter);
             }
