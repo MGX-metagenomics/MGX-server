@@ -30,7 +30,7 @@ public class UnixHelper {
     }
 
     public static void createDirectory(final File targetDir) throws IOException {
-        if (targetDir.exists()) {
+        if (targetDir.exists() && targetDir.isDirectory()) {
             return;
         }
         Path path = Paths.get(targetDir.toURI());
@@ -105,6 +105,7 @@ public class UnixHelper {
             String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
+                sb.append(System.lineSeparator());
             }
         }
         return sb.toString();

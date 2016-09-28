@@ -17,7 +17,6 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.sessions.MappingSessions;
@@ -77,17 +76,29 @@ public class ToolBean {
         return MGXLong.newBuilder().setValue(id).build();
     }
 
+//    @GET
+//    @Path("byJob/{id}")
+//    @Produces("application/x-protobuf")
+//    public ToolDTO byJob(@PathParam("id") Long job_id) {
+//        Job job;
+//        try {
+//            job = mgx.getJobDAO().getById(job_id);
+//        } catch (MGXException ex) {
+//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+//        }
+//        return ToolDTOFactory.getInstance().toDTO(job.getTool());
+//    }
+
     @GET
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
     public ToolDTO byJob(@PathParam("id") Long job_id) {
-        Job job;
         try {
-            job = mgx.getJobDAO().getById(job_id);
+            Tool tool = mgx.getToolDAO().byJob(job_id);
+            return ToolDTOFactory.getInstance().toDTO(tool);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return ToolDTOFactory.getInstance().toDTO(job.getTool());
     }
 
     @GET
@@ -182,8 +193,9 @@ public class ToolBean {
 
         long id;
         try {
-            id = mgx.getToolDAO().installGlobalTool(globalTool, globalTool.getClass(), mgx.getProjectDirectory());
+            id = mgx.getToolDAO().installGlobalTool(globalTool, mgx.getProjectDirectory());
         } catch (MGXException | IOException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
@@ -195,10 +207,11 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
-            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().<Tool>getById(id);
+            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
             String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
             return getParams(toolXMLData);
         } catch (MGXGlobalException | MGXException | IOException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }
     }
@@ -247,6 +260,7 @@ public class ToolBean {
         try {
             params = JobParameterHelper.getParameters(XMLData, mgxconfig.getPluginDump());
         } catch (MGXException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }
         return JobParameterDTOFactory.getInstance().toDTOList(params);

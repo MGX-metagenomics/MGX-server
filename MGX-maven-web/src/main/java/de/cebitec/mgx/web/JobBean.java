@@ -26,23 +26,16 @@ import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXJobException;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -82,29 +75,28 @@ public class JobBean {
 
         // we artificially set the IDs to 'null'; otherwise, JPA considers this
         // object an detached entity passed to persist()..
-        j.setId(null);
-        for (JobParameter jp : j.getParameters()) {
-            jp.setId(null);
-        }
-
-        Tool tool = null;
-        SeqRun seqrun = null;
-        try {
-            tool = mgx.getToolDAO().getById(dto.getToolId());
-            seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-
+//        j.setId(null);
+//        for (JobParameter jp : j.getParameters()) {
+//            jp.setId(null);
+//        }
+//        Tool tool = null;
+//        SeqRun seqrun = null;
+//        try {
+//            tool = mgx.getToolDAO().getById(dto.getToolId());
+//            seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
+//        } catch (MGXException ex) {
+//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+//        }
         j.setStatus(JobState.CREATED);
-        j.setTool(tool);
-        j.setSeqrun(seqrun);
+        j.setToolId(dto.getToolId());
+        j.setSeqrunId(dto.getSeqrunId());
         j.setCreator(mgx.getCurrentUser());
 
         // fetch default parameters for the referenced tool
         Set<JobParameter> defaultParams = new HashSet<>();
         try {
-            String toolXMLData = UnixHelper.readFile(new File(j.getTool().getXMLFile()));
+            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
+            String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
             AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
             while (jpIter.hasNext()) {
                 defaultParams.add(jpIter.next());
@@ -147,6 +139,11 @@ public class JobBean {
         Long job_id = null;
         try {
             job_id = mgx.getJobDAO().create(j);
+
+            for (JobParameter jp : j.getParameters()) {
+                jp.setJobId(job_id);
+                mgx.getJobParameterDAO().create(jp);
+            }
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -160,9 +157,8 @@ public class JobBean {
     public JobDTO fetch(@PathParam("id") Long id) {
         try {
             Job job = mgx.getJobDAO().getById(id);
-            fixParameters(job);
             return JobDTOFactory.getInstance().toDTO(job);
-        } catch (MGXException | IOException ex) {
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
@@ -171,27 +167,20 @@ public class JobBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public JobDTOList fetchall() {
-        List<Job> jobs = new ArrayList<>();
         try {
             AutoCloseableIterator<Job> acit = mgx.getJobDAO().getAll();
-            while (acit.hasNext()) {
-                Job j = acit.next();
-                fixParameters(j);
-                jobs.add(j);
-            }
-        } catch (MGXException | IOException ex) {
+            return JobDTOFactory.getInstance().toDTOList(acit);
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return JobDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(jobs.iterator()));
     }
 
     @GET
     @Path("getParameters/{id}")
     @Produces("application/x-protobuf")
-    public JobParameterListDTO getParameters(@PathParam("id") Long id) {
+    public JobParameterListDTO getParameters(@PathParam("id") Long job_id) {
         try {
-            Job job = mgx.getJobDAO().getById(id);
-            AutoCloseableIterator<JobParameter> params = mgx.getJobParameterDAO().ByJob(job);
+            AutoCloseableIterator<JobParameter> params = mgx.getJobParameterDAO().byJob(job_id);
             return JobParameterDTOFactory.getInstance().toDTOList(params);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -207,7 +196,7 @@ public class JobBean {
         try {
             Job job = mgx.getJobDAO().getById(id);
             for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(paramdtos)) {
-                jp.setJob(job);
+                jp.setJobId(id);
 
                 if (jp.getType().equals("ConfigFile")) {
                     String fullPath = mgx.getProjectFileDirectory() + File.separator
@@ -231,10 +220,11 @@ public class JobBean {
         boolean verified = false;
         try {
             Job job = mgx.getJobDAO().getById(id);
-            
+
             Host h = new Host(dispConfig.getDispatcherHost());
             verified = js.validate(h, mgx.getProjectName(), mgx.getDataSource(), job, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
         } catch (MGXException | MGXDispatcherException | IOException ex) {
+            mgx.log(ex);
             throw new MGXJobException(ex.getMessage());
         }
 
@@ -334,10 +324,10 @@ public class JobBean {
     public Response update(JobDTO dto) {
         Job job = JobDTOFactory.getInstance().toDB(dto);
         try {
-            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
-            SeqRun run = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
-            job.setTool(tool);
-            job.setSeqrun(run);
+//            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
+//            SeqRun run = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
+            job.setToolId(dto.getToolId());
+            job.setSeqrunId(dto.getSeqrunId());
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -392,31 +382,24 @@ public class JobBean {
     @Path("BySeqRun/{seqrun_id}")
     @Produces("application/x-protobuf")
     public JobDTOList BySeqRun(@PathParam("seqrun_id") Long seqrun_id) {
-        SeqRun run = null;
+//        SeqRun run = null;
+//        try {
+//            run = mgx.getSeqRunDAO().getById(seqrun_id);
+//        } catch (MGXException ex) {
+//            try {
+//                // we don't fail for non-existing seqruns; instead, an empty
+//                // result is returned
+//                return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(seqrun_id));
+//            } catch (MGXException ex1) {
+//                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex1);
+//            }
+//        }
         try {
-            run = mgx.getSeqRunDAO().getById(seqrun_id);
+            AutoCloseableIterator<Job> acit = mgx.getJobDAO().bySeqRun(seqrun_id);
+            return JobDTOFactory.getInstance().toDTOList(acit);
         } catch (MGXException ex) {
-            try {
-                // we don't fail for non-existing seqruns; instead, an empty
-                // result is returned
-                return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(run));
-            } catch (MGXException ex1) {
-                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex1);
-            }
-        }
-
-        List<Job> jobs = new ArrayList<>();
-        try {
-            AutoCloseableIterator<Job> acit = mgx.getJobDAO().BySeqRun(run);
-            while (acit.hasNext()) {
-                Job j = acit.next();
-                fixParameters(j);
-                jobs.add(j);
-            }
-        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return JobDTOFactory.getInstance().toDTOList(new ForwardingIterator<>(jobs.iterator()));
     }
 
     @GET
@@ -431,43 +414,45 @@ public class JobBean {
         }
     }
 
-    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
-
-    private void fixParameters(Job job) throws MGXException, IOException {
-        String fName = job.getTool().getXMLFile();
-        List<JobParameter> availableParams;
-
-        if (paramCache.containsKey(fName)) {
-            availableParams = paramCache.get(fName);
-        } else {
-            String toolXMLData = UnixHelper.readFile(new File(fName));
-            availableParams = new ArrayList<>();
-            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
-            while (apIter.hasNext()) {
-                availableParams.add(apIter.next());
-            }
-            paramCache.put(fName, availableParams);
-        }
-
-        final String projectFileDir = mgx.getProjectFileDirectory().getAbsolutePath();
-
-        for (JobParameter jp : job.getParameters()) {
-            for (JobParameter candidate : availableParams) {
-                // can't compare by ID field here
-                if (jp.getNodeId() == candidate.getNodeId() && jp.getParameterName().equals(candidate.getParameterName())) {
-                    jp.setClassName(candidate.getClassName());
-                    jp.setType(candidate.getType());
-                    jp.setDisplayName(candidate.getDisplayName());
-                }
-            }
-
-            // do not expose internal path names
-            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
-                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
-            }
-        }
-    }
-
+//    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
+//
+//    private void fixParameters(Job job) throws MGXException, IOException {
+//        String fName = job.getTool().getXMLFile();
+//        List<JobParameter> availableParams;
+//
+//        if (paramCache.containsKey(fName)) {
+//            availableParams = paramCache.get(fName);
+//        } else {
+//            String toolXMLData = UnixHelper.readFile(new File(fName));
+//            availableParams = new ArrayList<>();
+//            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
+//            while (apIter.hasNext()) {
+//                availableParams.add(apIter.next());
+//            }
+//            paramCache.put(fName, availableParams);
+//        }
+//
+//        final String projectFileDir = mgx.getProjectFileDirectory().getAbsolutePath();
+//
+//        for (JobParameter jp : job.getParameters()) {
+//            for (JobParameter candidate : availableParams) {
+//                // can't compare by ID field here
+//                if (jp.getNodeId() == candidate.getNodeId() && jp.getParameterName().equals(candidate.getParameterName())) {
+//                    jp.setClassName(candidate.getClassName());
+//                    jp.setType(candidate.getType());
+//                    jp.setDisplayName(candidate.getDisplayName());
+//                }
+//            }
+//
+//            // do not expose internal path names
+//            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir + File.separator)) {
+//                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir + File.separator, ""));
+//            }
+//            if (jp.getParameterValue() != null && jp.getParameterValue().startsWith(projectFileDir)) {
+//                jp.setParameterValue(jp.getParameterValue().replaceAll(projectFileDir, ""));
+//            }
+//        }
+//    }
     private JobParameter findDefaultParameter(JobParameter userParam, Collection<JobParameter> defaultParams) {
         for (JobParameter jp : defaultParams) {
             if (jp.getNodeId() == userParam.getNodeId() && jp.getParameterName().equals(userParam.getParameterName())) {

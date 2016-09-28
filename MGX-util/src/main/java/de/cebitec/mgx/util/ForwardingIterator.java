@@ -16,7 +16,7 @@ public class ForwardingIterator<T> implements AutoCloseableIterator<T> {
 
     @Override
     public boolean hasNext() {
-        return iter.hasNext();
+        return iter != null && iter.hasNext();
     }
 
     @Override

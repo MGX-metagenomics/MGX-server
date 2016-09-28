@@ -24,7 +24,7 @@ public class LimitingIterator<T> implements AutoCloseableIterator<T> {
         if (next != null) {
             return true;
         }
-        if (count <= limit && iter.hasNext()) {
+        if (count <= limit && iter != null && iter.hasNext()) {
             next = iter.next();
             count++;
             return true;

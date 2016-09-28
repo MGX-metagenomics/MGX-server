@@ -42,8 +42,8 @@ public class TermDTOFactory extends DTOConversionBase<Term, TermDTO, TermDTOList
     @Override
     public Term toDB(TermDTO dto) {
         Term t = new Term();
-        t.setId(dto.getId())
-                .setName(dto.getName());
+        t.setId(dto.getId());
+        t.setName(dto.getName());
 
         if (dto.hasParentId()) {
             t.setParentId(dto.getParentId());

@@ -1,61 +1,42 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
 /**
  *
  * @author sjaenick
  */
-@Entity
-@Table(name = "Mapping")
-public class Mapping implements Serializable, Identifiable {
+public class Mapping extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    //
-    @ManyToOne
-    @JoinColumn(name = "run_id", nullable = false)
-    protected SeqRun seqrun;
-    //
-    @ManyToOne
-    @JoinColumn(name = "job_id", nullable = false)
-    protected Job job;
-    //
-    @ManyToOne
-    @JoinColumn(name = "ref_id", nullable = false)
-    protected Reference reference;
-    //
-    @Basic
-    @NotNull
-    @Column(name = "bam_file", unique = true)
+    protected long seqrun;
+    protected long job;
+    protected long reference;
     protected String bam_file;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public SeqRun getSeqrun() {
+    public long getSeqRunId() {
         return seqrun;
     }
 
-    public Job getJob() {
+    public void setSeqrunId(long seqrun) {
+        this.seqrun = seqrun;
+    }
+
+    public void setJobId(long job) {
+        this.job = job;
+    }
+
+    public void setReferenceId(long reference) {
+        this.reference = reference;
+    }
+
+    public void setBAMFile(String bam_file) {
+        this.bam_file = bam_file;
+    }
+
+    public long getJobId() {
         return job;
     }
 
-    public Reference getReference() {
+    public long getReferenceId() {
         return reference;
     }
 

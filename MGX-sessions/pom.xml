@@ -4,12 +4,12 @@
     <parent>
         <artifactId>MGX-maven</artifactId>
         <groupId>de.cebitec.mgx</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
 
     <groupId>de.cebitec.mgx</groupId>
     <artifactId>MGX-sessions</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>ejb</packaging>
 
     <name>MGX-sessions</name>
@@ -23,27 +23,27 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>1.134</version>
+            <version>1.143</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-util</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-configuration-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>javax</groupId>

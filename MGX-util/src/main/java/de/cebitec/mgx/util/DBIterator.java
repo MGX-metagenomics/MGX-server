@@ -27,7 +27,7 @@ public abstract class DBIterator<T> implements AutoCloseableIterator<T> {
     public boolean hasNext() {
         boolean ret = false;
         try {
-            ret = r.next();
+            ret = r != null && r.next();
         } catch (SQLException ex) {
             Logger.getLogger(DBIterator.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -3,7 +3,6 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.Observation;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.model.misc.BulkObservation;
 import de.cebitec.mgx.model.misc.SequenceObservation;
@@ -18,7 +17,7 @@ import java.util.List;
  *
  * @author sjaenick
  */
-public class ObservationDAO<T extends Observation> {
+public class ObservationDAO {
 
     private final MGXController ctx;
 
@@ -112,17 +111,19 @@ public class ObservationDAO<T extends Observation> {
         }
     }
 
-    public DBIterator<SequenceObservation> byRead(long seqId) throws MGXException {
+    public DBIterator<SequenceObservation> byRead(final long seqId) throws MGXException {
+        if (seqId <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         DBIterator<SequenceObservation> iter = null;
         PreparedStatement stmt = null;
         ResultSet rset = null;
         Connection conn = null;
-        
+
         //
         // no try-with-resources here; the DBIterator will take care of
         // closing the database resources
         //
-
         try {
             conn = ctx.getConnection();
             stmt = conn.prepareStatement("SELECT * from getObservations(?)");

@@ -5,7 +5,7 @@ import com.sun.jersey.spi.container.ContainerRequestFilter;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
-import de.cebitec.gpms.data.JPAMasterI;
+import de.cebitec.gpms.data.JDBCMasterI;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -56,7 +56,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
         for (MembershipI m : u.getMemberships()) {
             if (m.getProject().getName().equals(projectName)) {
                 // will create a new master or re-use a cached one
-                gpms.createMaster(m, JPAMasterI.class);
+                gpms.createMaster(m, JDBCMasterI.class);
                 return cr;
             }
         }

@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 public class GlobalReferenceDAO {
 
     private final MGXGlobal global;
-    private final boolean validate = true;
 
     public GlobalReferenceDAO(MGXGlobal global) {
         this.global = global;
@@ -52,10 +51,11 @@ public class GlobalReferenceDAO {
             throw new MGXGlobalException(ex);
         }
 
-        if (validate && ref != null) {
+        if (ref != null) {
             File seqFile = new File(ref.getFile());
-            if (!seqFile.exists()) {
-                throw new MGXGlobalException("Reference sequence data for " + ref.getName() + " is missing.");
+            if (!(seqFile.exists() && seqFile.canRead())) {
+                global.log("Global reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
+                throw new MGXGlobalException("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
             }
         }
         return ref;
@@ -73,13 +73,12 @@ public class GlobalReferenceDAO {
                         ref.setLength(rs.getInt(3));
                         ref.setFile(rs.getString(4));
 
-                        if (validate) {
-                            File seqFile = new File(ref.getFile());
-                            if (!seqFile.exists()) {
-                                throw new MGXGlobalException("Reference sequence data for " + ref.getName() + " is missing.");
-                            }
+                        File seqFile = new File(ref.getFile());
+                        if (!(seqFile.exists() && seqFile.canRead())) {
+                            global.log("Global reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
+                            throw new MGXGlobalException("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
                         }
-                        
+
                         refs.add(ref);
                     }
                 }

@@ -10,7 +10,7 @@ import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
-import de.cebitec.gpms.data.JPAMasterI;
+import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import java.lang.reflect.Method;
@@ -71,7 +71,7 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
             if (rights.length == 0) {
                 return cr;
             }
-            JPAMasterI master = gpmslocal.getCurrentMaster();
+            JDBCMasterI master = gpmslocal.getCurrentMaster();
             if (master == null) {
                 throw new MGXWebException(Response.Status.INTERNAL_SERVER_ERROR, "No master object for this request");
             }

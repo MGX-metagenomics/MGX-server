@@ -1,62 +1,26 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
 import java.util.Map;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author sj
  */
-@Entity
-@Table(name = "JobParameter")
-public class JobParameter implements Serializable, Identifiable {
+public class JobParameter extends Identifiable {
 
     private static final long serialVersionUID = 1L;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    //
-    @ManyToOne
-    @JoinColumn(name = "job_id", nullable = false)
-    protected Job job;
-    @Basic
-    @NotNull
-    @Column(name = "node_id")
+    protected long job;
     protected Long node_id;
-    @Basic
-    @NotNull
-    @Column(name = "param_name")
     protected String param_name;
-    @Basic
-    @NotNull
-    @Column(name = "param_value")
     protected String param_value;
-    @Basic
-    @NotNull
-    @Column(name = "user_name")
     private String user_name;
-    @Basic
-    @NotNull
-    @Column(name = "user_desc")
     private String user_desc;
 
-    @Override
-    public Long getId() {
-        return id;
-    }
-
-    public JobParameter setId(Long jp_id) {
-        id = jp_id;
-        return this;
-    }
-
-    public Job getJob() {
+    public long getJobId() {
         return job;
     }
 
-    public JobParameter setJob(Job job) {
+    public JobParameter setJobId(long job) {
         this.job = job;
         return this;
     }
@@ -88,17 +52,11 @@ public class JobParameter implements Serializable, Identifiable {
         return this;
     }
     
-    @Transient
     String displayName;
-    @Transient
     String className;
-    @Transient
     Map<String, String> choices;
-    @Transient
     String type;
-    @Transient
     Boolean optional;
-    @Transient
     String default_value = "";
 
     public String getUserDescription() {

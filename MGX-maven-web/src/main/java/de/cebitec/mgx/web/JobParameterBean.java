@@ -8,7 +8,6 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -70,10 +69,8 @@ public class JobParameterBean {
     @Path("ByJob/{job_id}")
     @Produces("application/x-protobuf")
     public JobParameterListDTO ByJob(@PathParam("job_id") Long job_id) {
-        Job job;
         try {
-            job = mgx.getJobDAO().getById(job_id);
-            return JobParameterDTOFactory.getInstance().toDTOList(mgx.getJobParameterDAO().ByJob(job));
+            return JobParameterDTOFactory.getInstance().toDTOList(mgx.getJobParameterDAO().byJob(job_id));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }

@@ -6,6 +6,7 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
@@ -19,7 +20,7 @@ import java.util.Iterator;
  *
  * @author sjaenick
  */
-public class SequenceDAO<T extends Sequence> extends DAO<T> {
+public class SequenceDAO extends DAO<Sequence> {
 
     private static final String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
 
@@ -32,10 +33,36 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
         return Sequence.class;
     }
 
+    private final static String CREATE = "INSERT INTO read (name, length, seqrun_id, discard) "
+            + "VALUES (?,?,?,?) RETURNING id";
+
+    public long create(Sequence obj, long seqrunId) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+                stmt.setString(1, obj.getName());
+                stmt.setInt(2, obj.getLength());
+                stmt.setLong(3, seqrunId);
+                stmt.setBoolean(4, false);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        obj.setId(rs.getLong(1));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+        return obj.getId();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
-    public T getById(Long id) throws MGXException {
-
+    public Sequence getById(long id) throws MGXException {
+        if (id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
         // find the storage file for this sequence
         String dbFile = null;
         String seqName = null;
@@ -50,6 +77,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 }
             }
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
 
@@ -71,18 +99,21 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 seq.setSequence(seqString);
                 seq.setLength(seqString.length());
             }
-        } catch (Exception ex) {
+        } catch (SeqStoreException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
-        return (T) seq;
+        return seq;
     }
 
-    @Override
-    public AutoCloseableIterator<T> getByIds(Collection<Long> ids) throws MGXException {
+    public AutoCloseableIterator<Sequence> getByIds(Collection<Long> ids) throws MGXException {
+        if (ids == null || ids.isEmpty()) {
+            throw new MGXException("Null/empty ID list.");
+        }
         if (ids.size() > 10_000) {
             throw new MGXException("Chunk too large, please do not request more than 10k sequences.");
         }
-        
+
         String GET_BY_IDS = "SELECT id, name, length FROM read WHERE id IN (" + toSQLTemplateString(ids.size()) + ")";
 
         try {
@@ -94,17 +125,18 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
             }
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<T>(rs, stmt, conn) {
+            return new DBIterator<Sequence>(rs, stmt, conn) {
                 @Override
-                public T convert(ResultSet rs) throws SQLException {
+                public Sequence convert(ResultSet rs) throws SQLException {
                     Sequence seq = new Sequence();
                     seq.setId(rs.getLong(1));
                     seq.setName(rs.getString(2));
                     seq.setLength(rs.getInt(3));
-                    return (T) seq;
+                    return seq;
                 }
             };
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
 
@@ -126,6 +158,7 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 }
             }
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
         throw new MGXException("Not found.");
@@ -144,7 +177,13 @@ public class SequenceDAO<T extends Sequence> extends DAO<T> {
                 }
             };
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
+    }
+
+    @Override
+    public long create(Sequence obj) throws MGXException {
+        throw new UnsupportedOperationException("Not supported."); //To change body of generated methods, choose Tools | Templates.
     }
 }

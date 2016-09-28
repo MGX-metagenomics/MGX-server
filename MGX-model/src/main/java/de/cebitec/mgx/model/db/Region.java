@@ -4,60 +4,21 @@ package de.cebitec.mgx.model.db;
  *
  * @author belmann
  */
-import java.io.Serializable;
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+public class Region extends Identifiable {
 
-/**
- *
- * @author belmann
- */
-@Entity
-@Table(name = "Region")
-public class Region implements Serializable, Identifiable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Basic
-    @NotNull
-    @Column(name = "name")
     private String name;
-    @Basic
-    @NotNull
-    @Column(name = "description")
     private String description;
-    @Basic
-    @NotNull
-    @Column(name = "type")
     private String type;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ref_id", nullable = false)
-    private Reference reference;
-    @Basic
-    @NotNull
-    @Column(name = "reg_start")
+    private long ref_id;
     private int start;
-    @Basic
-    @NotNull
-    @Column(name = "reg_stop")
     private int stop;
 
-//    public Reference getReference() {
-//        return reference;
-//    }
-//
-//    public void setReference(Reference reference) {
-//        this.reference = reference;
-//    }
-
-    @Override
-    public Long getId() {
-        return id;
+    public long getReferenceId() {
+        return ref_id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setReferenceId(long reference) {
+        this.ref_id = reference;
     }
 
     public String getName() {
@@ -98,10 +59,5 @@ public class Region implements Serializable, Identifiable {
 
     public void setStop(int stop) {
         this.stop = stop;
-    }
-
-    @Override
-    public String toString() {
-        return "de.cebitec.mgx.model.db.Region";
     }
 }

@@ -4,7 +4,9 @@ import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
+import de.cebitec.mgx.util.ForwardingIterator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -13,12 +15,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author sj
  */
-public class ReferenceDAO<T extends Reference> extends DAO<T> {
+public class ReferenceDAO extends DAO<Reference> {
 
     public ReferenceDAO(MGXControllerImpl ctx) {
         super(ctx);
@@ -29,6 +33,141 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
         return Reference.class;
     }
 
+    @Override
+    public long create(Reference obj) throws MGXException {
+        AutoCloseableIterator<Reference> iter = getAll();
+        while (iter.hasNext()) {
+            Reference ref = iter.next();
+            if (ref.getName().equals(obj.getName())) {
+                throw new MGXException("A reference named " + obj.getName() + " already exists.");
+            }
+        }
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
+                stmt.setString(1, obj.getName());
+                stmt.setInt(2, obj.getLength());
+                stmt.setString(3, obj.getFile());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        obj.setId(rs.getLong(1));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+        return obj.getId();
+    }
+
+    private final static String UPDATE = "UPDATE reference SET name=?, ref_length=? WHERE id=?";
+
+    public void update(Reference obj) throws MGXException {
+        if (obj.getId() == Reference.INVALID_IDENTIFIER) {
+            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+                stmt.setString(1, obj.getName());
+                stmt.setInt(2, obj.getLength());
+
+                stmt.setLong(3, obj.getId());
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+    }
+
+    public void delete(long id) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
+                stmt.setLong(1, id);
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+    }
+
+    private final static String BY_ID = "SELECT id, name, ref_length, ref_filepath FROM reference WHERE id=?";
+
+    @Override
+    public Reference getById(long id) throws MGXException {
+        if (id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                    }
+                    Reference ref = new Reference();
+                    ref.setId(rs.getLong(1));
+                    ref.setName(rs.getString(2));
+                    ref.setLength(rs.getInt(3));
+                    ref.setFile(rs.getString(4));
+
+                    if (ref.getFile() != null) {
+                        File seqFile = new File(ref.getFile());
+                        if (!(seqFile.exists() && seqFile.canRead())) {
+                            getController().log("Reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
+                            throw new MGXException("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                        }
+                    }
+                    return ref;
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+    }
+
+    public AutoCloseableIterator<Reference> getAll() throws MGXException {
+        List<Reference> refs = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Reference ref = new Reference();
+                        ref.setId(rs.getLong(1));
+                        ref.setName(rs.getString(2));
+                        ref.setLength(rs.getInt(3));
+                        ref.setFile(rs.getString(4));
+
+                        if (ref.getFile() != null) {
+                            File seqFile = new File(ref.getFile());
+                            if (!(seqFile.exists() && seqFile.canRead())) {
+                                getController().log("Reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
+                                throw new MGXException("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                            }
+                        }
+
+                        refs.add(ref);
+                    }
+                }
+            }
+
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+        return new ForwardingIterator<>(refs.iterator());
+    }
+
     public String getSequence(long refId, int from, int to) throws MGXException {
         int refLen = -1;
         String filePath = null;
@@ -36,13 +175,14 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT ref_length, ref_filepath FROM reference WHERE id=?")) {
                 stmt.setLong(1, refId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         refLen = rs.getInt(1);
                         filePath = rs.getString(2);
                     }
                 }
             }
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex);
         }
 
@@ -67,6 +207,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
             }
             return String.valueOf(buf).toUpperCase();
         } catch (IOException ex) {
+            getController().log(ex);
             throw new MGXException(ex.getMessage());
         }
     }
@@ -103,6 +244,7 @@ public class ReferenceDAO<T extends Reference> extends DAO<T> {
             };
 
         } catch (SQLException ex) {
+            getController().log(ex);
             throw new MGXException(ex.getMessage());
         }
         return iter;
