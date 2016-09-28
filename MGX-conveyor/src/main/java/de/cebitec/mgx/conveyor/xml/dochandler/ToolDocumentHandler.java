@@ -1,10 +1,7 @@
 package de.cebitec.mgx.conveyor.xml.dochandler;
 
 import de.cebitec.mgx.conveyor.ConfigItem;
-import de.cebitec.mgx.conveyor.ConfigItem;
 import de.cebitec.mgx.conveyor.Node;
-import de.cebitec.mgx.conveyor.Node;
-import de.cebitec.mgx.conveyor.Store;
 import de.cebitec.mgx.conveyor.Store;
 import de.cebitec.mgx.conveyor.TagsAndAttributes;
 import org.xml.sax.Attributes;

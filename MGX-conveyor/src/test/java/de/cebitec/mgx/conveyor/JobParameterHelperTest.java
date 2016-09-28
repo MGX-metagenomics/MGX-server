@@ -11,6 +11,7 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.After;
@@ -44,7 +45,7 @@ public class JobParameterHelperTest {
     @After
     public void tearDown() {
     }
-    
+
     @Test
     public void testGetParameters() throws IOException {
         System.out.println("getParameters");
@@ -58,13 +59,17 @@ public class JobParameterHelperTest {
         }
         assertNotNull(iter);
         JobParameter jp = null;
-        int cnt=0;
+        int cnt = 0;
         while (iter.hasNext()) {
             jp = iter.next();
             assertNotNull(jp);
+            System.err.println("classname: "+jp.getClassName());
             cnt++;
             if (jp.getParameterName().equals("database")) {
                 assertEquals(2, jp.getChoices().size());
+                for (Entry<String, String> e : jp.getChoices().entrySet()) {
+                    System.err.println("k: " + e.getKey() + " v: " + e.getValue());
+                }
             }
         }
         assertEquals(4, cnt);
