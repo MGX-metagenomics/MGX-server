@@ -1,9 +1,8 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
-import static de.cebitec.mgx.model.dao.DAO.toSQLTemplateString;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.JobState;
@@ -32,7 +31,7 @@ public class JobDAO extends DAO<Job> {
 
     private static final String[] suffices = {"", ".stdout", ".stderr"};
 
-    public JobDAO(MGXControllerImpl ctx) {
+    public JobDAO(MGXController ctx) {
         super(ctx);
     }
 

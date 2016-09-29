@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class AttributeDAO extends DAO<Attribute> {
 
-    public AttributeDAO(MGXControllerImpl ctx) {
+    public AttributeDAO(MGXController ctx) {
         super(ctx);
     }
 

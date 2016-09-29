@@ -212,7 +212,7 @@ public class ReferenceDAO extends DAO<Reference> {
         }
     }
 
-    public DBIterator<Region> byReferenceInterval(long refId, final Reference ref, int from, int to) throws MGXException {
+    public DBIterator<Region> byReferenceInterval(final long refId, final Reference ref, int from, int to) throws MGXException {
 
         if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
             throw new MGXException("Invalid coordinates: " + from + " " + to);
@@ -233,12 +233,13 @@ public class ReferenceDAO extends DAO<Reference> {
                 @Override
                 public Region convert(ResultSet rs) throws SQLException {
                     Region r = new Region();
-                    //r.setReference(ref);
+                    r.setReferenceId(refId);
                     r.setId(rs.getLong(1));
                     r.setName(rs.getString(2));
-                    r.setDescription(rs.getString(3));
-                    r.setStart(rs.getInt(4));
-                    r.setStop(rs.getInt(5));
+                    r.setType(rs.getString(3));
+                    r.setDescription(rs.getString(4));
+                    r.setStart(rs.getInt(5));
+                    r.setStop(rs.getInt(6));
                     return r;
                 }
             };

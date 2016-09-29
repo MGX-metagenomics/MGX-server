@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.JobState;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class AttributeTypeDAO extends DAO<AttributeType> {
 
-    public AttributeTypeDAO(MGXControllerImpl ctx) {
+    public AttributeTypeDAO(MGXController ctx) {
         super(ctx);
     }
 
@@ -190,8 +190,8 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
                 + "GROUP BY atype.id, atype.name, atype.value_type, atype.structure "
                 + "ORDER BY atype.name ASC";
 
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
+        PreparedStatement stmt;
+        ResultSet rset;
         try {
             Connection c = getConnection();
             stmt = c.prepareStatement(sql);
@@ -227,8 +227,8 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
                 + "JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
                 + "WHERE job.job_state=? AND job.seqrun_id=?";
 
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
+        PreparedStatement stmt;
+        ResultSet rset;
         try {
             Connection c = getConnection();
             stmt = c.prepareStatement(sql);

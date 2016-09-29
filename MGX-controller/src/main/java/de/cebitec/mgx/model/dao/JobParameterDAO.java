@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
@@ -17,7 +17,7 @@ import java.sql.SQLException;
  */
 public class JobParameterDAO extends DAO<JobParameter> {
 
-    public JobParameterDAO(MGXControllerImpl ctx) {
+    public JobParameterDAO(MGXController ctx) {
         super(ctx);
     }
 

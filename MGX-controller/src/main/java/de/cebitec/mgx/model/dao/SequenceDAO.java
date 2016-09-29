@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
@@ -24,7 +24,7 @@ public class SequenceDAO extends DAO<Sequence> {
 
     private static final String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
 
-    public SequenceDAO(MGXControllerImpl ctx) {
+    public SequenceDAO(MGXController ctx) {
         super(ctx);
     }
 

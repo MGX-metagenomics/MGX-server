@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class MappingDAO extends DAO<Mapping> {
 
-    public MappingDAO(MGXControllerImpl ctx) {
+    public MappingDAO(MGXController ctx) {
         super(ctx);
     }
 

@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class DNAExtractDAO extends DAO<DNAExtract> {
 
-    public DNAExtractDAO(MGXControllerImpl ctx) {
+    public DNAExtractDAO(MGXController ctx) {
         super(ctx);
     }
 
