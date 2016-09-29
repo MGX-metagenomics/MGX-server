@@ -105,13 +105,14 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             cancel();
             throw new MGXException(ex.getMessage());
         }
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
+        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, type, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
             for (Region r : regions) {
                 stmt.setString(1, r.getName());
                 stmt.setString(2, r.getDescription());
-                stmt.setInt(3, r.getStart());
-                stmt.setInt(4, r.getStop());
-                stmt.setLong(5, referenceId);
+                stmt.setString(3, r.getType());
+                stmt.setInt(4, r.getStart());
+                stmt.setInt(5, r.getStop());
+                stmt.setLong(6, referenceId);
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -132,6 +133,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             Region r = new Region();
             r.setName(dto.getName());
             r.setDescription(dto.getDescription());
+            r.setType(dto.getType());
             r.setStart(dto.getStart());
             r.setStop(dto.getStop());
             regions.add(r);
