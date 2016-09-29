@@ -30,12 +30,10 @@ public class RegionDTOFactory extends DTOConversionBase<Region, RegionDTO, Regio
                 .setId(a.getId())
                 .setStart(a.getStart())
                 .setStop(a.getStop())
-                .setName(a.getName());
+                .setName(a.getName())
+                .setType(a.getType());
         if (a.getDescription() != null) {
             dto.setDescription(a.getDescription());
-        }
-        if (a.getType() != null) {
-            dto.setType(a.getType());
         }
         return dto.build();
     }
@@ -47,13 +45,11 @@ public class RegionDTOFactory extends DTOConversionBase<Region, RegionDTO, Regio
             r.setId(dto.getId());
         }
         r.setName(dto.getName());
+        r.setType(dto.getType());
         r.setStart(dto.getStart());
         r.setStop(dto.getStop());
         if (dto.hasDescription()) {
             r.setDescription(dto.getDescription());
-        }
-        if (dto.hasType()) {
-            r.setType(dto.getType());
         }
         return r;
     }
