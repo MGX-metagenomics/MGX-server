@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class ToolDAO extends DAO<Tool> {
 
-    public ToolDAO(MGXControllerImpl ctx) {
+    public ToolDAO(MGXController ctx) {
         super(ctx);
     }
 

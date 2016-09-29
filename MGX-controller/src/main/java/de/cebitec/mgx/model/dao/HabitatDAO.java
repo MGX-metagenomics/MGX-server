@@ -1,6 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
-import de.cebitec.mgx.controller.MGXControllerImpl;
+import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -18,12 +18,12 @@ import java.util.List;
  */
 public class HabitatDAO extends DAO<Habitat> {
 
-    public HabitatDAO(MGXControllerImpl ctx) {
+    public HabitatDAO(MGXController ctx) {
         super(ctx);
     }
 
     @Override
-    Class<Habitat> getType() {
+    Class getType() {
         return Habitat.class;
     }
 
