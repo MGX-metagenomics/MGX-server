@@ -5,7 +5,6 @@
  */
 package de.cebitec.mgx.conveyor;
 
-import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -45,15 +45,19 @@ public class PluginDumpTest {
     @Test
     public void testParseDumpWithBlackList() throws Exception {
         File plugindump = new File("src/test/resources/plugindump.xml");
+
+        PluginDump pdComplete = new PluginDump(plugindump);
+        
         Collection<String> filter = new ArrayList<>(1);
         filter.add("Conveyor.Tree.IsLeafVertex`1");
         PluginDump pd = new PluginDump(plugindump, filter);
         try {
+            pdComplete.parse();
             pd.parse();
         } catch (SAXException | ParserConfigurationException | IOException ex) {
-            Logger.getLogger(PluginDumpTest.class.getName()).log(Level.SEVERE, null, ex);
+            fail(ex.getMessage());
         }
-        assertEquals(445, pd.size());
+        assertEquals(pdComplete.size() - 1, pd.size());
 
     }
 
