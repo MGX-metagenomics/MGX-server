@@ -75,6 +75,8 @@ public class JobDAO extends DAO<Job> {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
+
+        Job job = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
@@ -84,7 +86,7 @@ public class JobDAO extends DAO<Job> {
                         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
                     }
 
-                    Job job = new Job();
+                    job = new Job();
                     job.setId(rs.getLong(1));
                     job.setCreator(rs.getString(2));
                     job.setStatus(JobState.values()[rs.getInt(3)]);
@@ -112,15 +114,15 @@ public class JobDAO extends DAO<Job> {
                             job.getParameters().add(jp);
                         }
                     } while (rs.next());
-
-                    fixParameters(job);
-                    return job;
                 }
             }
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
+
+        fixParameters(job);
+        return job;
     }
 
     public AutoCloseableIterator<Job> getByIds(long... ids) throws MGXException {
@@ -137,14 +139,16 @@ public class JobDAO extends DAO<Job> {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
                 int idx = 1;
-                for (Long id : ids) {
+                for (long id : ids) {
+                    if (id <= 0) {
+                        throw new MGXException("No/Invalid ID supplied.");
+                    }
                     stmt.setLong(idx++, id);
                 }
 
                 try (ResultSet rs = stmt.executeQuery()) {
-                    
-                    
-                     Job currentJob = null;
+
+                    Job currentJob = null;
 
                     while (rs.next()) {
                         if (rs.getLong(1) != 0) {
@@ -184,7 +188,7 @@ public class JobDAO extends DAO<Job> {
                             }
                         }
                     }
-                    
+
 //                    while (rs.next()) {
 //
 //                        if (ret == null) {
@@ -225,7 +229,7 @@ public class JobDAO extends DAO<Job> {
                 }
             }
         } catch (SQLException ex) {
-            getController().log(ex.getMessage());
+            getController().log(ex);
             throw new MGXException(ex);
         }
 
@@ -234,7 +238,7 @@ public class JobDAO extends DAO<Job> {
                 fixParameters(j);
             }
         }
-        
+
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
@@ -324,7 +328,6 @@ public class JobDAO extends DAO<Job> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-//        super.update(job);
 
         if (job.getStatus().equals(JobState.FINISHED)) {
             try (Connection conn = getConnection()) {
