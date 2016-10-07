@@ -102,10 +102,11 @@ public class ObservationDAO {
 
             }
         } catch (SQLException ex) {
-            ctx.log(ex.getMessage());
-            while (ex.getNextException() != null) {
-                ex = ex.getNextException();
-                ctx.log(ex.getMessage());
+            ctx.log(ex);
+            SQLException sqle = ex;
+            while (sqle.getNextException() != null) {
+                sqle = sqle.getNextException();
+                ctx.log(sqle);
             }
             throw new MGXException(ex.getMessage());
         }
