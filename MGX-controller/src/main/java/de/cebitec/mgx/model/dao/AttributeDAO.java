@@ -201,7 +201,7 @@ public class AttributeDAO extends DAO<Attribute> {
     public Map<Attribute, Long> getHierarchy(long attrTypeId, long job_id) throws MGXException {
 
         Map<Attribute, Long> ret = new HashMap<>();
-        TLongObjectMap<AttributeType> aTypeCache = new TLongObjectHashMap<>();
+//        TLongObjectMap<AttributeType> aTypeCache = new TLongObjectHashMap<>();
         TLongObjectMap<Attribute> attrCache = new TLongObjectHashMap<>();
         TLongLongMap attr2parent = new TLongLongHashMap();
 
@@ -212,18 +212,18 @@ public class AttributeDAO extends DAO<Attribute> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count
-                        AttributeType aType;
+//                        AttributeType aType;
                         long aTypeID = rs.getLong(1);
-                        if (aTypeCache.containsKey(aTypeID)) {
-                            aType = aTypeCache.get(aTypeID);
-                        } else {
-                            aType = new AttributeType();
-                            aType.setId(aTypeID);
-                            aType.setName(rs.getString(2));
-                            aType.setStructure(rs.getString(3).charAt(0));
-                            aType.setValueType(rs.getString(4).charAt(0));
-                            aTypeCache.put(aTypeID, aType);
-                        }
+//                        if (aTypeCache.containsKey(aTypeID)) {
+//                            aType = aTypeCache.get(aTypeID);
+//                        } else {
+//                            aType = new AttributeType();
+//                            aType.setId(aTypeID);
+//                            aType.setName(rs.getString(2));
+//                            aType.setStructure(rs.getString(3).charAt(0));
+//                            aType.setValueType(rs.getString(4).charAt(0));
+//                            aTypeCache.put(aTypeID, aType);
+//                        }
 
                         Attribute attr = new Attribute();
                         attr.setAttributeTypeId(aTypeID);
