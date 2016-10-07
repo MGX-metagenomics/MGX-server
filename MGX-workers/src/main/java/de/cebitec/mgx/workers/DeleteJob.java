@@ -6,6 +6,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
@@ -106,7 +107,7 @@ public final class DeleteJob extends TaskI {
             }
 
             setStatus(TaskI.State.FINISHED, "Job " + id + " deleted");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             Logger.getLogger(DeleteJob.class.getName()).log(Level.SEVERE, "Could not delete job " + id, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }
