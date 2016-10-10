@@ -35,7 +35,7 @@ public class PluginDumpTest {
         } catch (SAXException | ParserConfigurationException | IOException ex) {
             Logger.getLogger(PluginDumpTest.class.getName()).log(Level.SEVERE, null, ex);
         }
-        assertEquals(446, pd.size());
+        assertEquals(460, pd.size());
 
 //        String toolXml = UnixHelper.readFile(new File("src/test/resources/qiime_assignTaxonomy.xml"));
 //        ConveyorWorkflow workFlow = new ConveyorWorkflow(toolXml, pd);
