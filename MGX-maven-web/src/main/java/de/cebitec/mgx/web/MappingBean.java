@@ -1,8 +1,14 @@
 package de.cebitec.mgx.web;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.download.DownloadProviderI;
+import de.cebitec.mgx.download.DownloadSessions;
+import de.cebitec.mgx.download.FileDownloadProvider;
+import de.cebitec.mgx.dto.dto;
+import de.cebitec.mgx.dto.dto.BytesDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.MappedSequenceDTOList;
@@ -25,6 +31,7 @@ import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -44,6 +51,8 @@ public class MappingBean {
     MGXController mgx;
     @EJB
     MappingSessions mapSessions;
+    @EJB
+    DownloadSessions dsessions;
 
     @GET
     @Path("fetch/{id}")
@@ -152,6 +161,53 @@ public class MappingBean {
     public Response closeMapping(@PathParam("uuid") UUID uuid) {
         try {
             mapSessions.removeSession(uuid);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    /*
+     * file download interface
+     */
+    @GET
+    @Path("initDownload/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString initDownload(@PathParam("id") Long id) {
+
+        Mapping obj;
+        try {
+            obj = mgx.getMappingDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        File target = new File(obj.getBAMFile());
+        mgx.log("initiating BAM file download for " + target.getAbsolutePath());
+        FileDownloadProvider fdp = new FileDownloadProvider(mgx.getProjectName(), target);
+
+        UUID uuid = dsessions.registerDownloadSession(fdp);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    @GET
+    @Path("get/{uuid}")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public BytesDTO get(@PathParam("uuid") UUID session_id) {
+        try {
+            DownloadProviderI<byte[]> dp = dsessions.<byte[]>getSession(session_id);
+            return dto.BytesDTO.newBuilder().setData(ByteString.copyFrom(dp.fetch())).build();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("closeDownload/{uuid}")
+    public Response closeDownload(@PathParam("uuid") UUID session_id) {
+        try {
+            dsessions.closeSession(session_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
