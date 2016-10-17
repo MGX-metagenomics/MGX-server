@@ -5,7 +5,6 @@
  */
 package de.cebitec.mgx.global;
 
-import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,11 +27,11 @@ public class GlobalRegionDAO {
         this.global = global;
     }
 
-    public Collection<Region> byReference(Reference ref) throws MGXGlobalException {
+    public Collection<Region> byReference(long refId) throws MGXGlobalException {
         Collection<Region> regions = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop, type FROM region WHERE ref_id=?")) {
-                stmt.setLong(1, ref.getId());
+                stmt.setLong(1, refId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Region r = new Region();
