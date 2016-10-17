@@ -51,7 +51,6 @@ public class InstallGlobalReference extends TaskI {
         try {
             globalRef = global.getReferenceDAO().getById(globalId);
         } catch (MGXGlobalException ex) {
-            Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, ex.getMessage());
             return;
         }
@@ -65,8 +64,10 @@ public class InstallGlobalReference extends TaskI {
                 stmt.setString(3, "");
 
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         newRefId = rs.getLong(1);
+                    } else {
+                        setStatus(State.FAILED, "Error creating reference");
                     }
                 }
             }
@@ -100,6 +101,10 @@ public class InstallGlobalReference extends TaskI {
         } catch (SQLException ex) {
             Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, ex.getMessage());
+
+            // cleanup attempt
+            delReference(dataSource, newRefId);
+
             return;
         }
 
@@ -107,22 +112,28 @@ public class InstallGlobalReference extends TaskI {
 
         // transfer regions
         // TODO: convert to iterator
-        Collection<Region> regions = null;
+        Collection<Region> regions;
         try {
-            regions = global.getRegionDAO().byReference(globalRef);
+            regions = global.getRegionDAO().byReference(globalId);
         } catch (MGXGlobalException ex) {
             Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, ex.getMessage());
+
+            // cleanup attempt
+            delReference(dataSource, newRefId);
+
+            return;
         }
 
         try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?)")) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, type, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
                 for (Region r : regions) {
                     stmt.setString(1, r.getName());
-                    stmt.setString(2, r.getDescription());
-                    stmt.setInt(3, r.getStart());
-                    stmt.setInt(4, r.getStop());
-                    stmt.setLong(5, newRefId);
+                    stmt.setString(2, r.getType());
+                    stmt.setString(3, r.getDescription());
+                    stmt.setInt(4, r.getStart());
+                    stmt.setInt(5, r.getStop());
+                    stmt.setLong(6, newRefId);
                     stmt.addBatch();
                 }
                 stmt.executeBatch();
@@ -130,9 +141,40 @@ public class InstallGlobalReference extends TaskI {
         } catch (SQLException ex) {
             Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
             setStatus(State.FAILED, ex.getMessage());
+
+            // cleanup attempt
+            delRegions(dataSource, newRefId);
+            delReference(dataSource, newRefId);
             return;
         }
 
         setStatus(TaskI.State.FINISHED, "Reference copied.");
+    }
+
+    private void delRegions(DataSource ds, long refId) {
+        if (refId != -1) {
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
+                    stmt.setLong(1, refId);
+                    stmt.execute();
+                }
+            } catch (SQLException ex1) {
+                Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
+    }
+
+    private void delReference(DataSource ds, long refId) {
+        if (refId != -1) {
+            // cleanup attempt
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
+                    stmt.setLong(1, refId);
+                    stmt.execute();
+                }
+            } catch (SQLException ex1) {
+                Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+        }
     }
 }
