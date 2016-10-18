@@ -551,6 +551,7 @@ public class JobDAO extends DAO<Job> {
             try {
                 toolXMLData = UnixHelper.readFile(new File(fName));
             } catch (IOException ex) {
+                getController().log(ex);
                 throw new MGXException(ex);
             }
             availableParams = new ArrayList<>();
