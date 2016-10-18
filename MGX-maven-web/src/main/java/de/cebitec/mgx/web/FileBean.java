@@ -129,16 +129,17 @@ public class FileBean {
 
         path = path.replace("|", File.separator);
         File target;
-        UUID taskId = null;
         try {
             target = new File(mgx.getProjectFileDirectory().getAbsolutePath() + File.separator + path);
-            taskId = taskHolder.addTask(new DeleteFile(mgx.getDataSource(), target, mgx.getProjectName()));
+            if (!target.exists()) {
+                throw new MGXWebException("Nonexisting path: " + path);
+            }
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
-        if (!target.exists()) {
-            throw new MGXWebException("Nonexisting path: " + path);
-        }
+        
+        UUID taskId = taskHolder.addTask(new DeleteFile(mgx.getDataSource(), target, mgx.getProjectName()));
+
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
