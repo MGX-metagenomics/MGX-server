@@ -8,7 +8,7 @@ package de.cebitec.mgx.web.helper;
 public class ExceptionMessageConverter {
 
     public static String convert(String message) {
-        String template = "java.sql.SQLException: ";
+        String template = "SQLException: ";
         int templateStartPosition = message.indexOf(template);
         if (templateStartPosition < 0) {
             return message;
