@@ -5,19 +5,16 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
 
@@ -33,7 +30,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     private PreparedStatement stmt = null;
     private ResultSet rs = null;
     private boolean have_more_data = true;
-    private Map<Long, String> readnames = null;
+    private TLongObjectMap<String> readnames = null;
 
     public SeqByAttributeDownloadProvider(DataSource dataSource, String projectName, Set<Attribute> attributes, String dbFile) throws MGXException {
         super(dataSource, projectName);
@@ -56,7 +53,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
 
-        readnames = new HashMap<>(bulksize);
+        readnames = new TLongObjectHashMap<>(bulksize);
         
         // we cant use try-with-resources here, since the connection (and the
         // resultset) is kept alive across multiple invocations
@@ -97,12 +94,8 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         }
         have_more_data = count == bulksize;
 
-        long[] ids = new long[readnames.keySet().size()];
-        int i = 0;
-        for (Long l : readnames.keySet()) {
-            ids[i++] = l.longValue();
-        }
-
+        long[] ids = readnames.keys();
+        
         try {
             for (DNASequenceI seq : reader.fetch(ids)) {
                 SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
