@@ -60,8 +60,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             file = getStorageFile(run_id);
             SeqWriterI writer;
-            // restrict to MGX_Patrick for now
-            writer = hasQuality && projName.equals("MGX_Patrick") ? new CSQFWriter(file) : new CSFWriter(file);
+            writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
             this.dataSource = dataSource;
             //conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
