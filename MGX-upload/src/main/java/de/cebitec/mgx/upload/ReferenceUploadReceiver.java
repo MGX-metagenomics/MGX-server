@@ -105,22 +105,25 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             cancel();
             throw new MGXException(ex.getMessage());
         }
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, type, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
-            for (Region r : regions) {
-                stmt.setString(1, r.getName());
-                stmt.setString(2, r.getDescription());
-                stmt.setString(3, r.getType());
-                stmt.setInt(4, r.getStart());
-                stmt.setInt(5, r.getStop());
-                stmt.setLong(6, referenceId);
-                stmt.addBatch();
+
+        if (regions != null && !regions.isEmpty()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, type, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
+                for (Region r : regions) {
+                    stmt.setString(1, r.getName());
+                    stmt.setString(2, r.getDescription());
+                    stmt.setString(3, r.getType());
+                    stmt.setInt(4, r.getStart());
+                    stmt.setInt(5, r.getStop());
+                    stmt.setLong(6, referenceId);
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+                conn.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+                cancel();
+                throw new MGXException(ex.getMessage());
             }
-            stmt.executeBatch();
-            conn.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
-            cancel();
-            throw new MGXException(ex.getMessage());
         }
     }
 
