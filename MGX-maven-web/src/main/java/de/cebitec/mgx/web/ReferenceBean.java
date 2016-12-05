@@ -197,7 +197,8 @@ public class ReferenceBean {
         try {
             ref = mgx.getReferenceDAO().getById(ref_id);
             mgx.log("creating reference importer session for " + ref.getName());
-            ref.setFile(mgx.getProjectReferencesDirectory() + File.separator + ref.getId() + ".fas");
+            File target = new File(mgx.getProjectReferencesDirectory(), ref.getId() + ".fas");
+            ref.setFile(target.getAbsolutePath());
             ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
             uuid = upSessions.registerUploadSession(recv);
         } catch (MGXException | IOException | SQLException ex) {
