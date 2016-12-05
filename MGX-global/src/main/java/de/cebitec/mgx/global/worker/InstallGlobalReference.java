@@ -79,7 +79,7 @@ public class InstallGlobalReference extends TaskI {
 
         setStatus(TaskI.State.PROCESSING, "Copying sequence");
 
-        File targetFile = new File(projRefDir + newRefId + ".fas");
+        File targetFile = new File(referencesDir, newRefId + ".fas");
         try {
             UnixHelper.copyFile(new File(globalRef.getFile()), targetFile);
         } catch (IOException ex) {
