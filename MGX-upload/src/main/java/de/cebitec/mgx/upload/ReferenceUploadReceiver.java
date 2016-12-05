@@ -89,6 +89,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         }
         if (writer != null) {
             try {
+                writer.append(System.lineSeparator());
                 writer.close();
                 writer = null;
             } catch (IOException ex) {
