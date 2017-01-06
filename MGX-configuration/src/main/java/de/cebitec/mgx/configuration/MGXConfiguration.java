@@ -33,7 +33,7 @@ public class MGXConfiguration implements MGXConfigurationI {
 
         File f = new File(cfgFile);
         if (!f.exists()) {
-            throw new RuntimeException("MGX configuration failed, " + cfgFile.toString() + " missing");
+            throw new RuntimeException("MGX configuration failed, " + cfgFile + " missing");
         }
 
         FileInputStream in = null;
@@ -51,26 +51,19 @@ public class MGXConfiguration implements MGXConfigurationI {
                 }
             }
         }
-        Logger.getLogger(MGXConfiguration.class.getName()).log(Level.INFO, "MGX server configuration done.");
+        Logger.getLogger(getClass().getName()).log(Level.INFO, "MGX server configuration done.");
     }
 
     /*
      * settings for the MGX global zone
      */
-//    public String getMGXGlobalUser() {
-//        return config.getProperty("mgxglobal_user");
-//    }
-//
-//    public String getMGXGlobalPassword() {
-//        return config.getProperty("mgxglobal_pass");
-//    }
-//
-//    public String getMGXGlobalJDBCURL() {
-//        return config.getProperty("mgxglobal_jdbc_url");
-//    }
     @Override
     public String getMGXGlobalStorageDir() {
-        return config.getProperty("mgxglobal_persistent_dir");
+        String ret = config.getProperty("mgxglobal_persistent_dir");
+        if (!ret.endsWith(File.separator)) {
+            ret = ret + File.separator;
+        }
+        return ret;
     }
 
     /*
@@ -101,19 +94,14 @@ public class MGXConfiguration implements MGXConfigurationI {
         return config.getProperty("mgx_password");
     }
 
-//    public String getValidatorExecutable() {
-//        return config.getProperty("mgx_graphvalidate");
-//    }
     @Override
     public File getPluginDump() {
-        StringBuilder sb = new StringBuilder(getMGXGlobalStorageDir());
-        if (!getMGXGlobalStorageDir().endsWith(File.separator)) {
-            sb.append(File.separatorChar);
-        }
-        sb.append("plugins.xml");
+        File ret = new File(getMGXGlobalStorageDir() + "plugins.xml");
 
-        File ret = new File(sb.toString());
-        assert ret.exists();
+        if (!ret.exists()) {
+            Logger.getLogger(getClass().getName()).log(Level.INFO, "Plugin dump file missing at expected location ({0}).", ret.getAbsolutePath());
+            return null;
+        }
 
         return ret;
     }
@@ -148,7 +136,6 @@ public class MGXConfiguration implements MGXConfigurationI {
 //
 //        return p.getProperty("mgx_dispatcherhost");
 //    }
-
 //    public String getDispatcherToken() throws MGXDispatcherException {
 //
 //        /*
