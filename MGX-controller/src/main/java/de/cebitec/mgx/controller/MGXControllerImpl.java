@@ -29,7 +29,6 @@ public class MGXControllerImpl implements MGXController {
     //
     private final MGXConfigurationI cfg;
     private final JDBCMasterI gpmsmaster;
-    //private final EntityManager em;
     private File projectDir = null;
     private File projectQCDir = null;
     private File projectFileDir = null;
@@ -46,7 +45,6 @@ public class MGXControllerImpl implements MGXController {
         ProjectI gpmsProject = gpmsmaster.getProject();
         this.projectName = gpmsProject.getName();
         this.user = gpmsmaster.getUser();
-        //this.em = gpmsmaster.getEntityManagerFactory().createEntityManager();
         persistentDir = cfg.getPersistentDirectory();
         this.cfg = cfg;
     }
@@ -296,17 +294,11 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
         final MGXControllerImpl other = (MGXControllerImpl) obj;
-        if (!Objects.equals(this.gpmsmaster, other.gpmsmaster)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.gpmsmaster, other.gpmsmaster);
     }
 
 }
