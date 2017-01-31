@@ -59,20 +59,27 @@ public class JobSubmitterImpl implements JobSubmitterI {
             throw new MGXDispatcherException("Failed to write job configuration.");
         }
 
-        boolean ret = get(dispatcherHost, Boolean.class, "validate", MGX_CLASS, projName, String.valueOf(job.getId()));
+        boolean validated = get(dispatcherHost, Boolean.class, "validate", MGX_CLASS, projName, String.valueOf(job.getId()));
 
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
-                stmt.setInt(1, JobState.VERIFIED.getValue());
-                stmt.setLong(2, job.getId());
-                stmt.executeUpdate();
-                job.setStatus(JobState.VERIFIED);
+                if (validated) {
+                    stmt.setInt(1, JobState.VERIFIED.getValue());
+                    stmt.setLong(2, job.getId());
+                    stmt.executeUpdate();
+                    job.setStatus(JobState.VERIFIED);
+                } else {
+                    stmt.setInt(1, JobState.FAILED.getValue());
+                    stmt.setLong(2, job.getId());
+                    stmt.executeUpdate();
+                    job.setStatus(JobState.FAILED);
+                }
                 stmt.close();
             }
         } catch (SQLException ex) {
             throw new MGXDispatcherException(ex.getMessage());
         }
-        return ret;
+        return validated;
     }
 
     @Override
