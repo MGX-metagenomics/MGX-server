@@ -80,8 +80,8 @@ public class MGXConfiguration implements MGXConfigurationI {
     }
 
     @Override
-    public String getPersistentDirectory() {
-        return config.getProperty("mgx_persistent_dir");
+    public File getPersistentDirectory() {
+        return new File(config.getProperty("mgx_persistent_dir"));
     }
 
     @Override
