@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import javax.ejb.EJB;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -45,11 +44,10 @@ public class ControllerFactory {
                     }
 
                 })
-                .build(
-                        new CacheLoader<JDBCMasterI, MGXController>() {
+                .build(new CacheLoader<JDBCMasterI, MGXController>() {
                     @Override
-                    public MGXController load(JDBCMasterI jpaMaster) {
-                        return new MGXControllerImpl(jpaMaster, mgxconfig);
+                    public MGXController load(JDBCMasterI jdbcMaster) {
+                        return new MGXControllerImpl(jdbcMaster, mgxconfig.getPluginDump(), mgxconfig.getPersistentDirectory());
                     }
                 });
     }
@@ -66,11 +64,11 @@ public class ControllerFactory {
         //return new MGXControllerImpl(jpaMaster, mgxconfig);
     }
 
-    public void dispose(@Disposes MGXController c) {
+//    public void dispose(@Disposes MGXController c) {
 //        try {
 //            c.close();
 //        } catch (Exception ex) {
 //            Logger.getLogger(ControllerFactory.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-    }
+//    }
 }

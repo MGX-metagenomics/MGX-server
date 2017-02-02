@@ -76,7 +76,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             }
 //            conn.setClientInfo("ApplicationName", "");
 //            conn.close();
-        } catch (Exception ex) {
+        } catch (SeqStoreException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -90,7 +90,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             }
 //            conn.setClientInfo("ApplicationName", "");
 //            conn.close();
-        } catch (Exception ex) {
+        } catch (SeqStoreException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -148,7 +148,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     }
 
     private File getStorageFile(long run_id) throws MGXException {
-        StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory())
+        StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory().getAbsolutePath())
                 .append(File.separator).append(getProjectName())
                 .append(File.separator).append("seqruns")
                 .append(File.separator).append(run_id);

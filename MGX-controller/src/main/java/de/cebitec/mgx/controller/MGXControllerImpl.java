@@ -4,7 +4,6 @@ import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.JDBCMasterI;
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
@@ -27,7 +26,7 @@ public class MGXControllerImpl implements MGXController {
     private final String projectName;
     private final UserI user;
     //
-    private final MGXConfigurationI cfg;
+    private final File pluginDump;
     private final JDBCMasterI gpmsmaster;
     private File projectDir = null;
     private File projectQCDir = null;
@@ -35,23 +34,22 @@ public class MGXControllerImpl implements MGXController {
     private File projectJobDir = null;
     private File projectReferencesDir = null;
     //
-    private final String persistentDir;
-    //
+    private final File persistentDir;
     //
     private final static String DOUBLE_SEPARATOR = File.separator + File.separator;
 
-    public MGXControllerImpl(JDBCMasterI gpmsmaster, MGXConfigurationI cfg) {
+    public MGXControllerImpl(JDBCMasterI gpmsmaster, File pluginDump, File persistentDir) {
         this.gpmsmaster = gpmsmaster;
         ProjectI gpmsProject = gpmsmaster.getProject();
         this.projectName = gpmsProject.getName();
         this.user = gpmsmaster.getUser();
-        persistentDir = cfg.getPersistentDirectory();
-        this.cfg = cfg;
+        this.pluginDump = pluginDump;
+        this.persistentDir = persistentDir;
     }
 
     @Override
-    public MGXConfigurationI getConfiguration() {
-        return cfg;
+    public File getPluginDump() {
+        return pluginDump;
     }
 
     @Override
@@ -83,7 +81,7 @@ public class MGXControllerImpl implements MGXController {
             return projectDir;
         }
 
-        String ret = new StringBuilder(persistentDir).append(File.separator).append(getProjectName()).append(File.separator).toString();
+        String ret = new StringBuilder(persistentDir.getAbsolutePath()).append(File.separator).append(getProjectName()).append(File.separator).toString();
         while (ret.contains(DOUBLE_SEPARATOR)) {
             ret = ret.replaceAll(DOUBLE_SEPARATOR, File.separator);
         }
