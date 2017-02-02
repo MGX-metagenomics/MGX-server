@@ -73,20 +73,6 @@ public class JobBean {
 
         Job j = JobDTOFactory.getInstance().toDB(dto);
 
-        // we artificially set the IDs to 'null'; otherwise, JPA considers this
-        // object an detached entity passed to persist()..
-//        j.setId(null);
-//        for (JobParameter jp : j.getParameters()) {
-//            jp.setId(null);
-//        }
-//        Tool tool = null;
-//        SeqRun seqrun = null;
-//        try {
-//            tool = mgx.getToolDAO().getById(dto.getToolId());
-//            seqrun = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
-//        } catch (MGXException ex) {
-//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-//        }
         j.setStatus(JobState.CREATED);
         j.setToolId(dto.getToolId());
         j.setSeqrunId(dto.getSeqrunId());
@@ -111,7 +97,12 @@ public class JobBean {
             JobParameter defaultParam = findDefaultParameter(userParam, defaultParams);
             String value = userParam.getParameterValue();
 
-            if (defaultParam.getType().equals("ConfigFile")) {
+            if (defaultParam.getType() == null) {
+                mgx.log("Null type for " + defaultParam);
+                throw new MGXWebException("No type for parameter");
+            }
+
+            if ("ConfigFile".equals(defaultParam.getType())) {
                 String fullPath;
                 try {
                     fullPath = mgx.getProjectFileDirectory() + File.separator
@@ -136,7 +127,7 @@ public class JobBean {
         }
 
         // persist
-        Long job_id = null;
+        long job_id;
         try {
             job_id = mgx.getJobDAO().create(j);
 
@@ -220,7 +211,6 @@ public class JobBean {
         boolean verified = false;
         try {
             Job job = mgx.getJobDAO().getById(id);
-
             Host h = new Host(dispConfig.getDispatcherHost());
             verified = js.validate(h, mgx.getProjectName(), mgx.getDataSource(), job, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
         } catch (MGXException | MGXDispatcherException | IOException ex) {
@@ -264,6 +254,9 @@ public class JobBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(id);
+            if (job.getStatus() != JobState.FAILED) {
+                throw new MGXWebException("Job is in invalid state.");
+            }
             RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
@@ -279,22 +272,17 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean cancel(@PathParam("id") Long id) {
-        boolean isActive = true;
         Job job = null;
         try {
             job = mgx.getJobDAO().getById(id);
             JobState status = job.getStatus();
             // check if job has already reached a terminal state
             if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
-                isActive = false;
+                throw new MGXWebException("Job is not being processed, cannot cancel.");
             }
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-
-        if (!isActive) {
-            throw new MGXWebException("Job is not being processed, cannot cancel.");
         }
 
         mgx.log("Cancelling job " + id + " on user request");
@@ -324,8 +312,6 @@ public class JobBean {
     public Response update(JobDTO dto) {
         Job job = JobDTOFactory.getInstance().toDB(dto);
         try {
-//            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
-//            SeqRun run = mgx.getSeqRunDAO().getById(dto.getSeqrunId());
             job.setToolId(dto.getToolId());
             job.setSeqrunId(dto.getSeqrunId());
             mgx.getJobDAO().update(job);
