@@ -32,12 +32,32 @@ public final class DeleteJob extends TaskI {
 
             // delete observations
             setStatus(TaskI.State.PROCESSING, "Deleting observations");
-            try (Connection conn = dataSource.getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
-                    stmt.setLong(1, id);
-                    stmt.execute();
+            String delObs = "DELETE FROM observation WHERE ctid = any(array(SELECT ctid FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?) LIMIT 5000))";
+            int rowsAffected;
+            //
+            // delete in chunks to make sure the DB connections gets returned
+            // to the pool in a timely manner
+            //
+            do {
+                try (Connection conn = dataSource.getConnection()) {
+                    try (PreparedStatement stmt = conn.prepareStatement(delObs)) {
+                        stmt.setLong(1, id);
+                        //long duration = System.currentTimeMillis();
+                        rowsAffected = stmt.executeUpdate();
+                        //duration = System.currentTimeMillis() - duration;
+                        //System.err.println(rowsAffected + " observations purged in " + duration + "ms.");
+                    }
                 }
-            }
+            } while (rowsAffected == 5_000);
+
+//            // delete observations
+//            setStatus(TaskI.State.PROCESSING, "Deleting observations");
+//            try (Connection conn = dataSource.getConnection()) {
+//                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+//                    stmt.setLong(1, id);
+//                    stmt.execute();
+//                }
+//            }
 
             // delete attributecounts
             setStatus(TaskI.State.PROCESSING, "Deleting attributes");
