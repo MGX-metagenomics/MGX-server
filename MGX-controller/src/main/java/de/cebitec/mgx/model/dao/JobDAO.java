@@ -555,7 +555,7 @@ public class JobDAO extends DAO<Job> {
                 throw new MGXException(ex);
             }
             availableParams = new ArrayList<>();
-            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, getController().getConfiguration().getPluginDump());
+            AutoCloseableIterator<JobParameter> apIter = JobParameterHelper.getParameters(toolXMLData, getController().getPluginDump());
             while (apIter.hasNext()) {
                 availableParams.add(apIter.next());
             }

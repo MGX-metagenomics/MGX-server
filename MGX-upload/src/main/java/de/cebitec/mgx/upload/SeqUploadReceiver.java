@@ -65,7 +65,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             //conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
             bulksize = mgxconfig.getSQLBulkInsertSize();
-            flush = new SeqFlusher<T>(run_id, queue, dataSource, writer, qcAnalyzers, bulksize);
+            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers, bulksize);
             executor.execute(flush);
         } catch (MGXException | IOException | SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -130,7 +130,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         }
 
         // write QC stats
-        String prefix = new StringBuilder(mgxconfig.getPersistentDirectory())
+        String prefix = new StringBuilder(mgxconfig.getPersistentDirectory().getAbsolutePath())
                 .append(File.separator).append(getProjectName())
                 .append(File.separator).append("QC")
                 .append(File.separator).append(runId).append(".").toString();
@@ -169,7 +169,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     }
 
     private File getStorageFile(long run_id) throws MGXException {
-        StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory())
+        StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory().getAbsolutePath())
                 .append(File.separator).append(getProjectName())
                 .append(File.separator).append("seqruns")
                 .append(File.separator);

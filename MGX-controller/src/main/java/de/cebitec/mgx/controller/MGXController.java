@@ -21,7 +21,9 @@ public interface MGXController extends AutoCloseable {
 
     public void log(String msg, Object... args);
 
-    public MGXConfigurationI getConfiguration();
+//    public MGXConfigurationI getConfiguration();
+    
+    public File getPluginDump();
 
     public HabitatDAO getHabitatDAO();
 
