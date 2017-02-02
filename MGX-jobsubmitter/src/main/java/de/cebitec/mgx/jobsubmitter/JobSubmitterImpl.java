@@ -89,8 +89,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
         }
 
         // and send to dispatcher
-        Boolean ret = get(dispatcherHost, Boolean.class, "submit", MGX_CLASS, projName, String.valueOf(job.getId()));
-        return ret;
+        return get(dispatcherHost, Boolean.class, "submit", MGX_CLASS, projName, String.valueOf(job.getId()));
     }
 
     @Override
