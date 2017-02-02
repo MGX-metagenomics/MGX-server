@@ -22,7 +22,7 @@ public interface MGXConfigurationI {
 
     String getMGXUser();
 
-    String getPersistentDirectory();
+    File getPersistentDirectory();
 
     File getPluginDump();
 
