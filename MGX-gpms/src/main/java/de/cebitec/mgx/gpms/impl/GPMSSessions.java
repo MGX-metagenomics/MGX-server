@@ -33,7 +33,7 @@ public class GPMSSessions {
                     @Override
                     public void onRemoval(RemovalNotification<MembershipI, MasterI> notification) {
                         MasterI master = notification.getValue();
-                        log("Removing " + master.getRole().getName() + " session for " + master.getProject().getName());
+                        log("Removing GPMS " + master.getRole().getName() + " session for " + master.getProject().getName());
                         master.close();
                     }
                 })
@@ -61,6 +61,15 @@ public class GPMSSessions {
     }
 
     public void registerMaster(MembershipI m, MasterI master) {
+        //
+        // a cached MasterI might already be present if a change in the
+        // master class is requested
+        //
+        // see GPMS#createMaster
+        //
+        if (sessionsCache.getIfPresent(m) != null) {
+            sessionsCache.invalidate(m);
+        }
         sessionsCache.put(m, master);
     }
 
