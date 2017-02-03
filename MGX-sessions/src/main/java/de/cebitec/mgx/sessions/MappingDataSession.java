@@ -68,11 +68,12 @@ public class MappingDataSession {
             if (lock.tryLock(5, TimeUnit.SECONDS)) {
                 // query 1-based
                 SAMRecordIterator overlaps = samReader.queryOverlapping(String.valueOf(refId), from + 1, to + 1);
-                return new AutoCloseableSAMRecordIterator(overlaps, conn, lock);
+                return new AutoCloseableSAMRecordIterator(overlaps, lock);
             } else {
                 throw new MGXException("Failed to acquire lock, please try again later.");
             }
         } catch (InterruptedException ex) {
+            Logger.getLogger(MappingDataSession.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
     }
