@@ -39,7 +39,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                 stmt.setString(1, obj.getName());
                 stmt.setString(2, obj.getDBFile());
                 stmt.setString(3, obj.getAccession());
-                stmt.setLong(4, 0); //num seqs
+                stmt.setLong(4, -1L); //num seqs
                 stmt.setLong(5, obj.getSequencingMethod());
                 stmt.setLong(6, obj.getSequencingTechnology());
                 stmt.setBoolean(7, obj.getSubmittedToINSDC());
@@ -167,7 +167,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
 
     private final static String FETCHALL = "SELECT s.id, s.name, s.dbfile, s.database_accession, s.num_sequences, s.sequencing_method, "
             + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id "
-            + "FROM seqrun s";
+            + "FROM seqrun s WHERE s.num_sequences <> -1";
 
     public AutoCloseableIterator<SeqRun> getAll() throws MGXException {
 
@@ -204,9 +204,14 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
-    private final static String SQL_BY_EXTRACT = "SELECT s.id, s.name, s.dbfile, s.database_accession, s.num_sequences, s.sequencing_method, "
+    private final static String SQL_BY_EXTRACT = 
+            "WITH complete_runs AS ("
+            + "SELECT id, name, dbfile, database_accession, num_sequences, sequencing_method, "
+            + "sequencing_technology, submitted_to_insdc FROM seqrun WHERE num_sequences <> -1"
+            + ")"
+            + "SELECT s.id, s.name, s.dbfile, s.database_accession, s.num_sequences, s.sequencing_method, "
             + "s.sequencing_technology, s.submitted_to_insdc "
-            + "FROM dnaextract d LEFT JOIN seqrun s on (d.id=s.dnaextract_id) WHERE d.id=?";
+            + "FROM dnaextract d LEFT JOIN complete_runs s ON (d.id=s.dnaextract_id) WHERE d.id=?";
 
     public AutoCloseableIterator<SeqRun> byDNAExtract(final long extract_id) throws MGXException {
         if (extract_id <= 0) {
