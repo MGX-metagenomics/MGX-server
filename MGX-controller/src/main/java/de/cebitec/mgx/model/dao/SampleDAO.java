@@ -167,7 +167,7 @@ public class SampleDAO extends DAO<Sample> {
     }
 
     private final static String SQL_BY_HABITAT = "SELECT s.id, s.collectiondate, s.material, s.temperature, s.volume, s.volume_unit "
-            + "FROM habitat h LEFT JOIN sample s on (h.id=s.habitat_id) WHERE h.id=?";
+            + "FROM habitat h LEFT JOIN sample s ON (h.id=s.habitat_id) WHERE h.id=?";
 
     public AutoCloseableIterator<Sample> byHabitat(final long habitat_id) throws MGXException {
         if (habitat_id <= 0) {
