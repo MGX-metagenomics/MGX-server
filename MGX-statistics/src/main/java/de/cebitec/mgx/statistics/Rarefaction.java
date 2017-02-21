@@ -27,6 +27,10 @@ public class Rarefaction {
         RConnection conn = r.getR();
         List<Point> ret = new LinkedList<>();
 
+        if (conn == null) {
+            throw new MGXException("Could not connect to Rserve.");
+        }
+
         try {
             // create unique variable name
             String name = "data" + Rserve.generateSuffix();
