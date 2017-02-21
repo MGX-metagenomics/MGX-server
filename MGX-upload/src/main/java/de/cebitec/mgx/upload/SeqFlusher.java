@@ -14,7 +14,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -35,14 +34,13 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final DataSource dataSource;
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
-    private Exception error = null;
+    private volatile Exception error = null;
     private final int bulkSize;
     //
     private final List<T> holder = new ArrayList<>();
     //
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
-    private int waitMs = 5;
 
     public SeqFlusher(long seqrunId, BlockingQueue<T> in, DataSource dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
         this.seqrunId = seqrunId;
@@ -50,37 +48,27 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
-        this.bulkSize = bulkSize;
+        this.bulkSize = 5_000;
     }
 
     @Override
     public void run() {
         T seq = null;
-        while (!mayTerminate) {
+        while (!(mayTerminate && in.isEmpty())) {
             try {
-                seq = in.poll(waitMs, TimeUnit.NANOSECONDS);
+                seq = in.poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException ex) {
                 Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             }
-            if (seq != null) {
-                waitMs--;
-                waitMs = waitMs < 1 ? 1 : waitMs;
-                process(seq);
-            }
-        }
-
-        // flush
-        while (!in.isEmpty()) {
-            seq = in.poll();
             if (seq != null) {
                 process(seq);
             }
         }
 
         // flush remainder
-        flushChunk();
-
-        assert holder.isEmpty();
+        if (!holder.isEmpty()) {
+            flushChunk();
+        }
 
         try {
             writer.close();
@@ -89,24 +77,30 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             error = ex;
         }
 
+        assert holder.isEmpty();
         allDone.countDown();
     }
 
     private void process(T seq) {
-        holder.add(seq);
         for (Analyzer<T> a : analyzers) {
             a.add(seq);
+        }
+        synchronized (holder) {
+            holder.add(seq);
         }
         if (holder.size() >= bulkSize) {
             flushChunk();
         }
     }
 
-    private synchronized List<T> fetchChunk() {
-        int chunk = holder.size() < bulkSize ? holder.size() : bulkSize;
-        List<T> sub = holder.subList(0, chunk);
-        List<T> subList = new ArrayList<>(sub);
-        sub.clear(); // since sub is backed by holder, this removes all sub-list items from holder
+    private List<T> fetchChunk() {
+        List<T> subList;
+        synchronized (holder) {
+            int chunk = holder.size() < bulkSize ? holder.size() : bulkSize;
+            List<T> sub = holder.subList(0, chunk);
+            subList = new ArrayList<>(sub);
+            sub.clear(); // since sub is backed by holder, this removes all sub-list items from holder
+        }
         return subList;
     }
 
@@ -152,16 +146,14 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         //
         curPos = 0;
         try {
-            for (Iterator<T> iter = commitList.iterator(); iter.hasNext();) {
+            for (T seq : commitList) {
                 // add the generated IDs
-                T seq = iter.next();
                 seq.setId(generatedIDs[curPos++]);
                 writer.addSequence(seq);
             }
         } catch (SeqStoreException ex) {
             error = ex;
         }
-
     }
 
     private String createSQLBulkStatement(int elements) {
@@ -187,10 +179,10 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
 
     public void complete() throws Exception {
         mayTerminate = true;
+        allDone.await();
         if (error()) {
             throw getError();
         }
-        allDone.await();
     }
 
     public boolean error() {
