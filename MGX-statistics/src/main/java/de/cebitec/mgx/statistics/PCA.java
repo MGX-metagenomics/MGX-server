@@ -36,7 +36,7 @@ public class PCA {
 
         RConnection conn = r.getR();
         if (conn == null) {
-            throw new MGXException("Could not connect to R.");
+            throw new MGXException("Could not connect to Rserve.");
         }
 
         Map<String, String> sampleNames = new HashMap<>();
