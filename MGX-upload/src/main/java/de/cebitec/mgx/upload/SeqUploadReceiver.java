@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -48,7 +47,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     protected final Analyzer<T>[] qcAnalyzers;
     protected final int bulksize;
     //
-    private final BlockingQueue<T> queue = new LinkedBlockingQueue<>(10000);
+    private final BlockingQueue<T> queue = new LinkedBlockingQueue<>(100_000);
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
@@ -62,7 +61,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             SeqWriterI writer;
             writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
             this.dataSource = dataSource;
-            //conn.setClientInfo("ApplicationName", "MGX-SeqUpload (" + projName + ")");
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
             bulksize = mgxconfig.getSQLBulkInsertSize();
             flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers, bulksize);
@@ -81,8 +79,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         throwIfError();
         //
         try {
-            for (Iterator<SequenceDTO> iter = seqs.getSeqList().iterator(); iter.hasNext();) {
-                SequenceDTO s = iter.next();
+            for (SequenceDTO s : seqs.getSeqList()) {
                 DNASequenceI d;
                 if (s.hasQuality()) {
                     QualityDNASequence qd = new QualityDNASequence();
@@ -100,7 +97,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
-
         lastAccessed = System.currentTimeMillis();
     }
 
@@ -121,8 +117,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                     stmt.executeUpdate();
                 }
             }
-            //
-            //conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             cancel();
@@ -143,14 +137,27 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
 
     @Override
     public void cancel() {
+        System.err.println("Upload cancelled after " + total_num_sequences + " sequences, queue size " + queue.size());
         try {
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
-            try (Connection conn = dataSource.getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
-                    stmt.setLong(1, runId);
-                    stmt.executeUpdate();
+
+            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 5000))";
+            int rowsAffected;
+            //
+            // delete in chunks to make sure the DB connections gets returned
+            // to the pool in a timely manner
+            //
+            do {
+                try (Connection conn = dataSource.getConnection()) {
+                    try (PreparedStatement stmt = conn.prepareStatement(delReads)) {
+                        stmt.setLong(1, runId);
+                        rowsAffected = stmt.executeUpdate();
+                    }
                 }
+            } while (rowsAffected == 5_000);
+
+            try (Connection conn = dataSource.getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
                     stmt.setLong(1, runId);
                     stmt.executeUpdate();
