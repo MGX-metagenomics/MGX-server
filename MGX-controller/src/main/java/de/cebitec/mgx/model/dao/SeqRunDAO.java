@@ -58,41 +58,43 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     public void delete(long run_id) throws MGXException {
-//        final SeqRun sr = getById(run_id);
-//        // remove persistent storage file
-//        String dBFile = sr.getDBFile();
-//        if (dBFile != null) {
-//            SeqReaderFactory.delete(dBFile);
-//        }
 
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        /*
-         * JPA CascadeType.DELETE fetches and delete all entities individually;
-         * we can do better by manually deleting all referring objects ..
-         */
         try {
-            conn = getConnection();
-
             // delete observations
-            stmt = conn.prepareStatement("DELETE FROM observation WHERE seq_id IN (SELECT id FROM read WHERE seqrun_id=?)");
-            stmt.setLong(1, run_id);
-            stmt.execute();
+            //
+            // delete in chunks to make sure the DB connections gets returned
+            // to the pool in a timely manner
+            //
+            final String delObs = "DELETE FROM observation WHERE ctid = any(array(SELECT ctid FROM observation WHERE seq_id IN (SELECT id FROM read WHERE seqrun_id=?) LIMIT 5000))";
+            int rowsAffected;
+            do {
+                try (Connection c = getConnection()) {
+                    try (PreparedStatement ps = c.prepareStatement(delObs)) {
+                        ps.setLong(1, run_id);
+                        rowsAffected = ps.executeUpdate();
+                    }
+                }
+            } while (rowsAffected == 5_000);
 
             // delete attributecounts
-            stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
-                    + "(SELECT id FROM attribute WHERE job_id IN "
-                    + "(SELECT id from job WHERE seqrun_id=?)"
-                    + ")");
-            stmt.setLong(1, run_id);
-            stmt.execute();
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+                        + "(SELECT id FROM attribute WHERE job_id IN "
+                        + "(SELECT id from job WHERE seqrun_id=?)"
+                        + ")")) {
+                    stmt.setLong(1, run_id);
+                    stmt.execute();
+                }
+            }
 
             // delete attributes
-            stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id IN "
-                    + "(SELECT id from job WHERE seqrun_id=?)");
-            stmt.setLong(1, run_id);
-            stmt.execute();
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id IN "
+                        + "(SELECT id from job WHERE seqrun_id=?)")) {
+                    stmt.setLong(1, run_id);
+                    stmt.execute();
+                }
+            }
             // delete jobs
             //            stmt = conn.prepareStatement("DELETE FROM job WHERE seqrun_id=?");
             //            stmt.setLong(1, id);
@@ -102,29 +104,34 @@ public class SeqRunDAO extends DAO<SeqRun> {
                 getController().getJobDAO().delete(iter.next().getId());
             }
 
-            // delete reads
-            stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?");
-            stmt.setLong(1, run_id);
-            stmt.execute();
+            //
+            // delete in chunks to make sure the DB connections gets returned
+            // to the pool in a timely manner
+            //
+            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 5000))";
+            do {
+                try (Connection conn = getConnection()) {
+                    try (PreparedStatement stmt = conn.prepareStatement(delReads)) {
+                        stmt.setLong(1, run_id);
+                        rowsAffected = stmt.executeUpdate();
+                    }
+                }
+            } while (rowsAffected == 5_000);
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            close(conn, stmt, null);
         }
 
         // remove persistent entity
-        try (Connection conn2 = getConnection()) {
-            try (PreparedStatement ps = conn2.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
-                ps.setLong(1, run_id);
-                int numRows = ps.executeUpdate();
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
+                stmt.setLong(1, run_id);
+                int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + run_id + ".");
                 }
             }
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
-        } finally {
-            close(conn, stmt, null);
         }
     }
 
@@ -204,10 +211,10 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
-    private final static String SQL_BY_EXTRACT = 
-            "WITH complete_runs AS ("
+    private final static String SQL_BY_EXTRACT
+            = "WITH complete_runs AS ("
             + "SELECT id, name, dbfile, database_accession, num_sequences, sequencing_method, "
-            + "sequencing_technology, submitted_to_insdc FROM seqrun WHERE num_sequences <> -1"
+            + "sequencing_technology, submitted_to_insdc, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
             + ")"
             + "SELECT s.id, s.name, s.dbfile, s.database_accession, s.num_sequences, s.sequencing_method, "
             + "s.sequencing_technology, s.submitted_to_insdc "
