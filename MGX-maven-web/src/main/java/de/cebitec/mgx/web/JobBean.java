@@ -254,7 +254,8 @@ public class JobBean {
         Job job;
         try {
             job = mgx.getJobDAO().getById(id);
-            if (job.getStatus() != JobState.FAILED) {
+            JobState status = job.getStatus();
+            if (status != JobState.FAILED && status != JobState.ABORTED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
             RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
