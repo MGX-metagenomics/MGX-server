@@ -55,7 +55,7 @@ public class GPMS implements DBGPMSI {
             }
             sessions.registerMaster(mbr, master);
             now = System.currentTimeMillis() - now;
-            log("Created new master with role " + master.getRole().getName() + " for user " + getCurrentUser().getLogin() + " in " + now + "ms");
+            log("Created new " + mbr.getProject().getName() + " master with role " + master.getRole().getName() + " for user " + getCurrentUser().getLogin() + " in " + now + "ms");
         }
 
         master.setUser(getCurrentUser());
