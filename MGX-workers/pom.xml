@@ -66,31 +66,21 @@
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-core</artifactId>
             <version>1.0</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-sessions</artifactId>
             <version>1.0</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-isequences</artifactId>
             <version>1.0</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-jobsubmitter-api</artifactId>
             <version>1.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>de.cebitec.mgx</groupId>
-            <artifactId>MGX-controller</artifactId>
-            <version>1.0</version>
-            <type>jar</type>
         </dependency>
     </dependencies>
 </project>
