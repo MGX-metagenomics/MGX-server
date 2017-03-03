@@ -39,7 +39,6 @@ public class UploadSessions {
     @PreDestroy
     public void stop() {
         for (UUID uuid : sessions.keySet()) {
-            sessions.get(uuid).cancel();
             UploadReceiverI ur = sessions.remove(uuid);
             ur.cancel();
         }
@@ -73,8 +72,10 @@ public class UploadSessions {
 
     @Asynchronous
     public void cancelSession(UUID uuid) throws MGXException {
-        sessions.get(uuid).cancel();
-        sessions.remove(uuid);
+        UploadReceiverI recv = sessions.remove(uuid);
+        if (recv != null) {
+            recv.cancel();
+        }
     }
 
     @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
