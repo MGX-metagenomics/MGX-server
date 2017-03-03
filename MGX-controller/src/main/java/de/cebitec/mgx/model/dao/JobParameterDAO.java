@@ -52,6 +52,31 @@ public class JobParameterDAO extends DAO<JobParameter> {
         return obj.getId();
     }
 
+    public void create(JobParameter... objs) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+                for (JobParameter obj : objs) {
+                    stmt.setLong(1, obj.getJobId());
+                    stmt.setLong(2, obj.getNodeId());
+                    stmt.setString(3, obj.getParameterName());
+                    stmt.setString(4, obj.getParameterValue());
+                    stmt.setString(5, obj.getUserName());
+                    stmt.setString(6, obj.getUserDescription());
+                    stmt.addBatch();
+                }
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    int idx = 0;
+                    while (rs.next()) {
+                        objs[idx++].setId(rs.getLong(1));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+    }
+
     private final static String UPDATE = "UPDATE jobparameter SET job_id=?, node_id=?, param_name=?, param_value=?, user_name=?, user_desc=?"
             + " WHERE id=?";
 
@@ -92,7 +117,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
             throw new MGXException(ex);
         }
     }
-    
+
     private final static String BY_ID = "SELECT id, job_id, node_id, param_name, param_value, user_name, user_desc FROM jobparameter WHERE id=?";
 
     @Override
@@ -108,7 +133,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
                     if (!rs.next()) {
                         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
                     }
-                    
+
                     JobParameter jp = new JobParameter();
                     jp.setId(rs.getLong(1));
                     jp.setJobId(rs.getLong(2));
@@ -117,7 +142,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
                     jp.setParameterValue(rs.getString(5));
                     jp.setUserName(rs.getString(6));
                     jp.setUserDescription(rs.getString(7));
-                            
+
                     return jp;
                 }
             }

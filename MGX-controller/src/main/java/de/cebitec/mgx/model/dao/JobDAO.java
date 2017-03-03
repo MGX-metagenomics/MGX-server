@@ -61,12 +61,18 @@ public class JobDAO extends DAO<Job> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        
+
         if (obj.getParameters() != null && !obj.getParameters().isEmpty()) {
             for (JobParameter jp : obj.getParameters()) {
                 jp.setJobId(obj.getId());
             }
+
+            //
+            // persist parameters
+            //
+            getController().getJobParameterDAO().create(obj.getParameters().toArray(new JobParameter[]{}));
         }
+
         return obj.getId();
     }
 
