@@ -130,11 +130,6 @@ public class JobBean {
         long job_id;
         try {
             job_id = mgx.getJobDAO().create(j);
-
-            for (JobParameter jp : j.getParameters()) {
-                jp.setJobId(job_id);
-                mgx.getJobParameterDAO().create(jp);
-            }
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -258,7 +253,9 @@ public class JobBean {
             if (status != JobState.FAILED && status != JobState.ABORTED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            RestartJob dJob = new RestartJob(mgx, dispConfig.getDispatcherHost(), mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
+            RestartJob dJob = new RestartJob(mgx.getDatabaseHost(), mgx.getDatabaseName(), 
+                    mgx.getProjectDirectory(), dispConfig.getDispatcherHost(), 
+                    mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException | IOException ex) {
