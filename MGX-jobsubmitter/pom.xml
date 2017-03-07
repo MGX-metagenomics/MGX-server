@@ -37,12 +37,6 @@
             <version>1.0</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>de.cebitec.mgx</groupId>
-            <artifactId>MGX-model</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
         <!-- <dependency>
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-controller</artifactId>
