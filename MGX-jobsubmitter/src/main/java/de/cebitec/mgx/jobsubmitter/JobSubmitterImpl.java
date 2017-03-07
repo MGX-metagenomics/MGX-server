@@ -7,28 +7,20 @@ import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.dispatcher.client.MGXDispatcherConfiguration;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
-import de.cebitec.mgx.model.db.JobParameter;
-import de.cebitec.mgx.model.db.JobState;
-import de.cebitec.mgx.util.UnixHelper;
 import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.sql.DataSource;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
-import de.cebitec.mgx.model.db.Job;
 
 /**
  *
@@ -54,42 +46,17 @@ public class JobSubmitterImpl implements JobSubmitterI {
     }
 
     @Override
-    public boolean validate(Host dispatcherHost, String projName, DataSource dataSource, final Job job, String dbHost, String dbName, String dbUser, String dbPass, File projDir) throws MGXDispatcherException {
-        if (!createJobConfigFile(dbHost, dbName, dbUser, dbPass, projDir, job.getParameters(), job.getId())) {
-            throw new MGXDispatcherException("Failed to write job configuration.");
-        }
-
+    public boolean validate(Host dispatcherHost, String projName, long jobId) throws MGXDispatcherException {
         //
-        // dispatcher will update the job state to either JobState.VERIFIED
+        // dispatcher will update the DB job state to either JobState.VERIFIED
         // or JobState.FAILED
         //
-        return get(dispatcherHost, Boolean.class, "validate", MGX_CLASS, projName, String.valueOf(job.getId()));
+        return get(dispatcherHost, Boolean.class, "validate", MGX_CLASS, projName, String.valueOf(jobId));
     }
 
     @Override
-    public boolean submit(Host dispatcherHost, String projName, DataSource dataSource, Job job) throws MGXDispatcherException {
-        if (job.getStatus() != JobState.VERIFIED) {
-            throw new MGXDispatcherException("Job %d in invalid state %s", job.getId(), job.getStatus());
-        }
-
-        // set job to submitted
-        job.setStatus(JobState.SUBMITTED);
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET job_state=? WHERE id=?")) {
-                stmt.setInt(1, JobState.SUBMITTED.getValue());
-                stmt.setLong(2, job.getId());
-                int numRows = stmt.executeUpdate();
-                stmt.close();
-                if (numRows != 1) {
-                    throw new MGXDispatcherException("Could not update job state.");
-                }
-            }
-        } catch (SQLException ex) {
-            throw new MGXDispatcherException(ex.getMessage());
-        }
-
-        // and send to dispatcher
-        return get(dispatcherHost, Boolean.class, "submit", MGX_CLASS, projName, String.valueOf(job.getId()));
+    public boolean submit(Host dispatcherHost, String projName, long jobId) throws MGXDispatcherException {
+        return get(dispatcherHost, Boolean.class, "submit", MGX_CLASS, projName, String.valueOf(jobId));
     }
 
     @Override
@@ -102,44 +69,6 @@ public class JobSubmitterImpl implements JobSubmitterI {
         delete(dispatcherHost, "delete", MGX_CLASS, projectName, String.valueOf(jobId));
     }
 
-    private boolean createJobConfigFile(String dbHost, String dbName, String dbUser, String dbPass, File projectDir, Collection<JobParameter> params, long jobId) throws MGXDispatcherException {
-        String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
-                .append(File.separator)
-                .append("jobs")
-                .append(File.separator)
-                .append(jobId).toString();
-
-        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
-            cfgFile.write("mgx.username=" + dbUser);
-            cfgFile.newLine();
-            cfgFile.write("mgx.password=" + dbPass);
-            cfgFile.newLine();
-            cfgFile.write("mgx.host=" + dbHost);
-            cfgFile.newLine();
-            cfgFile.write("mgx.database=" + dbName);
-            cfgFile.newLine();
-            cfgFile.write("mgx.job_id=" + jobId);
-            cfgFile.newLine();
-            cfgFile.write("mgx.projectDir=" + projectDir);
-            cfgFile.newLine();
-
-            for (JobParameter jp : params) {
-                cfgFile.write(jp.getNodeId() + "." + jp.getParameterName() + "=" + jp.getParameterValue());
-                cfgFile.newLine();
-            }
-        } catch (IOException ex) {
-            throw new MGXDispatcherException(ex.getMessage());
-        }
-
-        try {
-            UnixHelper.makeFileGroupWritable(jobconfigFile);
-        } catch (IOException ex) {
-            throw new MGXDispatcherException(ex.getMessage());
-        }
-
-        return true;
-    }
-
     private WebResource getWebResource(Host target) throws MGXDispatcherException {
         if (target == null) {
             throw new MGXDispatcherException("Invalid null target!");
@@ -149,8 +78,8 @@ public class JobSubmitterImpl implements JobSubmitterI {
             currentHost = target;
             ClientConfig cc = new DefaultClientConfig();
             cc.getClasses().add(TextPlainReader.class);
-            cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, 5000); // in ms
-            cc.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, 20000); // in ms
+            cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, 5_000); // in ms
+            cc.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, 30_000); // in ms
             currentClient = Client.create(cc);
         }
         return currentClient.resource(getBaseURI(target));

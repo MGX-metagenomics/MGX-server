@@ -22,11 +22,6 @@
     <dependencies>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
-            <artifactId>MGX-model</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-dispatcher-common</artifactId>
             <version>1.0</version>
         </dependency>
@@ -44,7 +39,6 @@
                         <Export-Package>de.cebitec.mgx.jobsubmitter.api</Export-Package>
                         <Import-Package>
                             javax.sql,
-                            de.cebitec.mgx.model.db,
                             de.cebitec.mgx.dispatcher.common
                         </Import-Package>
                     </instructions>
