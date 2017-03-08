@@ -1,12 +1,11 @@
 package de.cebitec.mgx.statistics;
 
 import de.cebitec.mgx.core.MGXException;
-import java.io.BufferedReader;
+import de.cebitec.mgx.streamlogger.StreamLogger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -27,12 +26,18 @@ import org.rosuda.REngine.Rserve.RserveException;
 @Startup
 public class Rserve {
 
+    private static volatile boolean exiting = false;
+
     public synchronized RConnection getR() {
+        // do not offer new connections during shutdown/undeploy
+        if (exiting) {
+            return null;
+        }
         RConnection ret = null;
         try {
             ret = new RConnection();
         } catch (RserveException ex) {
-            start();
+//            start();
             try {
                 ret = new RConnection();
             } catch (RserveException ex1) {
@@ -58,6 +63,7 @@ public class Rserve {
 
     // "typical" locations for the R installation; this currently reflects the
     // environment found in Bielefeld and Giessen
+    //private final static String[] Rbinaries = new String[]{"/vol/mgx-sw/bin/R", "/vol/r-2.15/bin/R", "/usr/bin/R"};
     private final static String[] Rbinaries = new String[]{"/vol/r-2.15/bin/R", "/usr/bin/R"};
 
     @PostConstruct
@@ -90,15 +96,13 @@ public class Rserve {
 
             scriptFile = createScript();
 
-            String rserveStartCommand = R.getAbsolutePath() + " CMD Rserve --vanilla --RS-source " + scriptFile.getAbsolutePath();
+            String rserveStartCommand = R.getAbsolutePath() + " CMD Rserve -q --vanilla --RS-source " + scriptFile.getAbsolutePath();
             p = Runtime.getRuntime().exec(rserveStartCommand, envp.toArray(new String[]{}));
             //
-            err = new Thread(new RStreamReader(p.getErrorStream()));
-            err.setName("R error logger thread");
+            err = new StreamLogger("R error logger thread", p.getErrorStream(), Logger.getLogger(Rserve.class.getName()));
             err.start();
 
-            out = new Thread(new RStreamReader(p.getInputStream()));
-            out.setName("R output logger thread");
+            out = new StreamLogger("R output logger thread", p.getInputStream(), Logger.getLogger(Rserve.class.getName()));
             out.start();
             //
             p.waitFor();
@@ -115,7 +119,6 @@ public class Rserve {
             try {
                 conn = new RConnection();
             } catch (RserveException ex) {
-                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (conn != null) {
                 try {
@@ -193,37 +196,6 @@ public class Rserve {
             return tmpRFile;
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
-        }
-    }
-    private static volatile boolean exiting = false;
-
-    private final static class RStreamReader implements Runnable {
-
-        private final InputStream err;
-
-        RStreamReader(InputStream in) {
-            err = in;
-        }
-
-        @Override
-        public void run() {
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(err))) {
-                String line;
-                while (!exiting && in.ready() && ((line = in.readLine()) != null)) {
-                    if (!line.trim().isEmpty()) {
-                        Logger.getLogger(Rserve.class.getName()).log(Level.INFO, "R: {0}", line);
-                    } else {
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException ex) {
-                        }
-                    }
-                }
-            } catch (IOException ex) {
-                if (!exiting) {
-                    Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
         }
     }
 
