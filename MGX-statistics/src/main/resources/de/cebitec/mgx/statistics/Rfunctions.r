@@ -1,5 +1,6 @@
+library('parallel')
 library('BiocGenerics', warn.conflicts=F)
-library('Biobase', warn.conflicts=F)
+suppressPackageStartupMessages(library('Biobase', warn.conflicts=F))
 library('amap', warn.conflicts=F)
 library('MASS', warn.conflicts=F)
 
@@ -47,7 +48,6 @@ rarefaction<-function(x, subsample=2, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   library(lattice)
   library(permute)
   suppressPackageStartupMessages(library(vegan))
-  library(parallel)
 
   x <- as.matrix(x)
   y1<-apply(x, 1, sum)
