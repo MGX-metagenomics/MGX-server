@@ -200,9 +200,9 @@ public class AttributeDAO extends DAO<Attribute> {
 
     public Map<Attribute, Long> getHierarchy(long attrTypeId, long job_id) throws MGXException {
 
-        Map<Attribute, Long> ret = new HashMap<>();
+        Map<Attribute, Long> attrCount = new HashMap<>();
 //        TLongObjectMap<AttributeType> aTypeCache = new TLongObjectHashMap<>();
-        TLongObjectMap<Attribute> attrCache = new TLongObjectHashMap<>();
+        TLongObjectMap<Attribute> attrByID = new TLongObjectHashMap<>();
         TLongLongMap attr2parent = new TLongLongHashMap();
 
         try (Connection conn = getController().getConnection()) {
@@ -233,9 +233,9 @@ public class AttributeDAO extends DAO<Attribute> {
 
                         long parentId = rs.getLong(7);
                         attr2parent.put(attr.getId(), parentId);
-                        attrCache.put(attr.getId(), attr);
+                        attrByID.put(attr.getId(), attr);
 
-                        ret.put(attr, rs.getLong(8));
+                        attrCount.put(attr, rs.getLong(8));
                     }
                 }
             }
@@ -244,15 +244,15 @@ public class AttributeDAO extends DAO<Attribute> {
             throw new MGXException(ex.getMessage());
         }
 
-        for (Attribute a : ret.keySet()) {
+        for (Attribute a : attrCount.keySet()) {
             long parentID = attr2parent.get(a.getId());
             if (parentID != 0) {
-                Attribute parent = attrCache.get(parentID);
+                Attribute parent = attrByID.get(parentID);
                 a.setParentId(parent.getId());
             }
         }
 
-        return ret;
+        return attrCount;
     }
 
     public Map<Pair<Attribute, Attribute>, Integer> getCorrelation(long attrTypeId, long job1Id, long attrType2Id, long job2id) throws MGXException {
