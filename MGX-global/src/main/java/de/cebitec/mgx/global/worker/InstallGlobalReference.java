@@ -1,5 +1,6 @@
 package de.cebitec.mgx.global.worker;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
@@ -15,7 +16,6 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -27,7 +27,7 @@ public class InstallGlobalReference extends TaskI {
     private final long globalId;
     private final MGXGlobal global;
 
-    public InstallGlobalReference(DataSource projectDataSource, MGXGlobal global, long globalId, String projRefDir, String projName) {
+    public InstallGlobalReference(GPMSManagedDataSourceI projectDataSource, MGXGlobal global, long globalId, String projRefDir, String projName) {
         super(projName, projectDataSource);
         this.global = global;
         this.projRefDir = projRefDir;
@@ -57,7 +57,7 @@ public class InstallGlobalReference extends TaskI {
 
         // create reference in project to obtain an id
         long newRefId = -1;
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
                 stmt.setString(1, globalRef.getName());
                 stmt.setInt(2, globalRef.getLength());
@@ -92,7 +92,7 @@ public class InstallGlobalReference extends TaskI {
         }
 
         // update filepath on reference
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
                 stmt.setString(1, targetFile.getAbsolutePath());
                 stmt.setLong(2, newRefId);
@@ -103,7 +103,7 @@ public class InstallGlobalReference extends TaskI {
             setStatus(State.FAILED, ex.getMessage());
 
             // cleanup attempt
-            delReference(dataSource, newRefId);
+            delReference(newRefId);
 
             return;
         }
@@ -120,12 +120,12 @@ public class InstallGlobalReference extends TaskI {
             setStatus(State.FAILED, ex.getMessage());
 
             // cleanup attempt
-            delReference(dataSource, newRefId);
+            delReference(newRefId);
 
             return;
         }
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, type, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
                 for (Region r : regions) {
                     stmt.setString(1, r.getName());
@@ -143,17 +143,17 @@ public class InstallGlobalReference extends TaskI {
             setStatus(State.FAILED, ex.getMessage());
 
             // cleanup attempt
-            delRegions(dataSource, newRefId);
-            delReference(dataSource, newRefId);
+            delRegions(newRefId);
+            delReference(newRefId);
             return;
         }
 
         setStatus(TaskI.State.FINISHED, "Reference copied.");
     }
 
-    private void delRegions(DataSource ds, long refId) {
+    private void delRegions(long refId) {
         if (refId != -1) {
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
                     stmt.setLong(1, refId);
                     stmt.execute();
@@ -164,10 +164,10 @@ public class InstallGlobalReference extends TaskI {
         }
     }
 
-    private void delReference(DataSource ds, long refId) {
+    private void delReference(long refId) {
         if (refId != -1) {
             // cleanup attempt
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
                     stmt.setLong(1, refId);
                     stmt.execute();
