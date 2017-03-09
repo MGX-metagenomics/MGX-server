@@ -8,7 +8,10 @@ import com.google.common.cache.RemovalNotification;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.RequestScoped;
@@ -27,7 +30,8 @@ public class ControllerFactory {
     MGXConfigurationI mgxconfig;
     //
     //
-    private LoadingCache<JDBCMasterI, MGXController> masterCache = null;
+    private final LoadingCache<JDBCMasterI, MGXController> masterCache;
+    private final Timer timer;
 
     public ControllerFactory() {
 
@@ -50,6 +54,14 @@ public class ControllerFactory {
                         return new MGXControllerImpl(jdbcMaster, mgxconfig.getPluginDump(), mgxconfig.getPersistentDirectory());
                     }
                 });
+        
+        timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                masterCache.cleanUp();
+            }
+        }, 10_000, 60_000 * 2);
     }
 
     @Produces
@@ -62,6 +74,12 @@ public class ControllerFactory {
         }
         return masterCache.getUnchecked(master);
         //return new MGXControllerImpl(jpaMaster, mgxconfig);
+    }
+    
+    @PreDestroy
+    public void dispose() {
+        timer.cancel();
+        masterCache.invalidateAll();
     }
 
 //    public void dispose(@Disposes MGXController c) {
