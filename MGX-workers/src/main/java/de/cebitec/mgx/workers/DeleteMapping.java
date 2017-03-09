@@ -1,5 +1,6 @@
 package de.cebitec.mgx.workers;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
@@ -11,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -22,7 +22,7 @@ public class DeleteMapping extends TaskI {
     private final long id;
     private final MappingSessions sessions;
 
-    public DeleteMapping(Long mapId, DataSource dataSource, String projName, MappingSessions sessions) {
+    public DeleteMapping(Long mapId, GPMSManagedDataSourceI dataSource, String projName, MappingSessions sessions) {
         super(projName, dataSource);
         this.sessions = sessions;
         id = mapId;
@@ -35,7 +35,7 @@ public class DeleteMapping extends TaskI {
         sessions.abort(id);
 
         Set<Long> jobs = new HashSet<>();
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file, job_id")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -59,7 +59,7 @@ public class DeleteMapping extends TaskI {
 
                 // delete jobs
                 for (Long jobId : jobs) {
-                    TaskI delJob = new DeleteJob(jobId, dataSource, getProjectName(), sessions);
+                    TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), sessions);
                     delJob.addPropertyChangeListener(this);
                     delJob.run();
                     delJob.removePropertyChangeListener(this);
