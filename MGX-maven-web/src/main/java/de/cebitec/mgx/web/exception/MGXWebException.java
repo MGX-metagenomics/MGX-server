@@ -15,6 +15,10 @@ public class MGXWebException extends WebApplicationException {
 
     private Status http_status = null;
 
+    public MGXWebException(String msg, Object... args) {
+        this(Status.BAD_REQUEST, String.format(msg, args));
+    }
+
     public MGXWebException(String message) {
         this(Status.BAD_REQUEST, message);
     }
