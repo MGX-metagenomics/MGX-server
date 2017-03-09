@@ -4,16 +4,16 @@ import de.cebitec.gpms.core.ProjectI;
 import de.cebitec.gpms.core.RoleI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.JDBCMasterI;
+import de.cebitec.gpms.util.GPMSManagedConnectionI;
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.model.dao.*;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -28,6 +28,7 @@ public class MGXControllerImpl implements MGXController {
     //
     private final File pluginDump;
     private final JDBCMasterI gpmsmaster;
+    private final GPMSManagedDataSourceI dataSource;
     private File projectDir = null;
     private File projectQCDir = null;
     private File projectFileDir = null;
@@ -40,6 +41,9 @@ public class MGXControllerImpl implements MGXController {
 
     public MGXControllerImpl(JDBCMasterI gpmsmaster, File pluginDump, File persistentDir) {
         this.gpmsmaster = gpmsmaster;
+        this.dataSource = gpmsmaster.getDataSource();
+        this.dataSource.subscribe();
+        //
         ProjectI gpmsProject = gpmsmaster.getProject();
         this.projectName = gpmsProject.getName();
         this.user = gpmsmaster.getUser();
@@ -69,11 +73,6 @@ public class MGXControllerImpl implements MGXController {
     public final void log(String msg, Object... args) {
         log(String.format(msg, args));
     }
-
-//    @Override
-//    public EntityManager getEntityManager() {
-//        return em;
-//    }
 
     @Override
     public File getProjectDirectory() throws IOException {
@@ -168,13 +167,13 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public final DataSource getDataSource() {
-        return gpmsmaster.getDataSource();
+    public final GPMSManagedDataSourceI getDataSource() {
+        return dataSource;
     }
 
     @Override
-    public final Connection getConnection() throws SQLException {
-        return getDataSource().getConnection();
+    public final GPMSManagedConnectionI getConnection() throws SQLException {
+        return dataSource.getConnection();
     }
 
     @Override
@@ -189,13 +188,13 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public void close() {
-//        if (em.isOpen()) {
-//            em.close();
-//        }
+        // jobdao instances are handled differently because they 
+        // cache job parameters internally
         if (jobDAO != null) {
             jobDAO.dispose();
             jobDAO = null;
         }
+        dataSource.close(); // unsubscribe
     }
 
     @Override
