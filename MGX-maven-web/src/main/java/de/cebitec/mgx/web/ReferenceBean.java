@@ -26,7 +26,6 @@ import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -199,9 +198,9 @@ public class ReferenceBean {
             mgx.log("creating reference importer session for " + ref.getName());
             File target = new File(mgx.getProjectReferencesDirectory(), ref.getId() + ".fas");
             ref.setFile(target.getAbsolutePath());
-            ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getConnection());
+            ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getDataSource());
             uuid = upSessions.registerUploadSession(recv);
-        } catch (MGXException | IOException | SQLException ex) {
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(uuid.toString()).build();
