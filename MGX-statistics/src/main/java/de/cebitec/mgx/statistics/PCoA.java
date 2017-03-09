@@ -13,7 +13,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
@@ -36,7 +35,7 @@ public class PCoA {
             throw new MGXException("Insufficient number of datasets.");
         }
 
-        RConnection conn = r.getR();
+        RWrappedConnection conn = r.getR();
         if (conn == null) {
             throw new MGXException("Could not connect to Rserve.");
         }
@@ -56,28 +55,28 @@ public class PCoA {
                 if (vecLen != nv.getData().length) {
                     throw new MGXException("Received vectors of different length.");
                 }
-                String varname = "grp" + generateSuffix();
+                String varname = "grp" + Util.generateSuffix();
                 sampleNames.put(varname, nv.getName());
                 varOrder.add(varname);
                 conn.assign(varname, nv.getData());
             }
 
-            String matrixName = "matr" + generateSuffix();
+            String matrixName = "matr" + Util.generateSuffix();
             conn.eval(String.format("%s <- rbind(%s)", matrixName, StringUtils.join(varOrder, ",")));
 
             int i = 0;
             String[] colAliases = new String[m.getColumnNames().length];
             for (String s : m.getColumnNames()) {
-                String colName = "var" + generateSuffix();
+                String colName = "var" + Util.generateSuffix();
                 varNames.put(colName, s);
                 colAliases[i++] = colName;
             }
-            String tmp = "tmp." + generateSuffix();
+            String tmp = "tmp." + Util.generateSuffix();
             conn.assign(tmp, colAliases);
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
             
-            String pcoaName = "pcoa" + generateSuffix();
+            String pcoaName = "pcoa" + Util.generateSuffix();
             conn.eval(String.format("%s <- cmdscale(dist(%s), k=2)", pcoaName, matrixName));
             try {
 
@@ -112,17 +111,6 @@ public class PCoA {
 //            nwk = nwk.replace(e.getKey(), e.getValue());
 //        }
         return new ForwardingIterator<>(ret.iterator());
-    }
-
-    private static String generateSuffix() {
-        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            char c = chars[random.nextInt(chars.length)];
-            sb.append(c);
-        }
-        return sb.toString();
     }
 
 //    private double[] toDoubleArray(long[] in) {
