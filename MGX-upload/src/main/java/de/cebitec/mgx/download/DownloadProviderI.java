@@ -15,8 +15,6 @@ public interface DownloadProviderI<T> {
 
     public T fetch() throws MGXException;
     
-    public boolean isFinished();
-
     public String getProjectName();
 
     public long lastAccessed();
