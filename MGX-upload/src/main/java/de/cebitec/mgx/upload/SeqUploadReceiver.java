@@ -1,6 +1,6 @@
 package de.cebitec.mgx.upload;
 
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.sql.DataSource;
 
 /**
  *
@@ -36,34 +35,32 @@ import javax.sql.DataSource;
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
 public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiverI<SequenceDTOList> {
 
-    MGXConfigurationI mgxconfig;
-    //
     protected final String projectName;
     protected final long runId;
-    protected final DataSource dataSource;
-    protected File file;
+    protected GPMSManagedDataSourceI dataSource;
+    protected final File projectDirectory;
+    protected final File file;
     protected long total_num_sequences = 0;
     protected long lastAccessed;
     protected final Analyzer<T>[] qcAnalyzers;
-    protected final int bulksize;
     //
     private final BlockingQueue<T> queue = new LinkedBlockingQueue<>(100_000);
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
-    public SeqUploadReceiver(Executor executor, MGXConfigurationI mgxcfg, DataSource dataSource, String projName, long run_id, boolean hasQuality) throws MGXException {
-        projectName = projName;
-        runId = run_id;
-        mgxconfig = mgxcfg;
+    public SeqUploadReceiver(Executor executor, File projectDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality, int sqlBulksize) throws MGXException {
+        this.projectName = projName;
+        this.runId = run_id;
+        this.projectDirectory = projectDir;
+        this.dataSource = dataSource;
 
+        dataSource.subscribe();
+        
         try {
             file = getStorageFile(run_id);
-            SeqWriterI writer;
-            writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
-            this.dataSource = dataSource;
+            SeqWriterI writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
-            bulksize = mgxconfig.getSQLBulkInsertSize();
-            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers, bulksize);
+            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers, sqlBulksize);
             executor.execute(flush);
         } catch (MGXException | IOException | SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -123,9 +120,13 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             throw new MGXException(ex.getMessage());
         }
 
+        if (dataSource != null) {
+            dataSource.close();
+            dataSource = null;
+        }
+
         // write QC stats
-        String prefix = new StringBuilder(mgxconfig.getPersistentDirectory().getAbsolutePath())
-                .append(File.separator).append(getProjectName())
+        String prefix = new StringBuilder(projectDirectory.getAbsolutePath())
                 .append(File.separator).append("QC")
                 .append(File.separator).append(runId).append(".").toString();
         for (Analyzer a : qcAnalyzers) {
@@ -168,6 +169,11 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        if (dataSource != null) {
+            dataSource.close();
+            dataSource = null;
+        }
     }
 
     @Override
@@ -176,8 +182,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     }
 
     private File getStorageFile(long run_id) throws MGXException {
-        StringBuilder fname = new StringBuilder(mgxconfig.getPersistentDirectory().getAbsolutePath())
-                .append(File.separator).append(getProjectName())
+        StringBuilder fname = new StringBuilder(projectDirectory.getAbsolutePath())
                 .append(File.separator).append("seqruns")
                 .append(File.separator);
 

@@ -80,11 +80,6 @@ public class FileDownloadProvider implements DownloadProviderI<byte[]> {
     }
 
     @Override
-    public boolean isFinished() {
-        return finished;
-    }
-
-    @Override
     public String getProjectName() {
         return projectName;
     }

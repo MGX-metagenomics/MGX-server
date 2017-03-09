@@ -5,6 +5,7 @@
  */
 package de.cebitec.mgx.upload;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -20,7 +21,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -31,7 +31,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private volatile boolean mayTerminate = false;
     private final long seqrunId;
     private final BlockingQueue<T> in;
-    private final DataSource dataSource;
+    private final GPMSManagedDataSourceI dataSource;
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
     private volatile Exception error = null;
@@ -42,13 +42,15 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
 
-    public SeqFlusher(long seqrunId, BlockingQueue<T> in, DataSource dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
+    public SeqFlusher(long seqrunId, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
         this.seqrunId = seqrunId;
         this.in = in;
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
         this.bulkSize = 5_000;
+
+        dataSource.subscribe();
     }
 
     @Override
@@ -76,6 +78,8 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             error = ex;
         }
+
+        dataSource.close();
 
         assert holder.isEmpty();
         allDone.countDown();
@@ -179,7 +183,11 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
 
     public void complete() throws Exception {
         mayTerminate = true;
-        allDone.await();
+        try {
+            allDone.await();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+        }
         if (error()) {
             throw getError();
         }
