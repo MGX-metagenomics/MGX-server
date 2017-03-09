@@ -24,7 +24,7 @@ public class Rarefaction {
     Rserve r;
 
     public AutoCloseableIterator<Point> rarefy(double[] data) throws MGXException {
-        RConnection conn = r.getR();
+        RWrappedConnection conn = r.getR();
         List<Point> ret = new LinkedList<>();
 
         if (conn == null) {
@@ -33,7 +33,7 @@ public class Rarefaction {
 
         try {
             // create unique variable name
-            String name = "data" + Rserve.generateSuffix();
+            String name = "data" + Util.generateSuffix();
 
             float d = 0;
             for (double x : data) {
@@ -63,7 +63,6 @@ public class Rarefaction {
             // cleanup variables
             conn.eval("rm(" + name + ")");
             conn.eval("rm(" + name + ".rare)");
-            conn.close();
         } catch (REXPMismatchException | REngineException ex) {
             throw new MGXException("Computing rarefaction failed: " + ex.getMessage());
         } finally {

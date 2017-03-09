@@ -6,7 +6,6 @@ import de.cebitec.mgx.statistics.data.NamedVector;
 import de.cebitec.mgx.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
@@ -40,7 +39,7 @@ public class Clustering {
             throw new MGXException("Invalid agglomeration method: " + aggloMethod);
         }
 
-        RConnection conn = r.getR();
+        RWrappedConnection conn = r.getR();
         if (conn == null) {
             throw new MGXException("Could not connect to Rserve.");
         }
@@ -58,12 +57,12 @@ public class Clustering {
                 if (vecLen != nv.getData().length) {
                     throw new MGXException("Received vectors of different length.");
                 }
-                String varname = "grp" + generateSuffix();
+                String varname = "grp" + Util.generateSuffix();
                 names.put(varname, nv.getName());
                 conn.assign(varname, nv.getData());
             }
 
-            String matrixName = "matr" + generateSuffix();
+            String matrixName = "matr" + Util.generateSuffix();
             conn.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
 
             String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
@@ -120,17 +119,6 @@ public class Clustering {
         return nwk;
     }
     private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
-
-    private static String generateSuffix() {
-        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            char c = chars[random.nextInt(chars.length)];
-            sb.append(c);
-        }
-        return sb.toString();
-    }
 
 //    private double[] toDoubleArray(long[] in) {
 //        double[] ret = new double[in.length];

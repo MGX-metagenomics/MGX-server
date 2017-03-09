@@ -28,7 +28,7 @@ public class Rserve {
 
     private static volatile boolean exiting = false;
 
-    public synchronized RConnection getR() {
+    public synchronized RWrappedConnection getR() {
         // do not offer new connections during shutdown/undeploy
         if (exiting) {
             return null;
@@ -37,7 +37,6 @@ public class Rserve {
         try {
             ret = new RConnection();
         } catch (RserveException ex) {
-//            start();
             try {
                 ret = new RConnection();
             } catch (RserveException ex1) {
@@ -46,14 +45,14 @@ public class Rserve {
         }
 
         if (ret == null) {
-            return ret;
+            return null;
         }
         try {
             return new RWrappedConnection(ret);
         } catch (RserveException ex) {
             Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return ret;
+        return null;
     }
 
     private File scriptFile = null;
@@ -99,10 +98,10 @@ public class Rserve {
             String rserveStartCommand = R.getAbsolutePath() + " CMD Rserve -q --vanilla --RS-source " + scriptFile.getAbsolutePath();
             p = Runtime.getRuntime().exec(rserveStartCommand, envp.toArray(new String[]{}));
             //
-            err = new StreamLogger("R error logger thread", p.getErrorStream(), Logger.getLogger(Rserve.class.getName()));
+            err = new StreamLogger("R error logger thread", p.getErrorStream(), Logger.getLogger("Rserv-stderr"));
             err.start();
 
-            out = new StreamLogger("R output logger thread", p.getInputStream(), Logger.getLogger(Rserve.class.getName()));
+            out = new StreamLogger("R output logger thread", p.getInputStream(), Logger.getLogger("Rserv-stdout"));
             out.start();
             //
             p.waitFor();
@@ -128,32 +127,35 @@ public class Rserve {
                     Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            try {
-                p.getInputStream().close();
-                p.getErrorStream().close();
-            } catch (IOException ex) {
-                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
-            }
+
+//            try {
+//                p.getInputStream().close();
+//                p.getErrorStream().close();
+//            } catch (IOException ex) {
+//                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
+//            }
             p.destroy();
         }
 
         if (scriptFile != null && scriptFile.exists()) {
             scriptFile.delete();
         }
+
         if (err != null) {
             err.interrupt();
         }
         if (out != null) {
             out.interrupt();
         }
-
+        System.err.println("exit 8");
         if (err != null) {
             try {
-                err.join();
+                err.join(); 
             } catch (InterruptedException ex) {
                 Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        System.err.println("exit 9");
         if (out != null) {
             try {
                 out.join();
@@ -161,18 +163,19 @@ public class Rserve {
                 Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+        System.err.println("exit complete");
     }
 
-    public static String generateSuffix() {
-        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            char c = chars[random.nextInt(chars.length)];
-            sb.append(c);
-        }
-        return sb.toString();
-    }
+//    public static String generateSuffix() {
+//        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+//        StringBuilder sb = new StringBuilder();
+//        Random random = new Random();
+//        for (int i = 0; i < 10; i++) {
+//            char c = chars[random.nextInt(chars.length)];
+//            sb.append(c);
+//        }
+//        return sb.toString();
+//    }
 
     private synchronized File createScript() throws MGXException {
         if (scriptFile != null) {
