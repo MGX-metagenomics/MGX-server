@@ -1,5 +1,6 @@
 package de.cebitec.mgx.workers;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -23,7 +23,7 @@ public final class DeleteHabitat extends TaskI {
     private final File projectDir;
     private final MappingSessions mappingSessions;
 
-    public DeleteHabitat(DataSource dataSource, long id, String projName, File projectDir, MappingSessions mappingSessions) {
+    public DeleteHabitat(GPMSManagedDataSourceI dataSource, long id, String projName, File projectDir, MappingSessions mappingSessions) {
         super(projName, dataSource);
         this.id = id;
         this.projectDir = projectDir;
@@ -35,7 +35,7 @@ public final class DeleteHabitat extends TaskI {
 
         // fetch samples for this habitat
         List<Long> samples = new ArrayList<>();
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM sample WHERE habitat_id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -52,7 +52,7 @@ public final class DeleteHabitat extends TaskI {
 
         // delete samples
         for (Long sampleId : samples) {
-            TaskI t = new DeleteSample(sampleId, dataSource, getProjectName(), projectDir, mappingSessions);
+            TaskI t = new DeleteSample(sampleId, getDataSource(), getProjectName(), projectDir, mappingSessions);
             t.addPropertyChangeListener(this);
             t.run();
             t.removePropertyChangeListener(this);
@@ -60,7 +60,7 @@ public final class DeleteHabitat extends TaskI {
 
         try {
             String habitatName = null;
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM habitat WHERE id=?")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
@@ -74,7 +74,7 @@ public final class DeleteHabitat extends TaskI {
                 setStatus(TaskI.State.PROCESSING, "Deleting habitat " + habitatName);
             }
 
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM habitat WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();

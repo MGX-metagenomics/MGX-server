@@ -1,5 +1,6 @@
 package de.cebitec.mgx.workers;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
@@ -9,7 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -20,7 +20,7 @@ public final class DeleteJob extends TaskI {
     private final long id;
     private final MappingSessions mapSessions;
 
-    public DeleteJob(long id, DataSource dataSource, String projName, MappingSessions mapSessions) {
+    public DeleteJob(long id, GPMSManagedDataSourceI dataSource, String projName, MappingSessions mapSessions) {
         super(projName, dataSource);
         this.id = id;
         this.mapSessions = mapSessions;
@@ -39,7 +39,7 @@ public final class DeleteJob extends TaskI {
             // to the pool in a timely manner
             //
             do {
-                try (Connection conn = dataSource.getConnection()) {
+                try (Connection conn = getConnection()) {
                     try (PreparedStatement stmt = conn.prepareStatement(delObs)) {
                         stmt.setLong(1, id);
                         //long duration = System.currentTimeMillis();
@@ -61,7 +61,7 @@ public final class DeleteJob extends TaskI {
 
             // delete attributecounts
             setStatus(TaskI.State.PROCESSING, "Deleting attributes");
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
                         + "(SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
@@ -70,7 +70,7 @@ public final class DeleteJob extends TaskI {
             }
 
             // delete attributes
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
@@ -79,7 +79,7 @@ public final class DeleteJob extends TaskI {
 
             // delete mappings
             setStatus(TaskI.State.PROCESSING, "Deleting mapping data for job " + id);
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING id, bam_file")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
@@ -110,7 +110,7 @@ public final class DeleteJob extends TaskI {
 
             // parameters
             setStatus(TaskI.State.PROCESSING, "Deleting job parameters for job " + id);
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM jobparameter WHERE job_id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
@@ -119,7 +119,7 @@ public final class DeleteJob extends TaskI {
 
             // job
             setStatus(TaskI.State.PROCESSING, "Deleting job " + id);
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
