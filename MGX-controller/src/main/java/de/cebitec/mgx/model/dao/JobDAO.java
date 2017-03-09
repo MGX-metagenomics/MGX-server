@@ -10,7 +10,9 @@ import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.UnixHelper;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -533,6 +535,85 @@ public class JobDAO extends DAO<Job> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
+    private final static String BY_ATTRS = "SELECT DISTINCT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM attribute a "
+            + "LEFT JOIN job j ON (a.job_id=j.id)"
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
+            + "WHERE a.id IN (";
+
+    public List<Job> byAttributes(long[] attributeIDs) throws MGXException {
+        if (attributeIDs == null || attributeIDs.length == 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+
+        List<Job> ret = null;
+        try (Connection conn = getConnection()) {
+            
+            String sql = BY_ATTRS + toSQLTemplateString(attributeIDs.length) + ")";
+            
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                int pos = 1;
+                for (long attrId : attributeIDs) {
+                    stmt.setLong(pos++, attrId);
+                }
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    Job currentJob = null;
+
+                    while (rs.next()) {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+                                job.setSeqrunId(rs.getLong(7));
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(9));
+                                jp.setNodeId(rs.getLong(10));
+                                jp.setParameterName(rs.getString(11));
+                                jp.setParameterValue(rs.getString(12));
+                                jp.setUserName(rs.getString(13));
+                                jp.setUserDescription(rs.getString(14));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        return ret;
+    }
+
     public String getError(Job job) throws MGXException {
         if (job.getStatus() != JobState.FAILED) {
             //getController().log("state: "+job.getStatus());
@@ -609,4 +690,42 @@ public class JobDAO extends DAO<Job> {
         super.dispose();
         paramCache.clear();
     }
+
+    public void writeConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
+                .append(File.separator)
+                .append("jobs")
+                .append(File.separator)
+                .append(job.getId()).toString();
+
+        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
+            cfgFile.write("mgx.username=" + dbUser);
+            cfgFile.newLine();
+            cfgFile.write("mgx.password=" + dbPass);
+            cfgFile.newLine();
+            cfgFile.write("mgx.host=" + dbHost);
+            cfgFile.newLine();
+            cfgFile.write("mgx.database=" + dbName);
+            cfgFile.newLine();
+            cfgFile.write("mgx.job_id=" + job.getId());
+            cfgFile.newLine();
+            cfgFile.write("mgx.projectDir=" + projectDir);
+            cfgFile.newLine();
+
+            for (JobParameter jp : job.getParameters()) {
+                cfgFile.write(jp.getNodeId() + "." + jp.getParameterName() + "=" + jp.getParameterValue());
+                cfgFile.newLine();
+            }
+            cfgFile.flush();
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+
+        try {
+            UnixHelper.makeFileGroupWritable(jobconfigFile);
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+    }
+
 }
