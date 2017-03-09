@@ -1,11 +1,13 @@
 package de.cebitec.mgx.core;
 
+import de.cebitec.gpms.util.GPMSManagedConnectionI;
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.sql.DataSource;
 
 /**
  *
@@ -31,15 +33,16 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
     private final PropertyChangeSupport pcs;
     protected final String projName;
-    protected DataSource dataSource;
+    private GPMSManagedDataSourceI dataSource;
     private String statusMessage = "";
     protected long timeStamp;
     private State state;
     private boolean isSubTask = true;
 
-    public TaskI(final String pName, final DataSource dataSource) {
+    public TaskI(final String pName, final GPMSManagedDataSourceI dataSource) {
         projName = pName;
         this.dataSource = dataSource;
+        this.dataSource.subscribe();
         timeStamp = System.currentTimeMillis();
         state = State.INIT;
         pcs = new PropertyChangeSupport(this);
@@ -65,6 +68,8 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
 
     public void close() {
+        dataSource.close();
+        dataSource = null;
 //        try {
 //            if (conn != null && !isSubTask) {
 //                conn.close();
@@ -73,6 +78,14 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
 //        } catch (SQLException ex) {
 //            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
 //        }
+    }
+    
+    protected final GPMSManagedConnectionI getConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+    
+    protected final GPMSManagedDataSourceI getDataSource() {
+        return dataSource;
     }
 
     public String getProjectName() {
