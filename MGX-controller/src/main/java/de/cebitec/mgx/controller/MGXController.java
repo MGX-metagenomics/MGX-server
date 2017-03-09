@@ -1,13 +1,12 @@
 package de.cebitec.mgx.controller;
 
 import de.cebitec.gpms.core.RoleI;
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import de.cebitec.gpms.util.GPMSManagedConnectionI;
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.model.dao.*;
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.DataSource;
 
 /**
  *
@@ -57,11 +56,9 @@ public interface MGXController extends AutoCloseable {
 
     public RoleI getCurrentRole();
 
-//    public EntityManager getEntityManager();
+    public GPMSManagedDataSourceI getDataSource();
 
-    public DataSource getDataSource();
-
-    public Connection getConnection() throws SQLException;
+    public GPMSManagedConnectionI getConnection() throws SQLException;
 
     public File getProjectDirectory() throws IOException;
 
