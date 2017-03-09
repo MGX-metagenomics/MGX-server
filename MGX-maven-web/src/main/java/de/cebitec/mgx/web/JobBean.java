@@ -206,8 +206,8 @@ public class JobBean {
         boolean verified = false;
         try {
             Job job = mgx.getJobDAO().getById(id);
-            Host h = new Host(dispConfig.getDispatcherHost());
-            verified = js.validate(h, mgx.getProjectName(), mgx.getDataSource(), job, mgx.getDatabaseHost(), mgx.getDatabaseName(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getProjectDirectory());
+            mgx.getJobDAO().writeConfigFile(job, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
+            verified = js.validate(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), job.getId());
         } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex);
             throw new MGXJobException(ex.getMessage());
@@ -220,16 +220,19 @@ public class JobBean {
     @Path("execute/{id}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXBoolean execute(@PathParam("id") Long id) {
+    public MGXBoolean execute(@PathParam("id") Long jobId) {
 
         boolean submitted = false;
         try {
-            Job job = mgx.getJobDAO().getById(id);
+            Job job = mgx.getJobDAO().getById(jobId);
             if (job.getStatus() != JobState.VERIFIED) {
-                throw new MGXWebException("Job is in invalid state.");
+                throw new MGXWebException("Job %d in invalid state %s", jobId, job.getStatus());
             }
-            Host h = new Host(dispConfig.getDispatcherHost());
-            submitted = js.submit(h, mgx.getProjectName(), mgx.getDataSource(), job);
+            submitted = js.submit(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), jobId);
+
+            job.setStatus(submitted ? JobState.SUBMITTED : JobState.FAILED);
+            mgx.getJobDAO().update(job);
+
         } catch (MGXInsufficientJobConfigurationException ex) {
             mgx.log(ex.getMessage());
             throw new MGXJobException(ex.getMessage());
@@ -253,9 +256,8 @@ public class JobBean {
             if (status != JobState.FAILED && status != JobState.ABORTED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            RestartJob dJob = new RestartJob(mgx.getDatabaseHost(), mgx.getDatabaseName(), 
-                    mgx.getProjectDirectory(), dispConfig.getDispatcherHost(), 
-                    mgxconfig, job, mgx.getDataSource(), mgx.getProjectName(), js);
+            RestartJob dJob = new RestartJob(dispConfig.getDispatcherHost(),
+                    job, mgx.getDataSource(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(dJob);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException | IOException ex) {
