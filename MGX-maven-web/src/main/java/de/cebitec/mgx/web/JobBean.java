@@ -7,7 +7,7 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dispatcher.client.MGXDispatcherConfiguration;
+import de.cebitec.mgx.dispatcher.common.MGXDispatcherConfiguration;
 import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
