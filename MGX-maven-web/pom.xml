@@ -96,9 +96,8 @@
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
-            <artifactId>MGX-dispatcher-common</artifactId>
+            <artifactId>MGX-dispatcher-common-api</artifactId>
             <version>1.0</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>

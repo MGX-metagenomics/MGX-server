@@ -7,15 +7,13 @@ import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
-import de.cebitec.mgx.dispatcher.common.MGXDispatcherConfiguration;
-import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
+import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -28,9 +26,6 @@ import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 @Stateless(mappedName = "JobSubmitter")
 public class JobSubmitterImpl implements JobSubmitterI {
 
-    @EJB
-    MGXDispatcherConfiguration dispConfig;
-    //
     private Host currentHost = null;
     private Client currentClient = null;
 

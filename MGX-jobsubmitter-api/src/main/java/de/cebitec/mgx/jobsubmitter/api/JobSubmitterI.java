@@ -1,6 +1,6 @@
 package de.cebitec.mgx.jobsubmitter.api;
 
-import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
+import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 
 /**
  *

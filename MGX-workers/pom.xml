@@ -82,5 +82,10 @@
             <artifactId>MGX-jobsubmitter-api</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>de.cebitec.mgx</groupId>
+            <artifactId>MGX-dispatcher-common-api</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 </project>

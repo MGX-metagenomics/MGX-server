@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>
-            <artifactId>MGX-dispatcher-common</artifactId>
+            <artifactId>MGX-dispatcher-common-api</artifactId>
             <version>1.0</version>
         </dependency>
     </dependencies>
@@ -39,7 +39,7 @@
                         <Export-Package>de.cebitec.mgx.jobsubmitter.api</Export-Package>
                         <Import-Package>
                             javax.sql,
-                            de.cebitec.mgx.dispatcher.common
+                            de.cebitec.mgx.dispatcher.common.api
                         </Import-Package>
                     </instructions>
                 </configuration>

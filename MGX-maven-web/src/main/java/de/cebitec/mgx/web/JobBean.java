@@ -7,8 +7,8 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dispatcher.common.MGXDispatcherConfiguration;
-import de.cebitec.mgx.dispatcher.common.MGXDispatcherException;
+import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
+import de.cebitec.mgx.dispatcher.common.api.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTOList;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
@@ -17,7 +17,6 @@ import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
-import de.cebitec.mgx.dispatcher.common.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.workers.DeleteJob;
@@ -41,6 +40,7 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
+import de.cebitec.mgx.dispatcher.common.api.DispatcherClientConfigurationI;
 
 /**
  *
@@ -60,7 +60,7 @@ public class JobBean {
     @EJB
     MGXConfigurationI mgxconfig;
     @EJB
-    MGXDispatcherConfiguration dispConfig;
+    DispatcherClientConfigurationI dispConfig;
     @EJB
     MappingSessions mappingSessions;
 
