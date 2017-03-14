@@ -55,7 +55,7 @@ public class DownloadSessions {
         if (!sessions.containsKey(uuid)) {
             throw new MGXException("No such session: " + uuid.toString());
         }
-        return (DownloadProviderI<T>)sessions.get(uuid);
+        return (DownloadProviderI<T>) sessions.get(uuid);
     }
 
     @Asynchronous
@@ -76,20 +76,25 @@ public class DownloadSessions {
 
     @Schedule(hour = "*", minute = "*", second = "10", persistent = false)
     public void timeout(Timer timer) {
-        Set<UUID> toRemove = new HashSet<>();
-        for (UUID uuid : sessions.keySet()) {
-            DownloadProviderI s = sessions.get(uuid);
-            long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
+        Collection<UUID> toRemove = null;
+        for (Map.Entry<UUID, DownloadProviderI<?>> me : sessions.entrySet()) {
+            DownloadProviderI<?> prov = me.getValue();
+            long sessionIdleTime = (System.currentTimeMillis() - prov.lastAccessed()) / 1000;
             if (sessionIdleTime > timeout) {
-                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, s.getProjectName()});
-                toRemove.add(uuid);
-                s.cancel();
+                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting download session for {1}", new Object[]{timeout, prov.getProjectName()});
+                if (toRemove == null) {
+                    toRemove = new ArrayList<>();
+                }
+                toRemove.add(me.getKey());
+                prov.cancel();
 
             }
         }
 
-        for (UUID uuid : toRemove) {
-            sessions.remove(uuid);
+        if (toRemove != null) {
+            for (UUID uuid : toRemove) {
+                sessions.remove(uuid);
+            }
         }
     }
 }
