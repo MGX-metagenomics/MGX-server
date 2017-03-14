@@ -80,20 +80,24 @@ public class UploadSessions {
 
     @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
     public void timeout(Timer timer) {
-        Set<UUID> toRemove = new HashSet<>();
-        for (UUID uuid : sessions.keySet()) {
-            UploadReceiverI s = sessions.get(uuid);
-            long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
+        Collection<UUID> toRemove = null;
+        for (Map.Entry<UUID, UploadReceiverI> me : sessions.entrySet()) {
+            UploadReceiverI recv = me.getValue();
+            long sessionIdleTime = (System.currentTimeMillis() - recv.lastAccessed()) / 1000;
             if (sessionIdleTime > uploadTimeout) {
-                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, s.getProjectName()});
-                toRemove.add(uuid);
-                s.cancel();
-
+                Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, recv.getProjectName()});
+                if (toRemove == null) {
+                    toRemove = new ArrayList<>();
+                }
+                toRemove.add(me.getKey());
+                recv.cancel();
             }
         }
-
-        for (UUID uuid : toRemove) {
-            sessions.remove(uuid);
+        
+        if (toRemove != null) {
+            for (UUID uuid : toRemove) {
+                sessions.remove(uuid);
+            }
         }
     }
 }
