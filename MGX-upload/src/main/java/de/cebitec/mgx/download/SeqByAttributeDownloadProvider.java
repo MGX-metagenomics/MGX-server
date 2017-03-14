@@ -60,7 +60,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
             }
 
             qTime = System.currentTimeMillis() - qTime;
-            System.out.println("initial query took " + qTime);
         }
 
         qTime = System.currentTimeMillis();
@@ -96,7 +95,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         }
 
         qTime = System.currentTimeMillis() - qTime;
-        System.out.println("chunk fill took " + qTime);
 
         lastAccessed = System.currentTimeMillis();
         listBuilder.setComplete(!have_more_data);
