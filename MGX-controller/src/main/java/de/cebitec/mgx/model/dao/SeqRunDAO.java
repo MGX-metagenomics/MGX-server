@@ -211,6 +211,42 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
+    private final static String BY_JOB = "SELECT s.id, s.name, s.dbfile, s.database_accession, s.num_sequences, s.sequencing_method, "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id "
+            + "FROM job j LEFT JOIN seqrun s ON (j.seqrun_id=s.id) WHERE j.id=?";
+
+    public SeqRun byJob(long jobId) throws MGXException {
+        if (jobId <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_JOB)) {
+                stmt.setLong(1, jobId);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type " + getClassName() + " for ID " + jobId + ".");
+                    }
+
+                    SeqRun s = new SeqRun();
+                    s.setId(rs.getLong(1));
+                    s.setName(rs.getString(2));
+                    s.setDBFile(rs.getString(3));
+                    s.setAccession(rs.getString(4));
+                    s.setNumberOfSequences(rs.getLong(5));
+                    s.setSequencingMethod(rs.getLong(6));
+                    s.setSequencingTechnology(rs.getLong(7));
+                    s.setSubmittedToINSDC(rs.getBoolean(8));
+                    s.setExtractId(rs.getLong(9));
+                    return s;
+
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+    }
+
     private final static String SQL_BY_EXTRACT
             = "WITH complete_runs AS ("
             + "SELECT id, name, dbfile, database_accession, num_sequences, sequencing_method, "
