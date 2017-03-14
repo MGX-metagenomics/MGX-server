@@ -50,7 +50,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         this.analyzers = analyzers;
         this.bulkSize = 5_000;
 
-        dataSource.subscribe();
+        dataSource.subscribe(this);
     }
 
     @Override
@@ -79,7 +79,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             error = ex;
         }
 
-        dataSource.close();
+        
 
         assert holder.isEmpty();
         allDone.countDown();
@@ -122,7 +122,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         int curPos = 0;
         long[] generatedIDs = new long[commitList.size()];
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection(this)) {
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 int i = 1;
                 for (DNASequenceI s : commitList) {
@@ -191,6 +191,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         if (error()) {
             throw getError();
         }
+        dataSource.close(this);
     }
 
     public boolean error() {

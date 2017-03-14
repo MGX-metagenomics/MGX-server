@@ -42,7 +42,7 @@ public class MGXControllerImpl implements MGXController {
     public MGXControllerImpl(JDBCMasterI gpmsmaster, File pluginDump, File persistentDir) {
         this.gpmsmaster = gpmsmaster;
         this.dataSource = gpmsmaster.getDataSource();
-        this.dataSource.subscribe();
+        this.dataSource.subscribe(this);
         //
         ProjectI gpmsProject = gpmsmaster.getProject();
         this.projectName = gpmsProject.getName();
@@ -173,7 +173,7 @@ public class MGXControllerImpl implements MGXController {
 
     @Override
     public final GPMSManagedConnectionI getConnection() throws SQLException {
-        return dataSource.getConnection();
+        return dataSource.getConnection(this);
     }
 
     @Override
@@ -194,7 +194,7 @@ public class MGXControllerImpl implements MGXController {
             jobDAO.dispose();
             jobDAO = null;
         }
-        dataSource.close(); // unsubscribe
+        dataSource.close(this); // unsubscribe
     }
 
     @Override

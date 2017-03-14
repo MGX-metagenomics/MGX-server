@@ -54,7 +54,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         this.projectDirectory = projectDir;
         this.dataSource = dataSource;
 
-        dataSource.subscribe();
+        dataSource.subscribe(this);
         
         try {
             file = getStorageFile(run_id);
@@ -106,7 +106,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             flush.complete();
 
             String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, file.getCanonicalPath());
                     stmt.setLong(2, total_num_sequences);
@@ -121,7 +121,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         }
 
         if (dataSource != null) {
-            dataSource.close();
+            dataSource.close(this);
             dataSource = null;
         }
 
@@ -143,35 +143,33 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
 
-            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 5000))";
+            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 10000))";
             int rowsAffected;
             //
             // delete in chunks to make sure the DB connections gets returned
             // to the pool in a timely manner
             //
             do {
-                try (Connection conn = dataSource.getConnection()) {
+                try (Connection conn = dataSource.getConnection(this)) {
                     try (PreparedStatement stmt = conn.prepareStatement(delReads)) {
                         stmt.setLong(1, runId);
                         rowsAffected = stmt.executeUpdate();
                     }
                 }
-            } while (rowsAffected == 5_000);
+            } while (rowsAffected == 10_000);
 
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
                     stmt.setLong(1, runId);
                     stmt.executeUpdate();
                 }
             }
-            //
-            //conn.setClientInfo("ApplicationName", "");
         } catch (Exception ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         if (dataSource != null) {
-            dataSource.close();
+            dataSource.close(this);
             dataSource = null;
         }
     }

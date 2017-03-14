@@ -1,9 +1,9 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.gpms.util.GPMSManagedConnectionI;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Identifiable;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -25,7 +25,7 @@ public abstract class DAO<T extends Identifiable> {
         return ctx;
     }
 
-    protected final Connection getConnection() throws SQLException {
+    protected final GPMSManagedConnectionI getConnection() throws SQLException {
         return ctx.getConnection();
     }
 
@@ -42,7 +42,7 @@ public abstract class DAO<T extends Identifiable> {
     public void dispose() {
     }
 
-    protected final void close(Connection c, Statement s, ResultSet r) {
+    protected final void close(GPMSManagedConnectionI c, Statement s, ResultSet r) {
         try {
             if (r != null) {
                 r.close();

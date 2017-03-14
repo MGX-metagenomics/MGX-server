@@ -49,7 +49,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         this.projectName = projectName;
         this.dataSource = dataSource;
 
-        dataSource.subscribe();
+        dataSource.subscribe(this);
         lastAccessed = System.currentTimeMillis();
     }
 
@@ -80,7 +80,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
             fasta.delete();
         }
         if (dataSource != null) {
-            dataSource.close();
+            dataSource.close(this);
             dataSource = null;
         }
     }
@@ -102,7 +102,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         //reference.setRegions(regions);
         reference.setFile(fasta.getAbsolutePath());
 
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection(this)) {
             try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
                 stmt.setString(1, refFile);
                 stmt.setLong(2, referenceId);
@@ -114,7 +114,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         }
 
         if (regions != null && !regions.isEmpty()) {
-            try (Connection conn = dataSource.getConnection()) {
+            try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, type, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
                     for (Region r : regions) {
                         stmt.setString(1, r.getName());
@@ -135,7 +135,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         }
 
         if (dataSource != null) {
-            dataSource.close();
+            dataSource.close(this);
             dataSource = null;
         }
     }

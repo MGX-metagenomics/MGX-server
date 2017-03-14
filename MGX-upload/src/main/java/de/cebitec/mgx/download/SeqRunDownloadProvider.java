@@ -42,19 +42,20 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile) throws MGXException {
         this.projectName = projName;
         this.dataSource = dataSource;
-        this.dataSource.subscribe();
 
         try {
             reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile);
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
+        
+        this.dataSource.subscribe(this);
 
         lastAccessed = System.currentTimeMillis();
     }
 
     protected GPMSManagedConnectionI getConnection() throws SQLException {
-        return dataSource.getConnection();
+        return dataSource.getConnection(this);
     }
 
     @Override
@@ -71,7 +72,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void close() throws MGXException {
-        dataSource.close();
+        dataSource.close(this);
 
         try {
             if (reader != null) {
@@ -158,7 +159,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
         });
         
-        try (Connection conn = dataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection(this)) {
             try (PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
                 int idx = 1;
                 for (DNASequenceI seq : seqs) {

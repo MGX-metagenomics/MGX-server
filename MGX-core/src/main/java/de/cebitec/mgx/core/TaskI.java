@@ -42,10 +42,10 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     public TaskI(final String pName, final GPMSManagedDataSourceI dataSource) {
         projName = pName;
         this.dataSource = dataSource;
-        this.dataSource.subscribe();
         timeStamp = System.currentTimeMillis();
         state = State.INIT;
         pcs = new PropertyChangeSupport(this);
+        this.dataSource.subscribe(this);
     }
 
     public void setMainTask() {
@@ -57,31 +57,15 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
     }
 
     public void cancel() {
-//        try {
-//            if (conn != null && !isSubTask) {
-//                conn.close();
-//                conn = null; dataSource.
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
 
     public void close() {
-        dataSource.close();
+        dataSource.close(this);
         dataSource = null;
-//        try {
-//            if (conn != null && !isSubTask) {
-//                conn.close();
-//                conn = null;
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
     
     protected final GPMSManagedConnectionI getConnection() throws SQLException {
-        return dataSource.getConnection();
+        return dataSource.getConnection(this);
     }
     
     protected final GPMSManagedDataSourceI getDataSource() {
