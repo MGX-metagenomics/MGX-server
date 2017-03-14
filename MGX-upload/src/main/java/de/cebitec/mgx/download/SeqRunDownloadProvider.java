@@ -92,7 +92,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             // fetch sequences
             //
             List<DNASequenceI> seqs = new LinkedList<>();
-            while (count <= maxSeqsPerChunk && reader.hasMoreElements()) {
+            while (count < maxSeqsPerChunk && reader.hasMoreElements()) {
                 DNASequenceI seq = reader.nextElement();
                 seqs.add(seq);
                 count++;

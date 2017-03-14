@@ -68,7 +68,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         readnames.clear();
         int count = 0;
         try {
-            while (count <= maxSeqsPerChunk && rs.next()) {
+            while (count < maxSeqsPerChunk && rs.next()) {
                 readnames.put(rs.getLong(1), rs.getString(2));
                 count++;
             }
