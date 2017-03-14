@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -147,7 +146,6 @@ public class Rserve {
         if (out != null) {
             out.interrupt();
         }
-        System.err.println("exit 8");
         if (err != null) {
             try {
                 err.join(); 
@@ -155,7 +153,6 @@ public class Rserve {
                 Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        System.err.println("exit 9");
         if (out != null) {
             try {
                 out.join();
@@ -163,19 +160,7 @@ public class Rserve {
                 Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        System.err.println("exit complete");
     }
-
-//    public static String generateSuffix() {
-//        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-//        StringBuilder sb = new StringBuilder();
-//        Random random = new Random();
-//        for (int i = 0; i < 10; i++) {
-//            char c = chars[random.nextInt(chars.length)];
-//            sb.append(c);
-//        }
-//        return sb.toString();
-//    }
 
     private synchronized File createScript() throws MGXException {
         if (scriptFile != null) {
