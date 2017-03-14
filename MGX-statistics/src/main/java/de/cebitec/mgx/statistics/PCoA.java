@@ -17,7 +17,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
-import org.rosuda.REngine.Rserve.RConnection;
 
 /**
  *
@@ -75,7 +74,7 @@ public class PCoA {
             conn.assign(tmp, colAliases);
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
-            
+
             String pcoaName = "pcoa" + Util.generateSuffix();
             conn.eval(String.format("%s <- cmdscale(dist(%s), k=2)", pcoaName, matrixName));
             try {
@@ -113,20 +112,4 @@ public class PCoA {
         return new ForwardingIterator<>(ret.iterator());
     }
 
-//    private double[] toDoubleArray(long[] in) {
-//        double[] ret = new double[in.length];
-//        int i = 0;
-//        for (long l : in) {
-//            ret[i++] = (double) l;
-//        }
-//        return ret;
-//    }
-    private static boolean contains(String[] options, String value) {
-        for (String o : options) {
-            if (o.equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

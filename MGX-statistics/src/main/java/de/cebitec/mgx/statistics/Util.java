@@ -24,6 +24,15 @@ public class Util {
         return sb.toString();
     }
 
+    static boolean contains(String[] options, String value) {
+        for (String o : options) {
+            if (o.equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Util() {
     }
 

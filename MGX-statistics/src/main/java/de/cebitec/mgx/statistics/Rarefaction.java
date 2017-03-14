@@ -11,7 +11,6 @@ import javax.ejb.Stateless;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
-import org.rosuda.REngine.Rserve.RConnection;
 
 /**
  *

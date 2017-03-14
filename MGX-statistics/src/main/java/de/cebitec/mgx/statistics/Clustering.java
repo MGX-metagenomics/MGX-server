@@ -12,7 +12,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
-import org.rosuda.REngine.Rserve.RConnection;
 
 /**
  *
@@ -32,10 +31,10 @@ public class Clustering {
             throw new MGXException("Insufficient number of datasets.");
         }
 
-        if (!contains(DIST, distMethod)) {
+        if (!Util.contains(DIST, distMethod)) {
             throw new MGXException("Invalid distance method: " + distMethod);
         }
-        if (!contains(AGGLO, aggloMethod)) {
+        if (!Util.contains(AGGLO, aggloMethod)) {
             throw new MGXException("Invalid agglomeration method: " + aggloMethod);
         }
 
@@ -120,20 +119,5 @@ public class Clustering {
     }
     private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
 
-//    private double[] toDoubleArray(long[] in) {
-//        double[] ret = new double[in.length];
-//        int i = 0;
-//        for (long l : in) {
-//            ret[i++] = (double) l;
-//        }
-//        return ret;
-//    }
-    private static boolean contains(String[] options, String value) {
-        for (String o : options) {
-            if (o.equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }
