@@ -63,12 +63,11 @@ public class JobParameterDAO extends DAO<JobParameter> {
                     stmt.setString(5, obj.getUserName());
                     stmt.setString(6, obj.getUserDescription());
                     stmt.addBatch();
-                }
-
-                try (ResultSet rs = stmt.executeQuery()) {
-                    int idx = 0;
-                    while (rs.next()) {
-                        objs[idx++].setId(rs.getLong(1));
+                    
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            obj.setId(rs.getLong(1));
+                        }
                     }
                 }
             }
