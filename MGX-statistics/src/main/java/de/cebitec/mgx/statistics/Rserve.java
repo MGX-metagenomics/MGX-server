@@ -3,11 +3,10 @@ package de.cebitec.mgx.statistics;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.streamlogger.StreamLogger;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -61,8 +60,7 @@ public class Rserve {
 
     // "typical" locations for the R installation; this currently reflects the
     // environment found in Bielefeld and Giessen
-    //private final static String[] Rbinaries = new String[]{"/vol/mgx-sw/bin/R", "/vol/r-2.15/bin/R", "/usr/bin/R"};
-    private final static String[] Rbinaries = new String[]{"/vol/r-2.15/bin/R", "/usr/bin/R"};
+    private final static String[] Rbinaries = new String[]{"/vol/r-2.15/bin/R", "/vol/mgx-sw/bin/R", "/usr/bin/R"};
 
     @PostConstruct
     public void start() {
@@ -82,20 +80,10 @@ public class Rserve {
                 return;
             }
 
-            //
-            // JLU workaround for missing R packages
-            //
-            List<String> envp = new ArrayList<>();
-            if (new File("/vol/mgx/lib/R/Rserve/libs").isDirectory()) {
-                String pathEnv = System.getenv("PATH") + ":/vol/mgx/lib/R/Rserve/libs";
-                envp.add("PATH=" + pathEnv);
-                envp.add("R_LIBS=/vol/mgx/lib/R");
-            }
-
             scriptFile = createScript();
 
             String rserveStartCommand = R.getAbsolutePath() + " CMD Rserve -q --vanilla --RS-source " + scriptFile.getAbsolutePath();
-            p = Runtime.getRuntime().exec(rserveStartCommand, envp.toArray(new String[]{}));
+            p = Runtime.getRuntime().exec(rserveStartCommand);
             //
             err = new StreamLogger("R error logger thread", p.getErrorStream(), Logger.getLogger("Rserv-stderr"));
             err.start();
@@ -103,8 +91,8 @@ public class Rserve {
             out = new StreamLogger("R output logger thread", p.getInputStream(), Logger.getLogger("Rserv-stdout"));
             out.start();
             //
-            p.waitFor();
-        } catch (IOException | InterruptedException | MGXException ex) {
+            //p.waitFor();
+        } catch (IOException | MGXException ex) {
             Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -127,12 +115,6 @@ public class Rserve {
                 }
             }
 
-//            try {
-//                p.getInputStream().close();
-//                p.getErrorStream().close();
-//            } catch (IOException ex) {
-//                Logger.getLogger(Rserve.class.getName()).log(Level.SEVERE, null, ex);
-//            }
             p.destroy();
         }
 
@@ -168,19 +150,7 @@ public class Rserve {
         }
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("de/cebitec/mgx/statistics/Rfunctions.r")) {
             File tmpRFile = File.createTempFile(String.valueOf(System.currentTimeMillis()), "RSource.R");
-
-            byte[] buffer = new byte[1024];
-            try (FileOutputStream rOut = new FileOutputStream(tmpRFile)) {
-                int bytesRead = is.read(buffer);
-                while (bytesRead >= 0) {
-                    rOut.write(buffer, 0, bytesRead);
-                    bytesRead = is.read(buffer);
-                }
-
-                rOut.flush();
-                rOut.close();
-            }
-            is.close();
+            Files.copy(is, tmpRFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             return tmpRFile;
         } catch (IOException ex) {
             throw new MGXException(ex.getMessage());
