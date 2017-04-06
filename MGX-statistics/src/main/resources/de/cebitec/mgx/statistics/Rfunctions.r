@@ -28,7 +28,7 @@ rareCompute <- function(x, rare.data, select) {
     return(c(foo[1,], foo[2,]))
   }
 
-  tmp <- mclapply(1:length(select), function(X) rareStep(x, select, X), mc.cores=48, mc.cleanup=TRUE, mc.silent=TRUE)
+  tmp <- mclapply(1:length(select), function(X) rareStep(x, select, X), mc.cores=5, mc.cleanup=TRUE, mc.silent=TRUE)
   for (i in 1:length(select)) {
     storesummary.e[i,] <- tmp[[i]][1]
     storesummary.se[i,] <- tmp[[i]][2]
