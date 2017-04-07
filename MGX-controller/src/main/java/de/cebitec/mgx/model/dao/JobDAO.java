@@ -78,13 +78,17 @@ public class JobDAO extends DAO<Job> {
         return obj.getId();
     }
 
+    @Override
+    public Job getById(long id) throws MGXException {
+        return getById(id, true);
+    }
+
     private final static String BY_ID = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id=?";
 
-    @Override
-    public Job getById(long id) throws MGXException {
+    public Job getById(long id, boolean mangleParameters) throws MGXException {
 
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
@@ -135,7 +139,9 @@ public class JobDAO extends DAO<Job> {
             throw new MGXException(ex);
         }
 
-        fixParameters(job);
+        if (mangleParameters) {
+            fixParameters(job);
+        }
         return job;
     }
 
@@ -549,9 +555,9 @@ public class JobDAO extends DAO<Job> {
 
         List<Job> ret = null;
         try (Connection conn = getConnection()) {
-            
+
             String sql = BY_ATTRS + toSQLTemplateString(attributeIDs.length) + ")";
-            
+
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 int pos = 1;
                 for (long attrId : attributeIDs) {
@@ -692,7 +698,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     public void writeConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
-         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
+        String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
                 .append("jobs")
                 .append(File.separator)

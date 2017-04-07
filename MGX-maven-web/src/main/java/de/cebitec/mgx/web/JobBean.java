@@ -205,7 +205,7 @@ public class JobBean {
 
         boolean verified = false;
         try {
-            Job job = mgx.getJobDAO().getById(id);
+            Job job = mgx.getJobDAO().getById(id, false);
             mgx.getJobDAO().writeConfigFile(job, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
             verified = js.validate(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), job.getId());
         } catch (MGXException | MGXDispatcherException | IOException ex) {
