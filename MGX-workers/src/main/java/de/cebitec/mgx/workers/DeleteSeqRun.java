@@ -35,12 +35,15 @@ public final class DeleteSeqRun extends TaskI {
     public void run() {
 
         // fetch jobs for this seqrun
-        List<Long> jobs = new ArrayList<>();
+        List<Long> jobs = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM job WHERE seqrun_id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
+                        if (jobs == null) {
+                            jobs = new ArrayList<>();
+                        }
                         jobs.add(rs.getLong(1));
                     }
                 }
@@ -52,11 +55,13 @@ public final class DeleteSeqRun extends TaskI {
         }
 
         // delete jobs
-        for (Long jobId : jobs) {
-            TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), mappingSessions);
-            delJob.addPropertyChangeListener(this);
-            delJob.run();
-            delJob.removePropertyChangeListener(this);
+        if (jobs != null) {
+            for (Long jobId : jobs) {
+                TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), mappingSessions);
+                delJob.addPropertyChangeListener(this);
+                delJob.run();
+                delJob.removePropertyChangeListener(this);
+            }
         }
 
         try {
@@ -83,14 +88,14 @@ public final class DeleteSeqRun extends TaskI {
             try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
                     stmt.setLong(1, id);
-                    stmt.execute();
+                    stmt.executeUpdate();
                 }
             }
 
             try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
                     stmt.setLong(1, id);
-                    stmt.execute();
+                    stmt.executeUpdate();
                 }
             }
 
