@@ -24,7 +24,7 @@ public class MGXControllerImpl implements MGXController {
     private final static Logger logger = Logger.getLogger(MGXController.class.getName());
     //
     private final String projectName;
-    private final UserI user;
+    private UserI user;
     //
     private final File pluginDump;
     private final JDBCMasterI gpmsmaster;
@@ -275,6 +275,10 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public String getCurrentUser() {
         return user.getLogin();
+    }
+    
+    void setCurrentUser(UserI user) {
+        this.user = user;
     }
 
     @Override

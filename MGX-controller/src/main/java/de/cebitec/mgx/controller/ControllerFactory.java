@@ -30,7 +30,7 @@ public class ControllerFactory {
     MGXConfigurationI mgxconfig;
     //
     //
-    private final LoadingCache<JDBCMasterI, MGXController> masterCache;
+    private final LoadingCache<JDBCMasterI, MGXControllerImpl> masterCache;
     private final Timer timer;
 
     public ControllerFactory() {
@@ -38,9 +38,9 @@ public class ControllerFactory {
         masterCache = CacheBuilder.newBuilder()
                 .maximumSize(1000)
                 .expireAfterAccess(5, TimeUnit.MINUTES)
-                .removalListener(new RemovalListener<JDBCMasterI, MGXController>() {
+                .removalListener(new RemovalListener<JDBCMasterI, MGXControllerImpl>() {
                     @Override
-                    public void onRemoval(RemovalNotification<JDBCMasterI, MGXController> notification) {
+                    public void onRemoval(RemovalNotification<JDBCMasterI, MGXControllerImpl> notification) {
                         MGXController oldController = notification.getValue();
                         if (oldController != null) {
                             oldController.close();
@@ -48,9 +48,9 @@ public class ControllerFactory {
                     }
 
                 })
-                .build(new CacheLoader<JDBCMasterI, MGXController>() {
+                .build(new CacheLoader<JDBCMasterI, MGXControllerImpl>() {
                     @Override
-                    public MGXController load(JDBCMasterI jdbcMaster) {
+                    public MGXControllerImpl load(JDBCMasterI jdbcMaster) {
                         return new MGXControllerImpl(jdbcMaster, mgxconfig.getPluginDump(), mgxconfig.getPersistentDirectory());
                     }
                 });
@@ -72,7 +72,10 @@ public class ControllerFactory {
         if (master == null) {
             throw new IllegalArgumentException("GPMS did not provide a valid master!");
         }
-        return masterCache.getUnchecked(master);
+        MGXControllerImpl ret = masterCache.getUnchecked(master);
+        // update user info
+        ret.setCurrentUser(master.getUser());
+        return ret;
         //return new MGXControllerImpl(jpaMaster, mgxconfig);
     }
     
