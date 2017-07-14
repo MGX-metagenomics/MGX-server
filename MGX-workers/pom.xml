@@ -10,7 +10,7 @@
     <groupId>de.cebitec.mgx</groupId>
     <artifactId>MGX-workers</artifactId>
     <version>1.0</version>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <name>MGX-workers</name>
 
@@ -22,6 +22,35 @@
 
     <build>
         <plugins>
+             <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>3.3.0</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <configuration>
+                    <instructions>
+                        <Export-Package>
+                            de.cebitec.mgx.workers
+                        </Export-Package>
+                        <Import-Package>
+                            de.cebitec.gpms.util,
+                            de.cebitec.mgx.core,
+                            gnu.trove.procedure,
+                            gnu.trove.set,
+                            gnu.trove.set.hash
+                        </Import-Package>
+                        <Private-Package></Private-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -86,6 +115,11 @@
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-dispatcher-common-api</artifactId>
             <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>Trove-OSGi</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
