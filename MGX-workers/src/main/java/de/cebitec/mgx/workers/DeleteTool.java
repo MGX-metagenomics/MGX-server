@@ -29,7 +29,7 @@ public final class DeleteTool extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
         // fetch jobs for this tool
         List<Long> jobs = new ArrayList<>();
         try (Connection conn = getConnection()) {

@@ -31,7 +31,7 @@ public final class DeleteSample extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
 
         // fetch extracts for this sample
         List<Long> extracts = new ArrayList<>();

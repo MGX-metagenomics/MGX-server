@@ -31,7 +31,7 @@ public final class DeleteDNAExtract extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
 
         // fetch seqruns for this extract
         List<Long> seqruns = new ArrayList<>();

@@ -29,7 +29,7 @@ public class DeleteReference extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
         List<Long> mappings = new ArrayList<>();
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM mapping WHERE ref_id=?")) {

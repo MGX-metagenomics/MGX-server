@@ -3,13 +3,14 @@ package de.cebitec.mgx.workers;
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
+import gnu.trove.procedure.TLongProcedure;
+import gnu.trove.set.TLongSet;
+import gnu.trove.set.hash.TLongHashSet;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,12 +30,12 @@ public class DeleteMapping extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
 
         // abort any sessions referring to this mapping
         sessions.abort(id);
 
-        Set<Long> jobs = new HashSet<>();
+        TLongSet jobs = new TLongHashSet();
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file, job_id")) {
                 stmt.setLong(1, id);
@@ -58,12 +59,16 @@ public class DeleteMapping extends TaskI {
                 }
 
                 // delete jobs
-                for (Long jobId : jobs) {
-                    TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), sessions);
-                    delJob.addPropertyChangeListener(this);
-                    delJob.run();
-                    delJob.removePropertyChangeListener(this);
-                }
+                jobs.forEach(new TLongProcedure() {
+                    @Override
+                    public boolean execute(long jobId) {
+                        TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), sessions);
+                        delJob.addPropertyChangeListener(DeleteMapping.this);
+                        delJob.run();
+                        delJob.removePropertyChangeListener(DeleteMapping.this);
+                        return true;
+                    }
+                });
             }
         } catch (SQLException ex) {
             Logger.getLogger(DeleteMapping.class.getName()).log(Level.SEVERE, null, ex);

@@ -47,6 +47,18 @@ public abstract class TaskI implements Runnable, PropertyChangeListener {
         pcs = new PropertyChangeSupport(this);
         this.dataSource.subscribe(this);
     }
+    
+    public abstract void process() throws Exception;
+    
+    @Override
+    public final void run() {
+        try {
+            process();
+        } catch (Exception ex) {
+            Logger.getLogger(TaskI.class.getName()).log(Level.SEVERE, null, ex);
+            setStatus(State.FAILED, ex.toString());
+        }
+    }
 
     public void setMainTask() {
         isSubTask = false;

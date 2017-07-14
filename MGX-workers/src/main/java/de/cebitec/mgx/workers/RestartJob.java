@@ -34,7 +34,7 @@ public class RestartJob extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
         try {
 
             // delete observations

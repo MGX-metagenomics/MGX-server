@@ -31,7 +31,7 @@ public final class DeleteHabitat extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
 
         // fetch samples for this habitat
         List<Long> samples = new ArrayList<>();

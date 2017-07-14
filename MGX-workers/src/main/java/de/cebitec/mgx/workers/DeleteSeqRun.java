@@ -32,7 +32,20 @@ public final class DeleteSeqRun extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
+
+        // set number of sequences to -1 so this seqrun isn't returned
+        // in getAll() / ByDNAExtract()
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE seqrun SET num_sequences=-1 WHERE id=?")) {
+                stmt.setLong(1, id);
+                stmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            Logger.getLogger(DeleteSeqRun.class.getName()).log(Level.SEVERE, null, e);
+            setStatus(TaskI.State.FAILED, e.getMessage());
+            return;
+        }
 
         // fetch jobs for this seqrun
         List<Long> jobs = null;

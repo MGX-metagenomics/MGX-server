@@ -18,7 +18,7 @@ public class DeleteFile extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
         setStatus(TaskI.State.PROCESSING, "Deleting..");
         boolean success = deleteHierarchy(file);
         if (success) {
