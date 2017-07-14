@@ -35,7 +35,7 @@ public class InstallGlobalReference extends TaskI {
     }
 
     @Override
-    public void run() {
+    public void process() {
 
         File referencesDir = new File(projRefDir);
         if (!referencesDir.exists()) {
