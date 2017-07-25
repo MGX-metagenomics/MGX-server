@@ -41,6 +41,10 @@ import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import de.cebitec.mgx.dispatcher.common.api.DispatcherClientConfigurationI;
+import de.cebitec.mgx.global.MGXGlobal;
+import de.cebitec.mgx.global.MGXGlobalException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -54,6 +58,8 @@ public class JobBean {
     @MGX
     MGXController mgx;
     @EJB
+    MGXGlobal global;
+    @EJB
     JobSubmitterI js;
     @EJB
     TaskHolder taskHolder;
@@ -63,6 +69,43 @@ public class JobBean {
     DispatcherClientConfigurationI dispConfig;
     @EJB
     MappingSessions mappingSessions;
+
+    @PUT
+    @Path("runDefaultTools")
+    @Consumes("application/x-protobuf")
+    public Response runDefaultTools(MGXString dto) {
+        long seqrunId = Long.valueOf(dto.getValue());
+        try {
+            // fetch run to make sure it exists
+            SeqRun run = mgx.getSeqRunDAO().getById(seqrunId);
+
+            AutoCloseableIterator<Tool> globalT = global.getToolDAO().getAll();
+            List<Tool> globalTools = new ArrayList<>();
+            while (globalT != null && globalT.hasNext()) {
+                globalTools.add(globalT.next());
+            }
+
+            List<Tool> defaultTools = mgx.getToolDAO().getDefaultTools(globalTools);
+
+            for (Tool t : defaultTools) {
+                Job j = new Job();
+                j.setStatus(JobState.VERIFIED);
+                j.setToolId(t.getId());
+                j.setSeqrunId(seqrunId);
+                j.setCreator(mgx.getCurrentUser());
+
+                create(j);
+                mgx.getJobDAO().writeConfigFile(j, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
+                js.submit(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), j.getId());
+            }
+
+        } catch (MGXException | MGXDispatcherException | MGXGlobalException | IOException ex) {
+            mgx.log(ex);
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        return Response.ok().build();
+    }
 
     @PUT
     @Path("create")
@@ -78,10 +121,16 @@ public class JobBean {
         j.setSeqrunId(dto.getSeqrunId());
         j.setCreator(mgx.getCurrentUser());
 
+        long jobId = create(j);
+        return MGXLong.newBuilder().setValue(jobId).build();
+    }
+
+    public long create(Job j) {
+
         // fetch default parameters for the referenced tool
         Set<JobParameter> defaultParams = new HashSet<>();
         try {
-            Tool tool = mgx.getToolDAO().getById(dto.getToolId());
+            Tool tool = mgx.getToolDAO().getById(j.getToolId());
             String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
             AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
             while (jpIter.hasNext()) {
@@ -134,7 +183,7 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
 
-        return MGXLong.newBuilder().setValue(job_id).build();
+        return job_id;
     }
 
     @GET
