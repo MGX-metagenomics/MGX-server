@@ -88,7 +88,6 @@ public class ToolBean {
 //        }
 //        return ToolDTOFactory.getInstance().toDTO(job.getTool());
 //    }
-
     @GET
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
@@ -193,8 +192,8 @@ public class ToolBean {
 
         long id;
         try {
-            id = mgx.getToolDAO().installGlobalTool(globalTool, mgx.getProjectDirectory());
-        } catch (MGXException | IOException ex) {
+            id = mgx.getToolDAO().installGlobalTool(globalTool);
+        } catch (MGXException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
