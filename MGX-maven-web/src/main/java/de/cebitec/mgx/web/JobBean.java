@@ -94,6 +94,17 @@ public class JobBean {
                 j.setSeqrunId(seqrunId);
                 j.setCreator(mgx.getCurrentUser());
 
+                // fetch default parameters for the tool
+                Set<JobParameter> defaultParams = new HashSet<>();
+                String toolXMLData = UnixHelper.readFile(new File(t.getXMLFile()));
+                AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
+                while (jpIter.hasNext()) {
+                    JobParameter jp = jpIter.next();
+                    jp.setParameterValue(jp.getDefaultValue());
+                    defaultParams.add(jp);
+                }
+                j.setParameters(defaultParams);
+
                 create(j);
                 mgx.getJobDAO().writeConfigFile(j, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
                 js.submit(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), j.getId());
