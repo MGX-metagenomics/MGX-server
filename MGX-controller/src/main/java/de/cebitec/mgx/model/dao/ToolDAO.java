@@ -23,19 +23,19 @@ import java.util.List;
  * @author sjaenick
  */
 public class ToolDAO extends DAO<Tool> {
-
+    
     public ToolDAO(MGXController ctx) {
         super(ctx);
     }
-
+    
     @Override
     Class getType() {
         return Tool.class;
     }
-
+    
     private final static String CREATE = "INSERT INTO tool (author, description, name, url, version, xml_file) "
             + "VALUES (?,?,?,?,?,?) RETURNING id";
-
+    
     @Override
     public long create(Tool obj) throws MGXException {
         // extract xml data
@@ -51,7 +51,7 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(4, obj.getUrl());
                 stmt.setFloat(5, obj.getVersion());
                 stmt.setString(6, obj.getXMLFile());
-
+                
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
@@ -61,7 +61,7 @@ public class ToolDAO extends DAO<Tool> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-
+        
         String fname = null;
         try {
             fname = getController().getProjectJobDirectory() + File.separator + obj.getId() + ".xml";
@@ -74,13 +74,13 @@ public class ToolDAO extends DAO<Tool> {
             delete(obj.getId()); // remove from database, aka rollback
             throw new MGXException(ex.getMessage());
         }
-
+        
         obj.setXMLFile(fname);
         update(obj);
-
+        
         return obj.getId();
     }
-
+    
     @Override
     public Tool getById(long id) throws MGXException {
         if (id <= 0) {
@@ -101,7 +101,7 @@ public class ToolDAO extends DAO<Tool> {
                     t.setUrl(rs.getString(5));
                     t.setVersion(rs.getFloat(6));
                     t.setXMLFile(rs.getString(7));
-
+                    
                     return t;
                 }
             }
@@ -109,8 +109,13 @@ public class ToolDAO extends DAO<Tool> {
             throw new MGXException(ex);
         }
     }
-
+    
     public AutoCloseableIterator<Tool> getAll() throws MGXException {
+        List<Tool> tools = getTools();
+        return new ForwardingIterator<>(tools.iterator());
+    }
+    
+    private List<Tool> getTools() throws MGXException {
         List<Tool> tools = new ArrayList<>();
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, xml_file FROM tool")) {
@@ -131,14 +136,14 @@ public class ToolDAO extends DAO<Tool> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(tools.iterator());
+        return tools;
     }
-
+    
     private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.xml_file "
             + "FROM job j LEFT JOIN tool t on (j.tool_id=t.id) WHERE j.id=?";
-
+    
     public Tool byJob(long job_id) throws MGXException {
-
+        
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);
@@ -161,10 +166,10 @@ public class ToolDAO extends DAO<Tool> {
         }
         throw new MGXException("No object of type Job for ID " + job_id + ".");
     }
-
+    
     private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, xml_file=? "
             + "WHERE id=?";
-
+    
     public void update(Tool obj) throws MGXException {
         if (obj.getId() == Tool.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
@@ -184,9 +189,9 @@ public class ToolDAO extends DAO<Tool> {
             throw new MGXException(ex);
         }
     }
-
-    public long installGlobalTool(Tool global, File projectDir) throws MGXException {
-
+    
+    public long installGlobalTool(Tool global) throws MGXException {
+        
         Tool t = new Tool();
 
         // manual clone
@@ -207,14 +212,14 @@ public class ToolDAO extends DAO<Tool> {
          */
         StringBuilder targetName = null;
         try {
-            targetName = new StringBuilder(projectDir.getAbsolutePath())
+            targetName = new StringBuilder(getController().getProjectDirectory().getAbsolutePath())
                     .append(File.separator).append("jobs");
             File targetDir = new File(targetName.toString());
             if (!targetDir.exists()) {
                 UnixHelper.createDirectory(targetDir);
             }
             targetName.append(File.separator).append(id).append(".xml");
-
+            
             File src = new File(global.getXMLFile());
             File dest = new File(targetName.toString());
             UnixHelper.copyFile(src, dest);
@@ -226,10 +231,10 @@ public class ToolDAO extends DAO<Tool> {
         // update graph description
         t.setXMLFile(targetName.toString());
         update(t);
-
+        
         return id;
     }
-
+    
     public void delete(long id) throws MGXException {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=? RETURNING xml_file")) {
@@ -247,5 +252,37 @@ public class ToolDAO extends DAO<Tool> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+    }
+    
+    private final static String[] DEFAULT_TOOL_NAMES = new String[]{"MGX taxonomic classification"};
+    
+    public List<Tool> getDefaultTools(List<Tool> globalTools) throws MGXException {
+        List<Tool> defaultTools = new ArrayList<>();
+        
+        List<Tool> projectTools = getTools();
+        for (String toolName : DEFAULT_TOOL_NAMES) {
+            Tool projectTool = findByName(toolName, projectTools);
+            
+            if (projectTool == null) {
+                // tool missing, need to install from repo
+                getController().log("Installing tool " + toolName + " from global repository.");
+                Tool globalTool = findByName(toolName, globalTools);
+                long projectToolId = installGlobalTool(globalTool);
+                projectTool = getById(projectToolId);
+            }
+            
+            defaultTools.add(projectTool);
+        }
+        
+        return defaultTools;
+    }
+    
+    private static Tool findByName(String name, List<Tool> tools) {
+        for (Tool t : tools) {
+            if (name.equals(t.getName())) {
+                return t;
+            }
+        }
+        return null;
     }
 }
