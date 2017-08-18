@@ -54,28 +54,28 @@ public class PCoA {
                 if (vecLen != nv.getData().length) {
                     throw new MGXException("Received vectors of different length.");
                 }
-                String varname = "grp" + Util.generateSuffix();
+                String varname = Util.generateSuffix("grp");
                 sampleNames.put(varname, nv.getName());
                 varOrder.add(varname);
                 conn.assign(varname, nv.getData());
             }
 
-            String matrixName = "matr" + Util.generateSuffix();
+            String matrixName = Util.generateSuffix("matr");
             conn.eval(String.format("%s <- rbind(%s)", matrixName, StringUtils.join(varOrder, ",")));
 
             int i = 0;
             String[] colAliases = new String[m.getColumnNames().length];
             for (String s : m.getColumnNames()) {
-                String colName = "var" + Util.generateSuffix();
+                String colName = Util.generateSuffix("var");
                 varNames.put(colName, s);
                 colAliases[i++] = colName;
             }
-            String tmp = "tmp." + Util.generateSuffix();
+            String tmp = Util.generateSuffix("tmp.");
             conn.assign(tmp, colAliases);
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
 
-            String pcoaName = "pcoa" + Util.generateSuffix();
+            String pcoaName = Util.generateSuffix("pcoa");
             conn.eval(String.format("%s <- cmdscale(dist(%s), k=2)", pcoaName, matrixName));
             try {
 

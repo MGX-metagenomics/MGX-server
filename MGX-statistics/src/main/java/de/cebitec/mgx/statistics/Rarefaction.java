@@ -32,7 +32,7 @@ public class Rarefaction {
 
         try {
             // create unique variable name
-            String name = "data" + Util.generateSuffix();
+            String name = Util.generateSuffix("data");
 
             float d = 0;
             for (double x : data) {

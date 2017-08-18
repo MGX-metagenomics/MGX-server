@@ -56,12 +56,12 @@ public class Clustering {
                 if (vecLen != nv.getData().length) {
                     throw new MGXException("Received vectors of different length.");
                 }
-                String varname = "grp" + Util.generateSuffix();
+                String varname = Util.generateSuffix("grp");
                 names.put(varname, nv.getName());
                 conn.assign(varname, nv.getData());
             }
 
-            String matrixName = "matr" + Util.generateSuffix();
+            String matrixName = Util.generateSuffix("matr");
             conn.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
 
             String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
