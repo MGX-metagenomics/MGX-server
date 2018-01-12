@@ -13,8 +13,9 @@ import java.util.Random;
  */
 public class Util {
 
-    static String generateSuffix(String prefix) {
-        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+    private final static char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+
+    final static String generateSuffix(String prefix) {
         StringBuilder sb = new StringBuilder(prefix);
         Random random = new Random();
         for (int i = 0; i < 10; i++) {
@@ -24,7 +25,7 @@ public class Util {
         return sb.toString();
     }
 
-    static boolean contains(String[] options, String value) {
+    final static boolean contains(String[] options, String value) {
         for (String o : options) {
             if (o.equals(value)) {
                 return true;
