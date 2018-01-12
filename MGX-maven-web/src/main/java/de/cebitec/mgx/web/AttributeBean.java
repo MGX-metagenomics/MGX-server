@@ -232,7 +232,7 @@ public class AttributeBean {
 
     @GET
     @Path("continueSearch/{uuid}")
-    @Consumes("application/x-protobuf")
+    //@Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public SequenceDTOList continueSearch(@PathParam("uuid") String uuid) {
         UUID tmp = UUID.fromString(uuid);
