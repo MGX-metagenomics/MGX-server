@@ -12,7 +12,7 @@ import de.cebitec.mgx.dtoadapter.PointDTOFactory;
 import de.cebitec.mgx.statistics.Clustering;
 import de.cebitec.mgx.statistics.PCA;
 import de.cebitec.mgx.statistics.PCoA;
-import de.cebitec.mgx.statistics.Rarefaction;
+import de.cebitec.mgx.statistics.RarefactionRTK;
 import de.cebitec.mgx.statistics.data.Matrix;
 import de.cebitec.mgx.statistics.data.NamedVector;
 import de.cebitec.mgx.statistics.data.PCAResult;
@@ -35,8 +35,10 @@ import javax.ws.rs.Produces;
 @Stateless
 public class StatisticsBean {
 
+//    @EJB
+//    Rarefaction rarefaction;
     @EJB
-    Rarefaction rarefaction;
+    RarefactionRTK rarefactionRTK;
     @EJB
     Clustering clust;
     @EJB
@@ -55,7 +57,7 @@ public class StatisticsBean {
         }
         AutoCloseableIterator<Point> ret;
         try {
-            ret = rarefaction.rarefy(data);
+            ret = rarefactionRTK.rarefy(data);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }

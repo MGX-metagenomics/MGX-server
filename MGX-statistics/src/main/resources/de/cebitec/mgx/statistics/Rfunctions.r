@@ -3,6 +3,7 @@ library('BiocGenerics', warn.conflicts=F)
 suppressPackageStartupMessages(library('Biobase', warn.conflicts=F))
 library('amap', warn.conflicts=F)
 library('MASS', warn.conflicts=F)
+library('rtk', warn.conflicts=F)
 
 getAngle <-function(x1, y1, x2, y2) {
         x <- x2 - x1;
