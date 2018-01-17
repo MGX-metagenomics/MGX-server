@@ -91,8 +91,7 @@ public class PCoA {
                 for (String varName : sampleNames.keySet()) {
                     conn.eval(String.format("rm(%s)", varName));
                 }
-                conn.eval(String.format("rm(%s)", pcoaName));
-                conn.eval(String.format("rm(%s)", matrixName));
+                conn.eval(String.format("rm(%s,%s)", pcoaName,  matrixName));
             }
 
         } catch (REngineException | REXPMismatchException ex) {
