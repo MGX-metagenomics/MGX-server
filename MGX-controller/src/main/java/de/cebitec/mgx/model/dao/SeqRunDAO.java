@@ -6,6 +6,7 @@ import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -322,5 +323,10 @@ public class SeqRunDAO extends DAO<SeqRun> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+    }
+
+    public boolean hasQuality(long id) throws MGXException {
+        SeqRun run = getById(id);
+        return new File(run.getDBFile() + ".csq").exists();
     }
 }

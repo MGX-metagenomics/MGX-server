@@ -10,6 +10,7 @@ import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobsAndAttributeTypesDTO;
+import de.cebitec.mgx.dto.dto.MGXBoolean;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.QCResultDTOList;
@@ -213,6 +214,19 @@ public class SeqRunBean {
     }
 
     @GET
+    @Path("hasQuality/{id}")
+    @Produces("application/x-protobuf")
+    public MGXBoolean hasQuality(@PathParam("id") Long id) {
+        boolean hasQual;
+        try {
+            hasQual = mgx.getSeqRunDAO().hasQuality(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return MGXBoolean.newBuilder().setValue(hasQual).build();
+    }
+
+    @GET
     @Path("getQC/{id}")
     @Produces("application/x-protobuf")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
@@ -273,7 +287,7 @@ public class SeqRunBean {
                                 } else {
                                     Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{analyzer.getName(), run.getName(), analyzer.getNumberOfSequences()});
                                 }
-                            } catch (Exception ex) {
+                            } catch (SeqStoreException ex) {
                                 Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }
