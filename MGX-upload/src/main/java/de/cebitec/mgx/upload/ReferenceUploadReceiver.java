@@ -129,6 +129,10 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+                while (ex.getNextException() != null) {
+                    ex = ex.getNextException();
+                    Logger.getLogger(ReferenceUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 cancel();
                 throw new MGXException(ex.getMessage());
             }
