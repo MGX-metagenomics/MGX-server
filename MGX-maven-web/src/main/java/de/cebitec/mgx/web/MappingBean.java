@@ -154,6 +154,20 @@ public class MappingBean {
     }
 
     @GET
+    @Path("getGenomicCoverage/{uuid}")
+    @Produces("application/x-protobuf")
+    public MGXLong getGenomicCoverage(@PathParam("uuid") UUID uuid) {
+        long maxCov = -1;
+        try {
+            MappingDataSession session = mapSessions.getSession(uuid);
+            maxCov = session.getGenomicCoverage();
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return MGXLong.newBuilder().setValue(maxCov).build();
+    }
+
+    @GET
     @Path("closeMapping/{uuid}")
     @Produces("application/x-protobuf")
     public Response closeMapping(@PathParam("uuid") UUID uuid) {
