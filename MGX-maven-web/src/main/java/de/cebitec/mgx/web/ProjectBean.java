@@ -38,6 +38,7 @@ public class ProjectBean {
 
     @GET
     @Path("ping")
+    @Produces("application/x-protobuf")
     public GPMSLong ping() {
         return GPMSLong.newBuilder().setValue(System.currentTimeMillis()).build();
     }
