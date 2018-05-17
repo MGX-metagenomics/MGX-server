@@ -46,7 +46,7 @@ public class GPMSRoleFilter extends RolesAllowedResourceFilterFactory {
         }
     }
 
-    private class Filter implements ResourceFilter, ContainerRequestFilter {
+    private static class Filter implements ResourceFilter, ContainerRequestFilter {
 
         private final DBGPMSI gpmslocal;
         private final String[] rights;
