@@ -349,7 +349,7 @@ public class JobDAO extends DAO<Job> {
             throw new MGXException(ex);
         }
 
-        if (job.getStatus().equals(JobState.RUNNING)) {
+        if (job.getStatus().equals(JobState.RUNNING) || job.getStatus().equals(JobState.SUBMITTED)) {
             try (Connection conn = getConnection()) {
                 // set start date
                 try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET startdate=NOW() WHERE id=?")) {
