@@ -59,6 +59,9 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public final void log(Exception ex) {
         logger.log(Level.INFO, "{0}/{1}: {2}", new Object[]{gpmsmaster.getProject().getName(), getCurrentUser(), ex});
+        if (ex.getCause() != null && ex.getCause() instanceof Exception) {
+            log((Exception) ex.getCause());
+        }
     }
 
     @Override
