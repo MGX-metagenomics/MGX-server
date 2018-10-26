@@ -31,9 +31,26 @@ public class UriProjectFilter implements ContainerRequestFilter {
             Logger.getLogger(UriProjectFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
+//    private static final Set<String> cache = new HashSet<>();
+
     @Override
     public ContainerRequest filter(ContainerRequest cr) {
+
+        // Get the authentication passed in HTTP headers parameters
+//        String auth = cr.getHeaderValue("authorization");
+//        if (auth != null) {
+//            int idx = auth.indexOf(" ");
+//            if (idx != -1) {
+//                auth = auth.substring(++idx);
+//            }
+//            //auth = auth.replaceFirst("[Bb]asic ", "");
+//            String userColonPass = Base64.base64Decode(auth);
+//            if (!cache.contains(userColonPass)) {
+//                Logger.getLogger(UriProjectFilter.class.getName()).log(Level.INFO, "DEBUG: {0}", userColonPass);
+//                cache.add(userColonPass);
+//            }
+//        }
 
         String path = cr.getPath(true);
         String resource = path;
@@ -43,7 +60,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
             projectName = path.substring(0, idx);
             resource = path.substring(idx + 1);
         }
-        
+
         UriBuilder ub = cr.getRequestUriBuilder();
         ub.replacePath(cr.getBaseUri().getPath() + resource);
         cr.setUris(cr.getBaseUri(), ub.build());
