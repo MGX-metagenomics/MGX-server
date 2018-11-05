@@ -63,7 +63,7 @@ public class JobParameterHelperTest {
         while (iter.hasNext()) {
             jp = iter.next();
             assertNotNull(jp);
-            System.err.println("classname: "+jp.getClassName());
+            System.err.println("classname: " + jp.getClassName());
             cnt++;
             if (jp.getParameterName().equals("database")) {
                 assertEquals(2, jp.getChoices().size());
@@ -97,6 +97,29 @@ public class JobParameterHelperTest {
             cnt++;
         }
         assertEquals(3, cnt);
+    }
+
+    @Test
+    public void testRegressionFileParameter() throws IOException {
+        System.out.println("getParameters");
+        String toolXml = UnixHelper.readFile(new File("src/test/resources/discard_host.xml"));
+        File plugindump = new File("src/test/resources/plugindump.xml");
+        AutoCloseableIterator<JobParameter> iter = null;
+        try {
+            iter = JobParameterHelper.getParameters(toolXml, plugindump);
+        } catch (MGXException ex) {
+            Logger.getLogger(JobParameterHelperTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        assertNotNull(iter);
+        JobParameter jp = null;
+        int cnt = 0;
+        while (iter.hasNext()) {
+            jp = iter.next();
+            assertNotNull(jp);
+            System.err.println("classname: " + jp.getClassName());
+            cnt++;
+        }
+        assertEquals(2, cnt);
     }
 
 }
