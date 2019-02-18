@@ -20,7 +20,7 @@ import java.util.Set;
  * @author sjaenick
  */
 public class UnixHelper {
-
+    
     public static boolean isGroupWritable(final File f) throws IOException {
         if (!f.exists()) {
             return false;
@@ -28,10 +28,13 @@ public class UnixHelper {
         Set<PosixFilePermission> perms = Files.getPosixFilePermissions(Paths.get(f.getAbsolutePath()));
         return perms.contains(PosixFilePermission.GROUP_WRITE);
     }
-
+    
     public static void createDirectory(final File targetDir) throws IOException {
         if (targetDir.exists() && targetDir.isDirectory()) {
             return;
+        }
+        if (targetDir.exists() && !targetDir.isDirectory()) {
+            throw new IOException(targetDir.getAbsolutePath() + " already exists as a file.");
         }
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
@@ -42,7 +45,7 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_EXECUTE);
         Files.createDirectory(path, PosixFilePermissions.asFileAttribute(perms));
     }
-
+    
     public static void createFile(final File targetDir) throws IOException {
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
@@ -53,7 +56,7 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_EXECUTE);
         Files.createFile(path, PosixFilePermissions.asFileAttribute(perms));
     }
-
+    
     public static void makeDirectoryGroupWritable(final String file) throws IOException {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
@@ -64,7 +67,7 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_EXECUTE);
         Files.setPosixFilePermissions(path, perms);
     }
-
+    
     public static void makeFileGroupWritable(final String file) throws IOException {
         Path path = Paths.get(file);
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
@@ -73,7 +76,7 @@ public class UnixHelper {
                 PosixFilePermission.GROUP_WRITE);
         Files.setPosixFilePermissions(path, perms);
     }
-
+    
     public static void copyFile(final File in, final File out) throws IOException {
         FileInputStream fis = new FileInputStream(in);
         FileOutputStream fos = new FileOutputStream(out);
@@ -94,12 +97,12 @@ public class UnixHelper {
             fos.close();
         }
     }
-
+    
     public static String readFile(File f) throws IOException {
         if (!f.exists() && f.canRead()) {
             throw new IOException("File " + f.getAbsolutePath() + " missing or unreadable.");
         }
-
+        
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             String line;
