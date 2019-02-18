@@ -39,6 +39,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     protected final long runId;
     protected GPMSManagedDataSourceI dataSource;
     protected final File projectDirectory;
+    protected final File projectQCDirectory;
     protected final File file;
     protected long total_num_sequences = 0;
     protected long lastAccessed;
@@ -48,19 +49,20 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
-    public SeqUploadReceiver(Executor executor, File projectDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality, int sqlBulksize) throws MGXException {
+    public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality) throws MGXException {
         this.projectName = projName;
         this.runId = run_id;
         this.projectDirectory = projectDir;
+        this.projectQCDirectory = projectQCDir;
         this.dataSource = dataSource;
 
         dataSource.subscribe(this);
-        
+
         try {
             file = getStorageFile(run_id);
             SeqWriterI writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
             qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
-            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers, sqlBulksize);
+            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers);
             executor.execute(flush);
         } catch (MGXException | IOException | SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -126,8 +128,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         }
 
         // write QC stats
-        String prefix = new StringBuilder(projectDirectory.getAbsolutePath())
-                .append(File.separator).append("QC")
+        String prefix = new StringBuilder(projectQCDirectory.getAbsolutePath())
                 .append(File.separator).append(runId).append(".").toString();
         for (Analyzer a : qcAnalyzers) {
             Persister.persist(prefix, a);

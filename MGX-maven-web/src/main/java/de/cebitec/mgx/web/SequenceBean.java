@@ -25,7 +25,6 @@ import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -78,12 +77,10 @@ public class SequenceBean {
             // check seqrun exists before creating upload session
             mgx.getSeqRunDAO().getById(seqrun_id);
 
-            File projectDir = mgx.getProjectDirectory();
-
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            SeqUploadReceiver recv = new SeqUploadReceiver(executor, projectDir,
-                    mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
-                    hasQual, mgxconfig.getSQLBulkInsertSize());
+            SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
+                    mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
+                    hasQual);
             uuid = upSessions.registerUploadSession(recv);
 
         } catch (MGXException | IOException ex) {

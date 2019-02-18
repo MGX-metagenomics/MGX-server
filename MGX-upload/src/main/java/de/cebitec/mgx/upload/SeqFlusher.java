@@ -42,7 +42,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
 
-    public SeqFlusher(long seqrunId, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers, int bulkSize) {
+    public SeqFlusher(long seqrunId, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers) {
         this.seqrunId = seqrunId;
         this.in = in;
         this.dataSource = dataSource;
