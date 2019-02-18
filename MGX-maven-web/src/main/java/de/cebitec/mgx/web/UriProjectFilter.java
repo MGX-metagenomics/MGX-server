@@ -1,11 +1,14 @@
 package de.cebitec.mgx.web;
 
+import com.sun.jersey.core.util.Base64;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.JDBCMasterI;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -32,25 +35,31 @@ public class UriProjectFilter implements ContainerRequestFilter {
         }
     }
 
-//    private static final Set<String> cache = new HashSet<>();
+    //
+    // WARNING: setting DEBUG_AUTH to true will log cleartext passwords
+    //
+    private final static boolean DEBUG_AUTH = false;
+    private static final Set<String> cache = new HashSet<>();
 
     @Override
     public ContainerRequest filter(ContainerRequest cr) {
 
         // Get the authentication passed in HTTP headers parameters
-//        String auth = cr.getHeaderValue("authorization");
-//        if (auth != null) {
-//            int idx = auth.indexOf(" ");
-//            if (idx != -1) {
-//                auth = auth.substring(++idx);
-//            }
-//            //auth = auth.replaceFirst("[Bb]asic ", "");
-//            String userColonPass = Base64.base64Decode(auth);
-//            if (!cache.contains(userColonPass)) {
-//                Logger.getLogger(UriProjectFilter.class.getName()).log(Level.INFO, "DEBUG: {0}", userColonPass);
-//                cache.add(userColonPass);
-//            }
-//        }
+        if (DEBUG_AUTH) {
+            String auth = cr.getHeaderValue("authorization");
+            if (auth != null) {
+                int idx = auth.indexOf(" ");
+                if (idx != -1) {
+                    auth = auth.substring(++idx);
+                }
+                //auth = auth.replaceFirst("[Bb]asic ", "");
+                String userColonPass = Base64.base64Decode(auth);
+                if (!cache.contains(userColonPass)) {
+                    Logger.getLogger(UriProjectFilter.class.getName()).log(Level.INFO, "DEBUG: {0}", userColonPass);
+                    cache.add(userColonPass);
+                }
+            }
+        }
 
         String path = cr.getPath(true);
         String resource = path;
