@@ -1,7 +1,6 @@
 package de.cebitec.mgx.controller.boot;
 
 import de.cebitec.gpms.data.DBGPMSI;
-import de.cebitec.gpms.util.EMFNameResolver;
 import de.cebitec.gpms.util.GPMSDataSourceSelector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
