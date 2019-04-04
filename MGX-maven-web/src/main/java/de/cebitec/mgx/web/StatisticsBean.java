@@ -10,8 +10,8 @@ import de.cebitec.mgx.dtoadapter.MatrixDTOFactory;
 import de.cebitec.mgx.dtoadapter.PCAResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
 import de.cebitec.mgx.statistics.Clustering;
+import de.cebitec.mgx.statistics.NMDS;
 import de.cebitec.mgx.statistics.PCA;
-import de.cebitec.mgx.statistics.PCoA;
 import de.cebitec.mgx.statistics.RarefactionRTK;
 import de.cebitec.mgx.statistics.data.Matrix;
 import de.cebitec.mgx.statistics.data.NamedVector;
@@ -44,7 +44,7 @@ public class StatisticsBean {
     @EJB
     PCA pca;
     @EJB
-    PCoA pcoa;
+    NMDS nmds;
 
     @PUT
     @Path("Rarefaction")
@@ -108,10 +108,10 @@ public class StatisticsBean {
     }
 
     @PUT
-    @Path("PCoA")
+    @Path("NMDS")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
-    public PointDTOList PCoA(MGXMatrixDTO dto) {
+    public PointDTOList NMDS(MGXMatrixDTO dto) {
         Matrix m = MatrixDTOFactory.getInstance().toDB(dto);
 
         int numVars = m.getColumnNames().length;
@@ -124,7 +124,7 @@ public class StatisticsBean {
 
         AutoCloseableIterator<Point> ret;
         try {
-            ret = pcoa.pcoa(m);
+            ret = nmds.nmds(m);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
