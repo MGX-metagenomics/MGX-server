@@ -1,3 +1,4 @@
+library('vegan')
 library('parallel')
 library('BiocGenerics', warn.conflicts=F)
 suppressPackageStartupMessages(library('Biobase', warn.conflicts=F))
