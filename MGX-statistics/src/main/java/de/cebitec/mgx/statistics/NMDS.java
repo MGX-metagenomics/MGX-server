@@ -22,16 +22,29 @@ import org.rosuda.REngine.REngineException;
  *
  * @author sjaenick
  */
-@Stateless(mappedName = "PCoA")
-public class PCoA {
+@Stateless(mappedName = "NMDS")
+public class NMDS {
 
     @EJB
     Rserve r;
     //
 
-    public AutoCloseableIterator<Point> pcoa(Matrix m) throws MGXException {
+    private static final String[] VEGDIST = new String[]{"manhattan",
+        "euclidean", "canberra", "bray", "kulczynski",
+        "jaccard", "gower", "altGower", "morisita", "horn",
+        "mountford", "raup", "binomial", "chao", "cao",
+        "mahalanobis"};
+
+    public AutoCloseableIterator<Point> nmds(Matrix m) throws MGXException {
+        return nmds(m, "bray");
+    }
+
+    public AutoCloseableIterator<Point> nmds(Matrix m, String distMethod) throws MGXException {
         if (m.getRows().size() < 3) {
             throw new MGXException("Insufficient number of datasets.");
+        }
+        if (!Util.contains(VEGDIST, distMethod)) {
+            throw new MGXException("Invalid distance method: " + distMethod);
         }
 
         RWrappedConnection conn = r.getR();
@@ -76,14 +89,22 @@ public class PCoA {
             conn.eval(String.format("rm(%s)", tmp));
 
             String pcoaName = Util.generateSuffix("pcoa");
-            conn.eval(String.format("%s <- cmdscale(dist(%s), k=2)", pcoaName, matrixName));
+            conn.eval(String.format("x <- capture.output(%s <- metaMDS(%s, distance=\"%s\", k=2))", pcoaName, matrixName, distMethod));
+            conn.eval("rm(x)");
             try {
 
                 for (Entry<String, String> e : sampleNames.entrySet()) {
-                    double[] coords = conn.eval(String.format("%s[\"%s\",]", pcoaName, e.getKey())).asDoubles();
+                    double[] coords = conn.eval(String.format("%s$points[\"%s\",]", pcoaName, e.getKey())).asDoubles();
                     Point p = new Point(coords[0], coords[1], e.getValue());
                     ret.add(p);
                 }
+
+                for (Entry<String, String> e : varNames.entrySet()) {
+                    double[] coords = conn.eval(String.format("%s$species[\"%s\",]", pcoaName, e.getKey())).asDoubles();
+                    Point p = new Point(coords[0], coords[1], e.getValue());
+                    ret.add(p);
+                }
+
             } catch (ArrayIndexOutOfBoundsException ex) {
                 throw new MGXException("Could not access requested components." + ex.getMessage());
             } finally {
@@ -91,7 +112,7 @@ public class PCoA {
                 for (String varName : sampleNames.keySet()) {
                     conn.eval(String.format("rm(%s)", varName));
                 }
-                conn.eval(String.format("rm(%s,%s)", pcoaName,  matrixName));
+                conn.eval(String.format("rm(%s,%s)", pcoaName, matrixName));
             }
 
         } catch (REngineException | REXPMismatchException ex) {
@@ -101,7 +122,7 @@ public class PCoA {
         }
 
         if (ret == null) {
-            throw new MGXException("PCoA failed.");
+            throw new MGXException("NMDS failed.");
         }
 
 //        // re-convert group names
