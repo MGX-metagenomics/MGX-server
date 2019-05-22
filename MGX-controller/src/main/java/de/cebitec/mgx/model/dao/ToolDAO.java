@@ -2,10 +2,13 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.UnixHelper;
+import de.cebitec.mgx.workers.DeleteTool;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,30 +20,32 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author sjaenick
  */
 public class ToolDAO extends DAO<Tool> {
-    
+
     public ToolDAO(MGXController ctx) {
         super(ctx);
     }
-    
+
     @Override
     Class getType() {
         return Tool.class;
     }
-    
-    private final static String CREATE = "INSERT INTO tool (author, description, name, url, version, xml_file) "
-            + "VALUES (?,?,?,?,?,?) RETURNING id";
-    
+
+    private final static String CREATE = "INSERT INTO tool (author, description, name, url, version, file, scope) "
+            + "VALUES (?,?,?,?,?,?,?) RETURNING id";
+
     @Override
     public long create(Tool obj) throws MGXException {
         // extract xml data
-        String xmldata = obj.getXMLFile();
-        obj.setXMLFile(null);
+        String xmldata = obj.getFile();
+        obj.setFile(null);
 
 //        Long id = super.create(obj);
         try (Connection conn = getConnection()) {
@@ -50,8 +55,9 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(3, obj.getName());
                 stmt.setString(4, obj.getUrl());
                 stmt.setFloat(5, obj.getVersion());
-                stmt.setString(6, obj.getXMLFile());
-                
+                stmt.setString(6, obj.getFile());
+                stmt.setString(7, obj.getScope());
+
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
@@ -61,7 +67,7 @@ public class ToolDAO extends DAO<Tool> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        
+
         String fname = null;
         try {
             fname = getController().getProjectJobDirectory() + File.separator + obj.getId() + ".xml";
@@ -71,23 +77,37 @@ public class ToolDAO extends DAO<Tool> {
             }
             UnixHelper.makeFileGroupWritable(fname);
         } catch (IOException ex) {
-            delete(obj.getId()); // remove from database, aka rollback
+
+            // remove entity from DB
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=?")) {
+                    stmt.setLong(1, obj.getId());
+                    stmt.executeUpdate();
+                }
+            } catch (SQLException ex1) {
+                Logger.getLogger(ToolDAO.class.getName()).log(Level.SEVERE, null, ex1);
+            }
+
+            File f = new File(fname);
+            if (f.exists()) {
+                f.delete();
+            }
             throw new MGXException(ex.getMessage());
         }
-        
-        obj.setXMLFile(fname);
+
+        obj.setFile(fname);
         update(obj);
-        
+
         return obj.getId();
     }
-    
+
     @Override
     public Tool getById(long id) throws MGXException {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
         try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, xml_file FROM tool WHERE id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
@@ -100,8 +120,9 @@ public class ToolDAO extends DAO<Tool> {
                     t.setName(rs.getString(4));
                     t.setUrl(rs.getString(5));
                     t.setVersion(rs.getFloat(6));
-                    t.setXMLFile(rs.getString(7));
-                    
+                    t.setFile(rs.getString(7));
+                    t.setScope(rs.getString(8));
+
                     return t;
                 }
             }
@@ -109,16 +130,16 @@ public class ToolDAO extends DAO<Tool> {
             throw new MGXException(ex);
         }
     }
-    
+
     public AutoCloseableIterator<Tool> getAll() throws MGXException {
         List<Tool> tools = getTools();
         return new ForwardingIterator<>(tools.iterator());
     }
-    
+
     private List<Tool> getTools() throws MGXException {
         List<Tool> tools = new ArrayList<>();
         try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, xml_file FROM tool")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Tool t = new Tool();
@@ -128,7 +149,8 @@ public class ToolDAO extends DAO<Tool> {
                         t.setName(rs.getString(4));
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
-                        t.setXMLFile(rs.getString(7));
+                        t.setFile(rs.getString(7));
+                        t.setScope(rs.getString(8));
                         tools.add(t);
                     }
                 }
@@ -138,12 +160,12 @@ public class ToolDAO extends DAO<Tool> {
         }
         return tools;
     }
-    
-    private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.xml_file "
+
+    private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.file, t.scope "
             + "FROM job j LEFT JOIN tool t on (j.tool_id=t.id) WHERE j.id=?";
-    
+
     public Tool byJob(long job_id) throws MGXException {
-        
+
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);
@@ -156,7 +178,8 @@ public class ToolDAO extends DAO<Tool> {
                         t.setName(rs.getString(4));
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
-                        t.setXMLFile(rs.getString(7));
+                        t.setFile(rs.getString(7));
+                        t.setScope(rs.getString(8));
                         return t;
                     }
                 }
@@ -166,10 +189,10 @@ public class ToolDAO extends DAO<Tool> {
         }
         throw new MGXException("No object of type Job for ID " + job_id + ".");
     }
-    
-    private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, xml_file=? "
+
+    private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, file=?, scope=? "
             + "WHERE id=?";
-    
+
     public void update(Tool obj) throws MGXException {
         if (obj.getId() == Tool.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
@@ -181,17 +204,18 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(3, obj.getName());
                 stmt.setString(4, obj.getUrl());
                 stmt.setFloat(5, obj.getVersion());
-                stmt.setString(6, obj.getXMLFile());
-                stmt.setLong(7, obj.getId());
+                stmt.setString(6, obj.getFile());
+                stmt.setString(7, obj.getScope());
+                stmt.setLong(8, obj.getId());
                 stmt.executeUpdate();
             }
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
     }
-    
+
     public long installGlobalTool(Tool global) throws MGXException {
-        
+
         Tool t = new Tool();
 
         // manual clone
@@ -200,7 +224,8 @@ public class ToolDAO extends DAO<Tool> {
         t.setVersion(global.getVersion());
         t.setAuthor(global.getAuthor());
         t.setUrl(global.getUrl());
-        t.setXMLFile(global.getXMLFile());
+        t.setFile(global.getFile());
+        t.setScope(global.getScope());
 
         // persist to create the id
         long id = create(t);
@@ -219,8 +244,8 @@ public class ToolDAO extends DAO<Tool> {
                 UnixHelper.createDirectory(targetDir);
             }
             targetName.append(File.separator).append(id).append(".xml");
-            
-            File src = new File(global.getXMLFile());
+
+            File src = new File(global.getFile());
             File dest = new File(targetName.toString());
             UnixHelper.copyFile(src, dest);
             UnixHelper.makeFileGroupWritable(dest.getAbsolutePath());
@@ -229,40 +254,35 @@ public class ToolDAO extends DAO<Tool> {
         }
 
         // update graph description
-        t.setXMLFile(targetName.toString());
+        t.setFile(targetName.toString());
         update(t);
-        
+
         return id;
     }
-    
-    public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=? RETURNING xml_file")) {
-                stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-                    }
-                    File graph = new File(rs.getString(1));
-                    if (graph.exists()) {
-                        graph.delete();
-                    }
-                }
+
+    public TaskI delete(long id) throws MGXException, IOException {
+        List<TaskI> subtasks = new ArrayList<>();
+        try (AutoCloseableIterator<Job> iter = getController().getJobDAO().byTool(id)) {
+            while (iter.hasNext()) {
+                Job d = iter.next();
+                TaskI t = getController().getJobDAO().delete(d.getId());
+                subtasks.add(t);
             }
-        } catch (SQLException ex) {
-            throw new MGXException(ex);
         }
+
+        return new DeleteTool(getController().getDataSource(), id,
+                getController().getProjectName(), getController().getProjectJobDirectory().getAbsolutePath());
     }
-    
+
     private final static String[] DEFAULT_TOOL_NAMES = new String[]{"MGX taxonomic classification"};
-    
+
     public List<Tool> getDefaultTools(List<Tool> globalTools) throws MGXException {
         List<Tool> defaultTools = new ArrayList<>();
-        
+
         List<Tool> projectTools = getTools();
         for (String toolName : DEFAULT_TOOL_NAMES) {
             Tool projectTool = findByName(toolName, projectTools);
-            
+
             if (projectTool == null) {
                 // tool missing, need to install from repo
                 getController().log("Installing tool " + toolName + " from global repository.");
@@ -270,13 +290,13 @@ public class ToolDAO extends DAO<Tool> {
                 long projectToolId = installGlobalTool(globalTool);
                 projectTool = getById(projectToolId);
             }
-            
+
             defaultTools.add(projectTool);
         }
-        
+
         return defaultTools;
     }
-    
+
     private static Tool findByName(String name, List<Tool> tools) {
         for (Tool t : tools) {
             if (name.equals(t.getName())) {

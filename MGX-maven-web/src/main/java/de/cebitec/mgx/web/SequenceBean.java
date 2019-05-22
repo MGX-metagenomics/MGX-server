@@ -158,8 +158,9 @@ public class SequenceBean {
             // make sure requested run exists
             SeqRun seqrun = mgx.getSeqRunDAO().getById(seqrun_id);
             mgx.log("Creating download session for run ID " + seqrun_id);
-            provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), seqrun.getDBFile());
-        } catch (MGXException ex) {
+            String dbFile = mgx.getSeqRunDAO().getDBFile(seqrun.getId()).getAbsolutePath();
+            provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), dbFile);
+        } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
@@ -199,8 +200,9 @@ public class SequenceBean {
                 }
             }
 
-            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), attributeIDs, seqrun.getDBFile());
-        } catch (MGXException ex) {
+            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), 
+                    attributeIDs, mgx.getSeqRunDAO().getDBFile(seqrun.getId()).getAbsolutePath());
+        } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }

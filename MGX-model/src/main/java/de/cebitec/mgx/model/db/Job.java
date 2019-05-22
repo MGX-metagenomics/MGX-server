@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.db;
 
+import de.cebitec.mgx.common.JobState;
 import java.util.Collection;
 import java.util.Date;
 

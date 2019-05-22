@@ -1,11 +1,13 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
-import java.io.File;
+import de.cebitec.mgx.workers.DeleteMapping;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -255,24 +257,27 @@ public class MappingDAO extends DAO<Mapping> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
-    public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file")) {
-                stmt.setLong(1, id);
-
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-                    }
-                    File bamFile = new File(rs.getString(1));
-                    if (bamFile.exists()) {
-                        bamFile.delete();
-                    }
-                }
-            }
-        } catch (SQLException ex) {
-            getController().log(ex);
-            throw new MGXException(ex);
-        }
+    public TaskI delete(long id, GPMSManagedDataSourceI ds, String projectName, String jobDir) throws MGXException {
+        
+        return new DeleteMapping(id, ds, projectName, jobDir);
     }
+//        try (Connection conn = getConnection()) {
+//            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file")) {
+//                stmt.setLong(1, id);
+//
+//                try (ResultSet rs = stmt.executeQuery()) {
+//                    if (!rs.next()) {
+//                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+//                    }
+//                    File bamFile = new File(rs.getString(1));
+//                    if (bamFile.exists()) {
+//                        bamFile.delete();
+//                    }
+//                }
+//            }
+//        } catch (SQLException ex) {
+//            getController().log(ex);
+//            throw new MGXException(ex);
+//        }
+//    }
 }

@@ -27,7 +27,7 @@ public class TaskDTOFactory extends DTOConversionBase<TaskI, TaskDTO, TaskDTOLis
     public TaskDTO toDTO(TaskI t) {
         return TaskDTO.newBuilder()
                 .setMessage(t.getStatusMessage())
-                .setState(TaskDTO.TaskState.valueOf(t.getState().getValue()))
+                .setState(TaskDTO.TaskState.forNumber(t.getState().getValue()))
                 .build();
     }
 

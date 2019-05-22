@@ -16,7 +16,6 @@ import de.cebitec.mgx.dto.dto.FileDTOList;
 import de.cebitec.mgx.dto.dto.FileDTOList.Builder;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
-import de.cebitec.mgx.workers.DeleteFile;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.FileUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -138,7 +137,7 @@ public class FileBean {
             throw new MGXWebException(ex.getMessage());
         }
         
-        UUID taskId = taskHolder.addTask(new DeleteFile(mgx.getDataSource(), target, mgx.getProjectName()));
+        UUID taskId = taskHolder.addTask(mgx.getFileDAO().delete(target));
 
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }

@@ -1,15 +1,15 @@
 package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
+import gnu.trove.list.TLongList;
+import gnu.trove.list.array.TLongArrayList;
+import gnu.trove.procedure.TLongProcedure;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,18 +20,18 @@ import java.util.logging.Logger;
 public final class DeleteTool extends TaskI {
 
     private final long id;
-    private final MappingSessions mappingSessions;
+    private final String jobdir;
 
-    public DeleteTool(GPMSManagedDataSourceI dataSource, long id, String projName, MappingSessions mappingSessions) {
+    public DeleteTool(GPMSManagedDataSourceI dataSource, long id, String projName, String jobDir) {
         super(projName, dataSource);
         this.id = id;
-        this.mappingSessions = mappingSessions;
+        this.jobdir = jobDir;
     }
 
     @Override
     public void process() {
         // fetch jobs for this tool
-        List<Long> jobs = new ArrayList<>();
+        TLongList jobs = new TLongArrayList();
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM job WHERE tool_id=?")) {
                 stmt.setLong(1, id);
@@ -47,18 +47,22 @@ public final class DeleteTool extends TaskI {
         }
 
         // delete jobs
-        for (Long jobId : jobs) {
-            TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), mappingSessions);
-            delJob.addPropertyChangeListener(this);
-            delJob.run();
-            delJob.removePropertyChangeListener(this);
-        }
+        jobs.forEach(new TLongProcedure() {
+            @Override
+            public boolean execute(long jobId) {
+                TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), jobdir);
+                delJob.addPropertyChangeListener(DeleteTool.this);
+                delJob.run();
+                delJob.removePropertyChangeListener(DeleteTool.this);
+                return true;
+            }
+        });
 
         try {
             String toolName = null;
             String conveyorGraph = null;
             try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT name, xml_file FROM tool WHERE id=?")) {
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT name, file FROM tool WHERE id=?")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {

@@ -2,11 +2,14 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.workers.DeleteReference;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -84,19 +87,21 @@ public class ReferenceDAO extends DAO<Reference> {
         }
     }
 
-    public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
-                stmt.setLong(1, id);
-                int numRows = stmt.executeUpdate();
-                if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-                }
+    public TaskI delete(long id) throws MGXException, IOException {
+        List<TaskI> subtasks = new ArrayList<>();
+        try(AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
+             while (iter.hasNext()) {
+                Mapping s = iter.next();
+                TaskI del = getController().getMappingDAO().delete(s.getId(), getController().getDataSource(),
+                        getController().getProjectName(), getController().getProjectJobDirectory().getAbsolutePath());
+                subtasks.add(del);
             }
-        } catch (SQLException ex) {
-            getController().log(ex);
-            throw new MGXException(ex);
         }
+        return new DeleteReference(id, 
+                getController().getDataSource(), 
+                getController().getProjectName(), 
+                getController().getProjectJobDirectory().getAbsolutePath(),
+                subtasks.toArray(new TaskI[]{}));
     }
 
     private final static String BY_ID = "SELECT id, name, ref_length, ref_filepath FROM reference WHERE id=?";

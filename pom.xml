@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>de.cebitec.mgx</groupId>
     <artifactId>MGX-maven</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
+
     <packaging>pom</packaging>
     <name>MGX Maven Enterprise Application</name>
+
     <build>
         <plugins>
             <plugin>
@@ -15,7 +19,7 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
-                    <!-- <compilerArgument>-Xlint:all</compilerArgument> -->
+                    <compilerArgument>-Xlint:all</compilerArgument>
                 </configuration>
             </plugin>
         </plugins>
@@ -43,7 +47,7 @@
     </modules>
     
     <properties>
-        <eeapi.version>6.0</eeapi.version>
+        <eeapi.version>8.0</eeapi.version>
     </properties>
 
 

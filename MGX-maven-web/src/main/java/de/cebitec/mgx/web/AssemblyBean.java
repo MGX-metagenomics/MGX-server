@@ -5,16 +5,15 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dto.dto.HabitatDTO;
-import de.cebitec.mgx.dto.dto.HabitatDTOList;
+import de.cebitec.mgx.dto.dto.AssemblyDTO;
+import de.cebitec.mgx.dto.dto.AssemblyDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
-import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
-import de.cebitec.mgx.model.db.Habitat;
+import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
+import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -33,9 +32,9 @@ import javax.ws.rs.core.Response;
  *
  * @author sjaenick
  */
-@Path("Habitat")
+@Path("Assembly")
 @Stateless
-public class HabitatBean {
+public class AssemblyBean {
 
     @Inject
     @MGX
@@ -48,10 +47,10 @@ public class HabitatBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLong create(HabitatDTO dto) {
-        Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
+    public MGXLong create(AssemblyDTO dto) {
+        Assembly x = AssemblyDTOFactory.getInstance().toDB(dto);
         try {
-            long id = mgx.getHabitatDAO().create(h);
+            long id = mgx.getAssemblyDAO().create(x);
             return MGXLong.newBuilder().setValue(id).build();
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -63,10 +62,10 @@ public class HabitatBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public Response update(HabitatDTO dto) {
-        Habitat h = HabitatDTOFactory.getInstance().toDB(dto);
+    public Response update(AssemblyDTO dto) {
+        Assembly h = AssemblyDTOFactory.getInstance().toDB(dto);
         try {
-            mgx.getHabitatDAO().update(h);
+            mgx.getAssemblyDAO().update(h);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -76,22 +75,22 @@ public class HabitatBean {
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
-    public HabitatDTO fetch(@PathParam("id") Long id) {
-        Habitat obj = null;
+    public AssemblyDTO fetch(@PathParam("id") Long id) {
+        Assembly obj = null;
         try {
-            obj = mgx.getHabitatDAO().getById(id);
+            obj = mgx.getAssemblyDAO().getById(id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        return HabitatDTOFactory.getInstance().toDTO(obj);
+        return AssemblyDTOFactory.getInstance().toDTO(obj);
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
-    public HabitatDTOList fetchall() {
+    public AssemblyDTOList fetchall() {
         try {
-            return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
+            return AssemblyDTOFactory.getInstance().toDTOList(mgx.getAssemblyDAO().getAll());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -104,8 +103,8 @@ public class HabitatBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(mgx.getHabitatDAO().delete(id));
-        } catch (MGXException | IOException ex) {
+            taskId = taskHolder.addTask(mgx.getAssemblyDAO().delete(id));
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

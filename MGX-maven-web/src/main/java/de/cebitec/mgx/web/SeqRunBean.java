@@ -22,7 +22,6 @@ import de.cebitec.mgx.dtoadapter.QCResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
-import de.cebitec.mgx.workers.DeleteSeqRun;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -36,7 +35,6 @@ import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -83,8 +81,6 @@ public class SeqRunBean {
     MGXGlobal global;
     @EJB
     Executor executor;
-    @EJB
-    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -205,8 +201,8 @@ public class SeqRunBean {
 
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteSeqRun(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException ex) {
+            taskId = taskHolder.addTask(mgx.getSeqRunDAO().delete(id));
+        } catch (IOException | MGXException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -220,7 +216,7 @@ public class SeqRunBean {
         boolean hasQual;
         try {
             hasQual = mgx.getSeqRunDAO().hasQuality(id);
-        } catch (MGXException ex) {
+        } catch (IOException | MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXBoolean.newBuilder().setValue(hasQual).build();
@@ -234,14 +230,15 @@ public class SeqRunBean {
         SeqRun sr = null;
         try {
             sr = mgx.getSeqRunDAO().getById(id);
-            if (sr.getDBFile() != null && !sr.getDBFile().isEmpty()) {
-                SeqReaderI r = SeqReaderFactory.getReader(sr.getDBFile());
+            File dbFile = mgx.getSeqRunDAO().getDBFile(id);
+            if (dbFile != null) {
+                SeqReaderI r = SeqReaderFactory.getReader(dbFile.getAbsolutePath());
                 if (r != null) {
                     analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality());
                     r.close();
                 }
             }
-        } catch (MGXException | SeqStoreException ex) {
+        } catch (MGXException | IOException | SeqStoreException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -250,14 +247,17 @@ public class SeqRunBean {
 
         if (analyzers != null && analyzers.length > 0) {
             File qcDir;
+            String dbFile;
             try {
+                dbFile = mgx.getSeqRunDAO().getDBFile(sr.getId()).getAbsolutePath();
                 qcDir = mgx.getProjectQCDirectory();
-            } catch (IOException ex) {
+            } catch (IOException | MGXException ex) {
                 mgx.log(ex);
                 throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
             }
-            final String prefix = qcDir.getAbsolutePath() + File.separator + sr.getId() + ".";
+            final String prefix = qcDir.getAbsolutePath() + File.separator + id + ".";
             final SeqRun run = sr;
+            final String dbFilename = dbFile;
             for (final Analyzer analyzer : analyzers) {
                 File outFile = new File(prefix + analyzer.getName());
 
@@ -268,7 +268,7 @@ public class SeqRunBean {
                         @Override
                         public void run() {
                             try {
-                                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.<DNASequenceI>getReader(run.getDBFile());
+                                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.<DNASequenceI>getReader(dbFilename);
 
                                 while (r != null && r.hasMoreElements()) {
                                     DNASequenceI h = r.nextElement();

@@ -10,10 +10,7 @@ import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
-import de.cebitec.mgx.workers.DeleteDNAExtract;
 import de.cebitec.mgx.model.db.DNAExtract;
-import de.cebitec.mgx.model.db.Sample;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -45,8 +42,6 @@ public class DNAExtractBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
-    @EJB
-    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -121,16 +116,10 @@ public class DNAExtractBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
 
-        try {
-            mgx.getDNAExtractDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteDNAExtract(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException ex) {
+            taskId = taskHolder.addTask(mgx.getDNAExtractDAO().delete(id));
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

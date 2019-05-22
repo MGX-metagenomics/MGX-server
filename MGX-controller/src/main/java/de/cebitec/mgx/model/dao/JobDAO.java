@@ -1,21 +1,25 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.gpms.util.GPMSManagedDataSourceI;
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
+import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
-import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.util.UnixHelper;
+import de.cebitec.mgx.workers.DeleteJob;
+import de.cebitec.mgx.workers.RestartJob;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,8 +34,6 @@ import java.util.Map;
  * @author sjaenick
  */
 public class JobDAO extends DAO<Job> {
-
-    private static final String[] suffices = {"", ".stdout", ".stderr"};
 
     public JobDAO(MGXController ctx) {
         super(ctx);
@@ -76,6 +78,15 @@ public class JobDAO extends DAO<Job> {
         }
 
         return obj.getId();
+    }
+
+    public TaskI delete(long id) throws IOException {
+        return new DeleteJob(id, getController().getDataSource(), getController().getProjectName(),
+                getController().getProjectJobDirectory().getAbsolutePath());
+    }
+
+    public TaskI restart(Job job, String dispHost, GPMSManagedDataSourceI ds, String projectName, JobSubmitterI js) throws IOException, MGXDispatcherException {
+        return new RestartJob(dispHost, job, ds, projectName, js);
     }
 
     @Override
@@ -329,6 +340,74 @@ public class JobDAO extends DAO<Job> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
+    private final static String BYTOOL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqrun_id, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM job j "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.tool_id=?";
+
+    @SuppressWarnings("unchecked")
+    public AutoCloseableIterator<Job> byTool(long tool_id) throws MGXException {
+        List<Job> ret = null;
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BYTOOL)) {
+                stmt.setLong(1, tool_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    Job currentJob = null;
+
+                    while (rs.next()) {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+                                job.setSeqrunId(rs.getLong(7));
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(9));
+                                jp.setNodeId(rs.getLong(10));
+                                jp.setParameterName(rs.getString(11));
+                                jp.setParameterValue(rs.getString(12));
+                                jp.setUserName(rs.getString(13));
+                                jp.setUserDescription(rs.getString(14));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
     private final static String UPDATE = "UPDATE job SET created_by=?, job_state=?, seqrun_id=?, tool_id=? "
             + "WHERE id=?";
 
@@ -391,26 +470,6 @@ public class JobDAO extends DAO<Job> {
                 conn.close();
             } catch (SQLException ex) {
                 throw new MGXException(ex);
-            }
-        }
-    }
-
-    public void delete(long id) throws MGXException {
-        String sb;
-        try {
-            sb = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
-                    .append(File.separator)
-                    .append(id).toString();
-        } catch (IOException ex) {
-            getController().log(ex.getMessage());
-            throw new MGXException(ex);
-        }
-
-        for (String suffix : suffices) {
-            try {
-                Files.deleteIfExists(Paths.get(sb + suffix));
-            } catch (IOException ex) {
-                getController().log(ex.getMessage());
             }
         }
     }
@@ -640,7 +699,7 @@ public class JobDAO extends DAO<Job> {
 
     private void fixParameters(Job job) throws MGXException {
         Tool tool = getController().getToolDAO().getById(job.getToolId());
-        String fName = tool.getXMLFile();
+        String fName = tool.getFile();
         List<JobParameter> availableParams;
 
         if (paramCache.containsKey(fName)) {

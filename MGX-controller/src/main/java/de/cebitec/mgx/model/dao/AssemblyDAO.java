@@ -3,12 +3,11 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
-import de.cebitec.mgx.model.db.Habitat;
-import de.cebitec.mgx.model.db.Sample;
+import de.cebitec.mgx.model.db.Assembly;
+import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
-import de.cebitec.mgx.workers.DeleteHabitat;
-import java.io.IOException;
+import de.cebitec.mgx.workers.DeleteAssembly;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -20,30 +19,28 @@ import java.util.List;
  *
  * @author sjaenick
  */
-public class HabitatDAO extends DAO<Habitat> {
+public class AssemblyDAO extends DAO<Assembly> {
 
-    public HabitatDAO(MGXController ctx) {
+    public AssemblyDAO(MGXController ctx) {
         super(ctx);
     }
 
     @Override
     Class getType() {
-        return Habitat.class;
+        return Assembly.class;
     }
 
-    private final static String CREATE = "INSERT INTO habitat (name, altitude, biome, description, latitude, longitude) "
-            + "VALUES (?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO assembly (name, reads_assembled, total_length, job_id) "
+            + "VALUES (?,?,?) RETURNING id";
 
     @Override
-    public long create(Habitat obj) throws MGXException {
+    public long create(Assembly obj) throws MGXException {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
-                stmt.setInt(2, obj.getAltitude());
-                stmt.setString(3, obj.getBiome());
-                stmt.setString(4, obj.getDescription());
-                stmt.setDouble(5, obj.getLatitude());
-                stmt.setDouble(6, obj.getLongitude());
+                stmt.setLong(2, obj.getReadsAssembled());
+                stmt.setLong(3, obj.getTotalLengthBp());
+                stmt.setLong(4, obj.getAsmjobId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -57,23 +54,20 @@ public class HabitatDAO extends DAO<Habitat> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE habitat SET name=?, altitude=?, biome=?, description=?, latitude=?, "
-            + "longitude=? WHERE id=?";
+    private final static String UPDATE = "UPDATE assembly SET name=?, reads_assembled=?, total_length=?, job_id=? WHERE id=?";
 
-    public void update(Habitat obj) throws MGXException {
-        if (obj.getId() == Habitat.INVALID_IDENTIFIER) {
+    public void update(Assembly obj) throws MGXException {
+        if (obj.getId() == Assembly.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
-                stmt.setInt(2, obj.getAltitude());
-                stmt.setString(3, obj.getBiome());
-                stmt.setString(4, obj.getDescription());
-                stmt.setDouble(5, obj.getLatitude());
-                stmt.setDouble(6, obj.getLongitude());
+                stmt.setLong(2, obj.getReadsAssembled());
+                stmt.setLong(3, obj.getTotalLengthBp());
+                stmt.setLong(4, obj.getAsmjobId());
 
-                stmt.setLong(7, obj.getId());
+                stmt.setLong(5, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
@@ -84,18 +78,17 @@ public class HabitatDAO extends DAO<Habitat> {
         }
     }
 
-    public TaskI delete(long id) throws MGXException, IOException {
+    public TaskI delete(long id) throws MGXException {
         List<TaskI> subtasks = new ArrayList<>();
-        try (AutoCloseableIterator<Sample> iter = getController().getSampleDAO().byHabitat(id)) {
+        try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
             while (iter.hasNext()) {
-                Sample s = iter.next();
-                TaskI del = getController().getSampleDAO().delete(s.getId());
+                Bin s = iter.next();
+                TaskI del = getController().getBinDAO().delete(s.getId());
                 subtasks.add(del);
             }
         }
-        return new DeleteHabitat(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        return new DeleteAssembly(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
     }
-
 //    public void delete(long id) throws MGXException {
 //        try (Connection conn = getConnection()) {
 //            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM habitat WHERE id=?")) {
@@ -109,11 +102,11 @@ public class HabitatDAO extends DAO<Habitat> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, altitude, biome, description, latitude, longitude FROM habitat";
-    private static final String BY_ID = "SELECT name, altitude, biome, description, latitude, longitude FROM habitat WHERE id=?";
+    private static final String FETCHALL = "SELECT id, name, reads_assembled, total_length, job_id FROM assembly";
+    private static final String BY_ID = "SELECT id, name, reads_assembled, total_length, job_id FROM assembly WHERE id=?";
 
     @Override
-    public Habitat getById(long id) throws MGXException {
+    public Assembly getById(long id) throws MGXException {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
@@ -123,14 +116,12 @@ public class HabitatDAO extends DAO<Habitat> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        Habitat ret = new Habitat();
-                        ret.setId(id);
-                        ret.setName(rs.getString(1));
-                        ret.setAltitude(rs.getInt(2));
-                        ret.setBiome(rs.getString(3));
-                        ret.setDescription(rs.getString(4));
-                        ret.setLatitude(rs.getDouble(5));
-                        ret.setLongitude(rs.getDouble(6));
+                        Assembly ret = new Assembly();
+                        ret.setId(rs.getLong(1));
+                        ret.setName(rs.getString(2));
+                        ret.setReadsAssembled(rs.getLong(3));
+                        ret.setTotalLengthBp(rs.getLong(4));
+                        ret.setAsmjobId(rs.getLong(5));
                         return ret;
                     }
                 }
@@ -142,22 +133,21 @@ public class HabitatDAO extends DAO<Habitat> {
         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<Habitat> getAll() throws MGXException {
+    public AutoCloseableIterator<Assembly> getAll() throws MGXException {
 
-        List<Habitat> l = null;
+        List<Assembly> l = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
-                        Habitat ret = new Habitat();
+                        Assembly ret = new Assembly();
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
-                        ret.setAltitude(rs.getInt(3));
-                        ret.setBiome(rs.getString(4));
-                        ret.setDescription(rs.getString(5));
-                        ret.setLatitude(rs.getDouble(6));
-                        ret.setLongitude(rs.getDouble(7));
+                        ret.setReadsAssembled(rs.getLong(3));
+                        ret.setTotalLengthBp(rs.getLong(4));
+                        ret.setAsmjobId(rs.getLong(5));
+
                         if (l == null) {
                             l = new ArrayList<>();
                         }

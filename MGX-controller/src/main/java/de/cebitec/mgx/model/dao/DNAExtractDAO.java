@@ -2,9 +2,14 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.DNAExtract;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.workers.DeleteDNAExtract;
+import de.cebitec.mgx.workers.DeleteSeqRun;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -88,21 +93,34 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
         }
     }
 
-    public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
-                stmt.setLong(1, id);
-                int numRows = stmt.executeUpdate();
-                if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-                }
+    public TaskI delete(long extractID) throws MGXException, IOException {
+
+        List<TaskI> subtasks = new ArrayList<>();
+        try (AutoCloseableIterator<SeqRun> iter = getController().getSeqRunDAO().byDNAExtract(extractID)) {
+            while (iter.hasNext()) {
+                SeqRun run = iter.next();
+                TaskI delRun = getController().getSeqRunDAO().delete(run.getId());
+                subtasks.add(delRun);
             }
-        } catch (SQLException ex) {
-            getController().log(ex);
-            throw new MGXException(ex);
         }
+        return new DeleteDNAExtract(extractID, getController().getDataSource(), 
+                getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
     }
 
+//    public void delete(long id) throws MGXException {
+//        try (Connection conn = getConnection()) {
+//            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
+//                stmt.setLong(1, id);
+//                int numRows = stmt.executeUpdate();
+//                if (numRows != 1) {
+//                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+//                }
+//            }
+//        } catch (SQLException ex) {
+//            getController().log(ex);
+//            throw new MGXException(ex);
+//        }
+//    }
     private final static String BY_ID = "SELECT id, name, description, fiveprimer, method, protocol, "
             + "targetfragment, targetgene, threeprimer, sample_id "
             + "FROM dnaextract WHERE id=?";
@@ -191,7 +209,6 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
         List<DNAExtract> ret = null;
 
 //        final Sample sample = getController().getSampleDAO().getById(sample_id);
-
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SAMPLE)) {
                 stmt.setLong(1, sample_id);

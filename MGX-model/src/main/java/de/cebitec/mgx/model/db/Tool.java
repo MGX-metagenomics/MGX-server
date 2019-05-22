@@ -13,7 +13,8 @@ public class Tool extends Identifiable {
     protected Float version;
     protected String author;
     protected String url;
-    protected String xml_file;
+    protected String file;
+    protected String scope;
 
     public String getAuthor() {
         return author;
@@ -60,13 +61,22 @@ public class Tool extends Identifiable {
         return this;
     }
 
-    public String getXMLFile() {
-        return xml_file;
+    public String getFile() {
+        return file;
     }
 
-    public Tool setXMLFile(String xml_file) {
-        this.xml_file = xml_file;
+    public Tool setFile(String file) {
+        this.file = file;
         return this;
+    }
+
+    // either 'read' or 'assembly'
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
     }
 
     @Override

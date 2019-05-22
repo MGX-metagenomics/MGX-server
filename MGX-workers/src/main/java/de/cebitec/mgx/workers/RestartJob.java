@@ -1,12 +1,12 @@
 package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
-import de.cebitec.mgx.model.db.JobState;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;

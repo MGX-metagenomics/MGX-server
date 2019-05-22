@@ -29,11 +29,13 @@ public class MGXControllerImpl implements MGXController {
     private final File pluginDump;
     private final JDBCMasterI gpmsmaster;
     private final GPMSManagedDataSourceI dataSource;
+    private File projectSeqRunDir = null;
     private File projectDir = null;
     private File projectQCDir = null;
     private File projectFileDir = null;
     private File projectJobDir = null;
     private File projectReferencesDir = null;
+    private File projectAsmDir = null;
     //
     private final File persistentDir;
     //
@@ -99,6 +101,23 @@ public class MGXControllerImpl implements MGXController {
         }
         projectDir = targetDir;
         return projectDir;
+    }
+
+    @Override
+    public File getProjectSeqRunDirectory() throws IOException {
+        if (projectSeqRunDir != null) {
+            return projectSeqRunDir;
+        }
+
+        File fileDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "seqruns");
+        if (!fileDir.exists()) {
+            UnixHelper.createDirectory(fileDir);
+        }
+        if (!UnixHelper.isGroupWritable(fileDir)) {
+            UnixHelper.makeDirectoryGroupWritable(fileDir.getAbsolutePath());
+        }
+        projectSeqRunDir = fileDir;
+        return projectSeqRunDir;
     }
 
     @Override
@@ -170,6 +189,23 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public File getProjectAssemblyDirectory() throws IOException {
+        if (projectAsmDir != null) {
+            return projectAsmDir;
+        }
+
+        File asmDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "assemblies");
+        if (!asmDir.exists()) {
+            UnixHelper.createDirectory(asmDir);
+        }
+        if (!UnixHelper.isGroupWritable(asmDir)) {
+            UnixHelper.makeDirectoryGroupWritable(asmDir.getAbsolutePath());
+        }
+        projectAsmDir = asmDir;
+        return projectAsmDir;
+    }
+
+    @Override
     public final GPMSManagedDataSourceI getDataSource() {
         return dataSource;
     }
@@ -199,7 +235,27 @@ public class MGXControllerImpl implements MGXController {
         }
         dataSource.close(this); // unsubscribe
     }
+    
+    @Override
+    public AssemblyDAO getAssemblyDAO() {
+        return new AssemblyDAO(this);
+    }
 
+    @Override
+    public BinDAO getBinDAO() {
+        return new BinDAO(this);
+    }
+
+    @Override
+    public ContigDAO getContigDAO() {
+        return new ContigDAO(this);
+    }
+
+    @Override
+    public FileDAO getFileDAO() {
+        return new FileDAO(this);
+    }
+    
     @Override
     public HabitatDAO getHabitatDAO() {
         return new HabitatDAO(this);
@@ -279,7 +335,7 @@ public class MGXControllerImpl implements MGXController {
     public String getCurrentUser() {
         return user.getLogin();
     }
-    
+
     void setCurrentUser(UserI user) {
         this.user = user;
     }

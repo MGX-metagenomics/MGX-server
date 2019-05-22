@@ -19,13 +19,11 @@ import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import de.cebitec.mgx.workers.DeleteTool;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -56,8 +54,6 @@ public class ToolBean {
     MGXConfigurationI mgxconfig;
     @EJB
     MGXGlobal global;
-    @EJB
-    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")
@@ -103,21 +99,29 @@ public class ToolBean {
     @GET
     @Path("getXML/{id}")
     @Produces("application/x-protobuf")
+    @Deprecated
     public MGXString getXML(@PathParam("id") Long tool_id) {
+        return getContent(tool_id);
+    }
+
+    @GET
+    @Path("getContent/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString getContent(@PathParam("id") Long tool_id) {
         Tool obj = null;
         try {
             obj = mgx.getToolDAO().getById(tool_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-        File f = new File(obj.getXMLFile());
-        String xmlData = null;
+        File f = new File(obj.getFile());
+        String fileContents = null;
         try {
-            xmlData = UnixHelper.readFile(f);
+            fileContents = UnixHelper.readFile(f);
         } catch (IOException ex) {
             Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
         }
-        return MGXString.newBuilder().setValue(xmlData).build();
+        return MGXString.newBuilder().setValue(fileContents).build();
     }
 
     @GET
@@ -170,7 +174,12 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId = taskHolder.addTask(new DeleteTool(mgx.getDataSource(), id, mgx.getProjectName(), mappingSessions));
+        UUID taskId;
+        try {
+            taskId = taskHolder.addTask(mgx.getToolDAO().delete(id));
+        } catch (MGXException | IOException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -207,7 +216,7 @@ public class ToolBean {
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
             Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
-            String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
+            String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
             return getParams(toolXMLData);
         } catch (MGXGlobalException | MGXException | IOException ex) {
             mgx.log(ex);

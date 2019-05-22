@@ -1,12 +1,13 @@
 package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import gnu.trove.procedure.TLongProcedure;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -21,19 +22,16 @@ import java.util.logging.Logger;
 public class DeleteMapping extends TaskI {
 
     private final long id;
-    private final MappingSessions sessions;
+    private final String projectJobDir;
 
-    public DeleteMapping(Long mapId, GPMSManagedDataSourceI dataSource, String projName, MappingSessions sessions) {
+    public DeleteMapping(long mapId, GPMSManagedDataSourceI dataSource, String projName, String jobDir) {
         super(projName, dataSource);
-        this.sessions = sessions;
         id = mapId;
+        this.projectJobDir = jobDir;
     }
 
     @Override
     public void process() {
-
-        // abort any sessions referring to this mapping
-        sessions.abort(id);
 
         TLongSet jobs = new TLongHashSet();
         try (Connection conn = getConnection()) {
@@ -62,7 +60,7 @@ public class DeleteMapping extends TaskI {
                 jobs.forEach(new TLongProcedure() {
                     @Override
                     public boolean execute(long jobId) {
-                        TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), sessions);
+                        TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), projectJobDir);
                         delJob.addPropertyChangeListener(DeleteMapping.this);
                         delJob.run();
                         delJob.removePropertyChangeListener(DeleteMapping.this);

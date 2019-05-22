@@ -21,8 +21,15 @@ public interface MGXController extends AutoCloseable {
     public void log(String msg, Object... args);
 
 //    public MGXConfigurationI getConfiguration();
-    
     public File getPluginDump();
+
+    public AssemblyDAO getAssemblyDAO();
+
+    public BinDAO getBinDAO();
+    
+    public ContigDAO getContigDAO();
+
+    public FileDAO getFileDAO();
 
     public HabitatDAO getHabitatDAO();
 
@@ -62,6 +69,8 @@ public interface MGXController extends AutoCloseable {
 
     public File getProjectDirectory() throws IOException;
 
+    public File getProjectSeqRunDirectory() throws IOException;
+
     public File getProjectQCDirectory() throws IOException;
 
     public File getProjectFileDirectory() throws IOException;
@@ -69,6 +78,8 @@ public interface MGXController extends AutoCloseable {
     public File getProjectReferencesDirectory() throws IOException;
 
     public File getProjectJobDirectory() throws IOException;
+
+    public File getProjectAssemblyDirectory() throws IOException;
 
     public String getDatabaseHost();
 

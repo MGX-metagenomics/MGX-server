@@ -107,12 +107,11 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             // commit pending data
             flush.complete();
 
-            String sql = "UPDATE seqrun SET dbfile=?, num_sequences=? WHERE id=?";
+            String sql = "UPDATE seqrun SET num_sequences=? WHERE id=?";
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                    stmt.setString(1, file.getCanonicalPath());
-                    stmt.setLong(2, total_num_sequences);
-                    stmt.setLong(3, runId);
+                    stmt.setLong(1, total_num_sequences);
+                    stmt.setLong(2, runId);
                     stmt.executeUpdate();
                 }
             }

@@ -1,7 +1,6 @@
 package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -20,16 +19,25 @@ import java.util.logging.Logger;
 public class DeleteReference extends TaskI {
 
     private final long id;
-    private final MappingSessions sessions;
+    private final String projectJobDir;
+    private final TaskI[] subtasks;
 
-    public DeleteReference(GPMSManagedDataSourceI dataSource, long id, String projName, MappingSessions sessions) {
+    public DeleteReference(long id, GPMSManagedDataSourceI dataSource, String projName, String jobDir, TaskI... subtasks) {
         super(projName, dataSource);
         this.id = id;
-        this.sessions = sessions;
+        this.projectJobDir = jobDir;
+        this.subtasks = subtasks;
     }
 
     @Override
     public void process() {
+        
+        for (TaskI subtask : subtasks) {
+            subtask.addPropertyChangeListener(this);
+            subtask.run();
+            subtask.removePropertyChangeListener(this);
+        }
+
         List<Long> mappings = new ArrayList<>();
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM mapping WHERE ref_id=?")) {
@@ -47,7 +55,7 @@ public class DeleteReference extends TaskI {
 
         // delete mappings
         for (Long mapId : mappings) {
-            TaskI delJob = new DeleteMapping(mapId, getDataSource(), getProjectName(), sessions);
+            TaskI delJob = new DeleteMapping(mapId, getDataSource(), getProjectName(), projectJobDir);
             delJob.addPropertyChangeListener(this);
             delJob.run();
             delJob.removePropertyChangeListener(this);

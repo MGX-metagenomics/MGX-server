@@ -1,12 +1,14 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.dispatcher.common.api.MGXInsufficientJobConfigurationException;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -19,8 +21,6 @@ import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
-import de.cebitec.mgx.workers.DeleteJob;
-import de.cebitec.mgx.workers.RestartJob;
 import de.cebitec.mgx.model.db.*;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -96,7 +96,7 @@ public class JobBean {
 
                 // fetch default parameters for the tool
                 Set<JobParameter> defaultParams = new HashSet<>();
-                String toolXMLData = UnixHelper.readFile(new File(t.getXMLFile()));
+                String toolXMLData = UnixHelper.readFile(new File(t.getFile()));
                 AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
                 while (jpIter.hasNext()) {
                     JobParameter jp = jpIter.next();
@@ -142,7 +142,7 @@ public class JobBean {
         Set<JobParameter> defaultParams = new HashSet<>();
         try {
             Tool tool = mgx.getToolDAO().getById(j.getToolId());
-            String toolXMLData = UnixHelper.readFile(new File(tool.getXMLFile()));
+            String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
             AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
             while (jpIter.hasNext()) {
                 defaultParams.add(jpIter.next());
@@ -309,16 +309,14 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString restart(@PathParam("id") Long id) {
-        Job job;
         try {
-            job = mgx.getJobDAO().getById(id);
+            Job job = mgx.getJobDAO().getById(id);
             JobState status = job.getStatus();
             if (status != JobState.FAILED && status != JobState.ABORTED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            RestartJob dJob = new RestartJob(dispConfig.getDispatcherHost(),
-                    job, mgx.getDataSource(), mgx.getProjectName(), js);
-            UUID taskId = taskHolder.addTask(dJob);
+            TaskI t = mgx.getJobDAO().restart(job, dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), js);
+            UUID taskId = taskHolder.addTask(t);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
@@ -411,16 +409,12 @@ public class JobBean {
             }
         }
 
-        // remove persistent files
+        UUID taskId;
         try {
-            mgx.getJobDAO().delete(id);
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
+            taskId = taskHolder.addTask(mgx.getJobDAO().delete(id));
+        } catch (IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
-
-        DeleteJob dJob = new DeleteJob(id, mgx.getDataSource(), mgx.getProjectName(), mappingSessions);
-        UUID taskId = taskHolder.addTask(dJob);
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 

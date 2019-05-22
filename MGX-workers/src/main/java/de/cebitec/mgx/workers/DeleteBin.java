@@ -13,12 +13,12 @@ import java.util.logging.Logger;
  *
  * @author sjaenick
  */
-public final class DeleteDNAExtract extends TaskI {
+public final class DeleteBin extends TaskI {
 
     private final long id;
     private final TaskI[] subtasks;
 
-    public DeleteDNAExtract(long id, GPMSManagedDataSourceI dataSource, String projName, TaskI... subtasks) {
+    public DeleteBin(GPMSManagedDataSourceI dataSource, long id, String projName, TaskI... subtasks) {
         super(projName, dataSource);
         this.id = id;
         this.subtasks = subtasks;
@@ -34,32 +34,32 @@ public final class DeleteDNAExtract extends TaskI {
         }
 
         try {
-            String extractName = null;
+            String name = null;
             try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM dnaextract WHERE id=?")) {
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM bin WHERE id=?")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
-                            extractName = rs.getString(1);
+                            name = rs.getString(1);
                         }
                     }
                 }
             }
-
-            if (extractName != null) {
-                setStatus(TaskI.State.PROCESSING, "Deleting DNA extract " + extractName);
+            if (name != null) {
+                setStatus(TaskI.State.PROCESSING, "Deleting bin " + name);
             }
+
             try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM dnaextract WHERE id=?")) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM bin WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
                 }
             }
-            if (extractName != null) {
-                setStatus(TaskI.State.FINISHED, extractName + " deleted");
+            if (name != null) {
+                setStatus(TaskI.State.FINISHED, name + " deleted");
             }
         } catch (SQLException e) {
-            Logger.getLogger(DeleteDNAExtract.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(DeleteBin.class.getName()).log(Level.SEVERE, null, e);
             setStatus(TaskI.State.FAILED, e.getMessage());
         }
     }

@@ -1,9 +1,9 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.AttributeType;
-import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;

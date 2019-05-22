@@ -9,20 +9,22 @@ import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author sjaenick
  */
 public class SequenceDAO extends DAO<Sequence> {
-
-    private static final String GET_SEQRUN = "SELECT s.dbfile, r.name FROM seqrun s RIGHT JOIN read r ON (s.id = r.seqrun_id) WHERE r.id=?";
 
     public SequenceDAO(MGXController ctx) {
         super(ctx);
@@ -57,6 +59,8 @@ public class SequenceDAO extends DAO<Sequence> {
         return obj.getId();
     }
 
+    private static final String GET_SEQRUN = "SELECT r.seqrun_id, r.name FROM read r WHERE r.id=?";
+
     @Override
     @SuppressWarnings("unchecked")
     public Sequence getById(long id) throws MGXException {
@@ -64,14 +68,14 @@ public class SequenceDAO extends DAO<Sequence> {
             throw new MGXException("No/Invalid ID supplied.");
         }
         // find the storage file for this sequence
-        String dbFile = null;
+        long seqrun_id = -1;
         String seqName = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(GET_SEQRUN)) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        dbFile = rs.getString(1);
+                        seqrun_id = rs.getLong(1);
                         seqName = rs.getString(2);
                     }
                 }
@@ -79,6 +83,13 @@ public class SequenceDAO extends DAO<Sequence> {
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
+        }
+        
+        String dbFile = null;
+        try {
+            dbFile = getController().getSeqRunDAO().getDBFile(seqrun_id).getAbsolutePath();
+        } catch (IOException ex) {
+            Logger.getLogger(SequenceDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         if (dbFile == null || dbFile.isEmpty() || seqName == null || seqName.isEmpty()) {

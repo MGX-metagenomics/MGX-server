@@ -10,7 +10,6 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
-import de.cebitec.mgx.workers.DeleteSample;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -125,16 +124,10 @@ public class SampleBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
 
-        try {
-            mgx.getSampleDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-        
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(new DeleteSample(id, mgx.getDataSource(), mgx.getProjectName(), mgx.getProjectDirectory(), mappingSessions));
-        } catch (IOException ex) {
+            taskId = taskHolder.addTask(mgx.getSampleDAO().delete(id));
+        } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

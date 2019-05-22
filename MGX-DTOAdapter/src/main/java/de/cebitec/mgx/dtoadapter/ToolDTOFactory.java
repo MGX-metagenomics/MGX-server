@@ -32,6 +32,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setVersion(s.getVersion())
                 .setAuthor(s.getAuthor())
                 .setUrl(s.getUrl())
+                .setScope(s.getScope())
                 .build();
         // we don't expose the xml here..
     }
@@ -43,8 +44,9 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setVersion(dto.getVersion())
                 .setAuthor(dto.getAuthor())
                 .setUrl(dto.getUrl())
-                .setXMLFile(dto.getXml()); // not a file, but raw XML
+                .setFile(dto.getXml()); // not a file, but raw XML
 
+        t.setScope(dto.getScope());
         if (copyID && dto.hasId()) {
             t.setId(dto.getId());
         }

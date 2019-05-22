@@ -36,7 +36,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setSeqrunId(j.getSeqrunId())
                 .setToolId(j.getToolId())
                 .setCreator(j.getCreator())
-                .setState(JobDTO.JobState.valueOf(j.getStatus().getValue()));
+                .setState(JobDTO.JobState.forNumber(j.getStatus().getValue()));
 
         AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
         b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(acit));

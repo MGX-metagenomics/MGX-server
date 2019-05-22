@@ -2,7 +2,6 @@ package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -22,13 +21,13 @@ public final class DeleteSeqRun extends TaskI {
 
     private final long id;
     private final File projectDir;
-    private final MappingSessions mappingSessions;
+    private final String dbFile;
 
-    public DeleteSeqRun(long id, GPMSManagedDataSourceI dataSource, String projName, File projectDir, MappingSessions mappingSessions) {
+    public DeleteSeqRun(long id, GPMSManagedDataSourceI dataSource, String projName, File projectDir, String dbFile) {
         super(projName, dataSource);
         this.id = id;
         this.projectDir = projectDir;
-        this.mappingSessions = mappingSessions;
+        this.dbFile = dbFile;
     }
 
     @Override
@@ -70,7 +69,7 @@ public final class DeleteSeqRun extends TaskI {
         // delete jobs
         if (jobs != null) {
             for (Long jobId : jobs) {
-                TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), mappingSessions);
+                TaskI delJob = new DeleteJob(jobId, getDataSource(), getProjectName(), projectDir + File.separator + "jobs");
                 delJob.addPropertyChangeListener(this);
                 delJob.run();
                 delJob.removePropertyChangeListener(this);
@@ -79,14 +78,12 @@ public final class DeleteSeqRun extends TaskI {
 
         try {
             String runName = null;
-            String dBFile = null;
             try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT name, dbfile FROM seqrun WHERE id=?")) {
+                try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM seqrun WHERE id=?")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             runName = rs.getString(1);
-                            dBFile = rs.getString(2);
                         }
                     }
                 }
@@ -94,8 +91,8 @@ public final class DeleteSeqRun extends TaskI {
             setStatus(TaskI.State.PROCESSING, "Deleting sequencing run " + runName);
 
             // remove persistent storage file
-            if (dBFile != null) {
-                SeqReaderFactory.delete(dBFile);
+            if (dbFile != null) {
+                SeqReaderFactory.delete(dbFile);
             }
 
             try (Connection conn = getConnection()) {

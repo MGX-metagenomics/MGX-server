@@ -32,7 +32,7 @@ public class GlobalToolDAO {
     public AutoCloseableIterator<Tool> getAll() throws MGXGlobalException {
         List<Tool> tools = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, xml_file FROM tool")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Tool t = new Tool();
@@ -42,7 +42,8 @@ public class GlobalToolDAO {
                         t.setName(rs.getString(4));
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
-                        t.setXMLFile(rs.getString(7));
+                        t.setFile(rs.getString(7));
+                        t.setScope(rs.getString(8));
                         tools.add(t);
                     }
                 }
@@ -57,7 +58,7 @@ public class GlobalToolDAO {
     public Tool getById(Long id) throws MGXGlobalException {
         Tool t = null;
         try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT author, description, name, url, version, xml_file FROM tool WHERE id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -68,7 +69,8 @@ public class GlobalToolDAO {
                         t.setName(rs.getString(3));
                         t.setUrl(rs.getString(4));
                         t.setVersion(rs.getFloat(5));
-                        t.setXMLFile(rs.getString(6));
+                        t.setFile(rs.getString(6));
+                        t.setScope(rs.getString(7));
                     }
                 }
             }

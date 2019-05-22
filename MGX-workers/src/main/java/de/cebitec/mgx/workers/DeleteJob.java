@@ -1,7 +1,6 @@
 package de.cebitec.mgx.workers;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.core.TaskI;
 import java.io.File;
 import java.sql.Connection;
@@ -17,40 +16,32 @@ import java.util.logging.Logger;
  */
 public final class DeleteJob extends TaskI {
 
+    private static final String[] suffices = {"", ".stdout", ".stderr"};
     private final long id;
-    private final MappingSessions mapSessions;
+    private final String jobdir;
 
-    public DeleteJob(long id, GPMSManagedDataSourceI dataSource, String projName, MappingSessions mapSessions) {
+    public DeleteJob(long id, GPMSManagedDataSourceI dataSource, String projName, String jobDir) {
         super(projName, dataSource);
         this.id = id;
-        this.mapSessions = mapSessions;
+        this.jobdir = jobDir;
     }
 
     @Override
     public void process() {
         try {
 
-//            // delete observations
-//            setStatus(TaskI.State.PROCESSING, "Deleting observations");
-//            String delObs = "DELETE FROM observation WHERE ctid = any(array(SELECT ctid FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?) LIMIT 5000))";
-//            int rowsAffected;
-//            //
-//            // delete in chunks to make sure the DB connections gets returned
-//            // to the pool in a timely manner
-//            //
-//            do {
-//                try (Connection conn = getConnection()) {
-//                    try (PreparedStatement stmt = conn.prepareStatement(delObs)) {
-//                        stmt.setLong(1, id);
-//                        //long duration = System.currentTimeMillis();
-//                        rowsAffected = stmt.executeUpdate();
-//                        //duration = System.currentTimeMillis() - duration;
-//                        //System.err.println(rowsAffected + " observations purged in " + duration + "ms.");
-//                    }
-//                }
-//            } while (rowsAffected > 0);
-            
-//            // delete observations
+            String sb;
+            sb = new StringBuilder(jobdir)
+                    .append(File.separator)
+                    .append(id).toString();
+
+            for (String suffix : suffices) {
+                File f = new File(sb + suffix);
+                if (f.exists()) {
+                    f.delete();
+                }
+            }
+
             setStatus(TaskI.State.PROCESSING, "Deleting observations");
             try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
@@ -80,17 +71,12 @@ public final class DeleteJob extends TaskI {
             // delete mappings
             setStatus(TaskI.State.PROCESSING, "Deleting mapping data for job " + id);
             try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING id, bam_file")) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
                     stmt.setLong(1, id);
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
-
-                            // abort any sessions that might use this mapping
-                            long mappingId = rs.getLong(1);
-                            mapSessions.abort(mappingId);
-
                             // remove persistent data
-                            String bamName = rs.getString(2);
+                            String bamName = rs.getString(1);
                             File bamFile = new File(bamName);
                             if (bamFile.exists()) {
                                 bamFile.delete();
