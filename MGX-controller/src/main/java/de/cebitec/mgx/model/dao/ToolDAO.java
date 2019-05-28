@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
@@ -56,7 +57,7 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(4, obj.getUrl());
                 stmt.setFloat(5, obj.getVersion());
                 stmt.setString(6, obj.getFile());
-                stmt.setString(7, obj.getScope());
+                stmt.setInt(7, obj.getScope().getValue());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -121,7 +122,7 @@ public class ToolDAO extends DAO<Tool> {
                     t.setUrl(rs.getString(5));
                     t.setVersion(rs.getFloat(6));
                     t.setFile(rs.getString(7));
-                    t.setScope(rs.getString(8));
+                    t.setScope(ToolScope.values()[rs.getInt(8)]);
 
                     return t;
                 }
@@ -150,7 +151,7 @@ public class ToolDAO extends DAO<Tool> {
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
                         t.setFile(rs.getString(7));
-                        t.setScope(rs.getString(8));
+                        t.setScope(ToolScope.values()[rs.getInt(8)]);
                         tools.add(t);
                     }
                 }
@@ -179,7 +180,7 @@ public class ToolDAO extends DAO<Tool> {
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
                         t.setFile(rs.getString(7));
-                        t.setScope(rs.getString(8));
+                        t.setScope(ToolScope.values()[rs.getInt(8)]);
                         return t;
                     }
                 }
@@ -205,7 +206,7 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(4, obj.getUrl());
                 stmt.setFloat(5, obj.getVersion());
                 stmt.setString(6, obj.getFile());
-                stmt.setString(7, obj.getScope());
+                stmt.setInt(7, obj.getScope().getValue());
                 stmt.setLong(8, obj.getId());
                 stmt.executeUpdate();
             }

@@ -1,12 +1,5 @@
 package de.cebitec.mgx.jobsubmitter;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.ClientResponse.Status;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import java.io.*;
@@ -18,6 +11,15 @@ import javax.ejb.Stateless;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
+import java.util.concurrent.TimeUnit;
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import org.glassfish.jersey.client.ClientConfig;
 
 /**
  *
@@ -63,20 +65,23 @@ public class JobSubmitterImpl implements JobSubmitterI {
         delete(dispatcherHost, "delete", MGX_CLASS, projectName, String.valueOf(jobId));
     }
 
-    private WebResource getWebResource(Host target) throws MGXDispatcherException {
+    private WebTarget getWebResource(Host target) throws MGXDispatcherException {
         if (target == null) {
             throw new MGXDispatcherException("Invalid null target!");
         }
 
         if (currentClient == null || (currentHost != null && !currentHost.equals(target))) {
             currentHost = target;
-            ClientConfig cc = new DefaultClientConfig();
-            cc.getClasses().add(TextPlainReader.class);
-            cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, 5_000); // in ms
-            cc.getProperties().put(ClientConfig.PROPERTY_READ_TIMEOUT, 30_000); // in ms
-            currentClient = Client.create(cc);
+            ClientConfig cc = new ClientConfig();
+            cc.register(TextPlainReader.class);
+
+            currentClient = ClientBuilder.newBuilder()
+                    .withConfig(cc)
+                    .connectTimeout(5_000, TimeUnit.MILLISECONDS)
+                    .readTimeout(30_000, TimeUnit.MILLISECONDS)
+                    .build();
         }
-        return currentClient.resource(getBaseURI(target));
+        return currentClient.target(getBaseURI(target));
     }
 
     private static URI getBaseURI(Host target) throws MGXDispatcherException {
@@ -87,12 +92,12 @@ public class JobSubmitterImpl implements JobSubmitterI {
         return UriBuilder.fromUri(uri).build();
     }
 
-    protected final <U> U put(Host target, final String path, Object obj, Class<U> c) throws MGXDispatcherException {
-        try {
-            ClientResponse res = buildPath(target, path).put(ClientResponse.class, obj);
+    protected final <U> U put(Host target, final String path, Object obj, Class<U> targetClass) throws MGXDispatcherException {
+        Invocation.Builder buildPath = buildPath(target, path);
+        try (Response res = buildPath.put(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE))) {
             catchException(res);
-            return res.<U>getEntity(c);
-        } catch (ClientHandlerException che) {
+            return res.readEntity(targetClass);
+        } catch (ProcessingException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
                 throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
@@ -101,12 +106,12 @@ public class JobSubmitterImpl implements JobSubmitterI {
         }
     }
 
-    protected final <U> U get(Host target, Class<U> c, final String... path) throws MGXDispatcherException {
-        try {
-            ClientResponse res = buildPath(target, path).get(ClientResponse.class);
+    protected final <U> U get(Host target, Class<U> targetClass, final String... path) throws MGXDispatcherException {
+        Invocation.Builder buildPath = buildPath(target, path);
+        try (Response res = buildPath.get(Response.class)) {
             catchException(res);
-            return res.<U>getEntity(c);
-        } catch (ClientHandlerException che) {
+            return res.readEntity(targetClass);
+        } catch (ProcessingException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
                 throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
@@ -116,10 +121,11 @@ public class JobSubmitterImpl implements JobSubmitterI {
     }
 
     protected final void delete(Host target, final String... path) throws MGXDispatcherException {
+        Invocation.Builder buildPath = buildPath(target, path);
         try {
-            ClientResponse res = buildPath(target, path).delete(ClientResponse.class);
+            Response res = buildPath.delete(Response.class);
             catchException(res);
-        } catch (ClientHandlerException che) {
+        } catch (ProcessingException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
                 throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
@@ -129,10 +135,11 @@ public class JobSubmitterImpl implements JobSubmitterI {
     }
 
     protected final <U> void post(Host target, U obj, final String... path) throws MGXDispatcherException {
+        Invocation.Builder buildPath = buildPath(target, path);
         try {
-            ClientResponse res = buildPath(target, path).post(ClientResponse.class, obj);
+            Response res = buildPath.post(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE));
             catchException(res);
-        } catch (ClientHandlerException che) {
+        } catch (ProcessingException che) {
             if (che.getCause() != null && che.getCause() instanceof Exception) {
                 throw new MGXDispatcherException(che.getCause().getMessage());
             } else {
@@ -141,34 +148,33 @@ public class JobSubmitterImpl implements JobSubmitterI {
         }
     }
 
-    protected final void catchException(final ClientResponse res) throws MGXDispatcherException {
-        if (res == null) {
-            throw new MGXDispatcherException("No server response received.");
-        }
-        if (Status.fromStatusCode(res.getStatus()) != Status.OK) {
+    protected final void catchException(final Response res) throws MGXDispatcherException {
+        if (Response.Status.fromStatusCode(res.getStatus()) != Response.Status.OK) {
             StringBuilder msg = new StringBuilder();
-            String buf;
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(res.getEntityInputStream()))) {
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(res.readEntity(InputStream.class)))) {
+                String buf;
                 while ((buf = r.readLine()) != null) {
                     msg.append(buf);
                     msg.append(System.lineSeparator());
                 }
             } catch (IOException ex) {
-                Logger.getLogger(JobSubmitterImpl.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
             }
-            throw new MGXDispatcherException(msg.toString());
+            throw new MGXDispatcherException(msg.toString().trim());
         }
     }
 
-    private WebResource.Builder buildPath(Host host, String... pathComponents) throws MGXDispatcherException {
-        WebResource wr = getWebResource(host);
+    private Invocation.Builder buildPath(Host host, String... pathComponents) throws MGXDispatcherException {
+        WebTarget wr = getWebResource(host);
         try {
             for (String s : pathComponents) {
                 wr = wr.path(URLEncoder.encode(s, "UTF-8"));
             }
+            //System.err.println(wr.getURI().toASCIIString());
+
+            return wr.request(MediaType.TEXT_PLAIN_TYPE).accept(MediaType.TEXT_PLAIN_TYPE);
         } catch (UnsupportedEncodingException ex) {
-            throw new MGXDispatcherException(ex.getMessage());
+            throw new RuntimeException(ex);
         }
-        return wr.accept(MediaType.TEXT_PLAIN_TYPE);
     }
 }

@@ -1,5 +1,6 @@
 package de.cebitec.mgx.dtoadapter;
 
+import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.dto.dto.ToolDTO;
 import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.model.db.Tool;
@@ -32,7 +33,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setVersion(s.getVersion())
                 .setAuthor(s.getAuthor())
                 .setUrl(s.getUrl())
-                .setScope(s.getScope())
+                .setScope(ToolDTO.ToolScope.forNumber(s.getScope().getValue()))
                 .build();
         // we don't expose the xml here..
     }
@@ -46,7 +47,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setUrl(dto.getUrl())
                 .setFile(dto.getXml()); // not a file, but raw XML
 
-        t.setScope(dto.getScope());
+        t.setScope(ToolScope.values()[dto.getScope().ordinal()]);
         if (copyID && dto.hasId()) {
             t.setId(dto.getId());
         }

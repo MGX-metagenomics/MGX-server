@@ -1,5 +1,7 @@
 package de.cebitec.mgx.model.db;
 
+import de.cebitec.mgx.common.ToolScope;
+
 
 /**
  *
@@ -14,7 +16,7 @@ public class Tool extends Identifiable {
     protected String author;
     protected String url;
     protected String file;
-    protected String scope;
+    protected ToolScope scope;
 
     public String getAuthor() {
         return author;
@@ -71,11 +73,11 @@ public class Tool extends Identifiable {
     }
 
     // either 'read' or 'assembly'
-    public String getScope() {
+    public ToolScope getScope() {
         return scope;
     }
 
-    public void setScope(String scope) {
+    public void setScope(ToolScope scope) {
         this.scope = scope;
     }
 

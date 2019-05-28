@@ -47,7 +47,7 @@
     </modules>
     
     <properties>
-        <eeapi.version>8.0</eeapi.version>
+        <eeapi.version>8.0.1</eeapi.version>
     </properties>
 
 

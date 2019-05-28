@@ -5,6 +5,7 @@
  */
 package de.cebitec.mgx.global;
 
+import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -43,7 +44,7 @@ public class GlobalToolDAO {
                         t.setUrl(rs.getString(5));
                         t.setVersion(rs.getFloat(6));
                         t.setFile(rs.getString(7));
-                        t.setScope(rs.getString(8));
+                        t.setScope(ToolScope.values()[rs.getInt(8)]);
                         tools.add(t);
                     }
                 }
@@ -70,7 +71,7 @@ public class GlobalToolDAO {
                         t.setUrl(rs.getString(4));
                         t.setVersion(rs.getFloat(5));
                         t.setFile(rs.getString(6));
-                        t.setScope(rs.getString(7));
+                        t.setScope(ToolScope.values()[rs.getInt(7)]);
                     }
                 }
             }
