@@ -27,7 +27,7 @@ public class ContigDAO extends DAO<Contig> {
         return Contig.class;
     }
 
-    private final static String CREATE = "INSERT INTO contig (name, length_bp, bam_file, bin_id) "
+    private final static String CREATE = "INSERT INTO contig (name, length_bp, gc, bin_id) "
             + "VALUES (?,?,?,?) RETURNING id";
 
     @Override
@@ -36,7 +36,7 @@ public class ContigDAO extends DAO<Contig> {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
-                stmt.setString(3, obj.getBAMFile());
+                stmt.setFloat(3, obj.getGC());
                 stmt.setLong(4, obj.getBinId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -51,7 +51,7 @@ public class ContigDAO extends DAO<Contig> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE contig SET name=?, length_bp=?, bam_file=?, bin_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE contig SET name=?, length_bp=?, gc=?, bin_id=? WHERE id=?";
 
     public void update(Contig obj) throws MGXException {
         if (obj.getId() == Contig.INVALID_IDENTIFIER) {
@@ -61,7 +61,7 @@ public class ContigDAO extends DAO<Contig> {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
-                stmt.setString(3, obj.getBAMFile());
+                stmt.setFloat(3, obj.getGC());
                 stmt.setLong(4, obj.getBinId());
 
                 stmt.setLong(5, obj.getId());
@@ -99,8 +99,8 @@ public class ContigDAO extends DAO<Contig> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, length_bp, bam_file, bin_id FROM contig";
-    private static final String BY_ID = "SELECT id, name, length_bp, bam_file, bin_id FROM contig WHERE id=?";
+    private static final String FETCHALL = "SELECT id, name, length_bp, gc, bin_id FROM contig";
+    private static final String BY_ID = "SELECT id, name, length_bp, gc, bin_id FROM contig WHERE id=?";
 
     @Override
     public Contig getById(long id) throws MGXException {
@@ -116,8 +116,8 @@ public class ContigDAO extends DAO<Contig> {
                         Contig ret = new Contig();
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
-                        ret.setLength(rs.getLong(3));
-                        ret.setBAMFile(rs.getString(4));
+                        ret.setLength(rs.getInt(3));
+                        ret.setGC(rs.getFloat(4));
                         ret.setBinId(rs.getLong(5));
                         return ret;
                     }
@@ -142,8 +142,8 @@ public class ContigDAO extends DAO<Contig> {
                         Contig ret = new Contig();
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
-                        ret.setLength(rs.getLong(3));
-                        ret.setBAMFile(rs.getString(4));
+                        ret.setLength(rs.getInt(3));
+                        ret.setGC(rs.getFloat(4));
                         ret.setBinId(rs.getLong(5));
 
                         if (l == null) {
@@ -159,8 +159,8 @@ public class ContigDAO extends DAO<Contig> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.bam_file, c.bin_id FROM contig c"
-            + "LET JOIN assembly_bin b ON (c.bin_id=b.id) WHERE b.id=?";
+    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.bin_id FROM contig c"
+            + "LET JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
 
     public AutoCloseableIterator<Contig> byBin(long bin_id) throws MGXException {
 
@@ -178,8 +178,8 @@ public class ContigDAO extends DAO<Contig> {
                             Contig ret = new Contig();
                             ret.setId(rs.getLong(1));
                             ret.setName(rs.getString(2));
-                            ret.setLength(rs.getLong(3));
-                            ret.setBAMFile(rs.getString(4));
+                            ret.setLength(rs.getInt(3));
+                            ret.setGC(rs.getFloat(4));
                             ret.setBinId(rs.getLong(5));
 
                             if (l == null) {

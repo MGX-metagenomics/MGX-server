@@ -13,8 +13,8 @@ public class Assembly extends Identifiable {
 
     private String name;
     private long reads_assembled;
-    private long total_length_bp;
     private long asmjob_id;
+    private long n50;
 
     public Assembly() {
     }
@@ -43,12 +43,12 @@ public class Assembly extends Identifiable {
         this.asmjob_id = asmjob_id;
     }
 
-    public long getTotalLengthBp() {
-        return total_length_bp;
+    public void setN50(long n50) {
+        this.n50 = n50;
     }
 
-    public void setTotalLengthBp(long total_length_bp) {
-        this.total_length_bp = total_length_bp;
+    public long getN50() {
+        return n50;
     }
 
 }

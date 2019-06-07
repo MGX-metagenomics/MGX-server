@@ -10,10 +10,10 @@ package de.cebitec.mgx.model.db;
  * @author sj
  */
 public class Contig extends Identifiable {
-    
+
     private String name;
-    private long length_bp;
-    private String bam_file;
+    private float gc;
+    private int length_bp;
     private long bin_id;
 
     public Contig() {
@@ -27,20 +27,20 @@ public class Contig extends Identifiable {
         this.name = name;
     }
 
-    public long getLength() {
+    public int getLength() {
         return length_bp;
     }
 
-    public void setLength(long length_bp) {
+    public void setLength(int length_bp) {
         this.length_bp = length_bp;
     }
 
-    public String getBAMFile() {
-        return bam_file;
+    public float getGC() {
+        return gc;
     }
 
-    public void setBAMFile(String bam_file) {
-        this.bam_file = bam_file;
+    public void setGC(float gc) {
+        this.gc = gc;
     }
 
     public long getBinId() {
@@ -50,7 +50,4 @@ public class Contig extends Identifiable {
     public void setBinId(long bin_id) {
         this.bin_id = bin_id;
     }
-    
-    
-    
 }

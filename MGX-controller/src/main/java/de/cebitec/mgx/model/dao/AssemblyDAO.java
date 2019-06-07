@@ -30,8 +30,8 @@ public class AssemblyDAO extends DAO<Assembly> {
         return Assembly.class;
     }
 
-    private final static String CREATE = "INSERT INTO assembly (name, reads_assembled, total_length, job_id) "
-            + "VALUES (?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO assembly (name, reads_assembled, n50, job_id) "
+            + "VALUES (?,?,?,?) RETURNING id";
 
     @Override
     public long create(Assembly obj) throws MGXException {
@@ -39,7 +39,7 @@ public class AssemblyDAO extends DAO<Assembly> {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getReadsAssembled());
-                stmt.setLong(3, obj.getTotalLengthBp());
+                stmt.setLong(3, obj.getN50());
                 stmt.setLong(4, obj.getAsmjobId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -54,7 +54,7 @@ public class AssemblyDAO extends DAO<Assembly> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE assembly SET name=?, reads_assembled=?, total_length=?, job_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE assembly SET name=?, reads_assembled=?, n50=?, job_id=? WHERE id=?";
 
     public void update(Assembly obj) throws MGXException {
         if (obj.getId() == Assembly.INVALID_IDENTIFIER) {
@@ -64,7 +64,7 @@ public class AssemblyDAO extends DAO<Assembly> {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getReadsAssembled());
-                stmt.setLong(3, obj.getTotalLengthBp());
+                stmt.setLong(3, obj.getN50());
                 stmt.setLong(4, obj.getAsmjobId());
 
                 stmt.setLong(5, obj.getId());
@@ -89,21 +89,9 @@ public class AssemblyDAO extends DAO<Assembly> {
         }
         return new DeleteAssembly(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
     }
-//    public void delete(long id) throws MGXException {
-//        try (Connection conn = getConnection()) {
-//            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM habitat WHERE id=?")) {
-//                stmt.setLong(1, id);
-//                int numRows = stmt.executeUpdate();
-//                if (numRows != 1) {
-//                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-//                }
-//            }
-//        } catch (SQLException ex) {
-//            throw new MGXException(ex);
-//        }
-//    }
-    private static final String FETCHALL = "SELECT id, name, reads_assembled, total_length, job_id FROM assembly";
-    private static final String BY_ID = "SELECT id, name, reads_assembled, total_length, job_id FROM assembly WHERE id=?";
+
+    private static final String FETCHALL = "SELECT id, name, reads_assembled, n50, job_id FROM assembly";
+    private static final String BY_ID = "SELECT id, name, reads_assembled, n50, job_id FROM assembly WHERE id=?";
 
     @Override
     public Assembly getById(long id) throws MGXException {
@@ -120,7 +108,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
                         ret.setReadsAssembled(rs.getLong(3));
-                        ret.setTotalLengthBp(rs.getLong(4));
+                        ret.setN50(rs.getInt(4));
                         ret.setAsmjobId(rs.getLong(5));
                         return ret;
                     }
@@ -145,7 +133,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
                         ret.setReadsAssembled(rs.getLong(3));
-                        ret.setTotalLengthBp(rs.getLong(4));
+                        ret.setN50(rs.getInt(4));
                         ret.setAsmjobId(rs.getLong(5));
 
                         if (l == null) {

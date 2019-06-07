@@ -13,6 +13,8 @@ public class Bin extends Identifiable {
     
     private String name;
     private float completeness;
+    private String taxonomy;
+    private long n50;
     private long assembly_id;
 
     public Bin() {
@@ -40,6 +42,22 @@ public class Bin extends Identifiable {
 
     public void setAssemblyId(long assembly_id) {
         this.assembly_id = assembly_id;
+    }
+
+    public String getTaxonomy() {
+        return taxonomy;
+    }
+
+    public void setTaxonomy(String taxonomy) {
+        this.taxonomy = taxonomy;
+    }
+
+    public long getN50() {
+        return n50;
+    }
+
+    public void setN50(long n50) {
+        this.n50 = n50;
     }
     
 }

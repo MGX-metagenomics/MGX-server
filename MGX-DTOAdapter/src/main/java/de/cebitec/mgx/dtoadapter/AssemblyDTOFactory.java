@@ -29,9 +29,9 @@ public class AssemblyDTOFactory extends DTOConversionBase<Assembly, AssemblyDTO,
         return AssemblyDTO.newBuilder()
                 .setId(h.getId())
                 .setName(h.getName())
-                .setAssemblyJobId(h.getAsmjobId())
                 .setReadsAssembled(h.getReadsAssembled())
-                .setTotalLengthBp(h.getTotalLengthBp())
+                .setN50(h.getN50())
+                .setJobId(h.getAsmjobId())
                 .build();
     }
     
@@ -39,9 +39,9 @@ public class AssemblyDTOFactory extends DTOConversionBase<Assembly, AssemblyDTO,
     public final Assembly toDB(AssemblyDTO dto) {
         Assembly h = new Assembly();
         h.setName(dto.getName());
-        h.setAsmjobId(dto.getAssemblyJobId());
+        h.setAsmjobId(dto.getJobId());
         h.setReadsAssembled(dto.getReadsAssembled());
-        h.setTotalLengthBp(dto.getTotalLengthBp());
+        h.setN50(dto.getN50());
         
         if (dto.hasId()) {
             h.setId(dto.getId());

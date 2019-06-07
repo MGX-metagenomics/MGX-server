@@ -1,6 +1,7 @@
 package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.common.JobState;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobDTOList;
@@ -36,7 +37,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setSeqrunId(j.getSeqrunId())
                 .setToolId(j.getToolId())
                 .setCreator(j.getCreator())
-                .setState(JobDTO.JobState.forNumber(j.getStatus().getValue()));
+                .setState(dto.JobState.forNumber(j.getStatus().getValue()));
 
         AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
         b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(acit));

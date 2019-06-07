@@ -12,7 +12,7 @@ import de.cebitec.gpms.util.GPMSDataSourceSelector;
  *
  * @author sjaenick
  */
-public class MGXDataSourceSelector extends GPMSDataSourceSelector {
+public class MGX2DataSourceSelector extends GPMSDataSourceSelector {
 
     @Override
     public <T extends MasterI> DataSourceI selectFromDataSources(MembershipI mbr, Class<T> masterClass) throws GPMSException {
@@ -26,7 +26,7 @@ public class MGXDataSourceSelector extends GPMSDataSourceSelector {
         for (DataSourceI gpmsDS : mbr.getProject().getDataSources()) {
             if (gpmsDS instanceof DataSource_DBI) {
                 DataSource_DBI dsdb = (DataSource_DBI) gpmsDS;
-                if ("MGX".equals(dsdb.getType().getName()) && "MGX".equals(dsdb.getAPIType().getName())) {
+                if ("MGX-2".equals(dsdb.getType().getName()) && "MGX".equals(dsdb.getAPIType().getName())) {
                     return dsdb;
                 } else if ("MGX".equals(dsdb.getType().getName()) && "O2DBI2".equals(dsdb.getAPIType().getName())) {
                     // Bielefeld setup does not have a MGX api type yet
