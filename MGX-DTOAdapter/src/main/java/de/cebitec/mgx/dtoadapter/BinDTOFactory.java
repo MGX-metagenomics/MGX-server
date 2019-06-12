@@ -31,6 +31,7 @@ public class BinDTOFactory extends DTOConversionBase<Bin, BinDTO, BinDTOList> {
                 .setCompleteness(h.getCompleteness())
                 .setTaxonomy(h.getTaxonomy())
                 .setN50(h.getN50())
+                .setPredictedCds(h.getPredictedCDS())
                 .setAssemblyId(h.getAssemblyId())
                 .build();
     }
@@ -43,6 +44,7 @@ public class BinDTOFactory extends DTOConversionBase<Bin, BinDTO, BinDTOList> {
         h.setTaxonomy(dto.getTaxonomy());
         h.setN50(dto.getN50());
         h.setAssemblyId(dto.getAssemblyId());
+        h.setPredictedCDS(dto.getPredictedCds());
         
         if (dto.hasId()) {
             h.setId(dto.getId());

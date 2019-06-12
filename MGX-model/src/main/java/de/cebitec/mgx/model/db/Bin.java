@@ -16,6 +16,7 @@ public class Bin extends Identifiable {
     private String taxonomy;
     private long n50;
     private long assembly_id;
+    private int predicted_cds;
 
     public Bin() {
     }
@@ -59,5 +60,15 @@ public class Bin extends Identifiable {
     public void setN50(long n50) {
         this.n50 = n50;
     }
+
+    public int getPredictedCDS() {
+        return predicted_cds;
+    }
+
+    public void setPredictedCDS(int predicted_cds) {
+        this.predicted_cds = predicted_cds;
+    }
+    
+    
     
 }
