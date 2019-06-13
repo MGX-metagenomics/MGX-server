@@ -14,6 +14,7 @@ public class Contig extends Identifiable {
     private String name;
     private float gc;
     private int length_bp;
+    private int coverage;
     private long bin_id;
 
     public Contig() {
@@ -42,6 +43,15 @@ public class Contig extends Identifiable {
     public void setGC(float gc) {
         this.gc = gc;
     }
+
+    public int getCoverage() {
+        return coverage;
+    }
+
+    public void setCoverage(int coverage) {
+        this.coverage = coverage;
+    }
+    
 
     public long getBinId() {
         return bin_id;

@@ -27,8 +27,10 @@ public class ContigDTOFactory extends DTOConversionBase<Contig, ContigDTO, Conti
     public final ContigDTO toDTO(Contig h) {
         return ContigDTO.newBuilder()
                 .setId(h.getId())
+                .setName(h.getName())
                 .setGc(h.getGC())
                 .setLengthBp(h.getLength())
+                .setCoverage(h.getCoverage())
                 .setBinId(h.getBinId())
                 .build();
     }
@@ -38,6 +40,8 @@ public class ContigDTOFactory extends DTOConversionBase<Contig, ContigDTO, Conti
         Contig h = new Contig();
         h.setGC(dto.getGc());
         h.setLength(dto.getLengthBp());
+        h.setCoverage(dto.getCoverage());
+        h.setName(dto.getName());
         h.setBinId(dto.getBinId());
         
         if (dto.hasId()) {

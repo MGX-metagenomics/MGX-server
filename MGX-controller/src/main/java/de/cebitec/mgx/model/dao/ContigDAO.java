@@ -27,8 +27,8 @@ public class ContigDAO extends DAO<Contig> {
         return Contig.class;
     }
 
-    private final static String CREATE = "INSERT INTO contig (name, length_bp, gc, bin_id) "
-            + "VALUES (?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO contig (name, length_bp, gc, coverage, bin_id) "
+            + "VALUES (?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Contig obj) throws MGXException {
@@ -37,7 +37,8 @@ public class ContigDAO extends DAO<Contig> {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
                 stmt.setFloat(3, obj.getGC());
-                stmt.setLong(4, obj.getBinId());
+                stmt.setInt(4, obj.getCoverage());
+                stmt.setLong(5, obj.getBinId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -51,7 +52,7 @@ public class ContigDAO extends DAO<Contig> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE contig SET name=?, length_bp=?, gc=?, bin_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE contig SET name=?, length_bp=?, gc=?, coverage=?, bin_id=? WHERE id=?";
 
     public void update(Contig obj) throws MGXException {
         if (obj.getId() == Contig.INVALID_IDENTIFIER) {
@@ -62,9 +63,10 @@ public class ContigDAO extends DAO<Contig> {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
                 stmt.setFloat(3, obj.getGC());
-                stmt.setLong(4, obj.getBinId());
+                stmt.setInt(4, obj.getCoverage());
+                stmt.setLong(5, obj.getBinId());
 
-                stmt.setLong(5, obj.getId());
+                stmt.setLong(6, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
@@ -99,8 +101,8 @@ public class ContigDAO extends DAO<Contig> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, length_bp, gc, bin_id FROM contig";
-    private static final String BY_ID = "SELECT id, name, length_bp, gc, bin_id FROM contig WHERE id=?";
+    private static final String FETCHALL = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig";
+    private static final String BY_ID = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id=?";
 
     @Override
     public Contig getById(long id) throws MGXException {
@@ -118,7 +120,8 @@ public class ContigDAO extends DAO<Contig> {
                         ret.setName(rs.getString(2));
                         ret.setLength(rs.getInt(3));
                         ret.setGC(rs.getFloat(4));
-                        ret.setBinId(rs.getLong(5));
+                        ret.setCoverage(rs.getInt(5));
+                        ret.setBinId(rs.getLong(6));
                         return ret;
                     }
                 }
@@ -144,7 +147,8 @@ public class ContigDAO extends DAO<Contig> {
                         ret.setName(rs.getString(2));
                         ret.setLength(rs.getInt(3));
                         ret.setGC(rs.getFloat(4));
-                        ret.setBinId(rs.getLong(5));
+                        ret.setCoverage(rs.getInt(5));
+                        ret.setBinId(rs.getLong(6));
 
                         if (l == null) {
                             l = new ArrayList<>();
