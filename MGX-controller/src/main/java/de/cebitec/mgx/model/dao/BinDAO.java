@@ -29,8 +29,8 @@ public class BinDAO extends DAO<Bin> {
         return Bin.class;
     }
 
-    private final static String CREATE = "INSERT INTO bin (name, completeness, taxonomy, n50, predicted_cds, assembly_id) "
-            + "VALUES (?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO bin (name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id) "
+            + "VALUES (?,?,?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Bin obj) throws MGXException {
@@ -38,10 +38,11 @@ public class BinDAO extends DAO<Bin> {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setFloat(2, obj.getCompleteness());
-                stmt.setString(3, obj.getTaxonomy());
-                stmt.setLong(4, obj.getN50());
-                stmt.setInt(5, obj.getPredictedCDS());
-                stmt.setLong(6, obj.getAssemblyId());
+                stmt.setFloat(3, obj.getContamination());
+                stmt.setString(4, obj.getTaxonomy());
+                stmt.setLong(5, obj.getN50());
+                stmt.setInt(6, obj.getPredictedCDS());
+                stmt.setLong(7, obj.getAssemblyId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -55,7 +56,7 @@ public class BinDAO extends DAO<Bin> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE bin SET name=?, completeness=?, taxonomy=?, n50=?, predicted_cds=?, assembly_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE bin SET name=?, completeness=?, contamination=?, taxonomy=?, n50=?, predicted_cds=?, assembly_id=? WHERE id=?";
 
     public void update(Bin obj) throws MGXException {
         if (obj.getId() == Bin.INVALID_IDENTIFIER) {
@@ -65,12 +66,13 @@ public class BinDAO extends DAO<Bin> {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setFloat(2, obj.getCompleteness());
-                stmt.setString(3, obj.getTaxonomy());
-                stmt.setLong(4, obj.getN50());
-                stmt.setInt(5, obj.getPredictedCDS());
-                stmt.setLong(6, obj.getAssemblyId());
+                stmt.setFloat(3, obj.getContamination());
+                stmt.setString(4, obj.getTaxonomy());
+                stmt.setLong(5, obj.getN50());
+                stmt.setInt(6, obj.getPredictedCDS());
+                stmt.setLong(7, obj.getAssemblyId());
 
-                stmt.setLong(7, obj.getId());
+                stmt.setLong(8, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
@@ -105,8 +107,8 @@ public class BinDAO extends DAO<Bin> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, completeness, taxonomy, n50, predicted_cds, assembly_id FROM bin";
-    private static final String BY_ID = "SELECT id, name, completeness, taxonomy, n50, predicted_cds, assembly_id FROM bin WHERE id=?";
+    private static final String FETCHALL = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id FROM bin";
+    private static final String BY_ID = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id FROM bin WHERE id=?";
 
     @Override
     public Bin getById(long id) throws MGXException {
@@ -123,10 +125,11 @@ public class BinDAO extends DAO<Bin> {
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
                         ret.setCompleteness(rs.getFloat(3));
-                        ret.setTaxonomy(rs.getString(4));
-                        ret.setN50(rs.getInt(5));
-                        ret.setPredictedCDS(rs.getInt(6));
-                        ret.setAssemblyId(rs.getLong(7));
+                        ret.setContamination(rs.getFloat(4));
+                        ret.setTaxonomy(rs.getString(5));
+                        ret.setN50(rs.getInt(6));
+                        ret.setPredictedCDS(rs.getInt(7));
+                        ret.setAssemblyId(rs.getLong(8));
                         return ret;
                     }
                 }
@@ -150,10 +153,11 @@ public class BinDAO extends DAO<Bin> {
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
                         ret.setCompleteness(rs.getFloat(3));
-                        ret.setTaxonomy(rs.getString(4));
-                        ret.setN50(rs.getInt(5));
-                        ret.setPredictedCDS(rs.getInt(6));
-                        ret.setAssemblyId(rs.getLong(7));
+                        ret.setContamination(rs.getFloat(4));
+                        ret.setTaxonomy(rs.getString(5));
+                        ret.setN50(rs.getInt(6));
+                        ret.setPredictedCDS(rs.getInt(7));
+                        ret.setAssemblyId(rs.getLong(8));
 
                         if (l == null) {
                             l = new ArrayList<>();
@@ -168,7 +172,7 @@ public class BinDAO extends DAO<Bin> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
+    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
             + "LET JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
 
     public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
@@ -188,10 +192,11 @@ public class BinDAO extends DAO<Bin> {
                             ret.setId(rs.getLong(1));
                             ret.setName(rs.getString(2));
                             ret.setCompleteness(rs.getFloat(3));
-                            ret.setTaxonomy(rs.getString(4));
-                            ret.setN50(rs.getInt(5));
-                            ret.setPredictedCDS(rs.getInt(6));
-                            ret.setAssemblyId(rs.getLong(7));
+                            ret.setContamination(rs.getFloat(4));
+                            ret.setTaxonomy(rs.getString(5));
+                            ret.setN50(rs.getInt(6));
+                            ret.setPredictedCDS(rs.getInt(7));
+                            ret.setAssemblyId(rs.getLong(8));
 
                             if (l == null) {
                                 l = new ArrayList<>();

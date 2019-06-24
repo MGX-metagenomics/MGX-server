@@ -10,9 +10,9 @@ package de.cebitec.mgx.model.db;
  * @author sj
  */
 public class Bin extends Identifiable {
-    
+
     private String name;
-    private float completeness;
+    private float completeness, contamination;
     private String taxonomy;
     private long n50;
     private long assembly_id;
@@ -35,6 +35,14 @@ public class Bin extends Identifiable {
 
     public void setCompleteness(float completeness) {
         this.completeness = completeness;
+    }
+
+    public float getContamination() {
+        return contamination;
+    }
+    
+    public void setContamination(float contamination) {
+        this.contamination = contamination;
     }
 
     public long getAssemblyId() {
@@ -68,7 +76,5 @@ public class Bin extends Identifiable {
     public void setPredictedCDS(int predicted_cds) {
         this.predicted_cds = predicted_cds;
     }
-    
-    
-    
+
 }
