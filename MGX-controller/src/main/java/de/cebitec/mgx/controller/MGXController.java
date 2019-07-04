@@ -23,11 +23,15 @@ public interface MGXController extends AutoCloseable {
 //    public MGXConfigurationI getConfiguration();
     public File getPluginDump();
 
+    public AssemblyJobDAO getAssemblyJobDAO();
+
     public AssemblyDAO getAssemblyDAO();
 
     public BinDAO getBinDAO();
-    
+
     public ContigDAO getContigDAO();
+
+    public GeneDAO getGeneDAO();
 
     public FileDAO getFileDAO();
 

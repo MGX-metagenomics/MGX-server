@@ -235,7 +235,12 @@ public class MGXControllerImpl implements MGXController {
         }
         dataSource.close(this); // unsubscribe
     }
-    
+
+    @Override
+    public AssemblyJobDAO getAssemblyJobDAO() {
+        return new AssemblyJobDAO(this);
+    }
+
     @Override
     public AssemblyDAO getAssemblyDAO() {
         return new AssemblyDAO(this);
@@ -252,10 +257,15 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public GeneDAO getGeneDAO() {
+        return new GeneDAO(this);
+    }
+
+    @Override
     public FileDAO getFileDAO() {
         return new FileDAO(this);
     }
-    
+
     @Override
     public HabitatDAO getHabitatDAO() {
         return new HabitatDAO(this);

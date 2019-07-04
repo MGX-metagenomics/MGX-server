@@ -8,12 +8,16 @@ import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.workers.DeleteAssembly;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -51,6 +55,14 @@ public class AssemblyDAO extends DAO<Assembly> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+        
+        try {
+            File asmDir = getController().getProjectAssemblyDirectory();
+            new File(asmDir,String.valueOf(obj.getId())).mkdir();
+        } catch (IOException ex) {
+            Logger.getLogger(AssemblyDAO.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         return obj.getId();
     }
 
