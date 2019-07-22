@@ -18,18 +18,23 @@ import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
+import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
+import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.Job;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -60,12 +65,39 @@ public class ServiceBean {
     @MGX
     MGXController mgx;
     @EJB
+    MGXGlobal global;
+    @EJB
     DownloadSessions downSessions;
+
+    @GET
+    @Path("fetch/{id}")
+    @Produces("application/x-protobuf")
+    public SeqRunDTO fetch(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
+        SeqRun seqrun;
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            boolean ok = false;
+            for (long l : asmJob.getSeqrunIds()) {
+                if (id == l) {
+                    ok = true;
+                    break;
+                }
+            }
+            if (!ok) {
+                throw new MGXServiceException("Invalid API key.");
+            }
+            seqrun = mgx.getSeqRunDAO().getById(id);
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+
+        return SeqRunDTOFactory.getInstance(global).toDTO(seqrun);
+    }
 
     @GET
     @Path("initDownload/{id}")
     @Produces("application/x-protobuf")
-    public dto.MGXString initDownload(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long seqrun_id) {
+    public MGXString initDownload(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long seqrun_id) {
         SeqRunDownloadProvider provider = null;
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
