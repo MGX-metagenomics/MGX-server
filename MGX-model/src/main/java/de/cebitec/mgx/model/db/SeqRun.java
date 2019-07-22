@@ -12,6 +12,7 @@ public class SeqRun extends Identifiable {
     protected String name;
     protected String database_accession;
     protected boolean submitted_to_insdc;
+    protected boolean isPaired;
     protected Long sequencing_technology;
     protected Long sequencing_method;
     protected Long num_sequences = Long.valueOf(0);
@@ -43,6 +44,15 @@ public class SeqRun extends Identifiable {
 
     public SeqRun setName(String name) {
         this.name = name;
+        return this;
+    }
+
+    public boolean isPaired() {
+        return isPaired;
+    }
+
+    public SeqRun setIsPaired(boolean isPaired) {
+        this.isPaired = isPaired;
         return this;
     }
 
