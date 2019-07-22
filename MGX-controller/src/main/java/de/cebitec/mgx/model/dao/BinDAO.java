@@ -212,7 +212,7 @@ public class BinDAO extends DAO<Bin> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    public TaskI delete(long bin_id) {
+    public TaskI delete(long bin_id) throws MGXException {
         List<TaskI> subtasks = new ArrayList<>();
 //        try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
 //            while (iter.hasNext()) {

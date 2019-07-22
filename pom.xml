@@ -44,7 +44,8 @@
         <module>MGX-sessions</module>
         <module>MGX-workers</module>
         <module>MGX-conveyor</module>
-    </modules>
+    <module>MGX-annotationservice</module>
+  </modules>
     
     <properties>
         <eeapi.version>8.0.1</eeapi.version>

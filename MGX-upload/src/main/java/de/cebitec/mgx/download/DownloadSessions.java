@@ -29,12 +29,11 @@ public class DownloadSessions {
     @EJB
     MGXConfigurationI mgxconfig;
     private Map<UUID, DownloadProviderI<?>> sessions = null;
-    private int timeout;
+    private final int timeout = 60; //seconds
 
     @PostConstruct
     public void start() {
         sessions = new HashMap<>();
-        timeout = mgxconfig.getTransferTimeout();
     }
 
     @PreDestroy

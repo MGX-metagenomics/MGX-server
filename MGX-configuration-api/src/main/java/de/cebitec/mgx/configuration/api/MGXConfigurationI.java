@@ -28,9 +28,4 @@ public interface MGXConfigurationI {
 
     int getSQLBulkInsertSize();
 
-    /*
-     * settings specific to project database
-     */
-    int getTransferTimeout();
-    
 }

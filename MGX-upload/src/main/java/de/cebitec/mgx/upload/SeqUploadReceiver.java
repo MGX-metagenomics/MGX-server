@@ -37,6 +37,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
 
     protected final String projectName;
     protected final long runId;
+    protected final boolean isPaired;
     protected GPMSManagedDataSourceI dataSource;
     protected final File projectDirectory;
     protected final File projectQCDirectory;
@@ -49,9 +50,10 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
-    public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality) throws MGXException {
+    public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality, boolean isPaired) throws MGXException {
         this.projectName = projName;
         this.runId = run_id;
+        this.isPaired = isPaired;
         this.projectDirectory = projectDir;
         this.projectQCDirectory = projectQCDir;
         this.dataSource = dataSource;
@@ -61,8 +63,8 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             file = getStorageFile(run_id);
             SeqWriterI writer = hasQuality ? new CSQFWriter(file) : new CSFWriter(file);
-            qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality);
-            flush = new SeqFlusher<>(run_id, queue, dataSource, writer, qcAnalyzers);
+            qcAnalyzers = QCFactory.<T>getQCAnalyzers(hasQuality, isPaired);
+            flush = new SeqFlusher<>(run_id, isPaired, queue, dataSource, writer, qcAnalyzers);
             executor.execute(flush);
         } catch (MGXException | IOException | SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence upload: " + ex.getMessage());
@@ -106,6 +108,10 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             // commit pending data
             flush.complete();
+            
+            if (isPaired) {
+                total_num_sequences /= 2; // count read pairs for PE
+            }
 
             String sql = "UPDATE seqrun SET num_sequences=? WHERE id=?";
             try (Connection conn = dataSource.getConnection(this)) {

@@ -75,12 +75,12 @@ public class SequenceBean {
         UUID uuid = null;
         try {
             // check seqrun exists before creating upload session
-            mgx.getSeqRunDAO().getById(seqrun_id);
-
+            SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
+            
             mgx.log("Creating upload session for " + mgx.getProjectName());
             SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
                     mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
-                    hasQual);
+                    hasQual, run.isPaired());
             uuid = upSessions.registerUploadSession(recv);
 
         } catch (MGXException | IOException ex) {
@@ -193,9 +193,10 @@ public class SequenceBean {
             //
             // make sure all jobs refer to the same seqrun
             //
-            SeqRun seqrun = mgx.getSeqRunDAO().getById(jobs.get(0).getSeqrunId());
+            SeqRun seqrun = mgx.getSeqRunDAO().getById(jobs.get(0).getSeqrunIds()[0]);
             for (Job job : jobs) {
-                if (seqrun.getId() != job.getSeqrunId()) {
+                long[] seqrunIds = job.getSeqrunIds();
+                if (arrayContains(seqrunIds, seqrun.getId())) {
                     throw new MGXException("Selected attributes refer to different sequencing runs.");
                 }
             }
@@ -209,6 +210,15 @@ public class SequenceBean {
 
         UUID uuid = downSessions.registerDownloadSession(provider);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+    
+    private static boolean arrayContains(long[] arr, long val) {
+        for (long l : arr) {
+            if (l == val) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @GET

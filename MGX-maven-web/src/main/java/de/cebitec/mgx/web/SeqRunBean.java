@@ -234,7 +234,7 @@ public class SeqRunBean {
             if (dbFile != null) {
                 SeqReaderI r = SeqReaderFactory.getReader(dbFile.getAbsolutePath());
                 if (r != null) {
-                    analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality());
+                    analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality(), sr.isPaired());
                     r.close();
                 }
             }

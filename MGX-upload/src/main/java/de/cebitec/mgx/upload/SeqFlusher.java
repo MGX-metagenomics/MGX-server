@@ -36,34 +36,61 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final Analyzer<T>[] analyzers;
     private volatile Exception error = null;
     private final int bulkSize;
+    private final boolean isPaired;
     //
     private final List<T> holder = new ArrayList<>();
     //
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
 
-    public SeqFlusher(long seqrunId, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers) {
+    public SeqFlusher(long seqrunId, boolean isPaired, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers) {
         this.seqrunId = seqrunId;
         this.in = in;
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
         this.bulkSize = 5_000;
+        this.isPaired = isPaired;
 
         dataSource.subscribe(this);
     }
 
     @Override
     public void run() {
-        T seq = null;
-        while (!(mayTerminate && in.isEmpty())) {
-            try {
-                seq = in.poll(500, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+
+        if (isPaired) {
+            T seq1 = null;
+            T seq2 = null;
+            while (!(mayTerminate && in.isEmpty())) {
+
+                while (seq1 == null || seq2 == null) {
+                    try {
+                        if (seq1 == null) {
+                            seq1 = in.poll(500, TimeUnit.MILLISECONDS);
+                        }
+                        if (seq2 == null) {
+                            seq2 = in.poll(500, TimeUnit.MILLISECONDS);
+                        }
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+                processPair(seq1, seq2);
+                seq1 = null;
+                seq2 = null;
             }
-            if (seq != null) {
-                process(seq);
+        } else {
+            T seq = null;
+            while (!(mayTerminate && in.isEmpty())) {
+                try {
+                    seq = in.poll(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (seq != null) {
+                    processSingle(seq);
+                }
             }
         }
 
@@ -79,18 +106,29 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             error = ex;
         }
 
-        
-
         assert holder.isEmpty();
         allDone.countDown();
     }
 
-    private void process(T seq) {
+    private void processSingle(T seq) {
         for (Analyzer<T> a : analyzers) {
             a.add(seq);
         }
         synchronized (holder) {
             holder.add(seq);
+        }
+        if (holder.size() >= bulkSize) {
+            flushChunk();
+        }
+    }
+
+    private void processPair(T seq1, T seq2) {
+        for (Analyzer<T> a : analyzers) {
+            a.addPair(seq1, seq2);
+        }
+        synchronized (holder) {
+            holder.add(seq1);
+            holder.add(seq2);
         }
         if (holder.size() >= bulkSize) {
             flushChunk();

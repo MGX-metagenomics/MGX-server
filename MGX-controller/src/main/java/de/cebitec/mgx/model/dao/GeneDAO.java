@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -215,5 +216,9 @@ public class GeneDAO extends DAO<Gene> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+    }
+
+    public TaskI delete(long id) throws MGXException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

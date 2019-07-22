@@ -28,12 +28,11 @@ public class UploadSessions {
     @EJB
     MGXConfigurationI mgxconfig;
     private Map<UUID, UploadReceiverI> sessions = null;
-    private int uploadTimeout;
+    private final int uploadTimeout = 60; // seconds
 
     @PostConstruct
     public void start() {
         sessions = new HashMap<>();
-        uploadTimeout = mgxconfig.getTransferTimeout();
     }
 
     @PreDestroy

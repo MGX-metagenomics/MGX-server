@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -200,5 +201,9 @@ public class ContigDAO extends DAO<Contig> {
             throw new MGXException(ex);
         }
         return new ForwardingIterator<>(l == null ? null : l.iterator());
+    }
+
+    public TaskI delete(long id) throws MGXException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

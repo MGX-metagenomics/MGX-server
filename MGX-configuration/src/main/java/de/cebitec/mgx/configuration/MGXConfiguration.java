@@ -66,14 +66,6 @@ public class MGXConfiguration implements MGXConfigurationI {
         return ret;
     }
 
-    /*
-     * settings specific to project database
-     */
-    @Override
-    public int getTransferTimeout() {
-        return getInt("mgx_transfer_timeout");
-    }
-
     @Override
     public int getSQLBulkInsertSize() {
         return getInt("sql_bulk_insert_size");

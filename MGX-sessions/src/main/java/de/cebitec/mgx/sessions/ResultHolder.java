@@ -1,6 +1,5 @@
 package de.cebitec.mgx.sessions;
 
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.util.LimitingIterator;
 import java.util.HashMap;
@@ -15,7 +14,6 @@ import javax.annotation.PreDestroy;
 import javax.ejb.Asynchronous;
 import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
-import javax.ejb.EJB;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -29,15 +27,12 @@ import javax.ejb.Startup;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class ResultHolder {
 
-    @EJB
-    MGXConfigurationI mgxconfig;
     private Map<UUID, LimitingIterator<?>> sessions = null;
-    private int timeout;
+    private final int timeout = 60;
 
     @PostConstruct
     public void start() {
         sessions = new HashMap<>(10);
-        timeout = mgxconfig.getTransferTimeout();
     }
 
     @PreDestroy

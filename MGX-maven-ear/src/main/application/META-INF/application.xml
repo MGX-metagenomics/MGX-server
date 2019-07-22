@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" version="6">
+    <application-name>MGX-maven-ear</application-name>
+    <display-name>MGX-maven-ear</display-name>
+    
+    <module>
+        <web>
+            <web-uri>MGX-maven-web-2.0.war</web-uri>
+            <context-root>/MGX-maven-web</context-root>
+        </web>
+    </module>
+    <module>
+        <web>
+            <web-uri>MGX-annotationservice-2.0.war</web-uri>
+            <context-root>/MGX-annotationservice</context-root>
+        </web>
+    </module>
+    <module>
+        <ejb>MGX-gpms-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-ExecutorService-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-upload-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-controller-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-jobsubmitter-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-dispatcher-common-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-global-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-configuration-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-statistics-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>MGX-sessions-2.0.jar</ejb>
+    </module>
+    <module>
+        <ejb>GPMS-ldap-loader-2.0.jar</ejb>
+    </module>
+    <library-directory>lib</library-directory>
+</application>
