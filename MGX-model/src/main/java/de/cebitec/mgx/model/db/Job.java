@@ -12,7 +12,7 @@ public class Job extends Identifiable {
 
     private static final long serialVersionUID = 1L;
     //
-    protected long seqrun_id;
+    protected long[] seqrun_ids;
     //
     protected long tool_id;
     protected String created_by;
@@ -70,12 +70,12 @@ public class Job extends Identifiable {
         return this;
     }
 
-    public long getSeqrunId() {
-        return seqrun_id;
+    public long[] getSeqrunIds() {
+        return seqrun_ids;
     }
 
-    public Job setSeqrunId(long seqrun) {
-        this.seqrun_id = seqrun;
+    public Job setSeqrunIds(long[] seqruns) {
+        this.seqrun_ids = seqruns;
         return this;
     }
 
