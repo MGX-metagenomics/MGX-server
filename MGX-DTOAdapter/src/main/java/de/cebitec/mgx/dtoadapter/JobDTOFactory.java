@@ -34,10 +34,13 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
     public final JobDTO toDTO(Job j) {
         Builder b = JobDTO.newBuilder()
                 .setId(j.getId())
-                .setSeqrunId(j.getSeqrunId())
                 .setToolId(j.getToolId())
                 .setCreator(j.getCreator())
                 .setState(dto.JobState.forNumber(j.getStatus().getValue()));
+        
+        for (long l : j.getSeqrunIds()) {
+            b.addSeqrun(l);
+        }
 
         AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
         b.setParameters(JobParameterDTOFactory.getInstance().toDTOList(acit));

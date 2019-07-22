@@ -54,6 +54,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
                 .setSubmittedToInsdc(s.getSubmittedToINSDC())
                 .setSequencingMethod(methDTO)
                 .setSequencingTechnology(techDTO)
+                .setIsPaired(s.isPaired())
                 .setNumSequences(s.getNumberOfSequences());
 
         if (s.getSubmittedToINSDC()) {
@@ -70,6 +71,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
                 .setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(dto.getSequencingMethod().getId())
                 .setSequencingTechnology(dto.getSequencingTechnology().getId())
+                .setIsPaired(dto.getIsPaired())
                 .setExtractId(dto.getExtractId());
 
         if (dto.getSubmittedToInsdc()) {
