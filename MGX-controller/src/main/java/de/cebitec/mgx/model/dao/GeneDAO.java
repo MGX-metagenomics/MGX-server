@@ -199,4 +199,21 @@ public class GeneDAO extends DAO<Gene> {
         }
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
+
+    public void createCoverage(long geneId, long runId, int coverage) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_coverage (run_id, gene_id, coverage) VALUES (?,?,?)")) {
+                stmt.setLong(1, runId);
+                stmt.setLong(2, geneId);
+                stmt.setInt(3, coverage);
+
+                int numRows = stmt.executeUpdate();
+                if (numRows != 1) {
+                    throw new MGXException("Could not store coverage information.");
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+    }
 }

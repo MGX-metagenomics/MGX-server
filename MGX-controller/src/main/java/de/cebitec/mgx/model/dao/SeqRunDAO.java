@@ -31,8 +31,8 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return SeqRun.class;
     }
 
-    private final static String CREATE = "INSERT INTO seqrun (name, database_accession, num_sequences, sequencing_method, sequencing_technology, submitted_to_insdc, dnaextract_id) "
-            + "VALUES (?,?,?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO seqrun (name, database_accession, num_sequences, sequencing_method, sequencing_technology, submitted_to_insdc, dnaextract_id, is_paired) "
+            + "VALUES (?,?,?,?,?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(SeqRun obj) throws MGXException {
@@ -45,6 +45,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                 stmt.setLong(5, obj.getSequencingTechnology());
                 stmt.setBoolean(6, obj.getSubmittedToINSDC());
                 stmt.setLong(7, obj.getExtractId());
+                stmt.setBoolean(8, obj.isPaired());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -147,7 +148,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
 //    }
 
     private final static String BY_ID = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
             + "FROM seqrun s WHERE s.id=?";
 
     @Override
@@ -173,6 +174,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                     s.setSequencingTechnology(rs.getLong(6));
                     s.setSubmittedToINSDC(rs.getBoolean(7));
                     s.setExtractId(rs.getLong(8));
+                    s.setIsPaired(rs.getBoolean(9));
                     return s;
 
                 }
@@ -183,7 +185,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     private final static String FETCHALL = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
             + "FROM seqrun s WHERE s.num_sequences <> -1";
 
     public AutoCloseableIterator<SeqRun> getAll() throws MGXException {
@@ -204,6 +206,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                         s.setSequencingTechnology(rs.getLong(6));
                         s.setSubmittedToINSDC(rs.getBoolean(7));
                         s.setExtractId(rs.getLong(8));
+                        s.setIsPaired(rs.getBoolean(9));
 
                         if (ret == null) {
                             ret = new ArrayList<>();
@@ -221,7 +224,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     private final static String BY_JOB = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
             + "FROM job j LEFT JOIN seqrun s ON (j.seqrun_id=s.id) WHERE j.id=?";
 
     public SeqRun byJob(long jobId) throws MGXException {
@@ -246,6 +249,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                     s.setSequencingTechnology(rs.getLong(6));
                     s.setSubmittedToINSDC(rs.getBoolean(7));
                     s.setExtractId(rs.getLong(8));
+                    s.setIsPaired(rs.getBoolean(9));
                     return s;
 
                 }
@@ -258,10 +262,10 @@ public class SeqRunDAO extends DAO<SeqRun> {
     private final static String SQL_BY_EXTRACT
             = "WITH complete_runs AS ("
             + "SELECT id, name, database_accession, num_sequences, sequencing_method, "
-            + "sequencing_technology, submitted_to_insdc, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
+            + "sequencing_technology, submitted_to_insdc, is_paired, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
             + ")"
             + "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.is_paired "
             + "FROM dnaextract d LEFT JOIN complete_runs s ON (d.id=s.dnaextract_id) WHERE d.id=?";
 
     public AutoCloseableIterator<SeqRun> byDNAExtract(final long extract_id) throws MGXException {
@@ -289,6 +293,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
                             s.setSequencingMethod(rs.getLong(5));
                             s.setSequencingTechnology(rs.getLong(6));
                             s.setSubmittedToINSDC(rs.getBoolean(7));
+                            s.setIsPaired(rs.getBoolean(8));
 
                             if (ret == null) {
                                 ret = new ArrayList<>();

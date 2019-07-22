@@ -29,8 +29,8 @@ public class BinDAO extends DAO<Bin> {
         return Bin.class;
     }
 
-    private final static String CREATE = "INSERT INTO bin (name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id) "
-            + "VALUES (?,?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO bin (name, completeness, contamination, taxonomy, n50, assembly_id) "
+            + "VALUES (?,?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Bin obj) throws MGXException {
@@ -41,8 +41,7 @@ public class BinDAO extends DAO<Bin> {
                 stmt.setFloat(3, obj.getContamination());
                 stmt.setString(4, obj.getTaxonomy());
                 stmt.setLong(5, obj.getN50());
-                stmt.setInt(6, obj.getPredictedCDS());
-                stmt.setLong(7, obj.getAssemblyId());
+                stmt.setLong(6, obj.getAssemblyId());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -56,7 +55,7 @@ public class BinDAO extends DAO<Bin> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE bin SET name=?, completeness=?, contamination=?, taxonomy=?, n50=?, predicted_cds=?, assembly_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE bin SET name=?, completeness=?, contamination=?, taxonomy=?, n50=?, assembly_id=? WHERE id=?";
 
     public void update(Bin obj) throws MGXException {
         if (obj.getId() == Bin.INVALID_IDENTIFIER) {
@@ -69,10 +68,9 @@ public class BinDAO extends DAO<Bin> {
                 stmt.setFloat(3, obj.getContamination());
                 stmt.setString(4, obj.getTaxonomy());
                 stmt.setLong(5, obj.getN50());
-                stmt.setInt(6, obj.getPredictedCDS());
-                stmt.setLong(7, obj.getAssemblyId());
+                stmt.setLong(6, obj.getAssemblyId());
 
-                stmt.setLong(8, obj.getId());
+                stmt.setLong(7, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");

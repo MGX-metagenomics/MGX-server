@@ -51,10 +51,10 @@ public class ControllerFactory {
                 .build(new CacheLoader<JDBCMasterI, MGXControllerImpl>() {
                     @Override
                     public MGXControllerImpl load(JDBCMasterI jdbcMaster) {
-                        return new MGXControllerImpl(jdbcMaster, mgxconfig.getPluginDump(), mgxconfig.getPersistentDirectory());
-                    }
+                            return new MGXControllerImpl(jdbcMaster, mgxconfig.getPluginDump(), mgxconfig.getPersistentDirectory());
+                        }
                 });
-        
+
         timer = new Timer(true);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -78,7 +78,7 @@ public class ControllerFactory {
         return ret;
         //return new MGXControllerImpl(jpaMaster, mgxconfig);
     }
-    
+
     @PreDestroy
     public void dispose() {
         timer.cancel();

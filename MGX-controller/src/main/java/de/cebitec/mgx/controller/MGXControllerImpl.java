@@ -36,7 +36,6 @@ public class MGXControllerImpl implements MGXController {
     private File projectJobDir = null;
     private File projectReferencesDir = null;
     private File projectAsmDir = null;
-    //
     private final File persistentDir;
     //
     private final static String DOUBLE_SEPARATOR = File.separator + File.separator;
@@ -189,23 +188,6 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public File getProjectAssemblyDirectory() throws IOException {
-        if (projectAsmDir != null) {
-            return projectAsmDir;
-        }
-
-        File asmDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "assemblies");
-        if (!asmDir.exists()) {
-            UnixHelper.createDirectory(asmDir);
-        }
-        if (!UnixHelper.isGroupWritable(asmDir)) {
-            UnixHelper.makeDirectoryGroupWritable(asmDir.getAbsolutePath());
-        }
-        projectAsmDir = asmDir;
-        return projectAsmDir;
-    }
-
-    @Override
     public final GPMSManagedDataSourceI getDataSource() {
         return dataSource;
     }
@@ -234,31 +216,6 @@ public class MGXControllerImpl implements MGXController {
             jobDAO = null;
         }
         dataSource.close(this); // unsubscribe
-    }
-
-    @Override
-    public AssemblyJobDAO getAssemblyJobDAO() {
-        return new AssemblyJobDAO(this);
-    }
-
-    @Override
-    public AssemblyDAO getAssemblyDAO() {
-        return new AssemblyDAO(this);
-    }
-
-    @Override
-    public BinDAO getBinDAO() {
-        return new BinDAO(this);
-    }
-
-    @Override
-    public ContigDAO getContigDAO() {
-        return new ContigDAO(this);
-    }
-
-    @Override
-    public GeneDAO getGeneDAO() {
-        return new GeneDAO(this);
     }
 
     @Override
@@ -334,6 +291,43 @@ public class MGXControllerImpl implements MGXController {
     @Override
     public MappingDAO getMappingDAO() {
         return new MappingDAO(this);
+    }
+
+    @Override
+    public File getProjectAssemblyDirectory() throws IOException {
+        if (projectAsmDir != null) {
+            return projectAsmDir;
+        }
+
+        File asmDir = new File(getProjectDirectory().getAbsolutePath() + File.separator + "assemblies");
+        if (!asmDir.exists()) {
+            UnixHelper.createDirectory(asmDir);
+        }
+        if (!UnixHelper.isGroupWritable(asmDir)) {
+            UnixHelper.makeDirectoryGroupWritable(asmDir.getAbsolutePath());
+        }
+        projectAsmDir = asmDir;
+        return projectAsmDir;
+    }
+
+    @Override
+    public AssemblyDAO getAssemblyDAO() {
+        return new AssemblyDAO(this);
+    }
+
+    @Override
+    public BinDAO getBinDAO() {
+        return new BinDAO(this);
+    }
+
+    @Override
+    public ContigDAO getContigDAO() {
+        return new ContigDAO(this);
+    }
+
+    @Override
+    public GeneDAO getGeneDAO() {
+        return new GeneDAO(this);
     }
 
     @Override
