@@ -33,6 +33,7 @@ public class GPMS implements DBGPMSI {
     //
     private final static Logger logger = Logger.getLogger(GPMS.class.getPackage().getName());
     //
+    private final static User serviceUser = new User("Service Access", null);
 
     @Override
     public Collection<ProjectClassI> getSupportedProjectClasses() {
@@ -65,6 +66,30 @@ public class GPMS implements DBGPMSI {
     }
 
     @Override
+    public <T extends MasterI> void createServiceMaster(MembershipI mbr, Class<T> targetClass) {
+
+        MasterI master = sessions.getMaster(mbr);
+
+        // cache miss or different master class requested
+        if (master == null || !(targetClass.isAssignableFrom(master.getClass()))) {
+            long now = System.currentTimeMillis();
+            try {
+                master = loader.createMaster(mbr, targetClass);
+            } catch (GPMSException ex) {
+                Logger.getLogger(GPMS.class.getName()).log(Level.SEVERE, null, ex);
+                return;// null;
+            }
+            sessions.registerMaster(mbr, master);
+            now = System.currentTimeMillis() - now;
+            log("Created new " + mbr.getProject().getName() + " master with role " + master.getRole().getName() + " for service access in " + now + "ms");
+        }
+
+        master.setUser(serviceUser);
+
+        loader.setCurrentMaster(master);
+    }
+
+    @Override
     public <T extends MasterI> T getCurrentMaster() {
         return loader.getCurrentMaster();
     }
@@ -72,12 +97,15 @@ public class GPMS implements DBGPMSI {
     @Override
     public UserI getCurrentUser() {
         String login = ejbCtx.getCallerPrincipal().getName();
+        if (login == null || "ANONYMOUS".equals(login)) {
+            return null;
+        }
         try {
             return new User(login, null, loader.getMemberships(login));
         } catch (GPMSException ex) {
             Logger.getLogger(GPMS.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
-        return null; //new User(login, null, Collections.EMPTY_LIST);
     }
 
     @Override
