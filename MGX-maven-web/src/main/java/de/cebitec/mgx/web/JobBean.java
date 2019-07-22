@@ -91,7 +91,7 @@ public class JobBean {
                 Job j = new Job();
                 j.setStatus(JobState.VERIFIED);
                 j.setToolId(t.getId());
-                j.setSeqrunId(seqrunId);
+                j.setSeqrunIds(new long[]{seqrunId});
                 j.setCreator(mgx.getCurrentUser());
 
                 // fetch default parameters for the tool
@@ -129,7 +129,11 @@ public class JobBean {
 
         j.setStatus(JobState.CREATED);
         j.setToolId(dto.getToolId());
-        j.setSeqrunId(dto.getSeqrunId());
+        long[] temp = new long[dto.getSeqrunCount()];
+        for (int i = 0; i < temp.length; i++) {
+            temp[i] = dto.getSeqrun(i);
+        }
+        j.setSeqrunIds(temp);
         j.setCreator(mgx.getCurrentUser());
 
         long jobId = create(j);
@@ -371,7 +375,11 @@ public class JobBean {
         Job job = JobDTOFactory.getInstance().toDB(dto);
         try {
             job.setToolId(dto.getToolId());
-            job.setSeqrunId(dto.getSeqrunId());
+            long[] temp = new long[dto.getSeqrunCount()];
+            for (int i = 0; i < temp.length; i++) {
+                temp[i] = dto.getSeqrun(i);
+            }
+            job.setSeqrunIds(temp);
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
