@@ -9,15 +9,25 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Priority;
+import javax.enterprise.context.RequestScoped;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 
+
+@PreMatching
+@Priority(1)
+@RequestScoped
 public class UriProjectFilter implements ContainerRequestFilter {
+    
+    // FIXME currently annotated as @RequestScoped due to 
+    // https://github.com/payara/Payara/issues/3994
 
     @Context
     SecurityContext ctx;
@@ -29,7 +39,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
 
     private void lookupGPMS() {
         try {
-            gpms = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-gpms/GPMS");
+            gpms = InitialContext.doLookup("java:global/MGX-maven-ear/MGX-gpms-2.0/GPMS");
         } catch (NamingException ex) {
             Logger.getLogger(UriProjectFilter.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -61,7 +71,7 @@ public class UriProjectFilter implements ContainerRequestFilter {
             }
         }
 
-        String path = cr.getUriInfo().getPath(); 
+        String path = cr.getUriInfo().getPath();
         String resource = path;
         String projectName = "";
         int idx = path.indexOf('/', 0);
@@ -70,12 +80,11 @@ public class UriProjectFilter implements ContainerRequestFilter {
             resource = path.substring(idx + 1);
         }
 
-        
         UriBuilder ub = cr.getUriInfo().getBaseUriBuilder();
         ub.replacePath(cr.getUriInfo().getBaseUri().getPath() + resource);
         cr.setRequestUri(cr.getUriInfo().getBaseUri(), ub.build());
-        
 
+        
         if ("GPMS".equals(projectName)) {
             // pass-through
             return;
