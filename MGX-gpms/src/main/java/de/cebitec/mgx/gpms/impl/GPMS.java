@@ -51,7 +51,7 @@ public class GPMS implements DBGPMSI {
                 master = loader.createMaster(mbr, targetClass);
             } catch (GPMSException ex) {
                 Logger.getLogger(GPMS.class.getName()).log(Level.SEVERE, null, ex);
-                return;
+                return;// null;
             }
             sessions.registerMaster(mbr, master);
             now = System.currentTimeMillis() - now;
@@ -61,6 +61,7 @@ public class GPMS implements DBGPMSI {
         master.setUser(getCurrentUser());
 
         loader.setCurrentMaster(master);
+        //return (T) master;
     }
 
     @Override
@@ -77,6 +78,11 @@ public class GPMS implements DBGPMSI {
             Logger.getLogger(GPMS.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null; //new User(login, null, Collections.EMPTY_LIST);
+    }
+
+    @Override
+    public MembershipI getService(String projectName, String roleName) throws GPMSException {
+        return loader.getService(projectName, roleName);
     }
 
     private void log(String msg) {
