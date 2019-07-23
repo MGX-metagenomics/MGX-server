@@ -35,7 +35,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setUrl(s.getUrl())
                 .setScope(ToolDTO.ToolScope.forNumber(s.getScope().getValue()))
                 .build();
-        // we don't expose the xml here..
+        // we don't expose the workflows definition here..
     }
 
     public final Tool toDB(ToolDTO dto, boolean copyID) {
@@ -45,7 +45,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setVersion(dto.getVersion())
                 .setAuthor(dto.getAuthor())
                 .setUrl(dto.getUrl())
-                .setFile(dto.getXml()); // not a file, but raw XML
+                .setFile(dto.getContent()); // not a file, but file content
 
         t.setScope(ToolScope.values()[dto.getScope().ordinal()]);
         if (copyID && dto.hasId()) {
