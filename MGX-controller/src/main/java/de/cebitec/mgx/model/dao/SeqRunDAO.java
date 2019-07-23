@@ -273,10 +273,11 @@ public class SeqRunDAO extends DAO<SeqRun> {
             + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
             + "FROM job j LEFT JOIN seqrun s ON (j.seqrun_id=s.id) WHERE j.id=?";
 
-    public SeqRun byJob(long jobId) throws MGXException {
+    public AutoCloseableIterator<SeqRun> byJob(long jobId) throws MGXException {
         if (jobId <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
+        List<SeqRun> ret = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_JOB)) {
                 stmt.setLong(1, jobId);
@@ -296,13 +297,17 @@ public class SeqRunDAO extends DAO<SeqRun> {
                     s.setSubmittedToINSDC(rs.getBoolean(7));
                     s.setExtractId(rs.getLong(8));
                     s.setIsPaired(rs.getBoolean(9));
-                    return s;
+                    if (ret == null) {
+                        ret = new ArrayList<>();
+                    }
+                    ret.add(s);
 
                 }
             }
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     private final static String SQL_BY_EXTRACT

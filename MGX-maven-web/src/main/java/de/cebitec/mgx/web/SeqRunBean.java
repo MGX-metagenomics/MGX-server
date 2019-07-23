@@ -178,10 +178,9 @@ public class SeqRunBean {
     @GET
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
-    public SeqRunDTO byJob(@PathParam("id") Long jobId) {
+    public SeqRunDTOList byJob(@PathParam("id") Long jobId) {
         try {
-            SeqRun run = mgx.getSeqRunDAO().byJob(jobId);
-            return SeqRunDTOFactory.getInstance(global).toDTO(run);
+            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byJob(jobId));
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
