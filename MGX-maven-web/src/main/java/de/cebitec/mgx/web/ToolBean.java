@@ -96,13 +96,13 @@ public class ToolBean {
         }
     }
 
-    @GET
-    @Path("getXML/{id}")
-    @Produces("application/x-protobuf")
-    @Deprecated
-    public MGXString getXML(@PathParam("id") Long tool_id) {
-        return getContent(tool_id);
-    }
+//    @GET
+//    @Path("getXML/{id}")
+//    @Produces("application/x-protobuf")
+//    @Deprecated
+//    public MGXString getXML(@PathParam("id") Long tool_id) {
+//        return getContent(tool_id);
+//    }
 
     @GET
     @Path("getContent/{id}")
@@ -216,33 +216,33 @@ public class ToolBean {
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
             Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
-            String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
-            return getParams(toolXMLData);
+            String toolContent = UnixHelper.readFile(new File(tool.getFile()));
+            return getParams(toolContent);
         } catch (MGXGlobalException | MGXException | IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }
     }
 
-    @PUT
-    @Path("getAvailableParameters")
-    @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
-    @Deprecated
-    public JobParameterListDTO getAvailableParameters(ToolDTO dto) {
-
-        XMLValidator validator = new XMLValidator();
-        try {
-            if (!validator.isValid(dto.getXml())) {
-                throw new MGXWebException("XML is not Valid");
-            }
-        } catch (SAXException | IOException | ParserConfigurationException ex) {
-            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXWebException("XML is not valid: " + ex.getMessage());
-        }
-
-        return getParams(dto.getXml());
-    }
+//    @PUT
+//    @Path("getAvailableParameters")
+//    @Consumes("application/x-protobuf")
+//    @Produces("application/x-protobuf")
+//    @Deprecated
+//    public JobParameterListDTO getAvailableParameters(ToolDTO dto) {
+//
+//        XMLValidator validator = new XMLValidator();
+//        try {
+//            if (!validator.isValid(dto.getContent())) {
+//                throw new MGXWebException("XML is not Valid");
+//            }
+//        } catch (SAXException | IOException | ParserConfigurationException ex) {
+//            Logger.getLogger(ToolBean.class.getName()).log(Level.SEVERE, null, ex);
+//            throw new MGXWebException("XML is not valid: " + ex.getMessage());
+//        }
+//
+//        return getParams(dto.getContent());
+//    }
 
     @PUT
     @Path("getParameters")
@@ -263,10 +263,10 @@ public class ToolBean {
         return getParams(dto.getValue());
     }
 
-    private JobParameterListDTO getParams(String XMLData) {
+    private JobParameterListDTO getParams(String toolContent) {
         AutoCloseableIterator<JobParameter> params;
         try {
-            params = JobParameterHelper.getParameters(XMLData, mgxconfig.getPluginDump());
+            params = JobParameterHelper.getParameters(toolContent, mgxconfig.getPluginDump());
         } catch (MGXException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
