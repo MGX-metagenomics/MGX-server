@@ -3,6 +3,8 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.model.db.Assembly;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -146,7 +148,6 @@ public class SeqRunDAO extends DAO<SeqRun> {
 //            throw new MGXException(ex.getMessage());
 //        }
 //    }
-
     private final static String BY_ID = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
             + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
             + "FROM seqrun s WHERE s.id=?";
@@ -182,6 +183,51 @@ public class SeqRunDAO extends DAO<SeqRun> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+    }
+
+    public AutoCloseableIterator<SeqRun> getByIds(long... ids) throws MGXException {
+        if (ids == null || ids.length == 0) {
+            throw new MGXException("Null/empty ID list.");
+        }
+        List<SeqRun> ret = null;
+        String BY_IDS = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
+                + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
+                + "FROM seqrun s WHERE s.id IN (" + toSQLTemplateString(ids.length) + ")";
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
+                int idx = 1;
+                for (long id : ids) {
+                    if (id <= 0) {
+                        throw new MGXException("No/Invalid ID supplied.");
+                    }
+                    stmt.setLong(idx++, id);
+                }
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        SeqRun s = new SeqRun();
+                        s.setId(rs.getLong(1));
+                        s.setName(rs.getString(2));
+                        s.setAccession(rs.getString(3));
+                        s.setNumberOfSequences(rs.getLong(4));
+                        s.setSequencingMethod(rs.getLong(5));
+                        s.setSequencingTechnology(rs.getLong(6));
+                        s.setSubmittedToINSDC(rs.getBoolean(7));
+                        s.setExtractId(rs.getLong(8));
+                        s.setIsPaired(rs.getBoolean(9));
+                        if (ret == null) {
+                            ret = new ArrayList<>();
+                        }
+                        ret.add(s);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+
     }
 
     private final static String FETCHALL = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
@@ -311,6 +357,13 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
+    public AutoCloseableIterator<SeqRun> byAssembly(final long asmId) throws MGXException {
+        // FIXME - 3 DB roundtrips
+        Assembly asm = getController().getAssemblyDAO().getById(asmId);
+        Job job = getController().getJobDAO().getById(asm.getAsmjobId());
+        return getController().getSeqRunDAO().getByIds(job.getSeqrunIds());
+    }
+
     private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=? "
             + "WHERE id=?";
 
@@ -346,4 +399,5 @@ public class SeqRunDAO extends DAO<SeqRun> {
         }
         return new File(getController().getProjectSeqRunDirectory().getAbsolutePath() + File.separator + id);
     }
+
 }

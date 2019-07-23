@@ -187,6 +187,17 @@ public class SeqRunBean {
         }
     }
 
+    @GET
+    @Path("byAssembly/{id}")
+    @Produces("application/x-protobuf")
+    public SeqRunDTOList byAssembly(@PathParam("id") Long asmId) {
+        try {
+            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byAssembly(asmId));
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
+
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
