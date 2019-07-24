@@ -4,6 +4,7 @@ import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -96,6 +97,12 @@ public class MGXConfiguration implements MGXConfigurationI {
         }
 
         return ret;
+    }
+
+    @Override
+    public URI getAnnotationService() {
+        String service = config.getProperty("mgx_annotationservice");
+        return URI.create(service);
     }
 
 //    public String getDispatcherHost() throws MGXDispatcherException {

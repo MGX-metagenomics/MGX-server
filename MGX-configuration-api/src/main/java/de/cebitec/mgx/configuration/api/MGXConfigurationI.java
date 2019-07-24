@@ -6,6 +6,7 @@
 package de.cebitec.mgx.configuration.api;
 
 import java.io.File;
+import java.net.URI;
 
 /**
  *
@@ -27,5 +28,7 @@ public interface MGXConfigurationI {
     File getPluginDump();
 
     int getSQLBulkInsertSize();
+
+    public URI getAnnotationService();
 
 }
