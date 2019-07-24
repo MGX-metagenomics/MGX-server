@@ -1,6 +1,7 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.commonwl.CommonWL;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
@@ -103,7 +104,6 @@ public class ToolBean {
 //    public MGXString getXML(@PathParam("id") Long tool_id) {
 //        return getContent(tool_id);
 //    }
-
     @GET
     @Path("getContent/{id}")
     @Produces("application/x-protobuf")
@@ -217,7 +217,14 @@ public class ToolBean {
         try {
             Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
             String toolContent = UnixHelper.readFile(new File(tool.getFile()));
-            return getParams(toolContent);
+            if (tool.getFile().endsWith("xml")) {
+                return getParams(toolContent);
+            } else if (tool.getFile().endsWith("cwl")) {
+                AutoCloseableIterator<JobParameter> parameters = CommonWL.getParameters(toolContent);
+                return JobParameterDTOFactory.getInstance().toDTOList(parameters);
+            } else {
+                throw new MGXWebException("Unable to determine workflow type.");
+            }
         } catch (MGXGlobalException | MGXException | IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
@@ -243,7 +250,6 @@ public class ToolBean {
 //
 //        return getParams(dto.getContent());
 //    }
-
     @PUT
     @Path("getParameters")
     @Consumes("application/x-protobuf")

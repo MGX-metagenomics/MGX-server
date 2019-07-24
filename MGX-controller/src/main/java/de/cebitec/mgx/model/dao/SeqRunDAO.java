@@ -33,8 +33,8 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return SeqRun.class;
     }
 
-    private final static String CREATE = "INSERT INTO seqrun (name, database_accession, num_sequences, sequencing_method, sequencing_technology, submitted_to_insdc, dnaextract_id, is_paired) "
-            + "VALUES (?,?,?,?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO seqrun (name, database_accession, num_sequences, sequencing_method, sequencing_technology, submitted_to_insdc, dnaextract_id, paired) "
+            + "VALUES (?,?,?,?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(SeqRun obj) throws MGXException {
@@ -149,7 +149,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
 //        }
 //    }
     private final static String BY_ID = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
             + "FROM seqrun s WHERE s.id=?";
 
     @Override
@@ -191,7 +191,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
         }
         List<SeqRun> ret = null;
         String BY_IDS = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-                + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
+                + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
                 + "FROM seqrun s WHERE s.id IN (" + toSQLTemplateString(ids.length) + ")";
 
         try (Connection conn = getConnection()) {
@@ -231,7 +231,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     private final static String FETCHALL = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
             + "FROM seqrun s WHERE s.num_sequences <> -1";
 
     public AutoCloseableIterator<SeqRun> getAll() throws MGXException {
@@ -270,7 +270,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     private final static String BY_JOB = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.is_paired "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
             + "FROM job j LEFT JOIN seqrun s ON (j.seqrun_id=s.id) WHERE j.id=?";
 
     public AutoCloseableIterator<SeqRun> byJob(long jobId) throws MGXException {
@@ -313,10 +313,10 @@ public class SeqRunDAO extends DAO<SeqRun> {
     private final static String SQL_BY_EXTRACT
             = "WITH complete_runs AS ("
             + "SELECT id, name, database_accession, num_sequences, sequencing_method, "
-            + "sequencing_technology, submitted_to_insdc, is_paired, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
+            + "sequencing_technology, submitted_to_insdc, paired, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
             + ")"
             + "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.is_paired "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.paired "
             + "FROM dnaextract d LEFT JOIN complete_runs s ON (d.id=s.dnaextract_id) WHERE d.id=?";
 
     public AutoCloseableIterator<SeqRun> byDNAExtract(final long extract_id) throws MGXException {
@@ -369,8 +369,8 @@ public class SeqRunDAO extends DAO<SeqRun> {
         return getController().getSeqRunDAO().getByIds(job.getSeqrunIds());
     }
 
-    private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=? "
-            + "WHERE id=?";
+    private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=?, "
+            + "paired=? WHERE id=?";
 
     public void update(SeqRun obj) throws MGXException {
         if (obj.getId() == SeqRun.INVALID_IDENTIFIER) {
@@ -383,7 +383,8 @@ public class SeqRunDAO extends DAO<SeqRun> {
                 stmt.setLong(3, obj.getSequencingMethod());
                 stmt.setLong(4, obj.getSequencingTechnology());
                 stmt.setBoolean(5, obj.getSubmittedToINSDC());
-                stmt.setLong(6, obj.getId());
+                stmt.setBoolean(6, obj.isPaired());
+                stmt.setLong(7, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");

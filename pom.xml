@@ -45,6 +45,7 @@
         <module>MGX-workers</module>
         <module>MGX-conveyor</module>
     <module>MGX-annotationservice</module>
+    <module>MGX-commonwl</module>
   </modules>
     
     <properties>

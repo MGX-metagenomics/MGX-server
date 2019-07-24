@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Connection;
@@ -860,7 +861,56 @@ public class JobDAO extends DAO<Job> {
         paramCache.clear();
     }
 
-    public void writeConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+    public void writeCWLConfigFile(Job job, File projectDir, String projectName, URI annotationService) throws MGXException {
+
+        String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
+                .append(File.separator)
+                .append("jobs")
+                .append(File.separator)
+                .append(job.getId())
+                .toString();
+
+        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
+            cfgFile.write("projectName: " + projectName);
+            cfgFile.newLine();
+            cfgFile.write("apiKey: " + createApiKey(job));
+            cfgFile.newLine();
+            cfgFile.write("hostURI: " + annotationService.toASCIIString());
+            cfgFile.newLine();
+            cfgFile.write("runIds:");
+            cfgFile.newLine();
+            for (long runId : job.getSeqrunIds()) {
+                cfgFile.write("  - \"");
+                cfgFile.write(String.valueOf(runId));
+                cfgFile.write("\"");
+                cfgFile.newLine();
+            }
+
+            for (JobParameter jp : job.getParameters()) {
+                cfgFile.write(jp.getParameterName() + ": ");
+                if (jp.getClassName().equals("string")) {
+                    cfgFile.write("\"" + jp.getParameterValue() + "\"");
+                } else if (jp.getClassName().equals("int")) {
+                    cfgFile.write(jp.getParameterValue());
+                } else {
+                    throw new MGXException("Unknown parameter type: " + jp.getClassName());
+                }
+                cfgFile.newLine();
+            }
+            cfgFile.flush();
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+
+        try {
+            UnixHelper.makeFileGroupWritable(jobconfigFile);
+        } catch (IOException ex) {
+            throw new MGXException(ex.getMessage());
+        }
+    }
+
+    public void writeConveyorConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
                 .append("jobs")
