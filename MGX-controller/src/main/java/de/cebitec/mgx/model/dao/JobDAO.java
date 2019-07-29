@@ -147,7 +147,12 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                    long[] tmp = new long[values.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        tmp[i] = values[i];
+                    }
+                    job.setSeqrunIds(tmp);
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
@@ -216,7 +221,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -326,7 +336,12 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                    long[] tmp = new long[values.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        tmp[i] = values[i];
+                    }
+                    job.setSeqrunIds(tmp);
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
@@ -381,7 +396,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -449,7 +469,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -805,6 +830,9 @@ public class JobDAO extends DAO<Job> {
     private void fixParameters(Job job) throws MGXException {
         Tool tool = getController().getToolDAO().getById(job.getToolId());
         String fName = tool.getFile();
+        if (!tool.getFile().endsWith(".xml")) {
+            return;
+        }
         List<JobParameter> availableParams;
 
         if (paramCache.containsKey(fName)) {

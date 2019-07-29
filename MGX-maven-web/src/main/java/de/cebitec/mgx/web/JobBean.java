@@ -2,6 +2,7 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.common.JobState;
+import de.cebitec.mgx.commonwl.CommonWL;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
@@ -44,7 +45,9 @@ import de.cebitec.mgx.dispatcher.common.api.DispatcherClientConfigurationI;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -151,12 +154,25 @@ public class JobBean {
 
         // fetch default parameters for the referenced tool
         Set<JobParameter> defaultParams = new HashSet<>();
+        Tool tool = null;
         try {
-            Tool tool = mgx.getToolDAO().getById(j.getToolId());
-            String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
-            AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
-            while (jpIter.hasNext()) {
-                defaultParams.add(jpIter.next());
+            tool = mgx.getToolDAO().getById(j.getToolId());
+        } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        try {
+            if (tool.getFile().endsWith(".xml")) {
+                String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
+                AutoCloseableIterator<JobParameter> jpIter = JobParameterHelper.getParameters(toolXMLData, mgxconfig.getPluginDump());
+                while (jpIter.hasNext()) {
+                    defaultParams.add(jpIter.next());
+                }
+            } else { // CWL
+                AutoCloseableIterator<JobParameter> parameters = CommonWL.getParameters(UnixHelper.readFile(new File(tool.getFile())));
+                while (parameters.hasNext()) {
+                    defaultParams.add(parameters.next());
+                }
             }
         } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
@@ -164,29 +180,31 @@ public class JobBean {
         }
 
         // postprocess user parameters
-        for (JobParameter userParam : j.getParameters()) {
-            JobParameter defaultParam = findDefaultParameter(userParam, defaultParams);
-            String value = userParam.getParameterValue();
+        if (tool.getFile().endsWith(".xml")) {
+            for (JobParameter userParam : j.getParameters()) {
+                JobParameter defaultParam = findDefaultParameter(userParam, defaultParams);
+                String value = userParam.getParameterValue();
 
-            if (defaultParam.getType() == null) {
-                mgx.log("Null type for " + defaultParam);
-                throw new MGXWebException("No type for parameter");
-            }
+                if (defaultParam.getType() == null) {
+                    mgx.log("Null type for " + defaultParam);
+                    throw new MGXWebException("No type for parameter");
+                }
 
-            if ("ConfigFile".equals(defaultParam.getType())) {
-                String fullPath;
-                try {
-                    fullPath = mgx.getProjectFileDirectory() + File.separator
-                            + userParam.getParameterValue().substring(2).replace("|", File.separator);
-                } catch (IOException ex) {
-                    throw new MGXWebException(ex.getMessage());
+                if ("ConfigFile".equals(defaultParam.getType())) {
+                    String fullPath;
+                    try {
+                        fullPath = mgx.getProjectFileDirectory() + File.separator
+                                + userParam.getParameterValue().substring(2).replace("|", File.separator);
+                    } catch (IOException ex) {
+                        throw new MGXWebException(ex.getMessage());
+                    }
+                    if (!new File(fullPath).exists()) {
+                        throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
+                    }
+                    value = fullPath;
                 }
-                if (!new File(fullPath).exists()) {
-                    throw new MGXWebException("Invalid file path: " + userParam.getParameterValue());
-                }
-                value = fullPath;
+                userParam.setParameterValue(value);
             }
-            userParam.setParameterValue(value);
         }
 
         // make sure all required parameters are set
@@ -282,6 +300,18 @@ public class JobBean {
             if (t.getFile().endsWith("xml")) {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
             } else if (t.getFile().endsWith("cwl")) {
+                // as the stored job parameters do not have a class name, we
+                // need to fetch these from the workflow and update the params
+                String toolContent = UnixHelper.readFile(new File(t.getFile()));
+                AutoCloseableIterator<JobParameter> params = CommonWL.getParameters(toolContent);
+                Map<String, JobParameter> tmp = new HashMap<>();
+                while (params.hasNext()) {
+                    JobParameter jp = params.next();
+                    tmp.put(jp.getUserName(), jp);
+                }
+                for (JobParameter jp : job.getParameters()) {
+                    jp.setClassName(tmp.get(jp.getUserName()).getClassName());
+                }
                 mgx.getJobDAO().writeCWLConfigFile(job, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
             } else {
                 throw new MGXWebException("Unable to determine workflow type.");
