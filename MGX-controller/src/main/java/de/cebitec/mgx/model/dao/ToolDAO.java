@@ -108,7 +108,7 @@ public class ToolDAO extends DAO<Tool> {
             throw new MGXException("No/Invalid ID supplied.");
         }
         try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, definition, scope FROM tool WHERE id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
@@ -140,7 +140,7 @@ public class ToolDAO extends DAO<Tool> {
     private List<Tool> getTools() throws MGXException {
         List<Tool> tools = new ArrayList<>();
         try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, definition, scope FROM tool")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Tool t = new Tool();
@@ -162,7 +162,7 @@ public class ToolDAO extends DAO<Tool> {
         return tools;
     }
 
-    private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.definition, t.scope "
+    private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.file, t.scope "
             + "FROM job j LEFT JOIN tool t on (j.tool_id=t.id) WHERE j.id=?";
 
     public Tool byJob(long job_id) throws MGXException {
@@ -191,7 +191,7 @@ public class ToolDAO extends DAO<Tool> {
         throw new MGXException("No object of type Job for ID " + job_id + ".");
     }
 
-    private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, definition=?, scope=? "
+    private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, file=?, scope=? "
             + "WHERE id=?";
 
     public void update(Tool obj) throws MGXException {
