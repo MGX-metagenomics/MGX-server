@@ -244,7 +244,12 @@ public class ToolDAO extends DAO<Tool> {
             if (!targetDir.exists()) {
                 UnixHelper.createDirectory(targetDir);
             }
-            targetName.append(File.separator).append(id).append(".xml");
+            targetName.append(File.separator).append(id);
+            if (global.getFile().endsWith(".xml")) {
+                targetName.append(".xml");
+            } else {
+                targetName.append(".cwl");
+            }
 
             File src = new File(global.getFile());
             File dest = new File(targetName.toString());
