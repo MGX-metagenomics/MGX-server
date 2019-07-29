@@ -43,7 +43,8 @@ public class CommonWL {
                 jp.setOptional(type.endsWith("?"));
                 jp.setClassName(type);
                 jp.setDisplayName(description);
-                jp.setUserName(description);
+                jp.setUserName(id);
+                jp.setUserDescription(description);
                 parameters.add(jp);
             }
         }
