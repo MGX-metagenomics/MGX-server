@@ -39,6 +39,7 @@ public class CommonWL {
 
             if (!type.contains("File") && !type.contains("Directory") && !isInternalParameter(id)) {
                 JobParameter jp = new JobParameter();
+                jp.setNodeId(-1);
                 jp.setParameterName(id);
                 jp.setOptional(type.endsWith("?"));
                 jp.setClassName(type);

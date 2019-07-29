@@ -9,11 +9,8 @@ import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -74,6 +71,7 @@ public class CommonWLTest {
         int cnt = 0;
         while (result.hasNext()) {
             JobParameter jp = result.next();
+            System.out.println(jp.getClassName());
             System.out.println(jp.getUserName());
             System.out.println(jp.getUserDescription());
             System.out.println(jp.getDisplayName());
