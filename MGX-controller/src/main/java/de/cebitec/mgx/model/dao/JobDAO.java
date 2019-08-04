@@ -11,6 +11,7 @@ import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -147,7 +148,12 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                    long[] tmp = new long[values.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        tmp[i] = values[i];
+                    }
+                    job.setSeqrunIds(tmp);
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
@@ -216,7 +222,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -326,7 +337,12 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                    long[] tmp = new long[values.length];
+                    for (int i = 0; i < tmp.length; i++) {
+                        tmp[i] = values[i];
+                    }
+                    job.setSeqrunIds(tmp);
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
@@ -381,7 +397,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -449,7 +470,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -629,16 +655,17 @@ public class JobDAO extends DAO<Job> {
 
     private final static String SQL_BY_SEQRUN = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
-            + "FROM seqrun s "
-            + "LEFT JOIN job j ON (j.seqrun_id=s.id) "
-            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)"
-            + "WHERE s.id=?";
+            + "FROM job j "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
+            + "WHERE ?=ANY(j.seqruns)";
 
     public AutoCloseableIterator<Job> bySeqRun(final long run_id) throws MGXException {
         if (run_id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
         List<Job> ret = null;
+        
+        SeqRun run = getController().getSeqRunDAO().getById(run_id);
 
 //        SeqRun seqrun = getController().getSeqRunDAO().getById(run_id);
         try (Connection conn = getConnection()) {
@@ -646,13 +673,9 @@ public class JobDAO extends DAO<Job> {
                 stmt.setLong(1, run_id);
                 try (ResultSet rs = stmt.executeQuery()) {
 
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type SeqRun for ID " + run_id + ".");
-                    }
-
                     Job currentJob = null;
 
-                    do {
+                    while (rs.next()) {
                         if (rs.getLong(1) != 0) {
                             if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
                                 Job job = new Job();
@@ -666,7 +689,12 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+                                Long[] values = (Long[]) rs.getArray(7).getArray();
+                                long[] tmp = new long[values.length];
+                                for (int i = 0; i < tmp.length; i++) {
+                                    tmp[i] = values[i];
+                                }
+                                job.setSeqrunIds(tmp);
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -689,7 +717,7 @@ public class JobDAO extends DAO<Job> {
                                 currentJob.getParameters().add(jp);
                             }
                         }
-                    } while (rs.next());
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -805,6 +833,9 @@ public class JobDAO extends DAO<Job> {
     private void fixParameters(Job job) throws MGXException {
         Tool tool = getController().getToolDAO().getById(job.getToolId());
         String fName = tool.getFile();
+        if (!tool.getFile().endsWith(".xml")) {
+            return;
+        }
         List<JobParameter> availableParams;
 
         if (paramCache.containsKey(fName)) {

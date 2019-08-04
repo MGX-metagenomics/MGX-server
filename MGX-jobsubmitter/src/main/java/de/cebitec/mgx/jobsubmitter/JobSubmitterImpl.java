@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -175,6 +176,13 @@ public class JobSubmitterImpl implements JobSubmitterI {
             return wr.request(MediaType.TEXT_PLAIN_TYPE).accept(MediaType.TEXT_PLAIN_TYPE);
         } catch (UnsupportedEncodingException ex) {
             throw new RuntimeException(ex);
+        }
+    }
+    
+    @PreDestroy
+    public void dispose() {
+        if (currentClient != null) {
+            currentClient.close();
         }
     }
 }

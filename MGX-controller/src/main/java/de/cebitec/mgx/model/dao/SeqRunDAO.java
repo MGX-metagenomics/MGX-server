@@ -271,36 +271,36 @@ public class SeqRunDAO extends DAO<SeqRun> {
 
     private final static String BY_JOB = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
             + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
-            + "FROM job j LEFT JOIN seqrun s ON (j.seqrun_id=s.id) WHERE j.id=?";
+            + "FROM seqrun s WHERE s.id IN (SELECT unnest(seqruns) FROM job WHERE id=?)";
 
     public AutoCloseableIterator<SeqRun> byJob(long jobId) throws MGXException {
         if (jobId <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
         List<SeqRun> ret = null;
+        Job job = getController().getJobDAO().getById(jobId);
+
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_JOB)) {
                 stmt.setLong(1, jobId);
                 try (ResultSet rs = stmt.executeQuery()) {
 
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + jobId + ".");
+                    while (rs.next()) {
+                        SeqRun s = new SeqRun();
+                        s.setId(rs.getLong(1));
+                        s.setName(rs.getString(2));
+                        s.setAccession(rs.getString(3));
+                        s.setNumberOfSequences(rs.getLong(4));
+                        s.setSequencingMethod(rs.getLong(5));
+                        s.setSequencingTechnology(rs.getLong(6));
+                        s.setSubmittedToINSDC(rs.getBoolean(7));
+                        s.setExtractId(rs.getLong(8));
+                        s.setIsPaired(rs.getBoolean(9));
+                        if (ret == null) {
+                            ret = new ArrayList<>();
+                        }
+                        ret.add(s);
                     }
-
-                    SeqRun s = new SeqRun();
-                    s.setId(rs.getLong(1));
-                    s.setName(rs.getString(2));
-                    s.setAccession(rs.getString(3));
-                    s.setNumberOfSequences(rs.getLong(4));
-                    s.setSequencingMethod(rs.getLong(5));
-                    s.setSequencingTechnology(rs.getLong(6));
-                    s.setSubmittedToINSDC(rs.getBoolean(7));
-                    s.setExtractId(rs.getLong(8));
-                    s.setIsPaired(rs.getBoolean(9));
-                    if (ret == null) {
-                        ret = new ArrayList<>();
-                    }
-                    ret.add(s);
 
                 }
             }

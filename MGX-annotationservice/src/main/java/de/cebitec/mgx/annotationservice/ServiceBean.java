@@ -70,9 +70,9 @@ public class ServiceBean {
     DownloadSessions downSessions;
 
     @GET
-    @Path("fetch/{id}")
+    @Path("fetchSeqRun/{id}")
     @Produces("application/x-protobuf")
-    public SeqRunDTO fetch(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
+    public SeqRunDTO fetchSeqRun(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
         SeqRun seqrun;
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
