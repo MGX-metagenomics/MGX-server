@@ -160,6 +160,7 @@ public class ServiceBean {
         Assembly x = AssemblyDTOFactory.getInstance().toDB(dto);
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            x.setAsmjobId(asmJob.getId());
             long id = mgx.getAssemblyDAO().create(x);
             return MGXLong.newBuilder().setValue(id).build();
         } catch (MGXException ex) {
