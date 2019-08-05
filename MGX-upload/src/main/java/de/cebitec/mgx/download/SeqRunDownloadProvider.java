@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.TransactionAttribute;
@@ -31,13 +32,23 @@ import javax.ejb.TransactionAttributeType;
  * @author sjaenick
  */
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
-public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList> {
+public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList>, Runnable {
 
     protected final String projectName;
     private final GPMSManagedDataSourceI dataSource;
     protected SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
+
+    protected State state = State.OK;
+    protected MGXException exception = null;
+    protected final Semaphore lock = new Semaphore(1);
+    protected volatile SequenceDTOList nextChunk = null;
+
+    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws MGXException {
+        this(dataSource, projName, dbFile);
+        maxSeqsPerChunk = chunkSize;
+    }
 
     public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile) throws MGXException {
         this.projectName = projName;
@@ -48,7 +59,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
-        
+
         this.dataSource.subscribe(this);
 
         lastAccessed = System.currentTimeMillis();
@@ -60,6 +71,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void cancel() {
+        dataSource.close(this);
         try {
             if (reader != null) {
                 reader.close();
@@ -85,55 +97,82 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     }
 
     @Override
-    public SequenceDTOList fetch() throws MGXException {
-        int count = 0;
-        try {
+    public void run() {
+        lock.acquireUninterruptibly();
+
+        if (nextChunk == null) {
+
+            List<DNASequenceI> xferList = new LinkedList<>();
             //
             // fetch sequences
             //
-            List<DNASequenceI> seqs = new LinkedList<>();
-            while (count < maxSeqsPerChunk && reader.hasMoreElements()) {
-                DNASequenceI seq = reader.nextElement();
-                seqs.add(seq);
-                count++;
-            }
+            try {
+                while (xferList.size() < maxSeqsPerChunk && reader.hasMoreElements()) {
+                    DNASequenceI seq = reader.nextElement();
+                    xferList.add(seq);
+                }
 
-            //
-            // get names from database
-            //
-            if (!seqs.isEmpty()) {
-                getSequenceNames(seqs);
+                //
+                // get names from database
+                //
+                if (!xferList.isEmpty()) {
+                    getSequenceNames(xferList);
 
-                // additional check
-                for (DNASequenceI seq : seqs) {
-                    if (seq.getName() == null) {
-                        throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                    // additional check
+                    for (DNASequenceI seq : xferList) {
+                        if (seq.getName() == null) {
+                            //throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                            state = State.ERROR;
+                        }
                     }
                 }
-            }
-            //
-            // convert to DTO
-            //
-            Builder listBuilder = SequenceDTOList.newBuilder();
-            for (DNASequenceI seq : seqs) {
-                SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
-                        .setId(seq.getId())
-                        .setNameBytes(ByteString.copyFrom(seq.getName()))
-                        .setSequenceBytes(ByteString.copyFrom(seq.getSequence()));
 
-                if (seq instanceof DNAQualitySequenceI) {
-                    dtob.setQuality(ByteString.copyFrom(((DNAQualitySequenceI) seq).getQuality()));
+                //
+                // convert to DTO
+                //
+                Builder listBuilder = SequenceDTOList.newBuilder();
+                for (DNASequenceI seq : xferList) {
+                    SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
+                            .setId(seq.getId())
+                            .setNameBytes(ByteString.copyFrom(seq.getName()))
+                            .setSequenceBytes(ByteString.copyFrom(seq.getSequence()));
+
+                    if (seq instanceof DNAQualitySequenceI) {
+                        dtob.setQuality(ByteString.copyFrom(((DNAQualitySequenceI) seq).getQuality()));
+                    }
+                    listBuilder.addSeq(dtob.build());
                 }
-                listBuilder.addSeq(dtob.build());
+                listBuilder.setComplete(!reader.hasMoreElements());
+                nextChunk = listBuilder.build();
+            } catch (MGXException | SeqStoreException ex) {
+                exception = (MGXException) (ex instanceof MGXException ? ex : new MGXException(ex));
+                state = State.ERROR;
             }
-            lastAccessed = System.currentTimeMillis();
-            listBuilder.setComplete(!reader.hasMoreElements());
-            return listBuilder.build();
-
-        } catch (SeqStoreException ex) {
-            throw new MGXException(ex);
         }
 
+        lock.release();
+    }
+
+    @Override
+    public SequenceDTOList fetch() throws MGXException {
+
+        if (state != State.OK) {
+            throw exception;
+        }
+
+        lock.acquireUninterruptibly();
+        if (nextChunk == null) {
+            // if run() did not run and produce a new chunk, we synchronously
+            // invoke it to obtain the data; race conditions avoided via the
+            // semaphore
+            run();
+        }
+        SequenceDTOList ret = nextChunk;
+        nextChunk = null;
+        lock.release();
+        
+        lastAccessed = System.currentTimeMillis();
+        return ret;
     }
 
     @Override
@@ -158,7 +197,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             }
 
         });
-        
+
         try (Connection conn = dataSource.getConnection(this)) {
             try (PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
                 int idx = 1;
@@ -170,11 +209,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next() && seqIter.hasNext()) {
-                        long seqId = rs.getLong(1);
                         DNASequenceI seq = seqIter.next();
-                        
-                        //assert seqId == seq.getId();
-                        seq.setName(rs.getString(2).getBytes());
+                        seq.setName(rs.getString(1).getBytes());
                     }
                 }
             }
@@ -187,11 +223,16 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     private static String buildSQL(int numElements) {
         assert numElements > 0;
-        StringBuilder sb = new StringBuilder("SELECT id, name FROM read WHERE id IN (?");
+        StringBuilder sb = new StringBuilder("SELECT name FROM read WHERE id IN (?");
         for (int i = 1; i < numElements; i++) {
             sb.append(",?");
         }
         sb.append(") ORDER BY id ASC");
         return sb.toString();
+    }
+
+    protected static enum State {
+        OK,
+        ERROR;
     }
 }

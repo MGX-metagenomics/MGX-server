@@ -41,7 +41,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     @Override
     public SequenceDTOList fetch() throws MGXException {
 
-        long qTime = System.currentTimeMillis();
         if (rs == null) {
             //
             // first invocation, perform DB query
@@ -59,10 +58,8 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
                 throw new MGXException(ex);
             }
 
-            qTime = System.currentTimeMillis() - qTime;
         }
 
-        qTime = System.currentTimeMillis();
         SequenceDTOList.Builder listBuilder = SequenceDTOList.newBuilder();
         readnames.clear();
         int count = 0;
@@ -93,8 +90,6 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
         } catch (SeqStoreException ex) {
             throw new MGXException(ex);
         }
-
-        qTime = System.currentTimeMillis() - qTime;
 
         lastAccessed = System.currentTimeMillis();
         listBuilder.setComplete(!have_more_data);

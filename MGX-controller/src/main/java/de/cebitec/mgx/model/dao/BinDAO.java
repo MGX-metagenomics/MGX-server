@@ -172,6 +172,10 @@ public class BinDAO extends DAO<Bin> {
 
     private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
             + "LET JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
+    
+    //
+    // FIXME add total_bp field
+    //
 
     public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
 

@@ -164,8 +164,12 @@ public class ContigDAO extends DAO<Contig> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.bin_id FROM contig c"
+    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.bin_id size FROM contig c"
             + "LET JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
+    
+    //
+    // FIXME get num cds
+    //
 
     public AutoCloseableIterator<Contig> byBin(long bin_id) throws MGXException {
 

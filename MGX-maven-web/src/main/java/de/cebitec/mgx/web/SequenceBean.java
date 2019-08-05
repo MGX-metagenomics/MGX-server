@@ -76,7 +76,7 @@ public class SequenceBean {
         try {
             // check seqrun exists before creating upload session
             SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
-            
+
             mgx.log("Creating upload session for " + mgx.getProjectName());
             SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
                     mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
@@ -201,7 +201,7 @@ public class SequenceBean {
                 }
             }
 
-            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), 
+            provider = new SeqByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(),
                     attributeIDs, mgx.getSeqRunDAO().getDBFile(seqrun.getId()).getAbsolutePath());
         } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
@@ -211,7 +211,7 @@ public class SequenceBean {
         UUID uuid = downSessions.registerDownloadSession(provider);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
-    
+
     private static boolean arrayContains(long[] arr, long val) {
         for (long l : arr) {
             if (l == val) {
@@ -240,7 +240,12 @@ public class SequenceBean {
     public SequenceDTOList fetchSequences(@PathParam("uuid") UUID session_id) {
         try {
             DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
-            return session.fetch();
+            SequenceDTOList ret = session.fetch();
+            if (session instanceof Runnable) {
+                // submit for async background prefetch
+                executor.execute((Runnable) session); 
+            }
+            return ret;
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());

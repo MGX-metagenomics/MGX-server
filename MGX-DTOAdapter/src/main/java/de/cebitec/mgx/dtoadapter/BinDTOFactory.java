@@ -32,6 +32,7 @@ public class BinDTOFactory extends DTOConversionBase<Bin, BinDTO, BinDTOList> {
                 .setContamination(h.getContamination())
                 .setTaxonomy(h.getTaxonomy())
                 .setN50(h.getN50())
+                .setTotalBp(h.getTotalBp())
                 .setAssemblyId(h.getAssemblyId());
 
         if (h.getPredictedCDS() > 0) {

@@ -16,6 +16,7 @@ public class Contig extends Identifiable {
     private int length_bp;
     private int coverage;
     private long bin_id;
+    private int numCDS;
 
     public Contig() {
     }
@@ -59,5 +60,13 @@ public class Contig extends Identifiable {
 
     public void setBinId(long bin_id) {
         this.bin_id = bin_id;
+    }
+    
+    public void setNumberCDS(int numCDS) {
+        this.numCDS = numCDS;
+    }
+
+    public int getNumberCDS() {
+        return numCDS;
     }
 }
