@@ -100,7 +100,7 @@ public class ContigBean {
     @GET
     @Path("byBin/{id}")
     @Produces("application/x-protobuf")
-    public ContigDTOList byAssembly(@PathParam("id") Long id) {
+    public ContigDTOList byBin(@PathParam("id") Long id) {
         AutoCloseableIterator<Contig> bins;
         try {
             bins = mgx.getContigDAO().byBin(id);
