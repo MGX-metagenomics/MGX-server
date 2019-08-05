@@ -10,7 +10,6 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.ContigDTO;
@@ -113,14 +112,14 @@ public class ServiceBean {
             }
             mgx.log("Creating download session for run ID " + seqrun_id);
             String dbFile = mgx.getSeqRunDAO().getDBFile(seqrun_id).getAbsolutePath();
-            provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), dbFile);
+            provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), dbFile, 3_000);
         } catch (MGXException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXServiceException(ex.getMessage());
         }
 
         UUID uuid = downSessions.registerDownloadSession(provider);
-        return dto.MGXString.newBuilder().setValue(uuid.toString()).build();
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
 
     @GET
@@ -140,7 +139,7 @@ public class ServiceBean {
     @GET
     @Path("fetchSequences/{uuid}")
     @Consumes("application/x-protobuf")
-    public dto.SequenceDTOList fetchSequences(@HeaderParam("apiKey") String apiKey, @PathParam("uuid") UUID session_id) {
+    public SequenceDTOList fetchSequences(@HeaderParam("apiKey") String apiKey, @PathParam("uuid") UUID session_id) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
@@ -160,6 +159,7 @@ public class ServiceBean {
         Assembly x = AssemblyDTOFactory.getInstance().toDB(dto);
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            x.setAsmjobId(asmJob.getId());
             long id = mgx.getAssemblyDAO().create(x);
             return MGXLong.newBuilder().setValue(id).build();
         } catch (MGXException ex) {
