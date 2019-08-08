@@ -32,7 +32,7 @@ public class JobSubmitterImpl implements JobSubmitterI {
     private Host currentHost = null;
     private Client currentClient = null;
 
-    private final static String MGX_CLASS = "MGX";
+    private final static String MGX_CLASS = "MGX-2";
 
     @Override
     public void shutdown(Host dispatcherHost, String token) throws MGXDispatcherException {
