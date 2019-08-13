@@ -13,10 +13,12 @@ import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.ContigDTO;
+import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
+import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
@@ -35,6 +37,7 @@ import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.UnixHelper;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -183,45 +186,103 @@ public class ServiceBean {
         }
     }
 
+//    @PUT
+//    @Path("createContig")
+//    @Consumes("application/x-protobuf")
+//    @Produces("application/x-protobuf")
+//    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+//    public MGXLong createContig(@HeaderParam("apiKey") String apiKey, ContigDTO dto) {
+//        Contig c = ContigDTOFactory.getInstance().toDB(dto);
+//        try {
+//            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+//            long id = mgx.getContigDAO().create(c);
+//            return MGXLong.newBuilder().setValue(id).build();
+//        } catch (MGXException ex) {
+//            throw new MGXServiceException(ex.getMessage());
+//        }
+//    }
     @PUT
-    @Path("createContig")
+    @Path("createContigs")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLong createContig(@HeaderParam("apiKey") String apiKey, ContigDTO dto) {
-        Contig c = ContigDTOFactory.getInstance().toDB(dto);
+    public MGXLongList createContigs(@HeaderParam("apiKey") String apiKey, ContigDTOList dto) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-            long id = mgx.getContigDAO().create(c);
-            return MGXLong.newBuilder().setValue(id).build();
+
+            MGXLongList.Builder ret = MGXLongList.newBuilder();
+            for (ContigDTO contig : dto.getContigList()) {
+                Contig c = ContigDTOFactory.getInstance().toDB(contig);
+                long id = mgx.getContigDAO().create(c);
+                ret.addLong(id);
+            }
+            return ret.build();
         } catch (MGXException ex) {
             throw new MGXServiceException(ex.getMessage());
         }
     }
 
+//    @PUT
+//    @Path("appendSequence/{binId}")
+//    @Consumes("application/x-protobuf")
+//    @Produces("application/x-protobuf")
+//    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+//    public Response appendSequence(@HeaderParam("apiKey") String apiKey, @PathParam("binId") Long binId, SequenceDTO dto) {
+//        Sequence s = SequenceDTOFactory.getInstance().toDB(dto);
+//        try {
+//            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+//
+//            Bin bin = mgx.getBinDAO().getById(binId);
+//            File asmRoot = mgx.getProjectAssemblyDirectory();
+//            File assemblyDir = new File(asmRoot, String.valueOf(bin.getAssemblyId()));
+//            if (!assemblyDir.exists()) {
+//                assemblyDir.mkdirs();
+//            }
+//            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+//            try (BufferedWriter bw = new BufferedWriter(new FileWriter(binFasta, true))) {
+//                bw.write(">");
+//                bw.write(s.getName());
+//                bw.newLine();
+//                bw.write(s.getSequence());
+//                bw.newLine();
+//            }
+//        } catch (MGXException | IOException ex) {
+//            throw new MGXServiceException(ex.getMessage());
+//        }
+//        return Response.ok().build();
+//    }
     @PUT
-    @Path("appendSequence/{binId}")
+    @Path("appendSequences/{binId}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public Response appendSequence(@HeaderParam("apiKey") String apiKey, @PathParam("binId") Long binId, SequenceDTO dto) {
-        Sequence s = SequenceDTOFactory.getInstance().toDB(dto);
+    public Response appendSequences(@HeaderParam("apiKey") String apiKey, @PathParam("binId") Long binId, SequenceDTOList dto) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-
             Bin bin = mgx.getBinDAO().getById(binId);
             File asmRoot = mgx.getProjectAssemblyDirectory();
             File assemblyDir = new File(asmRoot, String.valueOf(bin.getAssemblyId()));
             if (!assemblyDir.exists()) {
                 assemblyDir.mkdirs();
             }
+            if (!UnixHelper.isGroupWritable(assemblyDir)) {
+                UnixHelper.makeDirectoryGroupWritable(assemblyDir.getAbsolutePath());
+            }
             File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            if (!binFasta.exists()) {
+                UnixHelper.createFile(binFasta);
+            }
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(binFasta, true))) {
-                bw.write(">");
-                bw.write(s.getName());
-                bw.newLine();
-                bw.write(s.getSequence());
-                bw.newLine();
+
+                for (SequenceDTO seq : dto.getSeqList()) {
+                    Sequence s = SequenceDTOFactory.getInstance().toDB(seq);
+                    bw.write(">");
+                    bw.write(s.getName());
+                    bw.newLine();
+                    bw.write(s.getSequence());
+                    bw.newLine();
+                }
+
             }
         } catch (MGXException | IOException ex) {
             throw new MGXServiceException(ex.getMessage());
