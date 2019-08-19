@@ -106,7 +106,7 @@ public class BinDAO extends DAO<Bin> {
 //        }
 //    }
     private static final String FETCHALL = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id FROM bin";
-    private static final String BY_ID = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, assembly_id FROM bin WHERE id=?";
+    private static final String BY_ID = "SELECT id, name, completeness, contamination, taxonomy, n50, assembly_id FROM bin WHERE id=?";
 
     @Override
     public Bin getById(long id) throws MGXException {
@@ -126,8 +126,9 @@ public class BinDAO extends DAO<Bin> {
                         ret.setContamination(rs.getFloat(4));
                         ret.setTaxonomy(rs.getString(5));
                         ret.setN50(rs.getInt(6));
-                        ret.setPredictedCDS(rs.getInt(7));
-                        ret.setAssemblyId(rs.getLong(8));
+                        ret.setPredictedCDS(0);
+                        //ret.setPredictedCDS(rs.getInt(7));
+                        ret.setAssemblyId(rs.getLong(7));
                         return ret;
                     }
                 }
