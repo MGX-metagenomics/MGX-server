@@ -17,6 +17,7 @@ import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
+import de.cebitec.mgx.dto.dto.GeneDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -291,16 +292,20 @@ public class ServiceBean {
     }
 
     @PUT
-    @Path("createGene")
+    @Path("createGenes")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLong createGene(@HeaderParam("apiKey") String apiKey, GeneDTO dto) {
-        Gene c = GeneDTOFactory.getInstance().toDB(dto);
+    public MGXLongList createGenes(@HeaderParam("apiKey") String apiKey, GeneDTOList dtos) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-            long id = mgx.getGeneDAO().create(c);
-            return MGXLong.newBuilder().setValue(id).build();
+            MGXLongList.Builder generatedIds = MGXLongList.newBuilder();
+            for (GeneDTO dto : dtos.getGeneList()) {
+                Gene c = GeneDTOFactory.getInstance().toDB(dto);
+                long id = mgx.getGeneDAO().create(c);
+                generatedIds.addLong(id);
+            }
+            return generatedIds.build();
         } catch (MGXException ex) {
             throw new MGXServiceException(ex.getMessage());
         }
