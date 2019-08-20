@@ -7,12 +7,18 @@ import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.workers.DeleteBin;
+import htsjdk.samtools.reference.FastaSequenceIndexCreator;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -173,11 +179,10 @@ public class BinDAO extends DAO<Bin> {
 
     private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
             + "LET JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
-    
+
     //
     // FIXME add total_bp field
     //
-
     public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
 
         List<Bin> l = null;
@@ -227,5 +232,19 @@ public class BinDAO extends DAO<Bin> {
 //            }
 //        }
         return new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+    }
+
+    public void indexFASTA(Bin bin) throws MGXException {
+        try {
+            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            if (!binFasta.exists() || !binFasta.canRead()) {
+                throw new MGXException("Unable to access FASTA file for bin "+ bin.getId()+".");
+            }
+            FastaSequenceIndexCreator.buildFromFasta(Paths.get(binFasta.getAbsolutePath()));
+        } catch (IOException ex) {
+            Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
+        }
     }
 }
