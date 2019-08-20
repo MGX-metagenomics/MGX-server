@@ -55,14 +55,14 @@ public class AssemblyDAO extends DAO<Assembly> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        
+
         try {
             File asmDir = getController().getProjectAssemblyDirectory();
-            new File(asmDir,String.valueOf(obj.getId())).mkdir();
+            new File(asmDir, String.valueOf(obj.getId())).mkdir();
         } catch (IOException ex) {
             Logger.getLogger(AssemblyDAO.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return obj.getId();
     }
 
@@ -159,6 +159,35 @@ public class AssemblyDAO extends DAO<Assembly> {
             throw new MGXException(ex);
         }
         return new ForwardingIterator<>(l == null ? null : l.iterator());
+    }
+
+    private static final String BY_JOB_ID = "SELECT id, name, reads_assembled, n50 FROM assembly WHERE job_id=?";
+
+    public Assembly byJob(long jobId) throws MGXException {
+        if (jobId <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_JOB_ID)) {
+                stmt.setLong(1, jobId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        Assembly ret = new Assembly();
+                        ret.setId(rs.getLong(1));
+                        ret.setName(rs.getString(2));
+                        ret.setReadsAssembled(rs.getLong(3));
+                        ret.setN50(rs.getInt(4));
+                        ret.setAsmjobId(jobId);
+                        return ret;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+
+        throw new MGXException("No object of type " + getClassName() + " for job ID " + jobId + ".");
     }
 
 }
