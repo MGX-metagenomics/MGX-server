@@ -110,6 +110,19 @@ public class GeneBean {
         return GeneDTOFactory.getInstance().toDTOList(bins);
     }
 
+    @GET
+    @Path("byContig/{id}")
+    @Produces("application/x-protobuf")
+    public GeneDTOList byContig(@PathParam("id") Long id) {
+        AutoCloseableIterator<Gene> bins;
+        try {
+            bins = mgx.getGeneDAO().byContig(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return GeneDTOFactory.getInstance().toDTOList(bins);
+    }
+
     @DELETE
     @Path("delete/{id}")
     @Produces("application/x-protobuf")
