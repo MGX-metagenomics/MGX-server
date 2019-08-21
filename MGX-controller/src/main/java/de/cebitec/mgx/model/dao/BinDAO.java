@@ -171,8 +171,8 @@ public class BinDAO extends DAO<Bin> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
-            + "LET JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
+    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50 FROM assembly a "
+            + "LEFT JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
     
     //
     // FIXME add total_bp field
@@ -198,8 +198,8 @@ public class BinDAO extends DAO<Bin> {
                             ret.setContamination(rs.getFloat(4));
                             ret.setTaxonomy(rs.getString(5));
                             ret.setN50(rs.getInt(6));
-                            ret.setPredictedCDS(rs.getInt(7));
-                            ret.setAssemblyId(rs.getLong(8));
+                            ret.setPredictedCDS(0);
+                            ret.setAssemblyId(asm_id);
 
                             if (l == null) {
                                 l = new ArrayList<>();

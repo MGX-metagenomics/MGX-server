@@ -164,8 +164,8 @@ public class ContigDAO extends DAO<Contig> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.bin_id size FROM contig c"
-            + "LET JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
+    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage FROM contig c "
+            + "LEFT JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
     
     //
     // FIXME get num cds
@@ -189,7 +189,8 @@ public class ContigDAO extends DAO<Contig> {
                             ret.setName(rs.getString(2));
                             ret.setLength(rs.getInt(3));
                             ret.setGC(rs.getFloat(4));
-                            ret.setBinId(rs.getLong(5));
+                            ret.setCoverage(rs.getInt(5));
+                            ret.setBinId(bin_id);
 
                             if (l == null) {
                                 l = new ArrayList<>();
