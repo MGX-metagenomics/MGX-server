@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -71,6 +72,8 @@ public class ServiceBean {
     MGXGlobal global;
     @EJB
     DownloadSessions downSessions;
+    @EJB
+    Executor executor;
 
     @GET
     @Path("fetchSeqRun/{id}")
@@ -147,7 +150,12 @@ public class ServiceBean {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
-            return session.fetch();
+            SequenceDTOList ret = session.fetch();
+            if (session instanceof Runnable) {
+                // submit for async background prefetch
+                executor.execute((Runnable) session);
+            }
+            return ret;
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
             throw new MGXServiceException(ex.getMessage());
