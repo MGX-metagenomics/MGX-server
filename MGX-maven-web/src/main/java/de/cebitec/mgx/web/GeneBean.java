@@ -10,11 +10,17 @@ import de.cebitec.mgx.dto.dto.GeneDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
+import de.cebitec.mgx.model.db.Bin;
+import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequence;
+import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -121,6 +127,31 @@ public class GeneBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return GeneDTOFactory.getInstance().toDTOList(bins);
+    }
+
+    @GET
+    @Path("getDNASequence/{id}")
+    @Produces("application/x-protobuf")
+    public MGXString getDNASequence(@PathParam("id") Long id) {
+        try {
+            Gene gene = mgx.getGeneDAO().getById(id);
+            Contig contig = mgx.getContigDAO().getById(gene.getContigId());
+            Bin bin = mgx.getBinDAO().getById(contig.getBinId());
+            File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            String geneSeq;
+            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                // htsjdk uses 1-based positions
+                ReferenceSequence seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStart() + 1, gene.getStop() + 1);
+                if (seq == null || seq.length() == 0) {
+                    throw new MGXWebException("No sequence found for contig " + contig.getName());
+                }
+                geneSeq = new String(seq.getBases());
+            }
+            return MGXString.newBuilder().setValue(geneSeq).build();
+        } catch (MGXException | IOException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @DELETE
