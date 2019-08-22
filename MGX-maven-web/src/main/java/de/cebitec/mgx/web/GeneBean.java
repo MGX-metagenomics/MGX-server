@@ -5,10 +5,12 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dnautils.DNAUtils;
 import de.cebitec.mgx.dto.dto.GeneDTO;
 import de.cebitec.mgx.dto.dto.GeneDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
@@ -132,7 +134,7 @@ public class GeneBean {
     @GET
     @Path("getDNASequence/{id}")
     @Produces("application/x-protobuf")
-    public MGXString getDNASequence(@PathParam("id") Long id) {
+    public SequenceDTO getDNASequence(@PathParam("id") Long id) {
         try {
             Gene gene = mgx.getGeneDAO().getById(id);
             Contig contig = mgx.getContigDAO().getById(gene.getContigId());
@@ -141,14 +143,25 @@ public class GeneBean {
             File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
             String geneSeq;
             try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
-                // htsjdk uses 1-based positions
-                ReferenceSequence seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStart() + 1, gene.getStop() + 1);
+                ReferenceSequence seq;
+                if (gene.getStart() < gene.getStop()) {
+                    // htsjdk uses 1-based positions
+                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStart() + 1, gene.getStop() + 1);
+                    geneSeq = new String(seq.getBases());
+                } else {
+                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStop() + 1, gene.getStart() + 1);
+                    geneSeq = DNAUtils.reverseComplement(new String(seq.getBases()));
+                }
                 if (seq == null || seq.length() == 0) {
                     throw new MGXWebException("No sequence found for contig " + contig.getName());
                 }
-                geneSeq = new String(seq.getBases());
             }
-            return MGXString.newBuilder().setValue(geneSeq).build();
+            return SequenceDTO.newBuilder()
+                    .setId(id)
+                    .setName(contig.getName() + "_" + String.valueOf(id))
+                    .setSequence(geneSeq)
+                    .build();
+
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
