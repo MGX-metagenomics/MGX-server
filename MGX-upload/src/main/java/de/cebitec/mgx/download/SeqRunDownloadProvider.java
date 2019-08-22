@@ -21,7 +21,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.TransactionAttribute;
@@ -42,7 +43,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     protected State state = State.OK;
     protected MGXException exception = null;
-    protected final Semaphore lock = new Semaphore(1);
+    protected final Lock lock = new ReentrantLock();
     protected volatile SequenceDTOList nextChunk = null;
 
     public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws MGXException {
@@ -98,7 +99,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void run() {
-        lock.acquireUninterruptibly();
+        lock.lock();
 
         if (nextChunk == null) {
 
@@ -121,11 +122,12 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                     // additional check
                     for (DNASequenceI seq : xferList) {
                         if (seq.getName() == null) {
-                            //throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
                             state = State.ERROR;
+                            throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
                         }
                     }
                 }
+
 
                 //
                 // convert to DTO
@@ -144,13 +146,15 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                 }
                 listBuilder.setComplete(!reader.hasMoreElements());
                 nextChunk = listBuilder.build();
+
             } catch (MGXException | SeqStoreException ex) {
                 exception = (MGXException) (ex instanceof MGXException ? ex : new MGXException(ex));
                 state = State.ERROR;
             }
         }
 
-        lock.release();
+        lock.unlock();
+
     }
 
     @Override
@@ -160,17 +164,17 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             throw exception;
         }
 
-        lock.acquireUninterruptibly();
+        lock.lock();
         if (nextChunk == null) {
             // if run() did not run and produce a new chunk, we synchronously
             // invoke it to obtain the data; race conditions avoided via the
-            // semaphore
+            // lock
             run();
         }
         SequenceDTOList ret = nextChunk;
         nextChunk = null;
-        lock.release();
-        
+        lock.unlock();
+
         lastAccessed = System.currentTimeMillis();
         return ret;
     }
