@@ -23,6 +23,7 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class CommonWL {
 
+    @SuppressWarnings("unchecked")
     public static AutoCloseableIterator<JobParameter> getParameters(String workflowContent) {
         List<JobParameter> parameters = new ArrayList<>();
         Yaml yaml = new Yaml();
@@ -58,7 +59,7 @@ public class CommonWL {
             // python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)' < packed.cwl > packed.yml
             List<Map<String, Object>> tmp = obj.get("$graph");
             for (Map<String, Object> map : tmp) {
-                if (map.containsKey("inputs") && map.containsKey("class") && "Workflow".equals(map.get("class"))) {
+                if (map.containsKey("inputs") && map.containsKey("class") && "Workflow".equals(map.get("class")) && map.get("inputs") instanceof List) {
                     List<Map<String, Object>> inputs = (List<Map<String, Object>>) map.get("inputs");
 
                     for (Map<String, Object> m : inputs) {

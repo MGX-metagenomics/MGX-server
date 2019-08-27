@@ -37,7 +37,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
 
     protected final String projectName;
     protected final long runId;
-    protected final boolean isPaired;
     protected GPMSManagedDataSourceI dataSource;
     protected final File projectDirectory;
     protected final File projectQCDirectory;
@@ -53,7 +52,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality, boolean isPaired) throws MGXException {
         this.projectName = projName;
         this.runId = run_id;
-        this.isPaired = isPaired;
         this.projectDirectory = projectDir;
         this.projectQCDirectory = projectQCDir;
         this.dataSource = dataSource;
@@ -109,10 +107,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             // commit pending data
             flush.complete();
             
-            if (isPaired) {
-                total_num_sequences /= 2; // count read pairs for PE
-            }
-
             String sql = "UPDATE seqrun SET num_sequences=? WHERE id=?";
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {

@@ -177,12 +177,20 @@ public class BinDAO extends DAO<Bin> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.predicted_cds FROM assembly a"
-            + "LET JOIN bin b ON (a.id=b.assembly_id) WHERE a.id=?";
+    private static final String BY_ASM = "WITH temp as ( "
+            + "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, sum(c.length_bp) FROM assembly a "
+            + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
+            + "LEFT JOIN contig c ON (b.id=c.bin_id) "
+            + "WHERE a.id=? "
+            + "GROUP BY b.id "
+            + "ORDER BY b.id ASC "
+            + ")"
+            + "SELECT t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.sum, count(g.id) FROM temp t "
+            + "LEFT JOIN contig c ON (t.id=c.bin_id) "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.sum "
+            + "ORDER BY t.id ASC";
 
-    //
-    // FIXME add total_bp field
-    //
     public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
 
         List<Bin> l = null;
@@ -203,8 +211,9 @@ public class BinDAO extends DAO<Bin> {
                             ret.setContamination(rs.getFloat(4));
                             ret.setTaxonomy(rs.getString(5));
                             ret.setN50(rs.getInt(6));
-                            ret.setPredictedCDS(rs.getInt(7));
-                            ret.setAssemblyId(rs.getLong(8));
+                            ret.setTotalBp(rs.getInt(7));
+                            ret.setPredictedCDS(rs.getInt(8));
+                            ret.setAssemblyId(asm_id);
 
                             if (l == null) {
                                 l = new ArrayList<>();
@@ -239,7 +248,7 @@ public class BinDAO extends DAO<Bin> {
             File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
             File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
             if (!binFasta.exists() || !binFasta.canRead()) {
-                throw new MGXException("Unable to access FASTA file for bin "+ bin.getId()+".");
+                throw new MGXException("Unable to access FASTA file for bin " + bin.getId() + ".");
             }
             FastaSequenceIndexCreator.buildFromFasta(Paths.get(binFasta.getAbsolutePath()));
         } catch (IOException ex) {

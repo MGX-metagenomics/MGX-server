@@ -162,19 +162,19 @@ public class GeneDAO extends DAO<Gene> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_CONTIG = "SELECT g.id, g.start, g.stop, g.coverage, g.contig_id FROM bin b "
+    private static final String BY_CONTIG = "SELECT g.id, g.start, g.stop, g.coverage FROM contig c "
             + "LEFT JOIN gene g ON (g.contig_id=c.id) WHERE c.id=?";
 
-    public AutoCloseableIterator<Gene> byBin(long bin_id) throws MGXException {
+    public AutoCloseableIterator<Gene> byContig(long contig_id) throws MGXException {
 
         List<Gene> l = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_CONTIG)) {
-                stmt.setLong(1, bin_id);
+                stmt.setLong(1, contig_id);
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Assembly for ID " + bin_id + ".");
+                        throw new MGXException("No object of type Contig for ID " + contig_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -183,7 +183,7 @@ public class GeneDAO extends DAO<Gene> {
                             ret.setStart(rs.getInt(2));
                             ret.setStop(rs.getInt(3));
                             ret.setCoverage(rs.getInt(4));
-                            ret.setContigId(rs.getLong(5));
+                            ret.setContigId(contig_id);
 
                             if (l == null) {
                                 l = new ArrayList<>();
@@ -219,6 +219,10 @@ public class GeneDAO extends DAO<Gene> {
     }
 
     public TaskI delete(long id) throws MGXException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public AutoCloseableIterator<Gene> byBin(Long id) throws MGXException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
