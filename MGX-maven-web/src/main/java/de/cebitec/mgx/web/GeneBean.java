@@ -108,7 +108,7 @@ public class GeneBean {
     @GET
     @Path("byBin/{id}")
     @Produces("application/x-protobuf")
-    public GeneDTOList byAssembly(@PathParam("id") Long id) {
+    public GeneDTOList byBin(@PathParam("id") Long id) {
         AutoCloseableIterator<Gene> bins;
         try {
             bins = mgx.getGeneDAO().byBin(id);

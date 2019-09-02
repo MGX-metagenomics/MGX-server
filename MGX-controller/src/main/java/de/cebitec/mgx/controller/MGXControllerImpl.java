@@ -331,6 +331,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public GeneCoverageDAO getGeneCoverageDAO() {
+        return new GeneCoverageDAO(this);
+    }
+
+    @Override
     public String getProjectName() {
         return projectName;
     }

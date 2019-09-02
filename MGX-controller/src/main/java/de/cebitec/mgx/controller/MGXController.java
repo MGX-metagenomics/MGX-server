@@ -58,6 +58,8 @@ public interface MGXController extends AutoCloseable {
 
     public GeneDAO getGeneDAO();
 
+    public GeneCoverageDAO getGeneCoverageDAO();
+
     public File getProjectAssemblyDirectory() throws IOException;
 
     public String getProjectName();

@@ -12,6 +12,7 @@ import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.BinDTO;
+import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
@@ -38,6 +39,7 @@ import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -195,21 +197,20 @@ public class ServiceBean {
         }
     }
 
-//    @PUT
-//    @Path("createContig")
-//    @Consumes("application/x-protobuf")
-//    @Produces("application/x-protobuf")
-//    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-//    public MGXLong createContig(@HeaderParam("apiKey") String apiKey, ContigDTO dto) {
-//        Contig c = ContigDTOFactory.getInstance().toDB(dto);
-//        try {
-//            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-//            long id = mgx.getContigDAO().create(c);
-//            return MGXLong.newBuilder().setValue(id).build();
-//        } catch (MGXException ex) {
-//            throw new MGXServiceException(ex.getMessage());
-//        }
-//    }
+    @GET
+    @Path("getBins/{id}")
+    @Produces("application/x-protobuf")
+    public BinDTOList getBins(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            Assembly asm = mgx.getAssemblyDAO().byJob(asmJob.getId());
+            AutoCloseableIterator<Bin> iter = mgx.getBinDAO().byAssembly(asm.getId());
+            return BinDTOFactory.getInstance().toDTOList(iter);
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
     @PUT
     @Path("createContigs")
     @Consumes("application/x-protobuf")
@@ -231,35 +232,6 @@ public class ServiceBean {
         }
     }
 
-//    @PUT
-//    @Path("appendSequence/{binId}")
-//    @Consumes("application/x-protobuf")
-//    @Produces("application/x-protobuf")
-//    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-//    public Response appendSequence(@HeaderParam("apiKey") String apiKey, @PathParam("binId") Long binId, SequenceDTO dto) {
-//        Sequence s = SequenceDTOFactory.getInstance().toDB(dto);
-//        try {
-//            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-//
-//            Bin bin = mgx.getBinDAO().getById(binId);
-//            File asmRoot = mgx.getProjectAssemblyDirectory();
-//            File assemblyDir = new File(asmRoot, String.valueOf(bin.getAssemblyId()));
-//            if (!assemblyDir.exists()) {
-//                assemblyDir.mkdirs();
-//            }
-//            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-//            try (BufferedWriter bw = new BufferedWriter(new FileWriter(binFasta, true))) {
-//                bw.write(">");
-//                bw.write(s.getName());
-//                bw.newLine();
-//                bw.write(s.getSequence());
-//                bw.newLine();
-//            }
-//        } catch (MGXException | IOException ex) {
-//            throw new MGXServiceException(ex.getMessage());
-//        }
-//        return Response.ok().build();
-//    }
     @PUT
     @Path("appendSequences/{binId}")
     @Consumes("application/x-protobuf")
