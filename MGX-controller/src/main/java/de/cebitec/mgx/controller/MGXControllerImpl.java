@@ -336,6 +336,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public GeneObservationDAO getGeneObservationDAO() {
+        return new GeneObservationDAO(this);
+    }
+
+    @Override
     public String getProjectName() {
         return projectName;
     }
