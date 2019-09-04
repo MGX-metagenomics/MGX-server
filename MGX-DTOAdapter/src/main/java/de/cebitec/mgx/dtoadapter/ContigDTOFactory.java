@@ -45,7 +45,7 @@ public class ContigDTOFactory extends DTOConversionBase<Contig, ContigDTO, Conti
         h.setName(dto.getName());
         h.setBinId(dto.getBinId());
         
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             h.setId(dto.getId());
         }
         

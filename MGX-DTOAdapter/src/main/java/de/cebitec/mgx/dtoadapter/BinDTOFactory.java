@@ -52,11 +52,11 @@ public class BinDTOFactory extends DTOConversionBase<Bin, BinDTO, BinDTOList> {
         h.setN50(dto.getN50());
         h.setAssemblyId(dto.getAssemblyId());
 
-        if (dto.hasPredictedCds()) {
+        if (dto.getPredictedCds() > 0) {
             h.setPredictedCDS(dto.getPredictedCds());
         }
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             h.setId(dto.getId());
         }
 

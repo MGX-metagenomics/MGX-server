@@ -39,7 +39,7 @@ public class AttributeTypeDTOFactory extends DTOConversionBase<AttributeType, At
                 .setStructure(dto.getStructure().charAt(0))
                 .setValueType(dto.getValueType().charAt(0));
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             at.setId(dto.getId());
         }
 

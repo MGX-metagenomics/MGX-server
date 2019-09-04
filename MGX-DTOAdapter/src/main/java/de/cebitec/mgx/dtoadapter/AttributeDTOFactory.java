@@ -51,7 +51,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
                 .setValue(dto.getValue());
 
         
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             a.setId(dto.getId());
         }
         return a;

@@ -48,7 +48,7 @@ public class SampleDTOFactory extends DTOConversionBase<Sample, SampleDTO, Sampl
                 .setVolumeUnit(dto.getVolumeUnit())
                 .setHabitatId(dto.getHabitatId());
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             s.setId(dto.getId());
         }
 

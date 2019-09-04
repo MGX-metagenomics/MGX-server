@@ -36,7 +36,7 @@ public class ReferenceDTOFactory extends DTOConversionBase<Reference, ReferenceD
     @Override
     public Reference toDB(ReferenceDTO dto) {
         Reference r = new Reference();
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             r.setId(dto.getId());
         }
         r.setName(dto.getName());

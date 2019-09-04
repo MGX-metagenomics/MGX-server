@@ -80,7 +80,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             for (SequenceDTO s : seqs.getSeqList()) {
                 DNASequenceI d;
-                if (s.hasQuality()) {
+                if (!s.getQuality().isEmpty()) {
                     QualityDNASequence qd = new QualityDNASequence();
                     qd.setQuality(s.getQuality().toByteArray());
                     d = qd;

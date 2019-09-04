@@ -43,7 +43,7 @@ public class AssemblyDTOFactory extends DTOConversionBase<Assembly, AssemblyDTO,
         h.setReadsAssembled(dto.getReadsAssembled());
         h.setN50(dto.getN50());
         
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             h.setId(dto.getId());
         }
         

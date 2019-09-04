@@ -53,25 +53,20 @@ public class BulkObservationDTOFactory extends DTOConversionBase<BulkObservation
         //
         for (BulkObservationDTO boDTO : bol.getBulkObservationList()) {
 
-            if (boDTO.hasSeqrunId()) {
+            if (boDTO.getSeqrunId() != 0) {
                 runId = boDTO.getSeqrunId();
             }
 
-            if (boDTO.hasSeqName()) {
+            if (!boDTO.getSeqName().isEmpty()) {
                 seqName = boDTO.getSeqName();
             }
 
-            if (boDTO.hasAttributeId()) {
+            if (boDTO.getAttributeId() != 0) {
                 attrId = boDTO.getAttributeId();
             }
 
-            if (boDTO.hasStart()) {
-                start = boDTO.getStart();
-            }
-
-            if (boDTO.hasStop()) {
-                stop = boDTO.getStop();
-            }
+            start = boDTO.getStart();
+            stop = boDTO.getStop();
 
             BulkObservation bo = new BulkObservation(runId, seqName, attrId, start, stop);
             ret.add(bo);

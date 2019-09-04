@@ -41,14 +41,14 @@ public class RegionDTOFactory extends DTOConversionBase<Region, RegionDTO, Regio
     @Override
     public Region toDB(RegionDTO dto) {
         Region r = new Region();
-        if (dto.hasId()) {
+        if (dto.getId() > 0) {
             r.setId(dto.getId());
         }
         r.setName(dto.getName());
         r.setType(dto.getType());
         r.setStart(dto.getStart());
         r.setStop(dto.getStop());
-        if (dto.hasDescription()) {
+        if (!dto.getDescription().isEmpty()) {
             r.setDescription(dto.getDescription());
         }
         return r;

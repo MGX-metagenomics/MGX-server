@@ -48,7 +48,7 @@ public class HabitatDTOFactory extends DTOConversionBase<Habitat, HabitatDTO, Ha
                 .setBiome(dto.getBiome())
                 .setDescription(dto.getDescription());
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             h.setId(dto.getId());
         }
 

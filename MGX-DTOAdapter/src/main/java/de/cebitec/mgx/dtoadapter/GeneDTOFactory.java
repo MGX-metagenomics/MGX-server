@@ -42,7 +42,7 @@ public class GeneDTOFactory extends DTOConversionBase<Gene, GeneDTO, GeneDTOList
         h.setCoverage(dto.getCoverage());
         h.setContigId(dto.getContigId());
         
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             h.setId(dto.getId());
         }
         

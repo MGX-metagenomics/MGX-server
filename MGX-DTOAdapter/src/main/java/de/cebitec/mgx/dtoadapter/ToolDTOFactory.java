@@ -48,7 +48,7 @@ public class ToolDTOFactory extends DTOConversionBase<Tool, ToolDTO, ToolDTOList
                 .setFile(dto.getContent()); // not a file, but file content
 
         t.setScope(ToolScope.values()[dto.getScope().ordinal()]);
-        if (copyID && dto.hasId()) {
+        if (copyID && dto.getId() > 0) {
             t.setId(dto.getId());
         }
         return t;

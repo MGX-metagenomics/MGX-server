@@ -65,7 +65,7 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setFinishDate(toDate(dto.getFinishDate()))
                 .setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
 
-        if (dto.hasId() && dto.getId() != -1) {
+        if (dto.getId() != 0 && dto.getId() != -1) {
             j.setId(dto.getId());
         }
         for (JobParameter jp : j.getParameters()) {

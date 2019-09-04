@@ -78,7 +78,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
             s.setAccession(dto.getAccession());
         }
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             s.setId(dto.getId());
         }
 

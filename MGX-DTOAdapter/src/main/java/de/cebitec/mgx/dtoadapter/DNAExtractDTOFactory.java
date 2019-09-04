@@ -63,7 +63,7 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
     public final DNAExtract toDB(DNAExtractDTO dto) {
         DNAExtract d = new DNAExtract();
 
-        if (dto.hasId()) {
+        if (dto.getId() != 0) {
             d.setId(dto.getId());
         }
         
@@ -75,19 +75,19 @@ public class DNAExtractDTOFactory extends DTOConversionBase<DNAExtract, DNAExtra
 
         // optional fields
 
-        if (dto.hasFivePrimePrimer()) {
+        if (!dto.getFivePrimePrimer().isEmpty()) {
             d.setFivePrimer(dto.getFivePrimePrimer());
         }
-        if (dto.hasThreePrimePrimer()) {
+        if (!dto.getThreePrimePrimer().isEmpty()) {
             d.setThreePrimer(dto.getThreePrimePrimer());
         }
-        if (dto.hasTargetGene()) {
+        if (!dto.getTargetGene().isEmpty()) {
             d.setTargetGene(dto.getTargetGene());
         }
-        if (dto.hasTargetFragment()) {
+        if (!dto.getTargetFragment().isEmpty()) {
             d.setTargetFragment(dto.getTargetFragment());
         }
-        if (dto.hasDescription()) {
+        if (!dto.getDescription().isEmpty()) {
             d.setDescription(dto.getDescription());
         }
 
