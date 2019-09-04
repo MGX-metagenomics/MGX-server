@@ -33,6 +33,7 @@ public class BinDTOFactory extends DTOConversionBase<Bin, BinDTO, BinDTOList> {
                 .setTaxonomy(h.getTaxonomy())
                 .setN50(h.getN50())
                 .setTotalBp(h.getTotalBp())
+                .setNumContigs(h.getNumContigs())
                 .setAssemblyId(h.getAssemblyId());
 
         if (h.getPredictedCDS() > 0) {

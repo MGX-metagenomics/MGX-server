@@ -18,6 +18,7 @@ public class Bin extends Identifiable {
     private long assembly_id;
     private int predicted_cds;
     private int total_bp;
+    private int num_contigs = 0;
 
     public Bin() {
     }
@@ -84,6 +85,14 @@ public class Bin extends Identifiable {
 
     public long getTotalBp() {
         return total_bp;
+    }
+
+    public int getNumContigs() {
+        return num_contigs;
+    }
+
+    public void setNumContigs(int num_contigs) {
+        this.num_contigs = num_contigs;
     }
 
 }

@@ -178,17 +178,17 @@ public class BinDAO extends DAO<Bin> {
     }
 
     private static final String BY_ASM = "WITH temp as ( "
-            + "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, sum(c.length_bp) FROM assembly a "
+            + "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, count(c.id), sum(c.length_bp) FROM assembly a "
             + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
             + "LEFT JOIN contig c ON (b.id=c.bin_id) "
             + "WHERE a.id=? "
             + "GROUP BY b.id "
             + "ORDER BY b.id ASC "
             + ")"
-            + "SELECT t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.sum, count(g.id) FROM temp t "
+            + "SELECT t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum, count(g.id) FROM temp t "
             + "LEFT JOIN contig c ON (t.id=c.bin_id) "
             + "LEFT JOIN gene g ON (c.id=g.contig_id) "
-            + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.sum "
+            + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum "
             + "ORDER BY t.id ASC";
 
     public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
@@ -211,8 +211,9 @@ public class BinDAO extends DAO<Bin> {
                             ret.setContamination(rs.getFloat(4));
                             ret.setTaxonomy(rs.getString(5));
                             ret.setN50(rs.getInt(6));
-                            ret.setTotalBp(rs.getInt(7));
-                            ret.setPredictedCDS(rs.getInt(8));
+                            ret.setNumContigs(rs.getInt(7));
+                            ret.setTotalBp(rs.getInt(8));
+                            ret.setPredictedCDS(rs.getInt(9));
                             ret.setAssemblyId(asm_id);
 
                             if (l == null) {
