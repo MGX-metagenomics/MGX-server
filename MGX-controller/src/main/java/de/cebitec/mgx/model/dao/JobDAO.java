@@ -664,7 +664,7 @@ public class JobDAO extends DAO<Job> {
             throw new MGXException("No/Invalid ID supplied.");
         }
         List<Job> ret = null;
-        
+
         SeqRun run = getController().getSeqRunDAO().getById(run_id);
 
 //        SeqRun seqrun = getController().getSeqRunDAO().getById(run_id);
@@ -940,7 +940,7 @@ public class JobDAO extends DAO<Job> {
         }
     }
 
-    public void writeConveyorConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+    public void writeConveyorConfigFile(Job job, URI annotationService, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
 
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
@@ -960,6 +960,10 @@ public class JobDAO extends DAO<Job> {
             cfgFile.write("mgx.job_id=" + job.getId());
             cfgFile.newLine();
             cfgFile.write("mgx.projectDir=" + projectDir);
+            cfgFile.newLine();
+            cfgFile.write("mgx.apiKey=" + createApiKey(job));
+            cfgFile.newLine();
+            cfgFile.write("mgx.annotationService=" + annotationService.toASCIIString());
             cfgFile.newLine();
 
             for (JobParameter jp : job.getParameters()) {

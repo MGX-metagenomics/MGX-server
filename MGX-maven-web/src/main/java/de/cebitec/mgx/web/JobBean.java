@@ -111,7 +111,8 @@ public class JobBean {
                 create(j);
 
                 if (t.getFile().endsWith("xml")) {
-                    mgx.getJobDAO().writeConveyorConfigFile(j, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
+                    mgx.getJobDAO().writeConveyorConfigFile(j, mgxconfig.getAnnotationService(), mgx.getProjectDirectory(), 
+                            mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
                 } else if (t.getFile().endsWith("cwl")) {
                     mgx.getJobDAO().writeCWLConfigFile(j, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
                 } else {
@@ -298,7 +299,9 @@ public class JobBean {
             Tool t = mgx.getToolDAO().getById(job.getToolId());
 
             if (t.getFile().endsWith("xml")) {
-                mgx.getJobDAO().writeConveyorConfigFile(job, mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
+                mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
+                        mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), 
+                        mgx.getDatabaseName(), mgx.getDatabaseHost());
             } else if (t.getFile().endsWith("cwl")) {
                 // as the stored job parameters do not have a class name, we
                 // need to fetch these from the workflow and update the params

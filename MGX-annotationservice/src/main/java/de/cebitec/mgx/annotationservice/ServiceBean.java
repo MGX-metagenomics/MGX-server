@@ -19,6 +19,7 @@ import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
 import de.cebitec.mgx.dto.dto.GeneDTOList;
+import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -29,6 +30,7 @@ import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
+import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
@@ -78,14 +80,26 @@ public class ServiceBean {
     Executor executor;
 
     @GET
+    @Path("getJob")
+    @Produces("application/x-protobuf")
+    public JobDTO getJob(@HeaderParam("apiKey") String apiKey) {
+        try {
+            Job job = mgx.getJobDAO().getByApiKey(apiKey);
+            return JobDTOFactory.getInstance().toDTO(job);
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @GET
     @Path("fetchSeqRun/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTO fetchSeqRun(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
         SeqRun seqrun;
         try {
-            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            Job job = mgx.getJobDAO().getByApiKey(apiKey);
             boolean ok = false;
-            for (long l : asmJob.getSeqrunIds()) {
+            for (long l : job.getSeqrunIds()) {
                 if (id == l) {
                     ok = true;
                     break;
@@ -198,9 +212,22 @@ public class ServiceBean {
     }
 
     @GET
-    @Path("getBins/{id}")
+    @Path("getAssembly")
     @Produces("application/x-protobuf")
-    public BinDTOList getBins(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
+    public AssemblyDTO getAssembly(@HeaderParam("apiKey") String apiKey) {
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            Assembly asm = mgx.getAssemblyDAO().byJob(asmJob.getId());
+            return AssemblyDTOFactory.getInstance().toDTO(asm);
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("getBins")
+    @Produces("application/x-protobuf")
+    public BinDTOList getBins(@HeaderParam("apiKey") String apiKey) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             Assembly asm = mgx.getAssemblyDAO().byJob(asmJob.getId());
@@ -212,21 +239,15 @@ public class ServiceBean {
     }
 
     @PUT
-    @Path("createContigs")
+    @Path("getContigs/{bin_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLongList createContigs(@HeaderParam("apiKey") String apiKey, ContigDTOList dto) {
+    public ContigDTOList getContigs(@HeaderParam("apiKey") String apiKey, long bin_id) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-
-            MGXLongList.Builder ret = MGXLongList.newBuilder();
-            for (ContigDTO contig : dto.getContigList()) {
-                Contig c = ContigDTOFactory.getInstance().toDB(contig);
-                long id = mgx.getContigDAO().create(c);
-                ret.addLong(id);
-            }
-            return ret.build();
+            AutoCloseableIterator<Contig> iter = mgx.getContigDAO().byBin(bin_id);
+            return ContigDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
             throw new MGXServiceException(ex.getMessage());
         }
