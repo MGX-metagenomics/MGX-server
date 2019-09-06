@@ -1,11 +1,13 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
+import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -318,17 +320,12 @@ public class SeqRunBean {
     }
 
     @GET
-    @Path("JobsAndAttributeTypes/{seqrun_id}")
+    @Path("JobsAndAttributeTypes/{seqrun_id}/{scope}")
     @Produces("application/x-protobuf")
-    public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id) {
+    public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id, @PathParam("scope") int scope) {
 
-//        // TODO - too many DB roundtrips here
-//        SeqRun run;
-//        try {
-//            run = mgx.getSeqRunDAO().getById(seqrun_id);
-//        } catch (MGXException ex) {
-//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-//        }
+        ToolScope tscope = ToolScope.values()[scope];
+        
         JobsAndAttributeTypesDTO.Builder b = JobsAndAttributeTypesDTO.newBuilder();
         try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
             while (iter.hasNext()) {
