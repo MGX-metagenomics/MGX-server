@@ -238,7 +238,7 @@ public class ServiceBean {
         }
     }
 
-    @PUT
+    @GET
     @Path("getContigs/{bin_id}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
@@ -248,6 +248,27 @@ public class ServiceBean {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             AutoCloseableIterator<Contig> iter = mgx.getContigDAO().byBin(bin_id);
             return ContigDTOFactory.getInstance().toDTOList(iter);
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @PUT
+    @Path("createContigs")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLongList createContigs(@HeaderParam("apiKey") String apiKey, ContigDTOList dto) {
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+
+            MGXLongList.Builder ret = MGXLongList.newBuilder();
+            for (ContigDTO contig : dto.getContigList()) {
+                Contig c = ContigDTOFactory.getInstance().toDB(contig);
+                long id = mgx.getContigDAO().create(c);
+                ret.addLong(id);
+            }
+            return ret.build();
         } catch (MGXException ex) {
             throw new MGXServiceException(ex.getMessage());
         }
