@@ -16,7 +16,9 @@ public abstract class Identifiable implements Serializable {
     }
 
     public final void setId(long id) {
-        this.id = id;
+        if (id > 0) {
+            this.id = id;
+        }
     }
 
     @Override

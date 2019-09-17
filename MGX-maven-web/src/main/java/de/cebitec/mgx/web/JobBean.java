@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -108,10 +110,10 @@ public class JobBean {
                 }
                 j.setParameters(defaultParams);
 
-                create(j);
+                createJob(j);
 
                 if (t.getFile().endsWith("xml")) {
-                    mgx.getJobDAO().writeConveyorConfigFile(j, mgxconfig.getAnnotationService(), mgx.getProjectDirectory(), 
+                    mgx.getJobDAO().writeConveyorConfigFile(j, mgxconfig.getAnnotationService(), mgx.getProjectName(), mgx.getProjectDirectory(),
                             mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
                 } else if (t.getFile().endsWith("cwl")) {
                     mgx.getJobDAO().writeCWLConfigFile(j, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
@@ -140,18 +142,25 @@ public class JobBean {
 
         j.setStatus(JobState.CREATED);
         j.setToolId(dto.getToolId());
-        long[] temp = new long[dto.getSeqrunCount()];
-        for (int i = 0; i < temp.length; i++) {
-            temp[i] = dto.getSeqrun(i);
-        }
-        j.setSeqrunIds(temp);
+
         j.setCreator(mgx.getCurrentUser());
 
-        long jobId = create(j);
+        long jobId;
+        try {
+            jobId = createJob(j);
+        } catch (MGXException ex) {
+            mgx.log(ex);
+            throw new MGXWebException(ex.getMessage());
+        }
+
         return MGXLong.newBuilder().setValue(jobId).build();
     }
 
-    public long create(Job j) {
+    public long createJob(Job j) throws MGXException {
+
+        if ((j.getSeqrunIds() == null || j.getSeqrunIds().length == 0) && j.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+            throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+        }
 
         // fetch default parameters for the referenced tool
         Set<JobParameter> defaultParams = new HashSet<>();
@@ -296,11 +305,17 @@ public class JobBean {
         boolean verified = false;
         try {
             Job job = mgx.getJobDAO().getById(id, false);
+
+            if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+                throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+            }
+
             Tool t = mgx.getToolDAO().getById(job.getToolId());
 
             if (t.getFile().endsWith("xml")) {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
-                        mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), 
+                        mgx.getProjectName(),
+                        mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(),
                         mgx.getDatabaseName(), mgx.getDatabaseHost());
             } else if (t.getFile().endsWith("cwl")) {
                 // as the stored job parameters do not have a class name, we
@@ -338,6 +353,11 @@ public class JobBean {
         boolean submitted = false;
         try {
             Job job = mgx.getJobDAO().getById(jobId);
+
+            if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+                throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+            }
+
             if (job.getStatus() != JobState.VERIFIED) {
                 throw new MGXWebException("Job %d in invalid state %s", jobId, job.getStatus());
             }

@@ -13,6 +13,7 @@ public class Job extends Identifiable {
     private static final long serialVersionUID = 1L;
     //
     protected long[] seqrun_ids;
+    protected long assembly_id = Identifiable.INVALID_IDENTIFIER;
     //
     protected long tool_id;
     protected String created_by;
@@ -22,7 +23,7 @@ public class Job extends Identifiable {
     protected Date finishDate = null;
     //
     protected Collection<JobParameter> params;
-    
+
     private int jobstate;
 
     public JobState getStatus() {
@@ -75,7 +76,20 @@ public class Job extends Identifiable {
     }
 
     public Job setSeqrunIds(long[] seqruns) {
-        this.seqrun_ids = seqruns;
+        if (seqruns != null && seqruns.length > 0) {
+            this.seqrun_ids = seqruns;
+        }
+        return this;
+    }
+
+    public long getAssemblyId() {
+        return assembly_id;
+    }
+
+    public Job setAssemblyId(long asmId) {
+        if (asmId > 0) {
+            this.assembly_id = asmId;
+        }
         return this;
     }
 
@@ -101,7 +115,7 @@ public class Job extends Identifiable {
             return false;
         }
         Job other = (Job) object;
-        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER) 
+        return !((this.getId() == INVALID_IDENTIFIER && other.getId() != INVALID_IDENTIFIER)
                 || (this.getId() != INVALID_IDENTIFIER && this.getId() != other.getId()));
     }
 

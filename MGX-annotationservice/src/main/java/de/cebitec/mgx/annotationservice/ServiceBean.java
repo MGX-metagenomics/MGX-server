@@ -43,12 +43,16 @@ import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequence;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -78,10 +82,12 @@ public class ServiceBean {
     DownloadSessions downSessions;
     @EJB
     Executor executor;
+    private static final Logger LOG = Logger.getLogger(ServiceBean.class.getName());
 
     @GET
     @Path("getJob")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public JobDTO getJob(@HeaderParam("apiKey") String apiKey) {
         try {
             Job job = mgx.getJobDAO().getByApiKey(apiKey);
@@ -94,6 +100,7 @@ public class ServiceBean {
     @GET
     @Path("fetchSeqRun/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public SeqRunDTO fetchSeqRun(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long id) {
         SeqRun seqrun;
         try {
@@ -119,6 +126,7 @@ public class ServiceBean {
     @GET
     @Path("initDownload/{id}")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString initDownload(@HeaderParam("apiKey") String apiKey, @PathParam("id") Long seqrun_id) {
         SeqRunDownloadProvider provider = null;
         try {
@@ -147,6 +155,7 @@ public class ServiceBean {
 
     @GET
     @Path("closeDownload/{uuid}")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response closeDownload(@HeaderParam("apiKey") String apiKey, @PathParam("uuid") UUID session_id) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
@@ -162,6 +171,7 @@ public class ServiceBean {
     @GET
     @Path("fetchSequences/{uuid}")
     @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public SequenceDTOList fetchSequences(@HeaderParam("apiKey") String apiKey, @PathParam("uuid") UUID session_id) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
@@ -214,12 +224,14 @@ public class ServiceBean {
     @GET
     @Path("getAssembly")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public AssemblyDTO getAssembly(@HeaderParam("apiKey") String apiKey) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             Assembly asm = mgx.getAssemblyDAO().byJob(asmJob.getId());
             return AssemblyDTOFactory.getInstance().toDTO(asm);
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
     }
@@ -227,13 +239,15 @@ public class ServiceBean {
     @GET
     @Path("getBins")
     @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public BinDTOList getBins(@HeaderParam("apiKey") String apiKey) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-            Assembly asm = mgx.getAssemblyDAO().byJob(asmJob.getId());
+            Assembly asm = mgx.getAssemblyDAO().getById(asmJob.getAssemblyId());
             AutoCloseableIterator<Bin> iter = mgx.getBinDAO().byAssembly(asm.getId());
             return BinDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
     }
@@ -243,12 +257,63 @@ public class ServiceBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public ContigDTOList getContigs(@HeaderParam("apiKey") String apiKey, long bin_id) {
+    public ContigDTOList getContigs(@HeaderParam("apiKey") String apiKey, @PathParam("bin_id") long bin_id) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             AutoCloseableIterator<Contig> iter = mgx.getContigDAO().byBin(bin_id);
             return ContigDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("getGenes/{contig_id}")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public GeneDTOList getGenes(@HeaderParam("apiKey") String apiKey, @PathParam("contig_id") long contig_id) {
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+            AutoCloseableIterator<Gene> iter = mgx.getGeneDAO().byContig(contig_id);
+            return GeneDTOFactory.getInstance().toDTOList(iter);
+        } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @GET
+    @Path("getSequence/{contig_id}")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public SequenceDTO getSequence(@HeaderParam("apiKey") String apiKey, @PathParam("contig_id") long ctg_id) {
+        try {
+            Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
+
+            Contig contig = mgx.getContigDAO().getById(ctg_id);
+            Bin bin = mgx.getBinDAO().getById(contig.getBinId());
+            File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            String geneSeq;
+            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                ReferenceSequence seq;
+                seq = ifsf.getSequence(contig.getName());
+                if (seq == null || seq.length() == 0) {
+                    throw new MGXServiceException("No sequence found for contig " + contig.getName());
+                }
+                geneSeq = new String(seq.getBases());
+            }
+            return SequenceDTO.newBuilder()
+                    .setId(ctg_id)
+                    .setName(contig.getName())
+                    .setSequence(geneSeq)
+                    .build();
+
+        } catch (MGXException | IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
     }
@@ -270,6 +335,7 @@ public class ServiceBean {
             }
             return ret.build();
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
     }
@@ -308,6 +374,7 @@ public class ServiceBean {
 
             }
         } catch (MGXException | IOException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
         return Response.ok().build();
@@ -329,6 +396,7 @@ public class ServiceBean {
             }
             return generatedIds.build();
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
     }
@@ -348,6 +416,7 @@ public class ServiceBean {
                 mgx.getGeneDAO().createCoverage(geneCov.getGeneId(), geneCov.getRunId(), geneCov.getCoverage());
             }
         } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
         }
         return Response.ok().build();

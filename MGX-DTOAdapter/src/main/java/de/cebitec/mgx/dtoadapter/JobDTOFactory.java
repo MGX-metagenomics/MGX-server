@@ -37,9 +37,14 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setToolId(j.getToolId())
                 .setCreator(j.getCreator())
                 .setState(dto.JobState.forNumber(j.getStatus().getValue()));
-        
-        for (long l : j.getSeqrunIds()) {
-            b.addSeqrun(l);
+
+        if (j.getSeqrunIds() != null) {
+            for (long l : j.getSeqrunIds()) {
+                b.addSeqrun(l);
+            }
+        }
+        if (j.getAssemblyId() > 0) {
+            b.setAssemblyId(j.getAssemblyId());
         }
 
         AutoCloseableIterator<JobParameter> acit = new ForwardingIterator<>(j.getParameters().iterator());
@@ -64,6 +69,18 @@ public class JobDTOFactory extends DTOConversionBase<Job, JobDTO, JobDTOList> {
                 .setStartDate(toDate(dto.getStartDate()))
                 .setFinishDate(toDate(dto.getFinishDate()))
                 .setParameters(JobParameterDTOFactory.getInstance().toDBList(dto.getParameters()));
+
+        if (dto.getSeqrunCount() > 0) {
+            long[] runIds = new long[dto.getSeqrunCount()];
+            for (int i = 0; i < runIds.length; i++) {
+                runIds[i] = dto.getSeqrun(i);
+            }
+            j.setSeqrunIds(runIds);
+        }
+        
+        if (dto.getAssemblyId() > 0) {
+            j.setAssemblyId(dto.getAssemblyId());
+        }
 
         if (dto.getId() != 0 && dto.getId() != -1) {
             j.setId(dto.getId());

@@ -159,101 +159,91 @@ public class AttributeDAO extends DAO<Attribute> {
         return Attribute.class;
     }
 
-    public List<Triple<Attribute, Long, Long>> getDistribution(long attrTypeId, long jobId) throws MGXException {
+    public List<Triple<Attribute, Long, Long>> getDistribution(long attrTypeId, long jobId, long seqrunId) throws MGXException {
 
-        Tool tool = getController().getToolDAO().byJob(jobId);
+        // attribute, parent id, count
+        List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
 
-        if (tool.getScope() == ToolScope.READ) {
+        try (Connection conn = getController().getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?,?)")) {
+                stmt.setLong(1, attrTypeId);
+                stmt.setLong(2, jobId);
+                stmt.setLong(3, seqrunId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Attribute attr = new Attribute();
+                        attr.setAttributeTypeId(attrTypeId);
+                        attr.setJobId(jobId);
+                        //
+                        attr.setId(rs.getLong(1));
+                        attr.setValue(rs.getString(2));
 
-            // attribute, parent id, count
-            List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
-
-            try (Connection conn = getController().getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?)")) {
-                    stmt.setLong(1, attrTypeId);
-                    stmt.setLong(2, jobId);
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            Attribute attr = new Attribute();
-                            attr.setAttributeTypeId(attrTypeId);
-                            attr.setJobId(jobId);
-                            //
-                            attr.setId(rs.getLong(1));
-                            attr.setValue(rs.getString(2));
-
-                            Long count = rs.getLong(3);
-                            // 
-                            // read the parent attributes id, if present
-                            Long parentId = rs.getLong(4);
-                            if (parentId == 0) {
-                                parentId = -1L;
-                            }
-
-                            ret.add(new Triple<>(attr, parentId, count));
+                        Long count = rs.getLong(3);
+                        // 
+                        // read the parent attributes id, if present
+                        Long parentId = rs.getLong(4);
+                        if (parentId == 0) {
+                            parentId = -1L;
                         }
+
+                        ret.add(new Triple<>(attr, parentId, count));
                     }
                 }
-            } catch (SQLException ex) {
-                getController().log(ex.getMessage());
-                throw new MGXException(ex.getMessage());
             }
-
-            return ret;
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+            throw new MGXException(ex.getMessage());
         }
 
-        throw new MGXException("Unable to fetch distribution for tool scope " + tool.getScope());
+        return ret;
+
     }
 
-    public Map<Attribute, Long> getHierarchy(long attrTypeId, long job_id) throws MGXException {
+    public Map<Attribute, Long> getHierarchy(long attrTypeId, long job_id, long seqrunId) throws MGXException {
 
-        Tool tool = getController().getToolDAO().byJob(job_id);
+        Map<Attribute, Long> attrCount = new HashMap<>();
+        TLongObjectMap<Attribute> attrByID = new TLongObjectHashMap<>();
+        TLongLongMap attr2parent = new TLongLongHashMap();
 
-        if (tool.getScope() == ToolScope.READ) {
+        try (Connection conn = getController().getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?,?)")) {
+                stmt.setLong(1, attrTypeId);
+                stmt.setLong(2, job_id);
+                stmt.setLong(3, seqrunId);
 
-            Map<Attribute, Long> attrCount = new HashMap<>();
-            TLongObjectMap<Attribute> attrByID = new TLongObjectHashMap<>();
-            TLongLongMap attr2parent = new TLongLongHashMap();
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count
+                        long aTypeID = rs.getLong(1);
 
-            try (Connection conn = getController().getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?)")) {
-                    stmt.setLong(1, attrTypeId);
-                    stmt.setLong(2, job_id);
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count
-                            long aTypeID = rs.getLong(1);
+                        Attribute attr = new Attribute();
+                        attr.setAttributeTypeId(aTypeID);
+                        attr.setJobId(job_id);
+                        attr.setId(rs.getLong(5));
+                        attr.setValue(rs.getString(6));
 
-                            Attribute attr = new Attribute();
-                            attr.setAttributeTypeId(aTypeID);
-                            attr.setJobId(job_id);
-                            attr.setId(rs.getLong(5));
-                            attr.setValue(rs.getString(6));
+                        long parentId = rs.getLong(7);
+                        attr2parent.put(attr.getId(), parentId);
+                        attrByID.put(attr.getId(), attr);
 
-                            long parentId = rs.getLong(7);
-                            attr2parent.put(attr.getId(), parentId);
-                            attrByID.put(attr.getId(), attr);
-
-                            attrCount.put(attr, rs.getLong(8));
-                        }
+                        attrCount.put(attr, rs.getLong(8));
                     }
                 }
-            } catch (SQLException ex) {
-                getController().log(ex.getMessage());
-                throw new MGXException(ex.getMessage());
             }
-
-            for (Attribute a : attrCount.keySet()) {
-                long parentID = attr2parent.get(a.getId());
-                if (parentID != 0) {
-                    Attribute parent = attrByID.get(parentID);
-                    a.setParentId(parent.getId());
-                }
-            }
-
-            return attrCount;
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+            throw new MGXException(ex.getMessage());
         }
 
-        throw new MGXException("Unable to fetch distribution for tool scope " + tool.getScope());
+        for (Attribute a : attrCount.keySet()) {
+            long parentID = attr2parent.get(a.getId());
+            if (parentID != 0) {
+                Attribute parent = attrByID.get(parentID);
+                a.setParentId(parent.getId());
+            }
+        }
+
+        return attrCount;
     }
 
     public Map<Pair<Attribute, Attribute>, Integer> getCorrelation(long attrTypeId, long job1Id, long attrType2Id, long job2id) throws MGXException {

@@ -52,12 +52,18 @@ public class MGXProjectFilter implements ContainerRequestFilter {
             projectName = path.substring(0, idx);
             resource = path.substring(idx + 1);
         }
+        
+        //Logger.getLogger(MGXProjectFilter.class.getName()).log(Level.SEVERE, "PATH: {0}", path);
+
+        if (projectName == null || projectName.isEmpty()) {
+            throw new WebApplicationException("No project name provided.", Response.Status.UNAUTHORIZED);
+        }
 
         String apiKey = cr.getHeaderString("apiKey");
         if (apiKey == null || apiKey.isEmpty()) {
             throw new WebApplicationException("No API key provided.", Response.Status.UNAUTHORIZED);
         }
-
+        
         UriBuilder ub = cr.getUriInfo().getBaseUriBuilder();
         ub.replacePath(cr.getUriInfo().getBaseUri().getPath() + resource);
         cr.setRequestUri(cr.getUriInfo().getBaseUri(), ub.build());
@@ -72,7 +78,7 @@ public class MGXProjectFilter implements ContainerRequestFilter {
             Logger.getLogger(MGXProjectFilter.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
-        
+
         gpms.createServiceMaster(serviceAccess, JDBCMasterI.class);
     }
 }

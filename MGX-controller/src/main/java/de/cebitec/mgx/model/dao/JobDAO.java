@@ -9,6 +9,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
+import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -29,6 +30,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,11 +52,15 @@ public class JobDAO extends DAO<Job> {
         return Job.class;
     }
 
-    private final static String CREATE = "INSERT INTO job (created_by, job_state, seqruns, tool_id, apikey) "
-            + "VALUES (?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO job (created_by, job_state, seqruns, assembly, tool_id, apikey) "
+            + "VALUES (?,?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Job obj) throws MGXException {
+
+        if ((obj.getSeqrunIds() == null || obj.getSeqrunIds().length == 0) && obj.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+            throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+        }
 
         // create a random API key 
         String apikey = UUID.randomUUID().toString().replaceAll("-", "");
@@ -66,17 +72,24 @@ public class JobDAO extends DAO<Job> {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getCreator());
                 stmt.setInt(2, obj.getStatus().getValue());
-                Long[] temp = new Long[obj.getSeqrunIds().length];
-                for (int i = 0; i < temp.length; i++) {
-                    temp[i] = obj.getSeqrunIds()[i];
+
+                Long[] temp = null;
+                if (obj.getSeqrunIds() != null) {
+                    temp = new Long[obj.getSeqrunIds().length];
+                    for (int i = 0; i < temp.length; i++) {
+                        temp[i] = obj.getSeqrunIds()[i];
+                    }
+                    Array array = conn.createArrayOf("BIGINT", temp);
+                    stmt.setArray(3, array);
+                    stmt.setNull(4, Types.BIGINT);
+                } else {
+                    stmt.setNull(3, Types.ARRAY);
+                    stmt.setLong(4, obj.getAssemblyId());
                 }
-                Array array = conn.createArrayOf("BIGINT", temp);
-                stmt.setArray(3, array);
 
-                //stmt.setLong(3, obj.getSeqrunId());
-                stmt.setLong(4, obj.getToolId());
+                stmt.setLong(5, obj.getToolId());
 
-                stmt.setString(5, sha256hex);
+                stmt.setString(6, sha256hex);
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -117,6 +130,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String BY_ID = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id=?";
@@ -148,25 +162,32 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    Long[] values = (Long[]) rs.getArray(7).getArray();
-                    long[] tmp = new long[values.length];
-                    for (int i = 0; i < tmp.length; i++) {
-                        tmp[i] = values[i];
+
+                    Array array = rs.getArray(7);
+                    if (array != null) {
+                        Long[] values = (Long[]) array.getArray();
+                        long[] tmp = new long[values.length];
+                        for (int i = 0; i < tmp.length; i++) {
+                            tmp[i] = values[i];
+                        }
+                        job.setSeqrunIds(tmp);
+                    } else {
+                        job.setAssemblyId(rs.getLong(8));
                     }
-                    job.setSeqrunIds(tmp);
+
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
                     do {
-                        if (rs.getLong(8) != 0) {
+                        if (rs.getLong(9) != 0) {
                             JobParameter jp = new JobParameter();
                             jp.setJobId(job.getId());
-                            jp.setId(rs.getLong(9));
-                            jp.setNodeId(rs.getLong(10));
-                            jp.setParameterName(rs.getString(11));
-                            jp.setParameterValue(rs.getString(12));
-                            jp.setUserName(rs.getString(13));
-                            jp.setUserDescription(rs.getString(14));
+                            jp.setId(rs.getLong(10));
+                            jp.setNodeId(rs.getLong(11));
+                            jp.setParameterName(rs.getString(12));
+                            jp.setParameterValue(rs.getString(13));
+                            jp.setUserName(rs.getString(14));
+                            jp.setUserDescription(rs.getString(15));
                             job.getParameters().add(jp);
                         }
                     } while (rs.next());
@@ -190,6 +211,7 @@ public class JobDAO extends DAO<Job> {
         List<Job> ret = null;
 
         String BY_IDS = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+                + "j.assembly, "
                 + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
                 + "FROM job j "
                 + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id IN (" + toSQLTemplateString(ids.length) + ")";
@@ -222,12 +244,19 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                Long[] values = (Long[]) rs.getArray(7).getArray();
-                                long[] tmp = new long[values.length];
-                                for (int i = 0; i < tmp.length; i++) {
-                                    tmp[i] = values[i];
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    job.setAssemblyId(rs.getLong(8));
                                 }
-                                job.setSeqrunIds(tmp);
+
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -237,58 +266,20 @@ public class JobDAO extends DAO<Job> {
                                 currentJob = job;
                             }
 
-                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
                                 JobParameter jp = new JobParameter();
                                 jp.setJobId(currentJob.getId());
-                                jp.setId(rs.getLong(9));
-                                jp.setNodeId(rs.getLong(10));
-                                jp.setParameterName(rs.getString(11));
-                                jp.setParameterValue(rs.getString(12));
-                                jp.setUserName(rs.getString(13));
-                                jp.setUserDescription(rs.getString(14));
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
 
                                 currentJob.getParameters().add(jp);
                             }
                         }
                     }
-
-//                    while (rs.next()) {
-//
-//                        if (ret == null) {
-//                            ret = new ArrayList<>(ids.size());
-//                        }
-//
-//                        Job job = new Job();
-//                        job.setId(rs.getLong(1));
-//                        job.setCreator(rs.getString(2));
-//                        job.setStatus(JobState.values()[rs.getInt(3)]);
-//                        if (rs.getTimestamp(4) != null) {
-//                            job.setStartDate(rs.getTimestamp(4));
-//                        }
-//                        if (rs.getTimestamp(5) != null) {
-//                            job.setFinishDate(rs.getTimestamp(5));
-//                        }
-//                        job.setToolId(rs.getLong(6));
-//                        job.setSeqrunId(rs.getLong(7));
-//                        job.setParameters(new ArrayList<JobParameter>());
-//
-//                        //
-//                        do {
-//                            if (rs.getLong(8) != 0) {
-//                                JobParameter jp = new JobParameter();
-//                                jp.setJobId(job.getId());
-//                                jp.setId(rs.getLong(9));
-//                                jp.setNodeId(rs.getLong(10));
-//                                jp.setParameterName(rs.getString(11));
-//                                jp.setParameterValue(rs.getString(12));
-//                                jp.setUserName(rs.getString(13));
-//                                jp.setUserDescription(rs.getString(14));
-//                                job.getParameters().add(jp);
-//                            }
-//                        } while (rs.next());
-//
-//                        ret.add(job);
-//                    }
                 }
             }
         } catch (SQLException ex) {
@@ -306,6 +297,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String BY_APIKEY = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.apikey=?";
@@ -337,25 +329,31 @@ public class JobDAO extends DAO<Job> {
                         job.setFinishDate(rs.getTimestamp(5));
                     }
                     job.setToolId(rs.getLong(6));
-                    Long[] values = (Long[]) rs.getArray(7).getArray();
-                    long[] tmp = new long[values.length];
-                    for (int i = 0; i < tmp.length; i++) {
-                        tmp[i] = values[i];
+                    Array array = rs.getArray(7);
+                    if (array != null) {
+                        Long[] values = (Long[]) array.getArray();
+                        long[] tmp = new long[values.length];
+                        for (int i = 0; i < tmp.length; i++) {
+                            tmp[i] = values[i];
+                        }
+                        job.setSeqrunIds(tmp);
+                    } else {
+                        long assemblyId = rs.getLong(8);
+                        job.setAssemblyId(assemblyId);
                     }
-                    job.setSeqrunIds(tmp);
                     job.setParameters(new ArrayList<JobParameter>());
 
                     //
                     do {
-                        if (rs.getLong(8) != 0) {
+                        if (rs.getLong(9) != 0) {
                             JobParameter jp = new JobParameter();
                             jp.setJobId(job.getId());
-                            jp.setId(rs.getLong(9));
-                            jp.setNodeId(rs.getLong(10));
-                            jp.setParameterName(rs.getString(11));
-                            jp.setParameterValue(rs.getString(12));
-                            jp.setUserName(rs.getString(13));
-                            jp.setUserDescription(rs.getString(14));
+                            jp.setId(rs.getLong(10));
+                            jp.setNodeId(rs.getLong(11));
+                            jp.setParameterName(rs.getString(12));
+                            jp.setParameterValue(rs.getString(13));
+                            jp.setUserName(rs.getString(14));
+                            jp.setUserDescription(rs.getString(15));
                             job.getParameters().add(jp);
                         }
                     } while (rs.next());
@@ -370,6 +368,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String FETCHALL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)";
@@ -397,12 +396,20 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                Long[] values = (Long[]) rs.getArray(7).getArray();
-                                long[] tmp = new long[values.length];
-                                for (int i = 0; i < tmp.length; i++) {
-                                    tmp[i] = values[i];
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    long assemblyId = rs.getLong(8);
+                                    job.setAssemblyId(assemblyId);
                                 }
-                                job.setSeqrunIds(tmp);
+
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -412,15 +419,15 @@ public class JobDAO extends DAO<Job> {
                                 currentJob = job;
                             }
 
-                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
                                 JobParameter jp = new JobParameter();
                                 jp.setJobId(currentJob.getId());
-                                jp.setId(rs.getLong(9));
-                                jp.setNodeId(rs.getLong(10));
-                                jp.setParameterName(rs.getString(11));
-                                jp.setParameterValue(rs.getString(12));
-                                jp.setUserName(rs.getString(13));
-                                jp.setUserDescription(rs.getString(14));
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
 
                                 currentJob.getParameters().add(jp);
                             }
@@ -442,6 +449,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String BYTOOL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.tool_id=?";
@@ -470,12 +478,19 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                Long[] values = (Long[]) rs.getArray(7).getArray();
-                                long[] tmp = new long[values.length];
-                                for (int i = 0; i < tmp.length; i++) {
-                                    tmp[i] = values[i];
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) array.getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    job.setAssemblyId(rs.getLong(8));
                                 }
-                                job.setSeqrunIds(tmp);
+
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -485,15 +500,15 @@ public class JobDAO extends DAO<Job> {
                                 currentJob = job;
                             }
 
-                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
                                 JobParameter jp = new JobParameter();
                                 jp.setJobId(currentJob.getId());
-                                jp.setId(rs.getLong(9));
-                                jp.setNodeId(rs.getLong(10));
-                                jp.setParameterName(rs.getString(11));
-                                jp.setParameterValue(rs.getString(12));
-                                jp.setUserName(rs.getString(13));
-                                jp.setUserDescription(rs.getString(14));
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
 
                                 currentJob.getParameters().add(jp);
                             }
@@ -534,25 +549,37 @@ public class JobDAO extends DAO<Job> {
         return apiKey;
     }
 
-    private final static String UPDATE = "UPDATE job SET created_by=?, job_state=?, seqruns=?, tool_id=? "
+    private final static String UPDATE = "UPDATE job SET created_by=?, job_state=?, seqruns=?, assembly=?, tool_id=? "
             + "WHERE id=?";
 
     public void update(Job job) throws MGXException {
         if (job.getId() == Job.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
         }
+
+        if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+            throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+        }
+
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, job.getCreator());
                 stmt.setInt(2, job.getStatus().getValue());
-                Long[] temp = new Long[job.getSeqrunIds().length];
-                for (int i = 0; i < temp.length; i++) {
-                    temp[i] = job.getSeqrunIds()[i];
+                if (job.getSeqrunIds() != null) {
+                    Long[] temp = new Long[job.getSeqrunIds().length];
+                    for (int i = 0; i < temp.length; i++) {
+                        temp[i] = job.getSeqrunIds()[i];
+                    }
+                    Array array = conn.createArrayOf("BIGINT", temp);
+                    stmt.setArray(3, array);
+                    stmt.setNull(4, Types.BIGINT);
+                } else {
+                    stmt.setNull(3, Types.ARRAY);
+                    stmt.setLong(4, job.getAssemblyId());
                 }
-                Array array = conn.createArrayOf("BIGINT", temp);
-                stmt.setArray(3, array);
-                stmt.setLong(4, job.getToolId());
-                stmt.setLong(5, job.getId());
+
+                stmt.setLong(5, job.getToolId());
+                stmt.setLong(6, job.getId());
                 stmt.executeUpdate();
             }
         } catch (SQLException ex) {
@@ -590,9 +617,11 @@ public class JobDAO extends DAO<Job> {
 
                 // create assignment counts for attributes belonging to this job
                 String sql = "INSERT INTO attributecount "
-                        + "SELECT attribute.id, count(attribute.id) FROM attribute "
+                        + "SELECT attribute.id, read.seqrun_id, count(attribute.id) FROM attribute "
                         + "LEFT JOIN observation ON (attribute.id = observation.attr_id) "
-                        + "WHERE job_id=? GROUP BY attribute.id ORDER BY attribute.id";
+                        + "LEFT JOIN read ON (observation.seq_id=read.id) "
+                        + "WHERE job_id=? GROUP BY attribute.id, read.seqrun_id ORDER BY attribute.id";
+
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
@@ -654,6 +683,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String SQL_BY_SEQRUN = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
@@ -689,12 +719,19 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                Long[] values = (Long[]) rs.getArray(7).getArray();
-                                long[] tmp = new long[values.length];
-                                for (int i = 0; i < tmp.length; i++) {
-                                    tmp[i] = values[i];
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    job.setAssemblyId(rs.getLong(8));
                                 }
-                                job.setSeqrunIds(tmp);
+
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -704,15 +741,15 @@ public class JobDAO extends DAO<Job> {
                                 currentJob = job;
                             }
 
-                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
                                 JobParameter jp = new JobParameter();
                                 jp.setJobId(currentJob.getId());
-                                jp.setId(rs.getLong(9));
-                                jp.setNodeId(rs.getLong(10));
-                                jp.setParameterName(rs.getString(11));
-                                jp.setParameterValue(rs.getString(12));
-                                jp.setUserName(rs.getString(13));
-                                jp.setUserDescription(rs.getString(14));
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
 
                                 currentJob.getParameters().add(jp);
                             }
@@ -734,6 +771,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     private final static String BY_ATTRS = "SELECT DISTINCT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
             + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
             + "FROM attribute a "
             + "LEFT JOIN job j ON (a.job_id=j.id)"
@@ -773,7 +811,19 @@ public class JobDAO extends DAO<Job> {
                                     job.setFinishDate(rs.getTimestamp(5));
                                 }
                                 job.setToolId(rs.getLong(6));
-                                job.setSeqrunIds((long[]) rs.getArray(7).getArray());
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    job.setAssemblyId(rs.getLong(8));
+                                }
+
                                 job.setParameters(new ArrayList<JobParameter>());
 
                                 if (ret == null) {
@@ -783,15 +833,15 @@ public class JobDAO extends DAO<Job> {
                                 currentJob = job;
                             }
 
-                            if (rs.getLong(8) != 0 && rs.getLong(8) == currentJob.getId()) {
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
                                 JobParameter jp = new JobParameter();
                                 jp.setJobId(currentJob.getId());
-                                jp.setId(rs.getLong(9));
-                                jp.setNodeId(rs.getLong(10));
-                                jp.setParameterName(rs.getString(11));
-                                jp.setParameterValue(rs.getString(12));
-                                jp.setUserName(rs.getString(13));
-                                jp.setUserDescription(rs.getString(14));
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
 
                                 currentJob.getParameters().add(jp);
                             }
@@ -940,7 +990,7 @@ public class JobDAO extends DAO<Job> {
         }
     }
 
-    public void writeConveyorConfigFile(Job job, URI annotationService, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+    public void writeConveyorConfigFile(Job job, URI annotationService, String projectName, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
 
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
@@ -964,6 +1014,8 @@ public class JobDAO extends DAO<Job> {
             cfgFile.write("mgx.apiKey=" + createApiKey(job));
             cfgFile.newLine();
             cfgFile.write("mgx.annotationService=" + annotationService.toASCIIString());
+            cfgFile.newLine();
+            cfgFile.write("mgx.projectName=" + projectName);
             cfgFile.newLine();
 
             for (JobParameter jp : job.getParameters()) {

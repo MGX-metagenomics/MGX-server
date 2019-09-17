@@ -13,22 +13,22 @@ import javax.annotation.Priority;
 import javax.enterprise.context.RequestScoped;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
-
 
 @PreMatching
 @Priority(1)
 @RequestScoped
 public class UriProjectFilter implements ContainerRequestFilter {
-    
+
     // FIXME currently annotated as @RequestScoped due to 
     // https://github.com/payara/Payara/issues/3994
-
     @Context
     SecurityContext ctx;
     private DBGPMSI gpms;
@@ -80,11 +80,14 @@ public class UriProjectFilter implements ContainerRequestFilter {
             resource = path.substring(idx + 1);
         }
 
+        if (projectName == null || projectName.isEmpty()) {
+            throw new WebApplicationException("No project name provided.", Response.Status.UNAUTHORIZED);
+        }
+
         UriBuilder ub = cr.getUriInfo().getBaseUriBuilder();
         ub.replacePath(cr.getUriInfo().getBaseUri().getPath() + resource);
         cr.setRequestUri(cr.getUriInfo().getBaseUri(), ub.build());
 
-        
         if ("GPMS".equals(projectName)) {
             // pass-through
             return;

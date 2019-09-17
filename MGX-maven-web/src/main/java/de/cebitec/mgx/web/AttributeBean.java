@@ -125,13 +125,13 @@ public class AttributeBean {
     }
 
     @GET
-    @Path("getDistribution/{attrTypeId}/{jobId}")
+    @Path("getDistribution/{attrTypeId}/{jobId}/{runId}")
     @Produces("application/x-protobuf")
-    public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
+    public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("runId") Long runId) {
 
         List<Triple<Attribute, Long, Long>> dist;
         try {
-            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId);
+            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId, runId);
             return convert(dist);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -139,9 +139,9 @@ public class AttributeBean {
     }
 
     @GET
-    @Path("getHierarchy/{attrTypeId}/{jobId}")
+    @Path("getHierarchy/{attrTypeId}/{jobId}/{runId}")
     @Produces("application/x-protobuf")
-    public AttributeDistribution getHierarchy(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
+    public AttributeDistribution getHierarchy(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("runId") Long runId) {
 
         Map<Attribute, Long> dist;
         try {
@@ -149,7 +149,7 @@ public class AttributeBean {
             if (job == null || job.getStatus() != JobState.FINISHED) {
                 throw new MGXWebException("Non-existing job or job in invalid state");
             }
-            dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, jobId);
+            dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, jobId, runId);
             return convert(dist);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
