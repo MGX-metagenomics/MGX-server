@@ -6,12 +6,14 @@ import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -199,6 +201,45 @@ public class GeneDAO extends DAO<Gene> {
             throw new MGXException(ex);
         }
         return new ForwardingIterator<>(l == null ? null : l.iterator());
+    }
+
+    private static final String BY_CONTIGS = "SELECT g.id, g.start, g.stop, g.coverage, g.contig_id FROM gene g "
+            + "WHERE g.contig_id IN (";
+
+    public AutoCloseableIterator<Gene> byContigs(Collection<Long> ids) throws MGXException {
+
+        if (ids == null || ids.isEmpty()) {
+            throw new MGXException("Null/empty ID list.");
+        }
+
+        String sql = BY_CONTIGS + toSQLTemplateString(ids.size()) + ")";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            int idx = 1;
+            for (Long id : ids) {
+                stmt.setLong(idx++, id);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+            return new DBIterator<Gene>(rs, stmt, conn) {
+                @Override
+                public Gene convert(ResultSet rs) throws SQLException {
+                    Gene ret = new Gene();
+                    ret.setId(rs.getLong(1));
+                    ret.setStart(rs.getInt(2));
+                    ret.setStop(rs.getInt(3));
+                    ret.setCoverage(rs.getInt(4));
+                    ret.setContigId(rs.getLong(5));
+                    return ret;
+                }
+            };
+
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
     }
 
     public void createCoverage(long geneId, long runId, int coverage) throws MGXException {
