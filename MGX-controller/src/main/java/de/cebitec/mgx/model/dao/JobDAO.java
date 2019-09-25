@@ -52,8 +52,8 @@ public class JobDAO extends DAO<Job> {
         return Job.class;
     }
 
-    private final static String CREATE = "INSERT INTO job (created_by, job_state, seqruns, assembly, tool_id, apikey) "
-            + "VALUES (?,?,?,?,?,?) RETURNING id";
+    private final static String CREATE = "INSERT INTO job (created_by, job_state, seqruns, assembly, tool_id) "
+            + "VALUES (?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Job obj) throws MGXException {
@@ -61,12 +61,6 @@ public class JobDAO extends DAO<Job> {
         if ((obj.getSeqrunIds() == null || obj.getSeqrunIds().length == 0) && obj.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
             throw new MGXException("Job object does not reference sequencing runs or assemblies.");
         }
-
-        // create a random API key 
-        String apikey = UUID.randomUUID().toString().replaceAll("-", "");
-        String sha256hex = Hashing.sha256()
-                .hashString(apikey, StandardCharsets.UTF_8)
-                .toString();
 
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
@@ -79,6 +73,7 @@ public class JobDAO extends DAO<Job> {
                     for (int i = 0; i < temp.length; i++) {
                         temp[i] = obj.getSeqrunIds()[i];
                     }
+                    
                     Array array = conn.createArrayOf("BIGINT", temp);
                     stmt.setArray(3, array);
                     stmt.setNull(4, Types.BIGINT);
@@ -88,8 +83,6 @@ public class JobDAO extends DAO<Job> {
                 }
 
                 stmt.setLong(5, obj.getToolId());
-
-                stmt.setString(6, sha256hex);
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -621,6 +614,8 @@ public class JobDAO extends DAO<Job> {
                         + "LEFT JOIN observation ON (attribute.id = observation.attr_id) "
                         + "LEFT JOIN read ON (observation.seq_id=read.id) "
                         + "WHERE job_id=? GROUP BY attribute.id, read.seqrun_id ORDER BY attribute.id";
+                
+                // FIXME - gene_observation
 
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
@@ -701,6 +696,91 @@ public class JobDAO extends DAO<Job> {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    Job currentJob = null;
+
+                    while (rs.next()) {
+                        if (rs.getLong(1) != 0) {
+                            if (currentJob == null || rs.getLong(1) != currentJob.getId()) {
+                                Job job = new Job();
+                                job.setId(rs.getLong(1));
+                                job.setCreator(rs.getString(2));
+                                job.setStatus(JobState.values()[rs.getInt(3)]);
+                                if (rs.getTimestamp(4) != null) {
+                                    job.setStartDate(rs.getTimestamp(4));
+                                }
+                                if (rs.getTimestamp(5) != null) {
+                                    job.setFinishDate(rs.getTimestamp(5));
+                                }
+                                job.setToolId(rs.getLong(6));
+
+                                Array array = rs.getArray(7);
+                                if (array != null) {
+                                    Long[] values = (Long[]) rs.getArray(7).getArray();
+                                    long[] tmp = new long[values.length];
+                                    for (int i = 0; i < tmp.length; i++) {
+                                        tmp[i] = values[i];
+                                    }
+                                    job.setSeqrunIds(tmp);
+                                } else {
+                                    job.setAssemblyId(rs.getLong(8));
+                                }
+
+                                job.setParameters(new ArrayList<JobParameter>());
+
+                                if (ret == null) {
+                                    ret = new ArrayList<>();
+                                }
+                                ret.add(job);
+                                currentJob = job;
+                            }
+
+                            if (rs.getLong(9) != 0 && rs.getLong(9) == currentJob.getId()) {
+                                JobParameter jp = new JobParameter();
+                                jp.setJobId(currentJob.getId());
+                                jp.setId(rs.getLong(10));
+                                jp.setNodeId(rs.getLong(11));
+                                jp.setParameterName(rs.getString(12));
+                                jp.setParameterValue(rs.getString(13));
+                                jp.setUserName(rs.getString(14));
+                                jp.setUserDescription(rs.getString(15));
+
+                                currentJob.getParameters().add(jp);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+        if (ret != null) {
+            for (Job j : ret) {
+                fixParameters(j);
+            }
+        }
+        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+    }
+
+    private final static String SQL_BY_ASM = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
+            + "j.assembly, "
+            + "jp.job_id, jp.id, jp.node_id, jp.param_name, jp.param_value, jp.user_name, jp.user_desc "
+            + "FROM job j "
+            + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
+            + "WHERE j.assembly=?";
+
+    public AutoCloseableIterator<Job> byAssembly(final long asm_id) throws MGXException {
+        if (asm_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+        List<Job> ret = null;
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_ASM)) {
+                stmt.setLong(1, asm_id);
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;

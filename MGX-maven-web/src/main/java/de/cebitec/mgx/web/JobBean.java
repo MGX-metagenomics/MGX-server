@@ -48,8 +48,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -519,6 +517,18 @@ public class JobBean {
         }
     }
 
+        @GET
+    @Path("ByAssembly/{asm_id}")
+    @Produces("application/x-protobuf")
+    public JobDTOList ByAssembly(@PathParam("asm_id") Long asm_id) {
+        try {
+            AutoCloseableIterator<Job> acit = mgx.getJobDAO().byAssembly(asm_id);
+            return JobDTOFactory.getInstance().toDTOList(acit);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
+    
     @GET
     @Path("GetError/{id}")
     @Produces("application/x-protobuf")

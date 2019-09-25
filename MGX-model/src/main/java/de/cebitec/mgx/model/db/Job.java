@@ -1,6 +1,7 @@
 package de.cebitec.mgx.model.db;
 
 import de.cebitec.mgx.common.JobState;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
@@ -77,6 +78,7 @@ public class Job extends Identifiable {
 
     public Job setSeqrunIds(long[] seqruns) {
         if (seqruns != null && seqruns.length > 0) {
+            Arrays.sort(seqrun_ids);
             this.seqrun_ids = seqruns;
         }
         return this;

@@ -49,6 +49,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
@@ -269,14 +271,19 @@ public class ServiceBean {
     }
 
     @GET
-    @Path("getGenes/{contig_id}")
+    @Path("getGenes/{contig_ids}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public GeneDTOList getGenes(@HeaderParam("apiKey") String apiKey, @PathParam("contig_id") long contig_id) {
+    public GeneDTOList getGenes(@HeaderParam("apiKey") String apiKey, @PathParam("contig_ids") String contig_ids) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
-            AutoCloseableIterator<Gene> iter = mgx.getGeneDAO().byContig(contig_id);
+            String[] splitted = contig_ids.split(",");
+            Collection<Long> ids = new ArrayList<>(splitted.length);
+            for (String s : splitted) {
+                ids.add(Long.valueOf(s));
+            }
+            AutoCloseableIterator<Gene> iter = mgx.getGeneDAO().byContigs(ids);
             return GeneDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -285,33 +292,56 @@ public class ServiceBean {
     }
 
     @GET
-    @Path("getSequence/{contig_id}")
+    @Path("getSequence/{contig_ids}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public SequenceDTO getSequence(@HeaderParam("apiKey") String apiKey, @PathParam("contig_id") long ctg_id) {
+    public SequenceDTOList getSequence(@HeaderParam("apiKey") String apiKey, @PathParam("contig_ids") String contig_ids) {
         try {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
 
-            Contig contig = mgx.getContigDAO().getById(ctg_id);
-            Bin bin = mgx.getBinDAO().getById(contig.getBinId());
-            File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
-            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-            String geneSeq;
-            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+            SequenceDTOList.Builder ret = SequenceDTOList.newBuilder();
+
+            String[] splitted = contig_ids.split(",");
+            Bin bin = null;
+            File assemblyDir = null;
+            File binFasta = null;
+            IndexedFastaSequenceFile ifsf = null;
+            for (String ctg_id : splitted) {
+
+                Contig contig = mgx.getContigDAO().getById(Long.valueOf(ctg_id));
+
+                if (bin == null || bin.getId() != contig.getBinId()) {
+                    bin = mgx.getBinDAO().getById(contig.getBinId());
+                    assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+                    if (binFasta == null || !binFasta.equals(new File(assemblyDir, String.valueOf(bin.getId()) + ".fna"))) {
+                        binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+                        if (ifsf != null) {
+                            ifsf.close();
+                        }
+                        ifsf = new IndexedFastaSequenceFile(binFasta);
+                    }
+                }
+
+                String contigSeq;
                 ReferenceSequence seq;
                 seq = ifsf.getSequence(contig.getName());
                 if (seq == null || seq.length() == 0) {
                     throw new MGXServiceException("No sequence found for contig " + contig.getName());
                 }
-                geneSeq = new String(seq.getBases());
+                contigSeq = new String(seq.getBases());
+                ret.addSeq(SequenceDTO.newBuilder()
+                        .setId(contig.getId())
+                        .setName(contig.getName())
+                        .setSequence(contigSeq)
+                        .build());
             }
-            return SequenceDTO.newBuilder()
-                    .setId(ctg_id)
-                    .setName(contig.getName())
-                    .setSequence(geneSeq)
-                    .build();
 
+            if (ifsf != null) {
+                ifsf.close();
+            }
+
+            return ret.build();
         } catch (MGXException | IOException ex) {
             LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
