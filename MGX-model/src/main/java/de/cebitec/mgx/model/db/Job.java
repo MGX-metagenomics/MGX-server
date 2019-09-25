@@ -78,7 +78,7 @@ public class Job extends Identifiable {
 
     public Job setSeqrunIds(long[] seqruns) {
         if (seqruns != null && seqruns.length > 0) {
-            Arrays.sort(seqrun_ids);
+            Arrays.sort(seqruns);
             this.seqrun_ids = seqruns;
         }
         return this;
