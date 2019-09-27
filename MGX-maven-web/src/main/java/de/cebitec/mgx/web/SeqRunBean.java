@@ -7,7 +7,6 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dto.dto;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -28,6 +27,8 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.global.model.Term;
+import de.cebitec.mgx.model.db.Assembly;
+import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;
@@ -325,25 +326,61 @@ public class SeqRunBean {
     public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id, @PathParam("scope") int scope) {
 
         ToolScope tscope = ToolScope.values()[scope];
-        
+
         JobsAndAttributeTypesDTO.Builder b = JobsAndAttributeTypesDTO.newBuilder();
-        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
-            while (iter.hasNext()) {
-                Job job = iter.next();
-                JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
-                    AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
-                    JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
-                            .setJob(jobDTO).setAttributeTypes(dtoList)
-                            .build();
-                    b.addEntry(jat);
+        switch (tscope) {
+            case READ:
+                try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
+                    while (iter.hasNext()) {
+                        Job job = iter.next();
+                        JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
+
+                        try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                            AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
+                            if (dtoList.getAttributeTypeCount() > 0) {
+                                JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
+                                        .setJob(jobDTO).setAttributeTypes(dtoList)
+                                        .build();
+                                b.addEntry(jat);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    mgx.log(ex);
+                    throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
                 }
+                break;
 
-            }
-        } catch (Exception ex) {
-            mgx.log(ex);
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            case ASSEMBLY:
+                // assembly jobs do not annotate attribute types
+                break;
+
+            case GENE_ANNOTATION:
+                try (AutoCloseableIterator<Assembly> asmiter = mgx.getAssemblyDAO().bySeqRun(seqrun_id)) {
+                    while (asmiter != null && asmiter.hasNext()) {
+                        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(asmiter.next().getId())) {
+                            while (iter.hasNext()) {
+                                Job job = iter.next();
+                                JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
+
+                                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                                    AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
+                                    if (dtoList.getAttributeTypeCount() > 0) {
+                                        JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
+                                                .setJob(jobDTO).setAttributeTypes(dtoList)
+                                                .build();
+                                        b.addEntry(jat);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    mgx.log(ex);
+                    throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+                }
+                break;
         }
         return b.build();
     }

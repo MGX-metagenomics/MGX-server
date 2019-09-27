@@ -5,6 +5,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Bin;
+import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.workers.DeleteAssembly;
@@ -188,6 +189,42 @@ public class AssemblyDAO extends DAO<Assembly> {
         }
 
         throw new MGXException("No object of type " + getClassName() + " for job ID " + jobId + ".");
+    }
+
+    private static final String BY_SEQRUN_ID = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id FROM assembly a "
+            + "LEFT JOIN job j ON (j.id=a.job_id) "
+            + "WHERE ?=ANY(j.seqruns)";
+
+    public AutoCloseableIterator<Assembly> bySeqRun(long seqrun_id) throws MGXException {
+        if (seqrun_id <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+
+        List<Assembly> l = null;
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BY_SEQRUN_ID)) {
+                stmt.setLong(1, seqrun_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+
+                    while (rs.next()) {
+                        Assembly ret = new Assembly();
+                        ret.setId(rs.getLong(1));
+                        ret.setName(rs.getString(2));
+                        ret.setReadsAssembled(rs.getLong(3));
+                        ret.setN50(rs.getInt(4));
+                        ret.setAsmjobId(rs.getLong(5));
+
+                        if (l == null) {
+                            l = new ArrayList<>();
+                        }
+                        l.add(ret);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new MGXException(ex);
+        }
+        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
 }
