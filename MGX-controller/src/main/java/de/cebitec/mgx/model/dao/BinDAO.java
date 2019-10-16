@@ -233,15 +233,18 @@ public class BinDAO extends DAO<Bin> {
     }
 
     public TaskI delete(long bin_id) throws MGXException {
-        List<TaskI> subtasks = new ArrayList<>();
-//        try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
-//            while (iter.hasNext()) {
-//                Bin s = iter.next();
-//                TaskI del = getController().getBinDAO().delete(s.getId());
-//                subtasks.add(del);
-//            }
-//        }
-        return new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        Bin bin = getById(bin_id);
+        try {
+            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
+            binFasta.delete();
+            File binFastaIdx = new File(assemblyDir, String.valueOf(bin_id) + ".fna.fai");
+            binFastaIdx.delete();
+        } catch (IOException ex) {
+            throw new MGXException(ex);
+        }
+
+        return new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), new TaskI[]{});
     }
 
     public void indexFASTA(Bin bin) throws MGXException {

@@ -34,6 +34,35 @@ public final class DeleteBin extends TaskI {
         }
 
         try {
+            
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene_coverage WHERE gene_id IN (SELECT id FROM gene WHERE contig_id IN (SELECT id from contig WHERE bin_id=?))")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+            }
+
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene_observation WHERE gene_id IN (SELECT id FROM gene WHERE contig_id IN (SELECT id from contig WHERE bin_id=?))")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+            }
+
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene WHERE contig_id IN (SELECT id from contig WHERE bin_id=?)")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+            }
+
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM contig WHERE bin_id=?")) {
+                    stmt.setLong(1, id);
+                    stmt.execute();
+                }
+            }
+
             String name = null;
             try (Connection conn = getConnection()) {
                 try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM bin WHERE id=?")) {

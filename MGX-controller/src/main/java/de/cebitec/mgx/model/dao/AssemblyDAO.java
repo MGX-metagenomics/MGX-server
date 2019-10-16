@@ -93,6 +93,16 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     public TaskI delete(long id) throws MGXException {
         List<TaskI> subtasks = new ArrayList<>();
+        
+        AutoCloseableIterator<Job> jobs = getController().getJobDAO().byAssembly(id);
+        while (jobs != null && jobs.hasNext()) {
+            try {
+                subtasks.add(getController().getJobDAO().delete(jobs.next().getId()));
+            } catch (IOException ex) {
+                Logger.getLogger(AssemblyDAO.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
         try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
             while (iter.hasNext()) {
                 Bin s = iter.next();
