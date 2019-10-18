@@ -235,8 +235,4 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         return sb.toString();
     }
 
-    protected static enum State {
-        OK,
-        ERROR;
-    }
 }

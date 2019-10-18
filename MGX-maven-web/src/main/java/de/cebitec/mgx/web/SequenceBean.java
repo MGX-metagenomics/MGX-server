@@ -170,7 +170,7 @@ public class SequenceBean {
     }
 
     @PUT
-    @Path("initDownloadforAttributes/")
+    @Path("initDownloadforAttributes")
     @Produces("application/x-protobuf")
     public MGXString initDownloadforAttributes(AttributeDTOList attrdtos) {
 

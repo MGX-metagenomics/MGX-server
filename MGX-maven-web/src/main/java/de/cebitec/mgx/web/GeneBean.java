@@ -6,11 +6,17 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dnautils.DNAUtils;
+import de.cebitec.mgx.download.DownloadProviderI;
+import de.cebitec.mgx.download.DownloadSessions;
+import de.cebitec.mgx.download.GeneByAttributeDownloadProvider;
+import de.cebitec.mgx.dto.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
 import de.cebitec.mgx.dto.dto.GeneDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
+import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
@@ -24,6 +30,7 @@ import htsjdk.samtools.reference.ReferenceSequence;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -49,7 +56,11 @@ public class GeneBean {
     @MGX
     MGXController mgx;
     @EJB
+    DownloadSessions downSessions;
+    @EJB
     TaskHolder taskHolder;
+    @EJB
+    Executor executor;
 
     @PUT
     @Path("create")
@@ -180,5 +191,66 @@ public class GeneBean {
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();
 
+    }
+
+    @PUT
+    @Path("initDownloadforAttributes")
+    @Produces("application/x-protobuf")
+    public MGXString initDownloadforAttributes(AttributeDTOList attrdtos) {
+
+        if (attrdtos.getAttributeCount() == 0) {
+            throw new MGXWebException("No attributes provided.");
+        }
+
+        GeneByAttributeDownloadProvider provider = null;
+        try {
+            long[] attributeIDs = new long[attrdtos.getAttributeCount()];
+            int i = 0;
+            for (AttributeDTO dto : attrdtos.getAttributeList()) {
+                attributeIDs[i++] = dto.getId();
+            }
+
+            mgx.log("Creating attribute-based gene download session for " + mgx.getProjectName());
+
+            provider = new GeneByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(),
+                    attributeIDs, mgx.getProjectAssemblyDirectory());
+        } catch (MGXException | IOException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        UUID uuid = downSessions.registerDownloadSession(provider);
+        return MGXString.newBuilder().setValue(uuid.toString()).build();
+    }
+
+    @GET
+    @Path("closeDownload/{uuid}")
+    public Response closeDownload(@PathParam("uuid") UUID session_id) {
+        try {
+            downSessions.closeSession(session_id);
+            mgx.log("Download finished for " + mgx.getProjectName());
+        } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("fetchSequences/{uuid}")
+    @Consumes("application/x-protobuf")
+    public SequenceDTOList fetchSequences(@PathParam("uuid") UUID session_id) {
+        try {
+            DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
+            SequenceDTOList ret = session.fetch();
+            if (session instanceof Runnable) {
+                // submit for async background prefetch
+                executor.execute((Runnable) session);
+            }
+            return ret;
+        } catch (MGXException ex) {
+            mgx.log(ex.getMessage());
+            throw new MGXWebException(ex.getMessage());
+        }
     }
 }
