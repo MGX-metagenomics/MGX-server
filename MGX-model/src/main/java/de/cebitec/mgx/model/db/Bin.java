@@ -17,7 +17,7 @@ public class Bin extends Identifiable {
     private long n50;
     private long assembly_id;
     private int predicted_cds;
-    private int total_bp;
+    private long total_bp;
     private int num_contigs = 0;
 
     public Bin() {
@@ -79,7 +79,7 @@ public class Bin extends Identifiable {
         this.predicted_cds = predicted_cds;
     }
     
-    public void setTotalBp(int bp) {
+    public void setTotalBp(long bp) {
         this.total_bp = bp;
     }
 

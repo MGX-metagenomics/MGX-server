@@ -212,7 +212,7 @@ public class BinDAO extends DAO<Bin> {
                             ret.setTaxonomy(rs.getString(5));
                             ret.setN50(rs.getInt(6));
                             ret.setNumContigs(rs.getInt(7));
-                            ret.setTotalBp(rs.getInt(8));
+                            ret.setTotalBp(rs.getLong(8));
                             ret.setPredictedCDS(rs.getInt(9));
                             ret.setAssemblyId(asm_id);
 
