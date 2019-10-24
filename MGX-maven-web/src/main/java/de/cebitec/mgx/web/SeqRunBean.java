@@ -27,8 +27,6 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.global.model.Term;
-import de.cebitec.mgx.model.db.Assembly;
-import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;
@@ -321,9 +319,9 @@ public class SeqRunBean {
     }
 
     @GET
-    @Path("JobsAndAttributeTypes/{seqrun_id}/{scope}")
+    @Path("JobsAndAttributeTypes/{seqrun_id}/{assembly_id}/{scope}")
     @Produces("application/x-protobuf")
-    public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id, @PathParam("scope") int scope) {
+    public JobsAndAttributeTypesDTO getJobsAndAttributeTypes(@PathParam("seqrun_id") Long seqrun_id, @PathParam("assembly_id") Long assembly_id, @PathParam("scope") int scope) {
 
         ToolScope tscope = ToolScope.values()[scope];
 
@@ -357,21 +355,19 @@ public class SeqRunBean {
                 break;
 
             case GENE_ANNOTATION:
-                try (AutoCloseableIterator<Assembly> asmiter = mgx.getAssemblyDAO().bySeqRun(seqrun_id)) {
-                    while (asmiter != null && asmiter.hasNext()) {
-                        try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(asmiter.next().getId())) {
-                            while (iter.hasNext()) {
-                                Job job = iter.next();
-                                JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
+                try {
+                    try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(assembly_id)) {
+                        while (iter.hasNext()) {
+                            Job job = iter.next();
+                            JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                                try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
-                                    AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
-                                    if (dtoList.getAttributeTypeCount() > 0) {
-                                        JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
-                                                .setJob(jobDTO).setAttributeTypes(dtoList)
-                                                .build();
-                                        b.addEntry(jat);
-                                    }
+                            try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                                AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
+                                if (dtoList.getAttributeTypeCount() > 0) {
+                                    JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
+                                            .setJob(jobDTO).setAttributeTypes(dtoList)
+                                            .build();
+                                    b.addEntry(jat);
                                 }
                             }
                         }
