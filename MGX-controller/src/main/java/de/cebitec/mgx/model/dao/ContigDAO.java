@@ -5,13 +5,11 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -136,76 +134,61 @@ public class ContigDAO extends DAO<Contig> {
 
     public AutoCloseableIterator<Contig> getAll() throws MGXException {
 
-        List<Contig> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            ResultSet rs = stmt.executeQuery();
 
-                    while (rs.next()) {
-
-                        Contig ret = new Contig();
-                        ret.setId(rs.getLong(1));
-                        ret.setName(rs.getString(2));
-                        ret.setLength(rs.getInt(3));
-                        ret.setGC(rs.getFloat(4));
-                        ret.setCoverage(rs.getInt(5));
-                        ret.setBinId(rs.getLong(6));
-
-                        if (l == null) {
-                            l = new ArrayList<>();
-                        }
-                        l.add(ret);
-                    }
+            return new DBIterator<Contig>(rs, stmt, conn) {
+                @Override
+                public Contig convert(ResultSet rs) throws SQLException {
+                    Contig ret = new Contig();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setLength(rs.getInt(3));
+                    ret.setGC(rs.getFloat(4));
+                    ret.setCoverage(rs.getInt(5));
+                    ret.setBinId(rs.getLong(6));
+                    return ret;
                 }
-            }
+
+            };
+
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
     private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage FROM contig c "
             + "LEFT JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
-    
+
     //
     // FIXME get num cds
     //
+    public AutoCloseableIterator<Contig> byBin(final long bin_id) throws MGXException {
 
-    public AutoCloseableIterator<Contig> byBin(long bin_id) throws MGXException {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(BY_BIN);
+            stmt.setLong(1, bin_id);
+            ResultSet rs = stmt.executeQuery();
 
-        List<Contig> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_BIN)) {
-                stmt.setLong(1, bin_id);
-                try (ResultSet rs = stmt.executeQuery()) {
-
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type Assembly for ID " + bin_id + ".");
-                    }
-                    do {
-                        if (rs.getLong(1) != 0) {
-                            Contig ret = new Contig();
-                            ret.setId(rs.getLong(1));
-                            ret.setName(rs.getString(2));
-                            ret.setLength(rs.getInt(3));
-                            ret.setGC(rs.getFloat(4));
-                            ret.setCoverage(rs.getInt(5));
-                            ret.setBinId(bin_id);
-
-                            if (l == null) {
-                                l = new ArrayList<>();
-                            }
-                            l.add(ret);
-                        }
-                    } while (rs.next());
-
+            return new DBIterator<Contig>(rs, stmt, conn) {
+                @Override
+                public Contig convert(ResultSet rs) throws SQLException {
+                    Contig ret = new Contig();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setLength(rs.getInt(3));
+                    ret.setGC(rs.getFloat(4));
+                    ret.setCoverage(rs.getInt(5));
+                    ret.setBinId(bin_id);
+                    return ret;
                 }
-
-            }
+            };
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
     public TaskI delete(long id) throws MGXException {

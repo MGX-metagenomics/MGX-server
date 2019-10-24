@@ -5,7 +5,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.workers.DeleteBin;
 import htsjdk.samtools.reference.FastaSequenceIndexCreator;
 import java.io.File;
@@ -15,8 +15,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -148,33 +146,29 @@ public class BinDAO extends DAO<Bin> {
 
     public AutoCloseableIterator<Bin> getAll() throws MGXException {
 
-        List<Bin> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            ResultSet rs = stmt.executeQuery();
 
-                    while (rs.next()) {
-                        Bin ret = new Bin();
-                        ret.setId(rs.getLong(1));
-                        ret.setName(rs.getString(2));
-                        ret.setCompleteness(rs.getFloat(3));
-                        ret.setContamination(rs.getFloat(4));
-                        ret.setTaxonomy(rs.getString(5));
-                        ret.setN50(rs.getInt(6));
-                        ret.setPredictedCDS(rs.getInt(7));
-                        ret.setAssemblyId(rs.getLong(8));
-
-                        if (l == null) {
-                            l = new ArrayList<>();
-                        }
-                        l.add(ret);
-                    }
+            return new DBIterator<Bin>(rs, stmt, conn) {
+                @Override
+                public Bin convert(ResultSet rs) throws SQLException {
+                    Bin ret = new Bin();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setCompleteness(rs.getFloat(3));
+                    ret.setContamination(rs.getFloat(4));
+                    ret.setTaxonomy(rs.getString(5));
+                    ret.setN50(rs.getInt(6));
+                    ret.setPredictedCDS(rs.getInt(7));
+                    ret.setAssemblyId(rs.getLong(8));
+                    return ret;
                 }
-            }
+            };
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
     private static final String BY_ASM = "WITH temp as ( "
@@ -191,45 +185,35 @@ public class BinDAO extends DAO<Bin> {
             + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum "
             + "ORDER BY t.id ASC";
 
-    public AutoCloseableIterator<Bin> byAssembly(long asm_id) throws MGXException {
+    public AutoCloseableIterator<Bin> byAssembly(final long asm_id) throws MGXException {
 
-        List<Bin> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ASM)) {
-                stmt.setLong(1, asm_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(BY_ASM);
+            stmt.setLong(1, asm_id);
+            ResultSet rs = stmt.executeQuery();
 
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type Assembly for ID " + asm_id + ".");
-                    }
-                    do {
-                        if (rs.getLong(1) != 0) {
-                            Bin ret = new Bin();
-                            ret.setId(rs.getLong(1));
-                            ret.setName(rs.getString(2));
-                            ret.setCompleteness(rs.getFloat(3));
-                            ret.setContamination(rs.getFloat(4));
-                            ret.setTaxonomy(rs.getString(5));
-                            ret.setN50(rs.getInt(6));
-                            ret.setNumContigs(rs.getInt(7));
-                            ret.setTotalBp(rs.getLong(8));
-                            ret.setPredictedCDS(rs.getInt(9));
-                            ret.setAssemblyId(asm_id);
-
-                            if (l == null) {
-                                l = new ArrayList<>();
-                            }
-                            l.add(ret);
-                        }
-                    } while (rs.next());
-
+            return new DBIterator<Bin>(rs, stmt, conn) {
+                @Override
+                public Bin convert(ResultSet rs) throws SQLException {
+                    Bin ret = new Bin();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setCompleteness(rs.getFloat(3));
+                    ret.setContamination(rs.getFloat(4));
+                    ret.setTaxonomy(rs.getString(5));
+                    ret.setN50(rs.getInt(6));
+                    ret.setNumContigs(rs.getInt(7));
+                    ret.setTotalBp(rs.getLong(8));
+                    ret.setPredictedCDS(rs.getInt(9));
+                    ret.setAssemblyId(asm_id);
+                    return ret;
                 }
+            };
 
-            }
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
     public TaskI delete(long bin_id) throws MGXException {
@@ -254,7 +238,7 @@ public class BinDAO extends DAO<Bin> {
             if (!binFasta.exists() || !binFasta.canRead()) {
                 throw new MGXException("Unable to access FASTA file for bin " + bin.getId() + ".");
             }
-            FastaSequenceIndexCreator.buildFromFasta(Paths.get(binFasta.getAbsolutePath()));
+            FastaSequenceIndexCreator.create(Paths.get(binFasta.getAbsolutePath()), true);
         } catch (IOException ex) {
             Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);

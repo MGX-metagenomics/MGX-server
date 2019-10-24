@@ -6,12 +6,10 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -105,34 +103,31 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
         String BY_IDS = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
                 + "FROM attributetype atype WHERE id IN (" + toSQLTemplateString(ids.length) + ")";
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
-                int idx = 1;
-                for (Long id : ids) {
-                    stmt.setLong(idx++, id);
-                }
-
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        AttributeType aType = new AttributeType();
-                        aType.setId(rs.getLong(1));
-                        aType.setName(rs.getString(2));
-                        aType.setValueType(rs.getString(3).charAt(0));
-                        aType.setStructure(rs.getString(4).charAt(0));
-
-                        if (ret == null) {
-                            ret = new ArrayList<>(ids.length);
-                        }
-
-                        ret.add(aType);
-                    }
-                }
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(BY_IDS);
+            int idx = 1;
+            for (Long id : ids) {
+                stmt.setLong(idx++, id);
             }
+            ResultSet rs = stmt.executeQuery();
+
+            return new DBIterator<AttributeType>(rs, stmt, conn) {
+                @Override
+                public AttributeType convert(ResultSet rs) throws SQLException {
+                    AttributeType aType = new AttributeType();
+                    aType.setId(rs.getLong(1));
+                    aType.setName(rs.getString(2));
+                    aType.setValueType(rs.getString(3).charAt(0));
+                    aType.setStructure(rs.getString(4).charAt(0));
+                    return aType;
+                }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     private final static String FETCHALL = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
@@ -145,42 +140,32 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
 
     public AutoCloseableIterator<AttributeType> getAll() throws MGXException {
 
-        List<AttributeType> ret = null;
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            stmt.setInt(1, JobState.FINISHED.getValue());
+            ResultSet rs = stmt.executeQuery();
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                stmt.setInt(1, JobState.FINISHED.getValue());
-
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-
-                        if (ret == null) {
-                            ret = new ArrayList<>();
-                        }
-
-                        AttributeType aType = new AttributeType();
-                        aType.setId(rs.getLong(1));
-                        aType.setName(rs.getString(2));
-                        aType.setValueType(rs.getString(3).charAt(0));
-                        aType.setStructure(rs.getString(4).charAt(0));
-
-                        ret.add(aType);
-                    }
+            return new DBIterator<AttributeType>(rs, stmt, conn) {
+                @Override
+                public AttributeType convert(ResultSet rs) throws SQLException {
+                    AttributeType aType = new AttributeType();
+                    aType.setId(rs.getLong(1));
+                    aType.setName(rs.getString(2));
+                    aType.setValueType(rs.getString(3).charAt(0));
+                    aType.setStructure(rs.getString(4).charAt(0));
+                    return aType;
                 }
-            }
+            };
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     /*
      *  returns attribute types for a job, if it's in FINISHED state
      */
     public DBIterator<AttributeType> byJob(long jobId) throws MGXException {
-
-        DBIterator<AttributeType> iter = null;
 
         final String sql = "SELECT atype.id as atype_id, atype.name as atype_name, atype.value_type, atype.structure "
                 + "FROM attributetype atype "
@@ -199,7 +184,7 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
             stmt.setInt(2, JobState.FINISHED.getValue());
             rset = stmt.executeQuery();
 
-            iter = new DBIterator<AttributeType>(rset, stmt, c) {
+            return new DBIterator<AttributeType>(rset, stmt, c) {
                 @Override
                 public AttributeType convert(ResultSet rs) throws SQLException {
                     AttributeType aType = new AttributeType();
@@ -212,9 +197,8 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
             };
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
+            throw new MGXException(ex);
         }
-
-        return iter;
     }
 
     public DBIterator<AttributeType> BySeqRun(long seqrunId) throws MGXException {
