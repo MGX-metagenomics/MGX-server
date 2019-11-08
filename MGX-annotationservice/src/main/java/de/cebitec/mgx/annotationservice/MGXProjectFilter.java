@@ -59,11 +59,6 @@ public class MGXProjectFilter implements ContainerRequestFilter {
             throw new WebApplicationException("No project name provided.", Response.Status.UNAUTHORIZED);
         }
 
-        String apiKey = cr.getHeaderString("apiKey");
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new WebApplicationException("No API key provided.", Response.Status.UNAUTHORIZED);
-        }
-        
         UriBuilder ub = cr.getUriInfo().getBaseUriBuilder();
         ub.replacePath(cr.getUriInfo().getBaseUri().getPath() + resource);
         cr.setRequestUri(cr.getUriInfo().getBaseUri(), ub.build());
