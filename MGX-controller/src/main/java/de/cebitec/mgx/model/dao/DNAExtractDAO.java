@@ -6,9 +6,8 @@ import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.workers.DeleteDNAExtract;
-import de.cebitec.mgx.workers.DeleteSeqRun;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -103,7 +102,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                 subtasks.add(delRun);
             }
         }
-        return new DeleteDNAExtract(extractID, getController().getDataSource(), 
+        return new DeleteDNAExtract(extractID, getController().getDataSource(),
                 getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
     }
 
@@ -163,88 +162,72 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
             + "FROM dnaextract d";
 
     public AutoCloseableIterator<DNAExtract> getAll() throws MGXException {
-        List<DNAExtract> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            ResultSet rs = stmt.executeQuery();
 
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-
-                        if (ret == null) {
-                            ret = new ArrayList<>();
-                        }
-                        DNAExtract d = new DNAExtract();
-                        d.setId(rs.getLong(1));
-                        d.setName(rs.getString(2));
-                        d.setDescription(rs.getString(3));
-                        d.setFivePrimer(rs.getString(4));
-                        d.setMethod(rs.getString(5));
-                        d.setProtocol(rs.getString(6));
-                        d.setTargetFragment(rs.getString(7));
-                        d.setTargetGene(rs.getString(8));
-                        d.setThreePrimer(rs.getString(9));
-                        d.setSampleId(rs.getLong(10));
-
-                        ret.add(d);
-                    }
+            return new DBIterator<DNAExtract>(rs, stmt, conn) {
+                @Override
+                public DNAExtract convert(ResultSet rs) throws SQLException {
+                    DNAExtract d = new DNAExtract();
+                    d.setId(rs.getLong(1));
+                    d.setName(rs.getString(2));
+                    d.setDescription(rs.getString(3));
+                    d.setFivePrimer(rs.getString(4));
+                    d.setMethod(rs.getString(5));
+                    d.setProtocol(rs.getString(6));
+                    d.setTargetFragment(rs.getString(7));
+                    d.setTargetGene(rs.getString(8));
+                    d.setThreePrimer(rs.getString(9));
+                    d.setSampleId(rs.getLong(10));
+                    return d;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
-
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     private final static String SQL_BY_SAMPLE = "SELECT d.id, d.name, d.description, d.fiveprimer, d.method, d.protocol, "
             + "d.targetfragment, d.targetgene, d.threeprimer "
-            + "FROM sample s LEFT JOIN dnaextract d ON (s.id=d.sample_id) WHERE s.id=?";
+            + "FROM dnaextract d WHERE d.sample_id=?";
 
     public AutoCloseableIterator<DNAExtract> bySample(final long sample_id) throws MGXException {
         if (sample_id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
-        List<DNAExtract> ret = null;
 
-//        final Sample sample = getController().getSampleDAO().getById(sample_id);
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SAMPLE)) {
-                stmt.setLong(1, sample_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(SQL_BY_SAMPLE);
+            stmt.setLong(1, sample_id);
+            ResultSet rs = stmt.executeQuery();
 
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type Sample for ID " + sample_id + ".");
-                    }
-                    do {
-                        if (rs.getLong(1) != 0) {
-                            DNAExtract d = new DNAExtract();
-                            d.setSampleId(sample_id);
-                            d.setId(rs.getLong(1));
-                            d.setName(rs.getString(2));
-                            d.setDescription(rs.getString(3));
-                            d.setFivePrimer(rs.getString(4));
-                            d.setMethod(rs.getString(5));
-                            d.setProtocol(rs.getString(6));
-                            d.setTargetFragment(rs.getString(7));
-                            d.setTargetGene(rs.getString(8));
-                            d.setThreePrimer(rs.getString(9));
-
-                            if (ret == null) {
-                                ret = new ArrayList<>();
-                            }
-                            ret.add(d);
-                        }
-                    } while (rs.next());
-
+            return new DBIterator<DNAExtract>(rs, stmt, conn) {
+                @Override
+                public DNAExtract convert(ResultSet rs) throws SQLException {
+                    DNAExtract d = new DNAExtract();
+                    d.setSampleId(sample_id);
+                    d.setId(rs.getLong(1));
+                    d.setName(rs.getString(2));
+                    d.setDescription(rs.getString(3));
+                    d.setFivePrimer(rs.getString(4));
+                    d.setMethod(rs.getString(5));
+                    d.setProtocol(rs.getString(6));
+                    d.setTargetFragment(rs.getString(7));
+                    d.setTargetGene(rs.getString(8));
+                    d.setThreePrimer(rs.getString(9));
+                    return d;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
-
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 }

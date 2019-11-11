@@ -50,10 +50,8 @@ public class UnixHelper {
         Path path = Paths.get(targetDir.toURI());
         Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.OWNER_READ,
                 PosixFilePermission.OWNER_WRITE,
-                PosixFilePermission.OWNER_EXECUTE,
                 PosixFilePermission.GROUP_READ,
-                PosixFilePermission.GROUP_WRITE,
-                PosixFilePermission.GROUP_EXECUTE);
+                PosixFilePermission.GROUP_WRITE);
         Files.createFile(path, PosixFilePermissions.asFileAttribute(perms));
     }
     

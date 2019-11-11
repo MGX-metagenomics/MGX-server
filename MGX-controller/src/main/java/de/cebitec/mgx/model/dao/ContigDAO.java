@@ -102,6 +102,7 @@ public class ContigDAO extends DAO<Contig> {
 //    }
     private static final String FETCHALL = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig";
     private static final String BY_ID = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id=?";
+    private static final String BY_IDS = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id IN (";
 
     @Override
     public Contig getById(long id) throws MGXException {
@@ -132,6 +133,46 @@ public class ContigDAO extends DAO<Contig> {
         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
     }
 
+    public AutoCloseableIterator<Contig> getByIds(long... ids) throws MGXException {
+        if (ids == null || ids.length == 0) {
+            throw new MGXException("Null/empty ID list.");
+        }
+
+        String query = BY_IDS + toSQLTemplateString(ids.length) + ")";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query);
+            int idx = 1;
+            for (long id : ids) {
+                if (id <= 0) {
+                    throw new MGXException("No/Invalid ID supplied.");
+                }
+                stmt.setLong(idx++, id);
+            }
+            ResultSet rs = stmt.executeQuery();
+
+            return new DBIterator<Contig>(rs, stmt, conn) {
+                @Override
+                public Contig convert(ResultSet rs) throws SQLException {
+                    Contig ret = new Contig();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setLength(rs.getInt(3));
+                    ret.setGC(rs.getFloat(4));
+                    ret.setCoverage(rs.getInt(5));
+                    ret.setBinId(rs.getLong(6));
+                    return ret;
+                }
+            };
+
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
+
+    }
+
     public AutoCloseableIterator<Contig> getAll() throws MGXException {
 
         try {
@@ -160,7 +201,7 @@ public class ContigDAO extends DAO<Contig> {
     }
 
     private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage FROM contig c "
-            + "LEFT JOIN bin b ON (c.bin_id=b.id) WHERE b.id=?";
+            + "WHERE c.bin_id=?";
 
     //
     // FIXME get num cds
@@ -192,6 +233,7 @@ public class ContigDAO extends DAO<Contig> {
     }
 
     public TaskI delete(long id) throws MGXException {
+        // FIXME
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

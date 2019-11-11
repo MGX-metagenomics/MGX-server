@@ -27,7 +27,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         Builder b = AttributeDTO.newBuilder();
         b.setId(attr.getId())
                 .setValue(attr.getValue())
-                .setJobid(attr.getJobId())
+                .setJobId(attr.getJobId())
                 .setAttributeTypeId(attr.getAttributeTypeId());
         if (attr.getParentId()!= Identifiable.INVALID_IDENTIFIER) {
             b.setParentId(attr.getParentId());
@@ -39,7 +39,7 @@ public class AttributeDTOFactory extends DTOConversionBase<Attribute, AttributeD
         Builder b = AttributeDTO.newBuilder();
         b.setId(attr.getId())
                 .setValue(attr.getValue())
-                .setJobid(attr.getJobId())
+                .setJobId(attr.getJobId())
                 .setAttributeTypeId(attr.getAttributeTypeId());
         b.setParentId(parentId);
         return b.build();

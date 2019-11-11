@@ -70,7 +70,7 @@ public class AttributeBean {
 //            Job job = mgx.getJobDAO().getById(dto.getJobid());
 
             Attribute attr = AttributeDTOFactory.getInstance().toDB(dto);
-            attr.setJobId(dto.getJobid());
+            attr.setJobId(dto.getJobId());
             attr.setAttributeTypeId(dto.getAttributeTypeId());
 
             if (dto.getParentId() != 0) {

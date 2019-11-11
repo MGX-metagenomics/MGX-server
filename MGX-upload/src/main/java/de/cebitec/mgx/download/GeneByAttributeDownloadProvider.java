@@ -159,8 +159,8 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
             listBuilder.setComplete(!have_more_data);
             nextChunk = listBuilder.build();
 
-            lock.unlock();
         }
+        lock.unlock();
     }
 
     @Override

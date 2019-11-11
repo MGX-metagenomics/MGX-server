@@ -171,19 +171,7 @@ public class BinDAO extends DAO<Bin> {
         }
     }
 
-    private static final String BY_ASM = "WITH temp as ( "
-            + "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, count(c.id), sum(c.length_bp) FROM assembly a "
-            + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
-            + "LEFT JOIN contig c ON (b.id=c.bin_id) "
-            + "WHERE a.id=? "
-            + "GROUP BY b.id "
-            + "ORDER BY b.id ASC "
-            + ")"
-            + "SELECT t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum, count(g.id) FROM temp t "
-            + "LEFT JOIN contig c ON (t.id=c.bin_id) "
-            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
-            + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum "
-            + "ORDER BY t.id ASC";
+    private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.num_contigs, b.total_bp, b.predicted_cds FROM bin b WHERE b.assembly_id=?";
 
     public AutoCloseableIterator<Bin> byAssembly(final long asm_id) throws MGXException {
 
@@ -231,14 +219,64 @@ public class BinDAO extends DAO<Bin> {
         return new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), new TaskI[]{});
     }
 
-    public void indexFASTA(Bin bin) throws MGXException {
-        try {
-            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
-            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-            if (!binFasta.exists() || !binFasta.canRead()) {
-                throw new MGXException("Unable to access FASTA file for bin " + bin.getId() + ".");
+    private static final String BINS_BY_ASM_TMPL = "WITH temp as ( "
+            + "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, count(c.id), sum(c.length_bp) FROM assembly a "
+            + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
+            + "LEFT JOIN contig c ON (b.id=c.bin_id) "
+            + "WHERE a.id=? "
+            + "GROUP BY b.id "
+            + "ORDER BY b.id ASC "
+            + ")"
+            + "SELECT t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum, count(g.id) FROM temp t "
+            + "LEFT JOIN contig c ON (t.id=c.bin_id) "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "GROUP BY t.id, t.name, t.completeness, t.contamination, t.taxonomy, t.n50, t.count, t.sum "
+            + "ORDER BY t.id ASC";
+
+    public void updateDerivedFields(long asm_id) throws MGXException {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(BINS_BY_ASM_TMPL)) {
+                stmt.setLong(1, asm_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Bin ret = new Bin();
+                        ret.setId(rs.getLong(1));
+                        //ret.setName(rs.getString(2));
+                        //ret.setCompleteness(rs.getFloat(3));
+                        //ret.setContamination(rs.getFloat(4));
+                        //ret.setTaxonomy(rs.getString(5));
+                        //ret.setN50(rs.getInt(6));
+                        ret.setNumContigs(rs.getInt(7));
+                        ret.setTotalBp(rs.getLong(8));
+                        ret.setPredictedCDS(rs.getInt(9));
+                        //ret.setAssemblyId(asm_id);
+
+                        try (PreparedStatement stmt2 = conn.prepareStatement("UPDATE bin SET predicted_cds=?, num_contigs=?, total_bp=? WHERE id=?")) {
+                            stmt2.setInt(1, ret.getPredictedCDS());
+                            stmt2.setInt(2, ret.getNumContigs());
+                            stmt2.setLong(3, ret.getTotalBp());
+                            stmt2.setLong(4, ret.getId());
+                            stmt2.executeUpdate();
+                        }
+
+                        indexFASTA(asm_id, ret.getId());
+                    }
+                }
             }
-            FastaSequenceIndexCreator.create(Paths.get(binFasta.getAbsolutePath()), true);
+        } catch (Exception ex) {
+            Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
+        }
+    }
+
+    private void indexFASTA(long asm_id, long bin_id) throws MGXException {
+        try {
+            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(asm_id));
+            File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
+            if (!binFasta.exists() || !binFasta.canRead()) {
+                throw new MGXException("Unable to access FASTA file for bin " + bin_id + ".");
+            }
+            FastaSequenceIndexCreator.buildFromFasta(Paths.get(binFasta.getAbsolutePath()));
         } catch (IOException ex) {
             Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);

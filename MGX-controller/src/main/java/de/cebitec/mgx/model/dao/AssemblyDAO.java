@@ -7,7 +7,7 @@ import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.workers.DeleteAssembly;
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +93,7 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     public TaskI delete(long id) throws MGXException {
         List<TaskI> subtasks = new ArrayList<>();
-        
+
         AutoCloseableIterator<Job> jobs = getController().getJobDAO().byAssembly(id);
         while (jobs != null && jobs.hasNext()) {
             try {
@@ -102,7 +102,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                 Logger.getLogger(AssemblyDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        
+
         try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
             while (iter.hasNext()) {
                 Bin s = iter.next();
@@ -146,30 +146,27 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     public AutoCloseableIterator<Assembly> getAll() throws MGXException {
 
-        List<Assembly> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            ResultSet rs = stmt.executeQuery();
 
-                    while (rs.next()) {
-                        Assembly ret = new Assembly();
-                        ret.setId(rs.getLong(1));
-                        ret.setName(rs.getString(2));
-                        ret.setReadsAssembled(rs.getLong(3));
-                        ret.setN50(rs.getInt(4));
-                        ret.setAsmjobId(rs.getLong(5));
-
-                        if (l == null) {
-                            l = new ArrayList<>();
-                        }
-                        l.add(ret);
-                    }
+            return new DBIterator<Assembly>(rs, stmt, conn) {
+                @Override
+                public Assembly convert(ResultSet rs) throws SQLException {
+                    Assembly ret = new Assembly();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setReadsAssembled(rs.getLong(3));
+                    ret.setN50(rs.getInt(4));
+                    ret.setAsmjobId(rs.getLong(5));
+                    return ret;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
     private static final String BY_JOB_ID = "SELECT id, name, reads_assembled, n50 FROM assembly WHERE job_id=?";
@@ -210,31 +207,28 @@ public class AssemblyDAO extends DAO<Assembly> {
             throw new MGXException("No/Invalid ID supplied.");
         }
 
-        List<Assembly> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_SEQRUN_ID)) {
-                stmt.setLong(1, seqrun_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(BY_SEQRUN_ID);
+            stmt.setLong(1, seqrun_id);
+            ResultSet rs = stmt.executeQuery();
 
-                    while (rs.next()) {
-                        Assembly ret = new Assembly();
-                        ret.setId(rs.getLong(1));
-                        ret.setName(rs.getString(2));
-                        ret.setReadsAssembled(rs.getLong(3));
-                        ret.setN50(rs.getInt(4));
-                        ret.setAsmjobId(rs.getLong(5));
-
-                        if (l == null) {
-                            l = new ArrayList<>();
-                        }
-                        l.add(ret);
-                    }
+            return new DBIterator<Assembly>(rs, stmt, conn) {
+                @Override
+                public Assembly convert(ResultSet rs) throws SQLException {
+                    Assembly ret = new Assembly();
+                    ret.setId(rs.getLong(1));
+                    ret.setName(rs.getString(2));
+                    ret.setReadsAssembled(rs.getLong(3));
+                    ret.setN50(rs.getInt(4));
+                    ret.setAsmjobId(rs.getLong(5));
+                    return ret;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
 }

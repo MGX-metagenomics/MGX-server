@@ -5,10 +5,8 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.Sample;
-import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.ForwardingIterator;
-import de.cebitec.mgx.workers.DeleteDNAExtract;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.workers.DeleteSample;
 import java.io.IOException;
 import java.sql.Connection;
@@ -151,90 +149,66 @@ public class SampleDAO extends DAO<Sample> {
             + "FROM sample s";
 
     public AutoCloseableIterator<Sample> getAll() throws MGXException {
-        List<Sample> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            ResultSet rs = stmt.executeQuery();
 
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-
-                        if (ret == null) {
-                            ret = new ArrayList<>();
-                        }
-
-                        Sample s = new Sample();
-                        s.setId(rs.getLong(1));
-                        s.setCollectionDate(new java.util.Date(rs.getDate(2).getTime()));
-                        s.setMaterial(rs.getString(3));
-                        s.setTemperature(rs.getDouble(4));
-                        s.setVolume(rs.getInt(5));
-                        s.setVolumeUnit(rs.getString(6));
-                        s.setHabitatId(rs.getLong(7));
-
-                        ret.add(s);
-
-                    }
+            return new DBIterator<Sample>(rs, stmt, conn) {
+                @Override
+                public Sample convert(ResultSet rs) throws SQLException {
+                    Sample s = new Sample();
+                    s.setId(rs.getLong(1));
+                    s.setCollectionDate(new java.util.Date(rs.getDate(2).getTime()));
+                    s.setMaterial(rs.getString(3));
+                    s.setTemperature(rs.getDouble(4));
+                    s.setVolume(rs.getInt(5));
+                    s.setVolumeUnit(rs.getString(6));
+                    s.setHabitatId(rs.getLong(7));
+                    return s;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
-
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
     private final static String SQL_BY_HABITAT = "SELECT s.id, s.collectiondate, s.material, s.temperature, s.volume, s.volume_unit "
-            + "FROM habitat h LEFT JOIN sample s ON (h.id=s.habitat_id) WHERE h.id=?";
+            + "FROM sample s WHERE s.habitat_id=?";
 
     public AutoCloseableIterator<Sample> byHabitat(final long habitat_id) throws MGXException {
         if (habitat_id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
-        List<Sample> ret = null;
 
-//        Habitat habitat = getController().getHabitatDAO().getById(habitat_id);
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_HABITAT)) {
-                stmt.setLong(1, habitat_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(SQL_BY_HABITAT);
+            stmt.setLong(1, habitat_id);
+            ResultSet rs = stmt.executeQuery();
 
-                    if (!rs.next()) {
-                        throw new MGXException("No object of type Habitat for ID " + habitat_id + ".");
-                    }
-                    do {
-                        if (rs.getLong(1) != 0) {
-                            Sample s = new Sample();
-                            s.setHabitatId(habitat_id);
-                            s.setId(rs.getLong(1));
-                            s.setCollectionDate(new java.util.Date(rs.getDate(2).getTime()));
-                            s.setMaterial(rs.getString(3));
-                            s.setTemperature(rs.getDouble(4));
-                            s.setVolume(rs.getInt(5));
-                            s.setVolumeUnit(rs.getString(6));
-
-                            if (ret == null) {
-                                ret = new ArrayList<>();
-                            }
-                            ret.add(s);
-                        }
-                    } while (rs.next());
-
+            return new DBIterator<Sample>(rs, stmt, conn) {
+                @Override
+                public Sample convert(ResultSet rs) throws SQLException {
+                    Sample s = new Sample();
+                    s.setHabitatId(habitat_id);
+                    s.setId(rs.getLong(1));
+                    s.setCollectionDate(new java.util.Date(rs.getDate(2).getTime()));
+                    s.setMaterial(rs.getString(3));
+                    s.setTemperature(rs.getDouble(4));
+                    s.setVolume(rs.getInt(5));
+                    s.setVolumeUnit(rs.getString(6));
+                    return s;
                 }
-            }
+            };
+
         } catch (SQLException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
-
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
     }
 
-//    public AutoCloseableIterator<Sample> byHabitat(Long habitat_id) throws MGXException {
-//        Habitat h = getController().getHabitatDAO().getById(habitat_id);
-//        Iterator<Sample> iterator = getEntityManager().<Sample>createQuery("SELECT DISTINCT s FROM " + getClassName() + " s WHERE s.habitat = :hab", Sample.class).
-//                setParameter("hab", h).getResultList().iterator();
-//        return new ForwardingIterator<>(iterator);
-//    }
 }
