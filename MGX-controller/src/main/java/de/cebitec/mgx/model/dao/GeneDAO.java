@@ -5,6 +5,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
+import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -265,5 +266,36 @@ public class GeneDAO extends DAO<Gene> {
 
     public AutoCloseableIterator<Gene> byBin(Long id) throws MGXException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    private final static String SQL_BULK_GENE
+            = "INSERT INTO gene_observation (start, stop, attr_id, gene_id) VALUES (?, ?, ?, ?)";
+
+    public void createAnnotations(List<GeneAnnotation> annots) throws MGXException {
+          try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_BULK_GENE)) {
+                for (GeneAnnotation obs : annots) {
+                    stmt.setInt(1, obs.getStart());
+                    stmt.setInt(2, obs.getStop());
+                    stmt.setLong(3, obs.getAttributeId());
+                    stmt.setLong(4, obs.getGeneId());
+                    stmt.addBatch();
+                }
+                int[] status = stmt.executeBatch();
+
+                if (status == null || status.length != annots.size()) {
+                    throw new MGXException("Database batch update failed. Expected " + annots.size()
+                            + ", got " + (status == null ? "null" : String.valueOf(status.length)));
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex);
+            SQLException sqle = ex;
+            while (sqle.getNextException() != null) {
+                sqle = sqle.getNextException();
+                getController().log(sqle);
+            }
+            throw new MGXException(ex.getMessage());
+        }
     }
 }

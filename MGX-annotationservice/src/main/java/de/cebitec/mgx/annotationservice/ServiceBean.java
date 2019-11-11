@@ -16,6 +16,8 @@ import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
+import de.cebitec.mgx.dto.dto.GeneAnnotationDTO;
+import de.cebitec.mgx.dto.dto.GeneAnnotationDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dto.dto.GeneDTO;
@@ -31,6 +33,7 @@ import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
+import de.cebitec.mgx.dtoadapter.GeneAnnotationDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
@@ -40,6 +43,7 @@ import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
+import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -52,6 +56,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
@@ -466,6 +471,22 @@ public class ServiceBean {
         return Response.ok().build();
     }
 
+    @PUT
+    @Path("createGeneObservations")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response createGeneObservations(GeneAnnotationDTOList dtoList) {
+        try {
+            List<GeneAnnotation> annots = GeneAnnotationDTOFactory.getInstance().toList(dtoList);
+            mgx.getGeneDAO().createAnnotations(annots);
+        } catch (MGXException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+            throw new MGXServiceException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
     @GET
     @Path("finishJob")
     @Consumes("application/x-protobuf")
@@ -475,7 +496,7 @@ public class ServiceBean {
             Job job = mgx.getJobDAO().getByApiKey(apiKey);
 
             Assembly asm = mgx.getAssemblyDAO().byJob(job.getId());
-            
+
             // update db fields, index FASTA files..
             mgx.getBinDAO().updateDerivedFields(asm.getId());
 
