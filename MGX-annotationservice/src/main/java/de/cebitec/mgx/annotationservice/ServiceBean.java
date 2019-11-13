@@ -12,11 +12,11 @@ import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
-import de.cebitec.mgx.dto.dto.GeneAnnotationDTO;
 import de.cebitec.mgx.dto.dto.GeneAnnotationDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
@@ -31,6 +31,7 @@ import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
+import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneAnnotationDTOFactory;
@@ -40,6 +41,7 @@ import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
@@ -227,12 +229,35 @@ public class ServiceBean {
     }
 
     @PUT
+    @Path("createAttributeType")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLong createAttributeType(AttributeTypeDTO dto) {
+        AttributeType attr = AttributeTypeDTOFactory.getInstance().toDB(dto);
+
+        try {
+            long id = mgx.getAttributeTypeDAO().create(attr);
+            return MGXLong.newBuilder().setValue(id).build();
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @PUT
     @Path("createAttribute")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong createAttribute(AttributeDTO dto) {
         Attribute attr = AttributeDTOFactory.getInstance().toDB(dto);
+        attr.setJobId(dto.getJobId());
+        attr.setAttributeTypeId(dto.getAttributeTypeId());
+
+        if (dto.getParentId() != 0) {
+            attr.setParentId(dto.getParentId());
+        }
+
         try {
             long id = mgx.getAttributeDAO().create(attr);
             return MGXLong.newBuilder().setValue(id).build();
@@ -395,7 +420,6 @@ public class ServiceBean {
     @PUT
     @Path("appendSequences/{binId}")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response appendSequences(@PathParam("binId") Long binId, SequenceDTOList dto) {
         try {
@@ -453,7 +477,6 @@ public class ServiceBean {
     @PUT
     @Path("createGeneCoverage")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response createGeneCoverage(@HeaderParam("apiKey") String apiKey, GeneCoverageDTOList dtoList) {
         try {
@@ -474,7 +497,6 @@ public class ServiceBean {
     @PUT
     @Path("createGeneObservations")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response createGeneObservations(GeneAnnotationDTOList dtoList) {
         try {
