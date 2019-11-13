@@ -267,12 +267,12 @@ public class GeneDAO extends DAO<Gene> {
     public AutoCloseableIterator<Gene> byBin(Long id) throws MGXException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     private final static String SQL_BULK_GENE
             = "INSERT INTO gene_observation (start, stop, attr_id, gene_id) VALUES (?, ?, ?, ?)";
 
     public void createAnnotations(List<GeneAnnotation> annots) throws MGXException {
-          try (Connection conn = getConnection()) {
+        try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BULK_GENE)) {
                 for (GeneAnnotation obs : annots) {
                     stmt.setInt(1, obs.getStart());
