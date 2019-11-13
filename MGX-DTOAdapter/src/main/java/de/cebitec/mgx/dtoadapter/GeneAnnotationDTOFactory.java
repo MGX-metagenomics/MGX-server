@@ -7,9 +7,7 @@ package de.cebitec.mgx.dtoadapter;
 
 import de.cebitec.mgx.dto.dto.GeneAnnotationDTO;
 import de.cebitec.mgx.dto.dto.GeneAnnotationDTOList;
-import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.model.db.GeneAnnotation;
-import de.cebitec.mgx.model.db.GeneCoverage;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,13 +44,13 @@ public class GeneAnnotationDTOFactory extends DTOConversionBase<GeneAnnotation, 
 
     @Override
     public GeneAnnotationDTOList toDTOList(AutoCloseableIterator<GeneAnnotation> iter) {
-       GeneAnnotationDTOList.Builder b = GeneAnnotationDTOList.newBuilder();
+        GeneAnnotationDTOList.Builder b = GeneAnnotationDTOList.newBuilder();
         while (iter != null && iter.hasNext()) {
             b.addAnnotation(toDTO(iter.next()));
         }
         return b.build();
     }
-    
+
     public List<GeneAnnotation> toList(GeneAnnotationDTOList dtolist) {
         List<GeneAnnotation> ret = new ArrayList<>();
         for (GeneAnnotationDTO dto : dtolist.getAnnotationList()) {
