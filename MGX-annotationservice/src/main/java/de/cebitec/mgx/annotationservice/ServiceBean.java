@@ -1,5 +1,10 @@
 package de.cebitec.mgx.annotationservice;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.annotationservice.exception.MGXServiceException;
 import de.cebitec.mgx.common.JobState;
@@ -60,7 +65,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
@@ -332,6 +339,25 @@ public class ServiceBean {
         }
     }
 
+    private final static LoadingCache<File, IndexedFastaSequenceFile> cache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .removalListener(new RemovalListener<File, IndexedFastaSequenceFile>() {
+                @Override
+                public void onRemoval(RemovalNotification<File, IndexedFastaSequenceFile> rn) {
+                    try {
+                        rn.getValue().close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            })
+            .build(new CacheLoader<File, IndexedFastaSequenceFile>() {
+                @Override
+                public IndexedFastaSequenceFile load(File k) throws Exception {
+                    return new IndexedFastaSequenceFile(k);
+                }
+            });
+
     @GET
     @Path("getSequence/{contig_ids}")
     @Consumes("application/x-protobuf")
@@ -339,7 +365,6 @@ public class ServiceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public SequenceDTOList getSequence(@PathParam("contig_ids") String contig_ids) {
         try {
-
             String[] splitted = contig_ids.split(",");
             long[] ids = new long[splitted.length];
             for (int i = 0; i < splitted.length; i++) {
@@ -348,7 +373,6 @@ public class ServiceBean {
 
             SequenceDTOList.Builder ret = SequenceDTOList.newBuilder();
             Bin bin = null;
-            File assemblyDir = null;
             File binFasta = null;
             IndexedFastaSequenceFile ifsf = null;
 
@@ -360,13 +384,14 @@ public class ServiceBean {
 
                     if (bin == null || bin.getId() != contig.getBinId()) {
                         bin = mgx.getBinDAO().getById(contig.getBinId());
-                        assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+                        File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
                         if (binFasta == null || !binFasta.equals(new File(assemblyDir, String.valueOf(bin.getId()) + ".fna"))) {
                             binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-                            if (ifsf != null) {
-                                ifsf.close();
+                            try {
+                                ifsf = cache.get(binFasta);
+                            } catch (ExecutionException ex) {
+                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex);
                             }
-                            ifsf = new IndexedFastaSequenceFile(binFasta);
                         }
                     }
 
@@ -384,10 +409,6 @@ public class ServiceBean {
                             .build());
                 }
 
-            }
-
-            if (ifsf != null) {
-                ifsf.close();
             }
 
             return ret.build();
