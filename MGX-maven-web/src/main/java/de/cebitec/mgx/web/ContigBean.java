@@ -9,12 +9,18 @@ import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
+import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequence;
+import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -108,6 +114,36 @@ public class ContigBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return ContigDTOFactory.getInstance().toDTOList(bins);
+    }
+
+    @GET
+    @Path("getDNASequence/{id}")
+    @Produces("application/x-protobuf")
+    public SequenceDTO getDNASequence(@PathParam("id") Long id) {
+        try {
+            Contig contig = mgx.getContigDAO().getById(id);
+            Bin bin = mgx.getBinDAO().getById(contig.getBinId());
+            File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            String contigSeq;
+            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                ReferenceSequence seq = ifsf.getSequence(contig.getName());
+
+                if (seq == null || seq.length() == 0) {
+                    throw new MGXWebException("No sequence found for contig " + contig.getName());
+                }
+                contigSeq = new String(seq.getBases());
+
+            }
+            return SequenceDTO.newBuilder()
+                    .setId(id)
+                    .setName(contig.getName())
+                    .setSequence(contigSeq)
+                    .build();
+
+        } catch (MGXException | IOException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
     }
 
     @DELETE
