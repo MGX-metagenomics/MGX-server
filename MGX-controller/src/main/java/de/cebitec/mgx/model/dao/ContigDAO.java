@@ -3,9 +3,15 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
+import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequence;
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -230,6 +236,34 @@ public class ContigDAO extends DAO<Contig> {
         } catch (SQLException ex) {
             throw new MGXException(ex);
         }
+    }
+
+    public Sequence getDNASequence(long contig_id) throws MGXException {
+        Contig contig = getById(contig_id);
+        Bin bin = getController().getBinDAO().getById(contig.getBinId());
+        String contigSeq;
+        try {
+            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                ReferenceSequence seq = ifsf.getSequence(contig.getName());
+
+                if (seq == null || seq.length() == 0) {
+                    throw new MGXException("No sequence found for contig " + contig.getName());
+                }
+                contigSeq = new String(seq.getBases());
+            }
+
+        } catch (IOException ex) {
+            throw new MGXException(ex);
+        }
+
+        Sequence ret = new Sequence();
+        ret.setId(contig_id);
+        ret.setName(contig.getName());
+        ret.setSequence(contigSeq);
+
+        return ret;
     }
 
     public TaskI delete(long id) throws MGXException {
