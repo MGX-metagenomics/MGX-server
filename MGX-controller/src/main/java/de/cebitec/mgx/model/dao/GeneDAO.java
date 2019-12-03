@@ -4,7 +4,6 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dnautils.DNAUtils;
-import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.GeneAnnotation;
@@ -15,7 +14,6 @@ import de.cebitec.mgx.util.ForwardingIterator;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -306,37 +304,56 @@ public class GeneDAO extends DAO<Gene> {
         }
     }
 
+    private final static String SQL_FETCH = "SELECT g.start, g.stop, c.name, c.bin_id, b.assembly_id "
+            + "FROM gene g "
+            + "LEFT JOIN contig c ON (g.contig_id=c.id) "
+            + "LEFT JOIN bin b ON (c.bin_id=b.id) "
+            + "WHERE g.id=?";
+
     public Sequence getDNASequence(long gene_id) throws MGXException {
-        try {
-            Gene gene = getById(gene_id);
-            Contig contig = getController().getContigDAO().getById(gene.getContigId());
-            Bin bin = getController().getBinDAO().getById(contig.getBinId());
-            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
-            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-            String geneSeq;
-            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
-                ReferenceSequence seq;
-                if (gene.getStart() < gene.getStop()) {
-                    // htsjdk uses 1-based positions
-                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStart() + 1, gene.getStop() + 1);
-                    geneSeq = new String(seq.getBases());
-                } else {
-                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStop() + 1, gene.getStart() + 1);
-                    geneSeq = DNAUtils.reverseComplement(new String(seq.getBases()));
-                }
-                if (seq == null || seq.length() == 0) {
-                    throw new MGXException("No sequence found for contig " + contig.getName());
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
+                stmt.setLong(1, gene_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type Gene for ID " + gene_id + ".");
+                    }
+
+                    int start = rs.getInt(1);
+                    int stop = rs.getInt(2);
+                    String contigName = rs.getString(3);
+                    long bin_id = rs.getLong(4);
+                    long assembly_id = rs.getLong(5);
+
+                    File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(assembly_id));
+                    File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
+                    String geneSeq;
+                    try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                        ReferenceSequence seq;
+                        if (start < stop) {
+                            // htsjdk uses 1-based positions
+                            seq = ifsf.getSubsequenceAt(contigName, start + 1, stop + 1);
+                            geneSeq = new String(seq.getBases());
+                        } else {
+                            seq = ifsf.getSubsequenceAt(contigName, stop + 1, start + 1);
+                            geneSeq = DNAUtils.reverseComplement(new String(seq.getBases()));
+                        }
+                        if (seq == null || seq.length() == 0) {
+                            throw new MGXException("No sequence found for contig " + contigName);
+                        }
+                    }
+
+                    Sequence ret = new Sequence();
+                    ret.setId(gene_id);
+                    ret.setName(contigName + "_" + String.valueOf(gene_id));
+                    ret.setSequence(geneSeq);
+
+                    return ret;
+
                 }
             }
-
-            Sequence ret = new Sequence();
-            ret.setId(gene_id);
-            ret.setName(contig.getName() + "_" + String.valueOf(gene_id));
-            ret.setSequence(geneSeq);
-            
-            return ret;
-
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new MGXException(ex);
         }
     }
