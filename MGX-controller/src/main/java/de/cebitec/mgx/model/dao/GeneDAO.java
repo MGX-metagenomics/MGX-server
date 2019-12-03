@@ -14,6 +14,7 @@ import de.cebitec.mgx.util.ForwardingIterator;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -353,7 +354,7 @@ public class GeneDAO extends DAO<Gene> {
 
                 }
             }
-        } catch (Exception ex) {
+        } catch (SQLException | IOException ex) {
             throw new MGXException(ex);
         }
     }

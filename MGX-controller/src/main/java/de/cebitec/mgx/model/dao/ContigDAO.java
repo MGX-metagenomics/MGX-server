@@ -3,7 +3,6 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
-import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -238,32 +237,48 @@ public class ContigDAO extends DAO<Contig> {
         }
     }
 
+    private final static String SQL_FETCH = "SELECT c.name, c.bin_id, b.assembly_id "
+            + "FROM contig c "
+            + "LEFT JOIN bin b ON (c.bin_id=b.id) "
+            + "WHERE c.id=?";
+
     public Sequence getDNASequence(long contig_id) throws MGXException {
-        Contig contig = getById(contig_id);
-        Bin bin = getController().getBinDAO().getById(contig.getBinId());
-        String contigSeq;
-        try {
-            File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
-            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
-                ReferenceSequence seq = ifsf.getSequence(contig.getName());
 
-                if (seq == null || seq.length() == 0) {
-                    throw new MGXException("No sequence found for contig " + contig.getName());
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
+                stmt.setLong(1, contig_id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type Contig for ID " + contig_id + ".");
+                    }
+
+                    String contig_name = rs.getString(1);
+                    long bin_id = rs.getLong(2);
+                    long assembly_id = rs.getLong(3);
+                    String contigSeq;
+
+                    File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(assembly_id));
+                    File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
+                    try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                        ReferenceSequence seq = ifsf.getSequence(contig_name);
+
+                        if (seq == null || seq.length() == 0) {
+                            throw new MGXException("No sequence found for contig " + contig_name);
+                        }
+                        contigSeq = new String(seq.getBases());
+                    }
+
+                    Sequence ret = new Sequence();
+                    ret.setId(contig_id);
+                    ret.setName(contig_name);
+                    ret.setSequence(contigSeq);
+
+                    return ret;
                 }
-                contigSeq = new String(seq.getBases());
             }
-
-        } catch (IOException ex) {
+        } catch (SQLException | IOException ex) {
             throw new MGXException(ex);
         }
-
-        Sequence ret = new Sequence();
-        ret.setId(contig_id);
-        ret.setName(contig.getName());
-        ret.setSequence(contigSeq);
-
-        return ret;
     }
 
     public TaskI delete(long id) throws MGXException {
