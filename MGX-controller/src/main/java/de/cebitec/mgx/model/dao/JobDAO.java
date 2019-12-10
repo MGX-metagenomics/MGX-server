@@ -607,19 +607,34 @@ public class JobDAO extends DAO<Job> {
                     stmt.close();
                 }
 
-                // create assignment counts for attributes belonging to this job
+                // create assignment counts for read-based attributes belonging to this job
                 String sql = "INSERT INTO attributecount "
                         + "SELECT attribute.id, read.seqrun_id, count(attribute.id) FROM attribute "
                         + "LEFT JOIN observation ON (attribute.id = observation.attr_id) "
                         + "LEFT JOIN read ON (observation.seq_id=read.id) "
                         + "WHERE job_id=? GROUP BY attribute.id, read.seqrun_id ORDER BY attribute.id";
 
-                // FIXME - gene_observation
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
                     stmt.close();
                 }
+
+                 // create coverage-based counts for gene attributes
+                String sql2 = "INSERT INTO attributecount "
+                        + "SELECT attribute.id, gene_coverage.run_id, sum(gene_coverage.coverage) FROM attribute "
+                        + "LEFT JOIN gene_observation ON (attribute.id = gene_observation.attr_id) "
+                        + "LEFT JOIN gene ON (gene_observation.gene_id=gene.id) "
+                        + "LEFT JOIN gene_coverage ON (gene.id=gene_coverage.gene_id) "
+                        + "WHERE job_id=? AND gene_coverage.coverage > 0 "
+                        + "GROUP BY attribute.id, gene_coverage.run_id ORDER BY attribute.id";
+
+                try (PreparedStatement stmt = conn.prepareStatement(sql2)) {
+                    stmt.setLong(1, job.getId());
+                    stmt.execute();
+                    stmt.close();
+                }
+
                 conn.close();
             } catch (SQLException ex) {
                 throw new MGXException(ex);
