@@ -12,7 +12,6 @@ import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
-import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -73,7 +72,7 @@ public class JobDAO extends DAO<Job> {
                     for (int i = 0; i < temp.length; i++) {
                         temp[i] = obj.getSeqrunIds()[i];
                     }
-                    
+
                     Array array = conn.createArrayOf("BIGINT", temp);
                     stmt.setArray(3, array);
                     stmt.setNull(4, Types.BIGINT);
@@ -614,9 +613,8 @@ public class JobDAO extends DAO<Job> {
                         + "LEFT JOIN observation ON (attribute.id = observation.attr_id) "
                         + "LEFT JOIN read ON (observation.seq_id=read.id) "
                         + "WHERE job_id=? GROUP BY attribute.id, read.seqrun_id ORDER BY attribute.id";
-                
-                // FIXME - gene_observation
 
+                // FIXME - gene_observation
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
@@ -690,9 +688,6 @@ public class JobDAO extends DAO<Job> {
         }
         List<Job> ret = null;
 
-        SeqRun run = getController().getSeqRunDAO().getById(run_id);
-
-//        SeqRun seqrun = getController().getSeqRunDAO().getById(run_id);
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);

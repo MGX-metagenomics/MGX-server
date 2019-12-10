@@ -3,8 +3,6 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
-import de.cebitec.mgx.model.db.Assembly;
-import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
@@ -337,11 +335,45 @@ public class SeqRunDAO extends DAO<SeqRun> {
         }
     }
 
+    private final static String RUNS_BY_ASSEMBLY = "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
+            + "s.sequencing_technology, s.submitted_to_insdc, s.dnaextract_id, s.paired "
+            + "FROM seqrun s "
+            + "WHERE s.id=ANY("
+            + "(SELECT j.seqruns FROM assembly a LEFT JOIN job j ON (a.job_id=j.id) WHERE a.id=?)::BIGINT[])";
+
     public AutoCloseableIterator<SeqRun> byAssembly(final long asmId) throws MGXException {
-        // FIXME - 3 DB roundtrips
-        Assembly asm = getController().getAssemblyDAO().getById(asmId);
-        Job job = getController().getJobDAO().getById(asm.getAsmjobId());
-        return getController().getSeqRunDAO().getByIds(job.getSeqrunIds());
+
+        if (asmId <= 0) {
+            throw new MGXException("No/Invalid ID supplied.");
+        }
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(RUNS_BY_ASSEMBLY);
+            stmt.setLong(1, asmId);
+            ResultSet rs = stmt.executeQuery();
+
+            return new DBIterator<SeqRun>(rs, stmt, conn) {
+                @Override
+                public SeqRun convert(ResultSet rs) throws SQLException {
+                    SeqRun s = new SeqRun();
+                    s.setId(rs.getLong(1));
+                    s.setName(rs.getString(2));
+                    s.setAccession(rs.getString(3));
+                    s.setNumberOfSequences(rs.getLong(4));
+                    s.setSequencingMethod(rs.getLong(5));
+                    s.setSequencingTechnology(rs.getLong(6));
+                    s.setSubmittedToINSDC(rs.getBoolean(7));
+                    s.setExtractId(rs.getLong(8));
+                    s.setIsPaired(rs.getBoolean(9));
+                    return s;
+                }
+            };
+
+        } catch (SQLException ex) {
+            getController().log(ex);
+            throw new MGXException(ex);
+        }
     }
 
     private final static String UPDATE = "UPDATE seqrun SET name=?, database_accession=?, sequencing_method=?,  sequencing_technology=?, submitted_to_insdc=?, "
