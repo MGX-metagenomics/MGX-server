@@ -49,7 +49,7 @@ public final class DeleteSeqRun extends TaskI {
         // fetch jobs for this seqrun
         List<Long> jobs = null;
         try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id FROM job WHERE seqrun_id=?")) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT j.id FROM job j WHERE ?=ANY(j.seqruns)")) {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
