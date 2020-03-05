@@ -269,6 +269,26 @@ public class BinDAO extends DAO<Bin> {
         }
     }
 
+    public void indexFASTA(File binFasta) throws MGXException {
+        File dir = binFasta.getParentFile();
+        if (!dir.exists() && dir.canWrite()) {
+            Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, "Cannot write to directory {0}", dir.getAbsolutePath());
+            return;
+        }
+        try {
+            FastaSequenceIndexCreator.create(binFasta.toPath(), true);
+        } catch (IOException ex) {
+            Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, null, ex);
+            throw new MGXException(ex);
+        }
+        File indexFile = new File(binFasta.getAbsolutePath() + ".fai");
+
+        if (!indexFile.exists()) {
+            Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, "Index creation failed for {0}", binFasta.getAbsolutePath());
+            throw new MGXException("Index creation failed.");
+        }
+    }
+
     private void indexFASTA(long asm_id, long bin_id) throws MGXException {
         try {
             File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(asm_id));

@@ -354,6 +354,13 @@ public class ServiceBean {
             .build(new CacheLoader<File, IndexedFastaSequenceFile>() {
                 @Override
                 public IndexedFastaSequenceFile load(File k) throws Exception {
+                    if (!k.exists()) {
+                        throw new MGXServiceException("FASTA file missing: " + k.getAbsolutePath());
+                    }
+                    File idxFile = new File(k.getAbsolutePath() + ".fai");
+                    if (!idxFile.exists()) {
+                        throw new MGXServiceException("FASTA index file missing: " + idxFile.getAbsolutePath());
+                    }
                     return new IndexedFastaSequenceFile(k);
                 }
             });
@@ -387,12 +394,23 @@ public class ServiceBean {
                         File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
                         if (binFasta == null || !binFasta.equals(new File(assemblyDir, String.valueOf(bin.getId()) + ".fna"))) {
                             binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
+                            File idxFile = new File(binFasta.getAbsolutePath() + ".fai");
+                            if (!idxFile.exists()) {
+                                // recreate missing index file
+                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, "Creating missing FASTA index for {0}", binFasta.getAbsolutePath());
+                                mgx.getBinDAO().indexFASTA(binFasta);
+                            }
                             try {
                                 ifsf = cache.get(binFasta);
                             } catch (ExecutionException ex) {
-                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex);
+                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex.getCause());
                             }
                         }
+                    }
+
+                    if (ifsf == null) {
+                        Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, "Unable to read {0}", binFasta.getAbsolutePath());
+                        throw new MGXServiceException("Unable to read " + binFasta.getAbsolutePath());
                     }
 
                     String contigSeq;
