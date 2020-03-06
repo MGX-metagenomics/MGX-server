@@ -549,6 +549,25 @@ public class ServiceBean {
     }
 
     @GET
+    @Path("startJob")
+    @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response startJob(@HeaderParam("apiKey") String apiKey) {
+        //
+        // upon job start, update state and startdate
+        //
+        try {
+            Job job = mgx.getJobDAO().getByApiKey(apiKey);
+            job.setStatus(JobState.RUNNING);
+            mgx.getJobDAO().update(job);
+
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @GET
     @Path("finishJob")
     @Consumes("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
