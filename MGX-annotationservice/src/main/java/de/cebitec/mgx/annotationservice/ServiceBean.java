@@ -16,7 +16,6 @@ import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
-import de.cebitec.mgx.dto.dto.GeneAnnotationDTO;
 import de.cebitec.mgx.dto.dto.GeneAnnotationDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
@@ -327,7 +326,7 @@ public class ServiceBean {
             File binFasta = null;
             IndexedFastaSequenceFile ifsf = null;
 
-            try (AutoCloseableIterator<Contig> iter = mgx.getContigDAO().getByIds(ids)) {
+            try ( AutoCloseableIterator<Contig> iter = mgx.getContigDAO().getByIds(ids)) {
 
                 while (iter != null && iter.hasNext()) {
 
@@ -412,7 +411,7 @@ public class ServiceBean {
             if (!binFasta.exists()) {
                 UnixHelper.createFile(binFasta);
             }
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(binFasta, true))) {
+            try ( BufferedWriter bw = new BufferedWriter(new FileWriter(binFasta, true))) {
 
                 for (SequenceDTO seq : dto.getSeqList()) {
                     bw.write(">");
@@ -482,6 +481,21 @@ public class ServiceBean {
             mgx.getGeneDAO().createAnnotations(annots);
         } catch (MGXException ex) {
             LOG.log(Level.SEVERE, null, ex);
+            throw new MGXServiceException(ex.getMessage());
+        }
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("startJob")
+    @Consumes("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response startJob(@HeaderParam("apiKey") String apiKey) {
+        try {
+            Job job = mgx.getJobDAO().getByApiKey(apiKey);
+            job.setStatus(JobState.RUNNING);
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
             throw new MGXServiceException(ex.getMessage());
         }
         return Response.ok().build();
