@@ -194,7 +194,7 @@ public class AttributeBean {
     public MGXStringList find(SearchRequestDTO req) {
         AutoCloseableIterator<String> iter = null;
         try {
-            iter = mgx.getAttributeDAO().find(req.getTerm(), req.getSeqrunIdList());
+            iter = mgx.getAttributeDAO().find(req.getTerm(), req.getSeqrunId());
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
@@ -213,7 +213,7 @@ public class AttributeBean {
     public SequenceDTOList search(SearchRequestDTO req) {
         AutoCloseableIterator<Sequence> ret = null;
         try {
-            ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunIdList());
+            ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunId());
         } catch (MGXException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());

@@ -4,15 +4,12 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Gene;
-import de.cebitec.mgx.model.misc.BulkObservation;
 import de.cebitec.mgx.model.misc.GeneObservation;
-import de.cebitec.mgx.model.misc.SequenceObservation;
 import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 /**
  *

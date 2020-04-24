@@ -130,7 +130,6 @@ public class MappingDAO extends DAO<Mapping> {
         }
         List<Mapping> ret = null;
 
-//        final SeqRun sr = getController().getSeqRunDAO().getById(run_id);
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);
@@ -176,7 +175,6 @@ public class MappingDAO extends DAO<Mapping> {
         }
         List<Mapping> ret = null;
 
-//        final Reference ref = getController().getReferenceDAO().getById(ref_id);
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_REFERENCE)) {
                 stmt.setLong(1, ref_id);
@@ -222,7 +220,6 @@ public class MappingDAO extends DAO<Mapping> {
         }
         List<Mapping> ret = null;
 
-//        final Job job = getController().getJobDAO().getById(job_id);
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);
@@ -258,26 +255,8 @@ public class MappingDAO extends DAO<Mapping> {
     }
 
     public TaskI delete(long id, GPMSManagedDataSourceI ds, String projectName, String jobDir) throws MGXException {
-        
+
         return new DeleteMapping(id, ds, projectName, jobDir);
     }
-//        try (Connection conn = getConnection()) {
-//            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE id=? RETURNING bam_file")) {
-//                stmt.setLong(1, id);
-//
-//                try (ResultSet rs = stmt.executeQuery()) {
-//                    if (!rs.next()) {
-//                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
-//                    }
-//                    File bamFile = new File(rs.getString(1));
-//                    if (bamFile.exists()) {
-//                        bamFile.delete();
-//                    }
-//                }
-//            }
-//        } catch (SQLException ex) {
-//            getController().log(ex);
-//            throw new MGXException(ex);
-//        }
-//    }
+
 }

@@ -1,6 +1,7 @@
 package de.cebitec.mgx.gpms.impl;
 
 import de.cebitec.gpms.core.GPMSException;
+import de.cebitec.gpms.core.GPMSMessageI;
 import de.cebitec.gpms.core.MasterI;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.core.ProjectClassI;
@@ -9,6 +10,7 @@ import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.model.User;
 import de.cebitec.gpms.util.GPMSDataLoaderI;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Resource;
@@ -113,6 +115,11 @@ public class GPMS implements DBGPMSI {
         return loader.getService(projectName, roleName);
     }
 
+    @Override
+    public List<GPMSMessageI> getMessages() {
+        return loader.getMessages();
+    }
+    
     private void log(String msg) {
         logger.log(Level.INFO, msg);
     }

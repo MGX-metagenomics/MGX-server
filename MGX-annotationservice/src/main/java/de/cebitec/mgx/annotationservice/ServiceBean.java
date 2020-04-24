@@ -1,5 +1,10 @@
 package de.cebitec.mgx.annotationservice;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.annotationservice.exception.MGXServiceException;
 import de.cebitec.mgx.common.JobState;
@@ -12,6 +17,7 @@ import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
+import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.ContigDTO;
@@ -30,6 +36,7 @@ import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
+import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneAnnotationDTOFactory;
@@ -39,6 +46,7 @@ import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Attribute;
+import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Gene;
@@ -57,7 +65,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
@@ -226,12 +236,35 @@ public class ServiceBean {
     }
 
     @PUT
+    @Path("createAttributeType")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public MGXLong createAttributeType(AttributeTypeDTO dto) {
+        AttributeType attr = AttributeTypeDTOFactory.getInstance().toDB(dto);
+
+        try {
+            long id = mgx.getAttributeTypeDAO().create(attr);
+            return MGXLong.newBuilder().setValue(id).build();
+        } catch (MGXException ex) {
+            throw new MGXServiceException(ex.getMessage());
+        }
+    }
+
+    @PUT
     @Path("createAttribute")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong createAttribute(AttributeDTO dto) {
         Attribute attr = AttributeDTOFactory.getInstance().toDB(dto);
+        attr.setJobId(dto.getJobId());
+        attr.setAttributeTypeId(dto.getAttributeTypeId());
+
+        if (dto.getParentId() != 0) {
+            attr.setParentId(dto.getParentId());
+        }
+
         try {
             long id = mgx.getAttributeDAO().create(attr);
             return MGXLong.newBuilder().setValue(id).build();
@@ -306,6 +339,32 @@ public class ServiceBean {
         }
     }
 
+    private final static LoadingCache<File, IndexedFastaSequenceFile> cache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .removalListener(new RemovalListener<File, IndexedFastaSequenceFile>() {
+                @Override
+                public void onRemoval(RemovalNotification<File, IndexedFastaSequenceFile> rn) {
+                    try {
+                        rn.getValue().close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            })
+            .build(new CacheLoader<File, IndexedFastaSequenceFile>() {
+                @Override
+                public IndexedFastaSequenceFile load(File k) throws Exception {
+                    if (!k.exists()) {
+                        throw new MGXServiceException("FASTA file missing: " + k.getAbsolutePath());
+                    }
+                    File idxFile = new File(k.getAbsolutePath() + ".fai");
+                    if (!idxFile.exists()) {
+                        throw new MGXServiceException("FASTA index file missing: " + idxFile.getAbsolutePath());
+                    }
+                    return new IndexedFastaSequenceFile(k);
+                }
+            });
+
     @GET
     @Path("getSequence/{contig_ids}")
     @Consumes("application/x-protobuf")
@@ -313,7 +372,6 @@ public class ServiceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public SequenceDTOList getSequence(@PathParam("contig_ids") String contig_ids) {
         try {
-
             String[] splitted = contig_ids.split(",");
             long[] ids = new long[splitted.length];
             for (int i = 0; i < splitted.length; i++) {
@@ -322,7 +380,6 @@ public class ServiceBean {
 
             SequenceDTOList.Builder ret = SequenceDTOList.newBuilder();
             Bin bin = null;
-            File assemblyDir = null;
             File binFasta = null;
             IndexedFastaSequenceFile ifsf = null;
 
@@ -334,14 +391,26 @@ public class ServiceBean {
 
                     if (bin == null || bin.getId() != contig.getBinId()) {
                         bin = mgx.getBinDAO().getById(contig.getBinId());
-                        assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
+                        File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
                         if (binFasta == null || !binFasta.equals(new File(assemblyDir, String.valueOf(bin.getId()) + ".fna"))) {
                             binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-                            if (ifsf != null) {
-                                ifsf.close();
+                            File idxFile = new File(binFasta.getAbsolutePath() + ".fai");
+                            if (!idxFile.exists()) {
+                                // recreate missing index file
+                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, "Creating missing FASTA index for {0}", binFasta.getAbsolutePath());
+                                mgx.getBinDAO().indexFASTA(binFasta);
                             }
-                            ifsf = new IndexedFastaSequenceFile(binFasta);
+                            try {
+                                ifsf = cache.get(binFasta);
+                            } catch (ExecutionException ex) {
+                                Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, null, ex.getCause());
+                            }
                         }
+                    }
+
+                    if (ifsf == null) {
+                        Logger.getLogger(ServiceBean.class.getName()).log(Level.SEVERE, "Unable to read {0}", binFasta.getAbsolutePath());
+                        throw new MGXServiceException("Unable to read " + binFasta.getAbsolutePath());
                     }
 
                     String contigSeq;
@@ -358,10 +427,6 @@ public class ServiceBean {
                             .build());
                 }
 
-            }
-
-            if (ifsf != null) {
-                ifsf.close();
             }
 
             return ret.build();
@@ -394,7 +459,6 @@ public class ServiceBean {
     @PUT
     @Path("appendSequences/{binId}")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response appendSequences(@PathParam("binId") Long binId, SequenceDTOList dto) {
         try {
@@ -452,7 +516,6 @@ public class ServiceBean {
     @PUT
     @Path("createGeneCoverage")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response createGeneCoverage(@HeaderParam("apiKey") String apiKey, GeneCoverageDTOList dtoList) {
         try {
@@ -473,7 +536,6 @@ public class ServiceBean {
     @PUT
     @Path("createGeneObservations")
     @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response createGeneObservations(GeneAnnotationDTOList dtoList) {
         try {

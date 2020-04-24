@@ -22,9 +22,11 @@ public class Clustering {
 
     @EJB
     Rserve r;
+    @EJB
+    DataTransform transform;
     //
     private static final String[] AGGLO = new String[]{"ward", "single", "complete", "average", "mcquitty", "median", "centroid"};
-    private static final String[] DIST = new String[]{"euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"};
+    private static final String[] DIST = new String[]{"aitchison", "euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski"};
 
     public String cluster(Matrix m, String distMethod, String aggloMethod) throws MGXException {
         if (m.getRows().size() < 2) {
@@ -58,11 +60,20 @@ public class Clustering {
                 }
                 String varname = Util.generateSuffix("grp");
                 names.put(varname, nv.getName());
-                conn.assign(varname, nv.getData());
+
+                double[] data = nv.getData();
+                if (distMethod.equals("aitchison")) {
+                    data = transform.clr(nv.getData());
+                }
+                conn.assign(varname, data);
             }
 
             String matrixName = Util.generateSuffix("matr");
             conn.eval(matrixName + " <- rbind(" + StringUtils.join(names.keySet(), ",") + ")");
+
+            if (distMethod.equals("aitchison")) {
+                distMethod = "euclidean";
+            }
 
             String stmt = String.format("ctc::hc2Newick(hclust(dist(scale(%s),method=\"%s\"),method=\"%s\"))", matrixName, distMethod, aggloMethod);
             nwk = conn.eval(stmt).asString();
@@ -118,6 +129,5 @@ public class Clustering {
         return nwk;
     }
     private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
-
 
 }

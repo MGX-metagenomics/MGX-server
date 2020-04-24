@@ -9,8 +9,11 @@ import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
+import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Contig;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -108,6 +111,20 @@ public class ContigBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return ContigDTOFactory.getInstance().toDTOList(bins);
+    }
+
+    @GET
+    @Path("getDNASequence/{id}")
+    @Produces("application/x-protobuf")
+    public SequenceDTO getDNASequence(@PathParam("id") Long id) {
+        Sequence obj;
+        try {
+            obj = mgx.getContigDAO().getDNASequence(id);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return SequenceDTOFactory.getInstance().toDTO(obj);
+
     }
 
     @DELETE

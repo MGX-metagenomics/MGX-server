@@ -73,18 +73,6 @@ public class ToolBean {
         return MGXLong.newBuilder().setValue(id).build();
     }
 
-//    @GET
-//    @Path("byJob/{id}")
-//    @Produces("application/x-protobuf")
-//    public ToolDTO byJob(@PathParam("id") Long job_id) {
-//        Job job;
-//        try {
-//            job = mgx.getJobDAO().getById(job_id);
-//        } catch (MGXException ex) {
-//            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-//        }
-//        return ToolDTOFactory.getInstance().toDTO(job.getTool());
-//    }
     @GET
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
@@ -97,17 +85,10 @@ public class ToolBean {
         }
     }
 
-//    @GET
-//    @Path("getXML/{id}")
-//    @Produces("application/x-protobuf")
-//    @Deprecated
-//    public MGXString getXML(@PathParam("id") Long tool_id) {
-//        return getContent(tool_id);
-//    }
     @GET
-    @Path("getContent/{id}")
+    @Path("getDefinition/{id}")
     @Produces("application/x-protobuf")
-    public MGXString getContent(@PathParam("id") Long tool_id) {
+    public MGXString getDefinition(@PathParam("id") Long tool_id) {
         Tool obj = null;
         try {
             obj = mgx.getToolDAO().getById(tool_id);

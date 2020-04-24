@@ -5,6 +5,68 @@ suppressPackageStartupMessages(library('Biobase', warn.conflicts=F))
 library('amap', warn.conflicts=F)
 library('MASS', warn.conflicts=F)
 library('rtk', warn.conflicts=F)
+suppressPackageStartupMessages(library('compositions'))
+suppressPackageStartupMessages(library('coda.base'))
+
+
+#
+# additive zero replacement strategy according to aitchison, 1986
+#
+aitchisonAdditiveZeroReplacement <- function(vec) {
+  D <- length(vec)
+  Z <- sum(vec == 0)
+  d <- .Machine$double.eps
+
+  if (Z == 0) {
+    return(vec)
+  }
+
+  for (i in 1:(length(vec))) {
+    vec[i] <- ifelse(vec[i]==0, (d*(Z+1)*(D-Z))/D*D, vec[i]-((d*(Z+1)*Z)/D*D))
+  }
+  return(vec)
+}
+
+#aitchisonMultiplicativeZeroReplacement <- function(vec) {
+#  D <- length(vec)
+#  Z <- sum(vec == 0)
+#  c <- sum(vec)
+#  d <- .Machine$double.eps
+
+#  if (Z == 0) {
+#    return(vec)
+#  }
+
+#  ret <- vector(mode="numeric", length=D)
+#  for (i in 1:(length(vec))) {
+#    ret[i] <- ifelse(vec[i]==0, d, vec[i]*(1-(/c)))
+#  }
+#  return(ret)
+#}
+
+#
+# equal to coda.base::dist, but keeps rownames intact
+#
+aitchisonDist <- function (x, method = "euclidean", ...)
+{
+    METHODS <- c("aitchison", "euclidean", "maximum", "manhattan",
+        "canberra", "binary", "minkowski")
+    imethod <- pmatch(method, METHODS)
+    .coda = FALSE
+    if (!is.na(imethod) & imethod == 1) {
+        .coda = TRUE
+        y = coordinates(x)
+        rownames(y) <- rownames(x)
+        x <- y
+        method = "euclidean"
+    }
+    adist = stats::dist(x, method = method, ...)
+    if (.coda) {
+        attr(adist, "method") = "aitchison"
+    }
+    adist
+}
+
 
 getAngle <-function(x1, y1, x2, y2) {
         x <- x2 - x1;

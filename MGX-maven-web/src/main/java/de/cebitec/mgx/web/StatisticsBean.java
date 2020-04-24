@@ -1,6 +1,8 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.dto.dto.MGXDouble;
+import de.cebitec.mgx.dto.dto.MGXDoubleList;
 import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -10,6 +12,8 @@ import de.cebitec.mgx.dtoadapter.MatrixDTOFactory;
 import de.cebitec.mgx.dtoadapter.PCAResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.PointDTOFactory;
 import de.cebitec.mgx.statistics.Clustering;
+import de.cebitec.mgx.statistics.DataTransform;
+import de.cebitec.mgx.statistics.Distance;
 import de.cebitec.mgx.statistics.NMDS;
 import de.cebitec.mgx.statistics.PCA;
 import de.cebitec.mgx.statistics.RarefactionRTK;
@@ -45,6 +49,10 @@ public class StatisticsBean {
     PCA pca;
     @EJB
     NMDS nmds;
+    @EJB
+    DataTransform transform;
+    @EJB
+    Distance distance;
 
     @PUT
     @Path("Rarefaction")
@@ -129,5 +137,60 @@ public class StatisticsBean {
             throw new MGXWebException(ex.getMessage());
         }
         return PointDTOFactory.getInstance().toDTOList(ret);
+    }
+
+    @PUT
+    @Path("toCLR")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public MGXDoubleList toCLR(MGXDoubleList dto) {
+        double[] in = new double[dto.getValueCount()];
+        for (int i = 0; i < dto.getValueCount(); i++) {
+            in[i] = dto.getValue(i);
+        }
+        double[] clr;
+        try {
+            clr = transform.clr(in);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        MGXDoubleList.Builder b = MGXDoubleList.newBuilder();
+        for (double d : clr) {
+            b = b.addValue(d);
+        }
+        return b.build();
+    }
+
+    @PUT
+    @Path("aitchisonDistance")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public MGXDouble aitchisonDistance(MGXMatrixDTO dto) {
+        if (2 != dto.getRowCount()) {
+            throw new MGXWebException("Invalid number of rows in matrix.");
+        }
+
+        MGXDoubleList row1 = dto.getRow(0).getValues();
+        MGXDoubleList row2 = dto.getRow(1).getValues();
+
+        if (row1.getValueCount() != row2.getValueCount()) {
+            throw new MGXWebException("Rows are required to have equal lengths.");
+        }
+
+        double[] r1 = new double[row1.getValueCount()];
+        double[] r2 = new double[row2.getValueCount()];
+        for (int i = 0; i < r1.length; i++) {
+            r1[i] = row1.getValue(i);
+            r2[i] = row2.getValue(i);
+        }
+
+        double aiDist;
+        try {
+            aiDist = distance.aitchisonDistance(r1, r2);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+
+        return MGXDouble.newBuilder().setValue(aiDist).build();
     }
 }

@@ -110,6 +110,22 @@ public class AssemblyDAO extends DAO<Assembly> {
                 subtasks.add(del);
             }
         }
+
+        try {
+            final File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(id));
+            if (assemblyDir.exists()) {
+                TaskI delAssemblyDir = new TaskI("Deleting assembly directory", getController().getDataSource()) {
+                    @Override
+                    public void process() throws Exception {
+
+                        assemblyDir.delete();
+                    }
+                };
+                subtasks.add(delAssemblyDir);
+            }
+        } catch (IOException ex) {
+            throw new MGXException(ex);
+        }
         return new DeleteAssembly(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
     }
 

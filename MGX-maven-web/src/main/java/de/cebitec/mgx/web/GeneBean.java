@@ -5,7 +5,6 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dnautils.DNAUtils;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.GeneByAttributeDownloadProvider;
@@ -18,16 +17,13 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
-import de.cebitec.mgx.model.db.Bin;
-import de.cebitec.mgx.model.db.Contig;
+import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Gene;
+import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
-import htsjdk.samtools.reference.IndexedFastaSequenceFile;
-import htsjdk.samtools.reference.ReferenceSequence;
-import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -146,36 +142,13 @@ public class GeneBean {
     @Path("getDNASequence/{id}")
     @Produces("application/x-protobuf")
     public SequenceDTO getDNASequence(@PathParam("id") Long id) {
+        Sequence obj;
         try {
-            Gene gene = mgx.getGeneDAO().getById(id);
-            Contig contig = mgx.getContigDAO().getById(gene.getContigId());
-            Bin bin = mgx.getBinDAO().getById(contig.getBinId());
-            File assemblyDir = new File(mgx.getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
-            File binFasta = new File(assemblyDir, String.valueOf(bin.getId()) + ".fna");
-            String geneSeq;
-            try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
-                ReferenceSequence seq;
-                if (gene.getStart() < gene.getStop()) {
-                    // htsjdk uses 1-based positions
-                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStart() + 1, gene.getStop() + 1);
-                    geneSeq = new String(seq.getBases());
-                } else {
-                    seq = ifsf.getSubsequenceAt(contig.getName(), gene.getStop() + 1, gene.getStart() + 1);
-                    geneSeq = DNAUtils.reverseComplement(new String(seq.getBases()));
-                }
-                if (seq == null || seq.length() == 0) {
-                    throw new MGXWebException("No sequence found for contig " + contig.getName());
-                }
-            }
-            return SequenceDTO.newBuilder()
-                    .setId(id)
-                    .setName(contig.getName() + "_" + String.valueOf(id))
-                    .setSequence(geneSeq)
-                    .build();
-
-        } catch (MGXException | IOException ex) {
+            obj = mgx.getGeneDAO().getDNASequence(id);
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
+        return SequenceDTOFactory.getInstance().toDTO(obj);
     }
 
     @DELETE

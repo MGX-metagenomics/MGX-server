@@ -1,14 +1,12 @@
 package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.common.JobState;
-import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Sequence;
-import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -357,30 +355,29 @@ public class AttributeDAO extends DAO<Attribute> {
         return new ForwardingIterator<>(attrs.iterator());
     }
 
-    private final static String SQL_FIND = "SELECT attr.id, value, attrtype_id, job_id, parent_id FROM attribute attr "
+    private final static String SQL_FIND = "SELECT value FROM attribute attr "
             + "LEFT JOIN job ON (attr.job_id = job.id) "
-            + "WHERE job.seqrun_id = ANY(?) AND job.job_state=? "
+            + "WHERE ?=ANY(job.seqruns) AND job.job_state=5 "
             + "AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')";
 
-    public DBIterator<String> find(String term, List<Long> seqrunIdList) throws MGXException {
-        if (term.isEmpty() || seqrunIdList.isEmpty()) {
+    public DBIterator<String> find(String term, long runId) throws MGXException {
+        if (term.isEmpty()) {
             throw new MGXException("Empty search term or empty run list.");
         }
         DBIterator<String> iter = null;
 
         try {
-            Connection conn = getController().getConnection();
+            Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(SQL_FIND);
-            stmt.setArray(1, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
-            stmt.setInt(2, JobState.FINISHED.getValue());
-            stmt.setString(3, term);
+            stmt.setLong(1, runId);
+            stmt.setString(2, term);
             ResultSet rset = stmt.executeQuery();
             final ResultSet rs = rset;
 
             iter = new DBIterator<String>(rs, stmt, conn) {
                 @Override
                 public String convert(ResultSet rs) throws SQLException {
-                    return rs.getString(2);
+                    return rs.getString(1);
                 }
             };
         } catch (SQLException ex) {
@@ -390,18 +387,31 @@ public class AttributeDAO extends DAO<Attribute> {
         return iter;
     }
 
-    public DBIterator<Sequence> search(String term, boolean exact, List<Long> seqrunIdList) throws MGXException {
-        DBIterator<Sequence> iter = null;
+    private final static String SQL_SEARCH = "WITH matching_attrs AS ( "
+            + "SELECT attr.id FROM attribute attr "
+            + "LEFT JOIN job ON (attr.job_id = job.id) "
+            + "WHERE ?=ANY(job.seqruns) AND job.job_state=5 "
+            + "AND (? AND upper(attr.value) = upper(?) "
+            + "OR NOT (?) AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')) "
+            + ")"
+            + "SELECT DISTINCT read.id AS read_id, read.name AS read_name, read.length as read_length "
+            + "FROM read "
+            + "JOIN observation obs ON (read.id = obs.seq_id) "
+            + "JOIN matching_attrs ON (obs.attr_id = matching_attrs.id)";
 
+    public DBIterator<Sequence> search(String term, boolean exact, long runId) throws MGXException {
         try {
-            Connection conn = getController().getConnection();
-            PreparedStatement stmt = conn.prepareStatement("SELECT * FROM searchTerm(?,?,?)");
-            stmt.setString(1, term);
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(SQL_SEARCH);
+            stmt.setLong(1, runId);
             stmt.setBoolean(2, exact);
-            stmt.setArray(3, conn.createArrayOf("numeric", seqrunIdList.toArray(new Long[seqrunIdList.size()])));
+            stmt.setString(3, term);
+            stmt.setBoolean(4, exact);
+            stmt.setString(5, term);
+
             ResultSet rset = stmt.executeQuery();
 
-            iter = new DBIterator<Sequence>(rset, stmt, conn) {
+            return new DBIterator<Sequence>(rset, stmt, conn) {
                 @Override
                 public Sequence convert(ResultSet rs) throws SQLException {
                     Sequence s = new Sequence();
@@ -414,7 +424,6 @@ public class AttributeDAO extends DAO<Attribute> {
         } catch (SQLException ex) {
             throw new MGXException(ex.getMessage());
         }
-        return iter;
     }
 
 }

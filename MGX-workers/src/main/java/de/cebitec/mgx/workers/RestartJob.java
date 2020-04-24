@@ -46,6 +46,13 @@ public class RestartJob extends TaskI {
                 }
             }
 
+            try (Connection conn = getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene_observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.executeUpdate();
+                }
+            }
+
             // delete attributecounts
             setStatus(TaskI.State.PROCESSING, "Deleting attributes");
             try (Connection conn = getConnection()) {
