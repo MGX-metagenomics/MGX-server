@@ -1,11 +1,11 @@
 package de.cebitec.mgx.dtoadapter;
 
-import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.JobDTO.Builder;
 import de.cebitec.mgx.dto.dto.JobDTOList;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.model.db.JobState;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import java.util.logging.Level;
