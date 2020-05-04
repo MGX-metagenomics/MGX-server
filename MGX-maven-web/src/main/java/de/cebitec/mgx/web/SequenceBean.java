@@ -165,6 +165,9 @@ public class SequenceBean {
             throw new MGXWebException(ex.getMessage());
         }
 
+        // submit for async background prefetch
+        executor.execute(provider);
+
         UUID uuid = downSessions.registerDownloadSession(provider);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
@@ -208,6 +211,9 @@ public class SequenceBean {
             throw new MGXWebException(ex.getMessage());
         }
 
+        // submit for async background prefetch
+        executor.execute(provider);
+
         UUID uuid = downSessions.registerDownloadSession(provider);
         return MGXString.newBuilder().setValue(uuid.toString()).build();
     }
@@ -241,9 +247,9 @@ public class SequenceBean {
         try {
             DownloadProviderI<SequenceDTOList> session = downSessions.getSession(session_id);
             SequenceDTOList ret = session.fetch();
-            if (session instanceof Runnable) {
+            if (ret.getComplete() == false) {
                 // submit for async background prefetch
-                executor.execute((Runnable) session); 
+                executor.execute((Runnable) session);
             }
             return ret;
         } catch (MGXException ex) {

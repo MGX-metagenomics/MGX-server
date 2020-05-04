@@ -41,8 +41,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
 
-    protected State state = State.OK;
-    protected MGXException exception = null;
+    protected volatile MGXException exception = null;
     protected final Lock lock = new ReentrantLock();
     protected volatile SequenceDTOList nextChunk = null;
 
@@ -99,7 +98,13 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void run() {
-        lock.lock();
+        if (exception != null) {
+            return;
+        }
+
+        if (!lock.tryLock()) {
+            return;
+        }
 
         if (nextChunk == null) {
 
@@ -122,12 +127,12 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                     // additional check
                     for (DNASequenceI seq : xferList) {
                         if (seq.getName() == null) {
-                            state = State.ERROR;
-                            throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                            exception = new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                            lock.unlock();
+                            return;
                         }
                     }
                 }
-
 
                 //
                 // convert to DTO
@@ -147,9 +152,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                 listBuilder.setComplete(!reader.hasMoreElements());
                 nextChunk = listBuilder.build();
 
-            } catch (MGXException | SeqStoreException ex) {
-                exception = (MGXException) (ex instanceof MGXException ? ex : new MGXException(ex));
-                state = State.ERROR;
+            } catch (SQLException | SeqStoreException ex) {
+                exception = new MGXException(ex);
             }
         }
 
@@ -160,17 +164,23 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     @Override
     public SequenceDTOList fetch() throws MGXException {
 
-        if (state != State.OK) {
+        if (exception != null) {
             throw exception;
         }
 
-        lock.lock();
         if (nextChunk == null) {
+            // no data yet, return empty chunk
+            SequenceDTOList.Builder listBuilder = SequenceDTOList.newBuilder();
+            listBuilder.setComplete(false);
+            lastAccessed = System.currentTimeMillis();
+            return listBuilder.build();
             // if run() did not run and produce a new chunk, we synchronously
             // invoke it to obtain the data; race conditions avoided via the
             // lock
-            run();
+            //run();
         }
+        
+        lock.lock();
         SequenceDTOList ret = nextChunk;
         nextChunk = null;
         lock.unlock();
@@ -190,7 +200,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         return lastAccessed;
     }
 
-    private void getSequenceNames(List<DNASequenceI> seqs) throws MGXException {
+    private void getSequenceNames(List<DNASequenceI> seqs) throws SQLException {
         //
         // sort by id, ascending
         //
@@ -218,9 +228,6 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                     }
                 }
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXException(ex);
         }
 
     }
