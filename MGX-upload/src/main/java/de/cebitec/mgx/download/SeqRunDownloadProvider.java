@@ -21,6 +21,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.TransactionAttribute;
@@ -39,6 +41,15 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
 
+    protected volatile MGXException exception = null;
+    protected final Lock lock = new ReentrantLock();
+    protected volatile SequenceDTOList nextChunk = null;
+
+    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws MGXException {
+        this(dataSource, projName, dbFile);
+        maxSeqsPerChunk = chunkSize;
+    }
+
     public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile) throws MGXException {
         this.projectName = projName;
         this.dataSource = dataSource;
@@ -48,7 +59,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         } catch (SeqStoreException ex) {
             throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
         }
-        
+
         this.dataSource.subscribe(this);
 
         lastAccessed = System.currentTimeMillis();
@@ -60,6 +71,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     @Override
     public void cancel() {
+        dataSource.close(this);
         try {
             if (reader != null) {
                 reader.close();
@@ -85,55 +97,97 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     }
 
     @Override
-    public SequenceDTOList fetch() throws MGXException {
-        int count = 0;
-        try {
+    public void run() {
+
+        if (exception != null) {
+            return;
+        }
+
+        if (!lock.tryLock()) {
+            return;
+        }
+
+        if (nextChunk == null) {
+
+            List<DNASequenceI> xferList = new LinkedList<>();
             //
             // fetch sequences
             //
-            List<DNASequenceI> seqs = new LinkedList<>();
-            while (count < maxSeqsPerChunk && reader.hasMoreElements()) {
-                DNASequenceI seq = reader.nextElement();
-                seqs.add(seq);
-                count++;
-            }
+            try {
+                while (xferList.size() < maxSeqsPerChunk && reader.hasMoreElements()) {
+                    DNASequenceI seq = reader.nextElement();
+                    xferList.add(seq);
+                }
 
-            //
-            // get names from database
-            //
-            if (!seqs.isEmpty()) {
-                getSequenceNames(seqs);
+                //
+                // get names from database
+                //
+                if (!xferList.isEmpty()) {
+                    getSequenceNames(xferList);
 
-                // additional check
-                for (DNASequenceI seq : seqs) {
-                    if (seq.getName() == null) {
-                        throw new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                    // additional check
+                    for (DNASequenceI seq : xferList) {
+                        if (seq.getName() == null) {
+                            exception = new MGXException("No name for read id " + seq.getId() + " in project " + projectName);
+                            lock.unlock();
+                            return;
+                        }
                     }
                 }
-            }
-            //
-            // convert to DTO
-            //
-            Builder listBuilder = SequenceDTOList.newBuilder();
-            for (DNASequenceI seq : seqs) {
-                SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
-                        .setId(seq.getId())
-                        .setNameBytes(ByteString.copyFrom(seq.getName()))
-                        .setSequenceBytes(ByteString.copyFrom(seq.getSequence()));
 
-                if (seq instanceof DNAQualitySequenceI) {
-                    dtob.setQuality(ByteString.copyFrom(((DNAQualitySequenceI) seq).getQuality()));
+                //
+                // convert to DTO
+                //
+                Builder listBuilder = SequenceDTOList.newBuilder();
+                for (DNASequenceI seq : xferList) {
+                    SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
+                            .setId(seq.getId())
+                            .setNameBytes(ByteString.copyFrom(seq.getName()))
+                            .setSequenceBytes(ByteString.copyFrom(seq.getSequence()));
+
+                    if (seq instanceof DNAQualitySequenceI) {
+                        dtob.setQuality(ByteString.copyFrom(((DNAQualitySequenceI) seq).getQuality()));
+                    }
+                    listBuilder.addSeq(dtob.build());
                 }
-                listBuilder.addSeq(dtob.build());
-            }
-            lastAccessed = System.currentTimeMillis();
-            listBuilder.setComplete(!reader.hasMoreElements());
-            return listBuilder.build();
+                listBuilder.setComplete(!reader.hasMoreElements());
+                nextChunk = listBuilder.build();
 
-        } catch (SeqStoreException ex) {
-            throw new MGXException(ex);
+            } catch (SQLException | SeqStoreException ex) {
+                exception = new MGXException(ex);
+            }
         }
 
+        lock.unlock();
+
+    }
+
+    @Override
+    public SequenceDTOList fetch() throws MGXException {
+
+        if (exception != null) {
+            throw exception;
+        }
+
+        if (nextChunk == null) {
+            // no data yet, return empty chunk
+            SequenceDTOList.Builder listBuilder = SequenceDTOList.newBuilder();
+            listBuilder.setComplete(false);
+            lastAccessed = System.currentTimeMillis();
+            return listBuilder.build();
+            // if run() did not run and produce a new chunk, we synchronously
+            // invoke it to obtain the data; race conditions avoided via the
+            // lock
+            //run();
+        }
+        
+        lock.lock();
+        SequenceDTOList ret = nextChunk;
+        nextChunk = null;
+        lock.unlock();
+
+        lastAccessed = System.currentTimeMillis();
+        return ret;
     }
 
     @Override
@@ -147,7 +201,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         return lastAccessed;
     }
 
-    private void getSequenceNames(List<DNASequenceI> seqs) throws MGXException {
+    private void getSequenceNames(List<DNASequenceI> seqs) throws SQLException {
         //
         // sort by id, ascending
         //
@@ -158,9 +212,9 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             }
 
         });
-        
-        try (Connection conn = dataSource.getConnection(this)) {
-            try (PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
+
+        try ( Connection conn = dataSource.getConnection(this)) {
+            try ( PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
                 int idx = 1;
                 for (DNASequenceI seq : seqs) {
                     stmt.setLong(idx++, seq.getId());
@@ -168,30 +222,25 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
                 Iterator<DNASequenceI> seqIter = seqs.iterator();
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next() && seqIter.hasNext()) {
-                        long seqId = rs.getLong(1);
                         DNASequenceI seq = seqIter.next();
-                        
-                        //assert seqId == seq.getId();
-                        seq.setName(rs.getString(2).getBytes());
+                        seq.setName(rs.getString(1).getBytes());
                     }
                 }
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXException(ex);
         }
 
     }
 
     private static String buildSQL(int numElements) {
         assert numElements > 0;
-        StringBuilder sb = new StringBuilder("SELECT id, name FROM read WHERE id IN (?");
+        StringBuilder sb = new StringBuilder("SELECT name FROM read WHERE id IN (?");
         for (int i = 1; i < numElements; i++) {
             sb.append(",?");
         }
         sb.append(") ORDER BY id ASC");
         return sb.toString();
     }
+
 }

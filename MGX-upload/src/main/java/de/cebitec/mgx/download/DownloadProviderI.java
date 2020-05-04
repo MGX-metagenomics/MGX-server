@@ -7,7 +7,7 @@ import de.cebitec.mgx.core.MGXException;
  * @author sjaenick
  * @param <T>
  */
-public interface DownloadProviderI<T> {
+public interface DownloadProviderI<T> extends Runnable {
 
     public void cancel();
 

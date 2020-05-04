@@ -80,6 +80,10 @@ public class FileDownloadProvider implements DownloadProviderI<byte[]> {
     }
 
     @Override
+    public void run() {
+    }
+
+    @Override
     public String getProjectName() {
         return projectName;
     }
