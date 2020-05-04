@@ -43,8 +43,7 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
     private String currentContigSeq = null;
     private IndexedFastaSequenceFile ifsf = null;
     //
-    protected State state = State.OK;
-    protected MGXException exception = null;
+    protected volatile MGXException exception = null;
     protected final Lock lock = new ReentrantLock();
     protected volatile SequenceDTOList nextChunk = null;
 
@@ -60,7 +59,7 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
     @Override
     public SequenceDTOList fetch() throws MGXException {
 
-        if (state != State.OK) {
+        if (exception != null) {
             throw exception;
         }
 
@@ -151,7 +150,6 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
                 }
             } catch (IOException | SQLException ex) {
                 exception = new MGXException(ex);
-                state = State.ERROR;
             }
             have_more_data = count == maxSeqsPerChunk;
 
