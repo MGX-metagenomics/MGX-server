@@ -40,6 +40,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     protected SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
+    protected final static int BASE_PAIR_LIMIT = 2_000_000;
 
     protected volatile MGXException exception = null;
     protected final Lock lock = new ReentrantLock();
@@ -109,12 +110,14 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         if (nextChunk == null) {
 
             List<DNASequenceI> xferList = new LinkedList<>();
+            int current_bp = 0;
             //
             // fetch sequences
             //
             try {
-                while (xferList.size() < maxSeqsPerChunk && reader.hasMoreElements()) {
+                while (reader.hasMoreElements() && xferList.size() < maxSeqsPerChunk && current_bp < BASE_PAIR_LIMIT) {
                     DNASequenceI seq = reader.nextElement();
+                    current_bp += seq.getSequence().length;
                     xferList.add(seq);
                 }
 
@@ -179,7 +182,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
             // lock
             //run();
         }
-        
+
         lock.lock();
         SequenceDTOList ret = nextChunk;
         nextChunk = null;
