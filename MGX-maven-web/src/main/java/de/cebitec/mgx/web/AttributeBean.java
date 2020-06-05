@@ -145,6 +145,13 @@ public class AttributeBean {
 
         Map<Attribute, Long> dist;
         try {
+            
+            // validate attribute type strucure
+            AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
+            if (attrType.getStructure() != AttributeType.STRUCTURE_HIERARCHICAL) {
+                throw new MGXException("Attribute type "+ attrType.getName()+ " is not an hierarchical attribute type.");
+            }
+            
             Job job = mgx.getJobDAO().getById(jobId);
             if (job == null || job.getStatus() != JobState.FINISHED) {
                 throw new MGXWebException("Non-existing job or job in invalid state");
