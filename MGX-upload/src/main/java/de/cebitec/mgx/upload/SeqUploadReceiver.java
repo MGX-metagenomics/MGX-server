@@ -79,6 +79,10 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         //
         try {
             for (SequenceDTO s : seqs.getSeqList()) {
+                if (s.getName().length() > 255) {
+                    throw new MGXException("Sequence name too long, max 255 characters supported.");
+                }
+                
                 DNASequenceI d;
                 if (!s.getQuality().isEmpty()) {
                     QualityDNASequence qd = new QualityDNASequence();
@@ -89,6 +93,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 }
                 d.setName(s.getName().getBytes());
                 d.setSequence(s.getSequence().getBytes());
+                
                 queue.put((T) d);
                 total_num_sequences++;
             }
