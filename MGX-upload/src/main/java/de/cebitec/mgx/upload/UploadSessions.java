@@ -3,6 +3,7 @@ package de.cebitec.mgx.upload;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.core.MGXException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -28,11 +29,11 @@ public class UploadSessions {
     @EJB
     MGXConfigurationI mgxconfig;
     private Map<UUID, UploadReceiverI> sessions = null;
-    private final int uploadTimeout = 60; // seconds
+    private int uploadTimeout = 60; // seconds
 
     @PostConstruct
     public void start() {
-        sessions = new HashMap<>();
+        sessions = new ConcurrentHashMap<>();
     }
 
     @PreDestroy
