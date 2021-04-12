@@ -5,9 +5,11 @@ import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.seqcompression.FourBitEncoder;
+import de.cebitec.mgx.seqcompression.QualityEncoder;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import java.sql.Connection;
@@ -117,17 +119,18 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
 
             try {
                 for (DNASequenceI seq : reader.fetch(ids)) {
+                    byte[] encodedDNA = seq.getSequence();
                     SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
                             .setId(seq.getId())
                             .setName(readnames.remove(seq.getId()))
-                            .setSequence(new String(seq.getSequence()));
+                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(encodedDNA)));
                     if (seq instanceof DNAQualitySequenceI) {
                         DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
-                        dtob.setQuality(ByteString.copyFrom(qseq.getQuality()));
+                        dtob.setQuality(ByteString.copyFrom(QualityEncoder.decode(qseq.getQuality(), (int) FourBitEncoder.decodeLength(encodedDNA))));
                     }
                     listBuilder.addSeq(dtob.build());
                 }
-            } catch (SeqStoreException ex) {
+            } catch (SequenceException ex) {
                 exception = new MGXException(ex);
                 lock.unlock();
                 return;

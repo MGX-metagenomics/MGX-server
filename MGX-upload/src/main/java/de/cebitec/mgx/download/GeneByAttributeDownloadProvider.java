@@ -1,11 +1,13 @@
 package de.cebitec.mgx.download;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.gpms.util.GPMSManagedConnectionI;
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dnautils.DNAUtils;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.seqcompression.FourBitEncoder;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import java.io.File;
@@ -142,7 +144,7 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
                     SequenceDTO seqdto = SequenceDTO.newBuilder()
                             .setId(geneId)
                             .setName(contigName + "_" + String.valueOf(geneId))
-                            .setSequence(geneSeq)
+                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(geneSeq.getBytes())))
                             .build();
                     listBuilder.addSeq(seqdto);
 

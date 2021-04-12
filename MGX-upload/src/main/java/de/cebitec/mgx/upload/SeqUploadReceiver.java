@@ -9,8 +9,8 @@ import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.CSQFWriter;
-import de.cebitec.mgx.seqstorage.DNASequence;
-import de.cebitec.mgx.seqstorage.QualityDNASequence;
+import de.cebitec.mgx.seqstorage.EncodedDNASequence;
+import de.cebitec.mgx.seqstorage.EncodedQualityDNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -82,22 +82,23 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 if (s.getName().length() > 255) {
                     throw new MGXException("Sequence name too long, max 255 characters supported.");
                 }
-                
-                DNASequenceI d;
+
                 if (!s.getQuality().isEmpty()) {
-                    QualityDNASequence qd = new QualityDNASequence();
-                    qd.setQuality(s.getQuality().toByteArray());
-                    d = qd;
+                    EncodedQualityDNASequence qd = new EncodedQualityDNASequence();
+                    qd.setName(s.getName().getBytes());
+                    qd.setEncodedSequence(s.getSequence().toByteArray());
+                    qd.setEncodedQuality(s.getQuality().toByteArray());
+                    queue.put((T)qd);
                 } else {
-                    d = new DNASequence();
+                    EncodedDNASequence eds = new EncodedDNASequence();
+                    eds.setName(s.getName().getBytes());
+                    eds.setEncodedSequence(s.getSequence().toByteArray());
+                    queue.put((T)eds);
                 }
-                d.setName(s.getName().getBytes());
-                d.setSequence(s.getSequence().getBytes());
-                
-                queue.put((T) d);
+
                 total_num_sequences++;
             }
-        } catch (SeqStoreException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
@@ -111,7 +112,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         try {
             // commit pending data
             flush.complete();
-            
+
             String sql = "UPDATE seqrun SET num_sequences=? WHERE id=?";
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {

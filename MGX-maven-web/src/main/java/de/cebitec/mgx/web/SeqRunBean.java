@@ -32,6 +32,7 @@ import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.QCResultI;
 import de.cebitec.mgx.qc.io.Loader;
 import de.cebitec.mgx.qc.io.Persister;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
@@ -298,7 +299,7 @@ public class SeqRunBean {
                                 } else {
                                     Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{analyzer.getName(), run.getName(), analyzer.getNumberOfSequences()});
                                 }
-                            } catch (SeqStoreException ex) {
+                            } catch (SequenceException ex) {
                                 Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
                             }
                         }

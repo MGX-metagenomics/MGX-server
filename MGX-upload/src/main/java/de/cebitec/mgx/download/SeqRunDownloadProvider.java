@@ -7,6 +7,9 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
+import de.cebitec.mgx.seqcompression.FourBitEncoder;
+import de.cebitec.mgx.seqcompression.QualityEncoder;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
@@ -145,17 +148,18 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
                     SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
                             .setId(seq.getId())
                             .setNameBytes(ByteString.copyFrom(seq.getName()))
-                            .setSequenceBytes(ByteString.copyFrom(seq.getSequence()));
+                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(seq.getSequence())));
 
                     if (seq instanceof DNAQualitySequenceI) {
-                        dtob.setQuality(ByteString.copyFrom(((DNAQualitySequenceI) seq).getQuality()));
+                        DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
+                        dtob.setQuality(ByteString.copyFrom(QualityEncoder.encode(qseq.getQuality())));
                     }
                     listBuilder.addSeq(dtob.build());
                 }
                 listBuilder.setComplete(!reader.hasMoreElements());
                 nextChunk = listBuilder.build();
 
-            } catch (SQLException | SeqStoreException ex) {
+            } catch (SQLException | SequenceException ex) {
                 exception = new MGXException(ex);
             }
         }

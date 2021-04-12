@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.protobuf.ByteString;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.annotationservice.exception.MGXServiceException;
 import de.cebitec.mgx.common.JobState;
@@ -53,6 +54,7 @@ import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
+import de.cebitec.mgx.seqcompression.FourBitEncoder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
@@ -423,7 +425,7 @@ public class ServiceBean {
                     ret.addSeq(SequenceDTO.newBuilder()
                             .setId(contig.getId())
                             .setName(contig.getName())
-                            .setSequence(contigSeq)
+                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(contigSeq.getBytes())))
                             .build());
                 }
 
@@ -481,7 +483,7 @@ public class ServiceBean {
                     bw.write(">");
                     bw.write(seq.getName());
                     bw.newLine();
-                    bw.write(seq.getSequence());
+                    bw.write(new String(FourBitEncoder.decode(seq.getSequence().toByteArray())));
                     bw.newLine();
                 }
 

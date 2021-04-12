@@ -1,10 +1,12 @@
 package de.cebitec.mgx.dtoadapter;
 
+import com.google.protobuf.ByteString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dto.dto.SequenceDTOList.Builder;
 import de.cebitec.mgx.model.db.Identifiable;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.seqcompression.FourBitEncoder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.LimitingIterator;
 import java.util.UUID;
@@ -38,7 +40,7 @@ public class SequenceDTOFactory extends DTOConversionBase<Sequence, SequenceDTO,
             b.setLength(a.getLength());
         }
         if (a.getSequence() != null) {
-            b.setSequence(a.getSequence());
+            b.setSequence(ByteString.copyFrom(FourBitEncoder.encode(a.getSequence().getBytes())));
         }
         return b.build();
     }
@@ -54,7 +56,7 @@ public class SequenceDTOFactory extends DTOConversionBase<Sequence, SequenceDTO,
             s.setLength(dto.getLength());
         }
         if (!dto.getSequence().isEmpty()) {
-            s.setSequence(dto.getSequence());
+            s.setSequence(new String(FourBitEncoder.decode(dto.getSequence().toByteArray())));
         }
 
         return s;
