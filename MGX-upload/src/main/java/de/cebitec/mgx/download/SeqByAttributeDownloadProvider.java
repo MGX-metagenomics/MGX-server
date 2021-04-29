@@ -119,14 +119,14 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
 
             try {
                 for (DNASequenceI seq : reader.fetch(ids)) {
-                    byte[] encodedDNA = seq.getSequence();
+                    byte[] decodedDNA = seq.getSequence();
                     SequenceDTO.Builder dtob = SequenceDTO.newBuilder()
                             .setId(seq.getId())
                             .setName(readnames.remove(seq.getId()))
-                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(encodedDNA)));
+                            .setSequence(ByteString.copyFrom(FourBitEncoder.encode(decodedDNA)));
                     if (seq instanceof DNAQualitySequenceI) {
                         DNAQualitySequenceI qseq = (DNAQualitySequenceI) seq;
-                        dtob.setQuality(ByteString.copyFrom(QualityEncoder.decode(qseq.getQuality(), (int) FourBitEncoder.decodeLength(encodedDNA))));
+                        dtob.setQuality(ByteString.copyFrom(QualityEncoder.encode(qseq.getQuality())));
                     }
                     listBuilder.addSeq(dtob.build());
                 }
