@@ -37,8 +37,8 @@ public class AttributeDAO extends DAO<Attribute> {
 
     @Override
     public long create(Attribute obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getValue());
                 stmt.setLong(2, obj.getAttributeTypeId());
                 stmt.setLong(3, obj.getJobId());
@@ -48,7 +48,7 @@ public class AttributeDAO extends DAO<Attribute> {
                     stmt.setNull(4, java.sql.Types.BIGINT);
                 }
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -62,8 +62,8 @@ public class AttributeDAO extends DAO<Attribute> {
     }
 
     public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE id=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE id=?")) {
                 stmt.setLong(1, id);
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
@@ -81,11 +81,11 @@ public class AttributeDAO extends DAO<Attribute> {
 
     @Override
     public Attribute getById(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
                         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
                     }
@@ -118,14 +118,14 @@ public class AttributeDAO extends DAO<Attribute> {
         String BY_IDS = "SELECT attr.id, attr.value, attr.attrtype_id, attr.parent_id, attr.job_id FROM attribute attr "
                 + "WHERE id IN (" + toSQLTemplateString(ids.length) + ")";
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
                 int idx = 1;
                 for (Long id : ids) {
                     stmt.setLong(idx++, id);
                 }
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Attribute attr = new Attribute();
                         attr.setId(rs.getLong(1));
@@ -161,15 +161,54 @@ public class AttributeDAO extends DAO<Attribute> {
 
 //        AttributeType attrType = getController().getAttributeTypeDAO().getById(attrTypeId);
 //        Job job = getController().getJobDAO().getById(jobId);
+        // attribute, parent id, count
+        List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
+
+        try ( Connection conn = getController().getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?)")) {
+                stmt.setLong(1, attrTypeId);
+                stmt.setLong(2, jobId);
+                try ( ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Attribute attr = new Attribute();
+                        attr.setAttributeTypeId(attrTypeId);
+                        attr.setJobId(jobId);
+                        //
+                        attr.setId(rs.getLong(1));
+                        attr.setValue(rs.getString(2));
+
+                        Long count = rs.getLong(3);
+                        // 
+                        // read the parent attributes id, if present
+                        Long parentId = rs.getLong(4);
+                        if (parentId == 0) {
+                            parentId = -1L;
+                        }
+
+                        ret.add(new Triple<>(attr, parentId, count));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            getController().log(ex.getMessage());
+            throw new MGXException(ex.getMessage());
+        }
+
+        return ret;
+
+    }
+
+    public List<Triple<Attribute, Long, Long>> getFilteredDistribution(long filterAttrId, long attrTypeId, long jobId) throws MGXException {
 
         // attribute, parent id, count
         List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
 
-        try (Connection conn = getController().getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getDistribution(?,?)")) {
+        try ( Connection conn = getController().getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getFilteredDistribution(?,?,?)")) {
                 stmt.setLong(1, attrTypeId);
                 stmt.setLong(2, jobId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                stmt.setLong(3, filterAttrId);
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Attribute attr = new Attribute();
                         attr.setAttributeTypeId(attrTypeId);
@@ -205,11 +244,11 @@ public class AttributeDAO extends DAO<Attribute> {
         TLongObjectMap<Attribute> attrByID = new TLongObjectHashMap<>();
         TLongLongMap attr2parent = new TLongLongHashMap();
 
-        try (Connection conn = getController().getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?)")) {
+        try ( Connection conn = getController().getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getHierarchy(?,?)")) {
                 stmt.setLong(1, attrTypeId);
                 stmt.setLong(2, job_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         //  attrtype_id | attrtype_name | atype_structure | attrtype_valtype | attr_id | attr_value | parent_id | count
 //                        AttributeType aType;
@@ -259,13 +298,13 @@ public class AttributeDAO extends DAO<Attribute> {
 
         Map<Pair<Attribute, Attribute>, Integer> ret = new HashMap<>();
 
-        try (Connection conn = getController().getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getCorrelation(?,?,?,?)")) {
+        try ( Connection conn = getController().getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT * FROM getCorrelation(?,?,?,?)")) {
                 stmt.setLong(1, job1Id);
                 stmt.setLong(2, attrTypeId);
                 stmt.setLong(3, job2id);
                 stmt.setLong(4, attrType2Id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Attribute attr = new Attribute();
                         attr.setAttributeTypeId(attrTypeId);
@@ -301,10 +340,9 @@ public class AttributeDAO extends DAO<Attribute> {
     public AutoCloseableIterator<Attribute> byJob(long jobId) throws MGXException {
 
 //        Job job = getController().getJobDAO().getById(jobId);
-
         // pre-collect attribute types
         final TLongObjectMap<AttributeType> attrTypes = new TLongObjectHashMap<>();
-        try (DBIterator<AttributeType> aTypes = getController().getAttributeTypeDAO().byJob(jobId)) {
+        try ( DBIterator<AttributeType> aTypes = getController().getAttributeTypeDAO().byJob(jobId)) {
             while (aTypes.hasNext()) {
                 AttributeType attrType = aTypes.next();
                 attrTypes.put(attrType.getId(), attrType);
@@ -313,11 +351,11 @@ public class AttributeDAO extends DAO<Attribute> {
 
         List<Attribute> attrs = new ArrayList<>();
 
-        try (Connection conn = getController().getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BYJOB)) {
+        try ( Connection conn = getController().getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BYJOB)) {
                 stmt.setLong(1, jobId);
                 stmt.setInt(2, JobState.FINISHED.getValue());
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
                         Attribute attr = new Attribute();
@@ -353,10 +391,10 @@ public class AttributeDAO extends DAO<Attribute> {
 
         List<Attribute> attrs = new ArrayList<>();
 
-        try (AutoCloseableIterator<Job> jobIter = getController().getJobDAO().bySeqRun(runId)) {
+        try ( AutoCloseableIterator<Job> jobIter = getController().getJobDAO().bySeqRun(runId)) {
             while (jobIter.hasNext()) {
                 Job job = jobIter.next();
-                try (AutoCloseableIterator<Attribute> attrIter = getController().getAttributeDAO().byJob(job.getId())) {
+                try ( AutoCloseableIterator<Attribute> attrIter = getController().getAttributeDAO().byJob(job.getId())) {
                     while (attrIter.hasNext()) {
                         attrs.add(attrIter.next());
                     }

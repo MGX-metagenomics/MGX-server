@@ -6,7 +6,10 @@
 package de.cebitec.mgx.upload;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
+import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.qc.Analyzer;
+import de.cebitec.mgx.seqstorage.DNASequence;
+import de.cebitec.mgx.seqstorage.QualityDNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
@@ -30,7 +33,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
 
     private volatile boolean mayTerminate = false;
     private final long seqrunId;
-    private final BlockingQueue<T> in;
+    private final BlockingQueue<SequenceDTO> in;
     private final GPMSManagedDataSourceI dataSource;
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
@@ -42,29 +45,45 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final CountDownLatch allDone = new CountDownLatch(1);
     //
 
-    public SeqFlusher(long seqrunId, BlockingQueue<T> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers) {
+    public SeqFlusher(long seqrunId, BlockingQueue<SequenceDTO> in, GPMSManagedDataSourceI dataSource, SeqWriterI<T> writer, Analyzer<T>[] analyzers) {
         this.seqrunId = seqrunId;
         this.in = in;
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
-        this.bulkSize = 5_000;
+        this.bulkSize = 25_000;
 
         dataSource.subscribe(this);
     }
 
     @Override
     public void run() {
-        T seq = null;
-        while (!(mayTerminate && in.isEmpty())) {
-            try {
+        SequenceDTO seq = null;
+        try {
+            while (!(mayTerminate && in.isEmpty())) {
                 seq = in.poll(500, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+
+                if (seq != null) {
+
+                    // convert DTO
+                    T d;
+                    if (seq.hasQuality()) {
+                        QualityDNASequence qd = new QualityDNASequence();
+                        qd.setQuality(seq.getQuality().toByteArray());
+                        d = (T) qd;
+                    } else {
+                        d = (T) new DNASequence();
+                    }
+                    d.setName(seq.getName().getBytes());
+                    d.setSequence(seq.getSequence().getBytes());
+
+                    // process
+                    process(d);
+                }
             }
-            if (seq != null) {
-                process(seq);
-            }
+        } catch (SeqStoreException | InterruptedException ex) {
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex;
         }
 
         // flush remainder
@@ -78,8 +97,6 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             error = ex;
         }
-
-        
 
         assert holder.isEmpty();
         allDone.countDown();

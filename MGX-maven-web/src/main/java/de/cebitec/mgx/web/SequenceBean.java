@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -60,6 +62,18 @@ public class SequenceBean {
     DownloadSessions downSessions;
     @EJB
     Executor executor;
+    
+    @GET
+    @Path("sleep/{duration}")
+    @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
+    public Response sleep(@PathParam("duration") Long duration) {
+        try {
+            Thread.sleep(duration);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(SequenceBean.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return Response.ok().build();
+    }
 
     /*
      * 

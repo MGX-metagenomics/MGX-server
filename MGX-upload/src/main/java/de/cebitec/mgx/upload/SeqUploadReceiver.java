@@ -9,8 +9,6 @@ import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.io.Persister;
 import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.CSQFWriter;
-import de.cebitec.mgx.seqstorage.DNASequence;
-import de.cebitec.mgx.seqstorage.QualityDNASequence;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
@@ -45,7 +43,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     protected long lastAccessed;
     protected final Analyzer<T>[] qcAnalyzers;
     //
-    private final BlockingQueue<T> queue = new LinkedBlockingQueue<>(100_000);
+    private final BlockingQueue<SequenceDTO> queue = new LinkedBlockingQueue<>(100_000);
     private final SeqFlusher<T> flush;
 
     @SuppressWarnings("unchecked")
@@ -82,22 +80,11 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 if (s.getName().length() > 255) {
                     throw new MGXException("Sequence name too long, max 255 characters supported.");
                 }
-                
-                DNASequenceI d;
-                if (s.hasQuality()) {
-                    QualityDNASequence qd = new QualityDNASequence();
-                    qd.setQuality(s.getQuality().toByteArray());
-                    d = qd;
-                } else {
-                    d = new DNASequence();
-                }
-                d.setName(s.getName().getBytes());
-                d.setSequence(s.getSequence().getBytes());
-                
-                queue.put((T) d);
+                System.err.println("SeqUpload queue size: " + queue.size());
+                queue.put(s);
                 total_num_sequences++;
             }
-        } catch (SeqStoreException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
@@ -149,20 +136,11 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
 
-            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 10000))";
-            int rowsAffected;
-            //
-            // delete in chunks to make sure the DB connections gets returned
-            // to the pool in a timely manner
-            //
-            do {
-                try (Connection conn = dataSource.getConnection(this)) {
-                    try (PreparedStatement stmt = conn.prepareStatement(delReads)) {
-                        stmt.setLong(1, runId);
-                        rowsAffected = stmt.executeUpdate();
-                    }
+            try (Connection conn = dataSource.getConnection(this)) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
+                    stmt.setLong(1, runId);
                 }
-            } while (rowsAffected == 10_000);
+            }
 
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
