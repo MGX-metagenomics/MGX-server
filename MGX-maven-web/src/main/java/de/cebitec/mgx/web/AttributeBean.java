@@ -131,12 +131,21 @@ public class AttributeBean {
 
         List<Triple<Attribute, Long, Long>> dist;
         try {
-            Job job = mgx.getJobDAO().getById(jobId, false);
-            if (job == null || job.getStatus() != JobState.FINISHED) {
-                throw new MGXWebException("Non-existing job or job in invalid state");
-            }
-
             dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId, runId);
+            return convert(dist);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+    }
+
+    @GET
+    @Path("getFilteredDistribution/{filterAttrId}/{attrTypeId}/{jobId}")
+    @Produces("application/x-protobuf")
+    public AttributeDistribution getFilteredDistribution(@PathParam("filterAttrId") Long filterAttrId, @PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
+
+        List<Triple<Attribute, Long, Long>> dist;
+        try {
+            dist = mgx.getAttributeDAO().getFilteredDistribution(filterAttrId, attrTypeId, jobId);
             return convert(dist);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -157,10 +166,12 @@ public class AttributeBean {
                 throw new MGXException("Attribute type " + attrType.getName() + " is not an hierarchical attribute type.");
             }
 
+            // TODO: check job state in sql query and remove this 
             Job job = mgx.getJobDAO().getById(jobId);
             if (job == null || job.getStatus() != JobState.FINISHED) {
                 throw new MGXWebException("Non-existing job or job in invalid state");
             }
+
             dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, jobId, runId);
             return convert(dist);
         } catch (MGXException ex) {
@@ -298,22 +309,25 @@ public class AttributeBean {
 
         AttributeDistribution.Builder b = AttributeDistribution.newBuilder();
 
-        for (Triple<Attribute, Long, Long> t : dist) {
-            Attribute attr = t.getFirst();
-            Long parentId = t.getSecond();
-            Long count = t.getThird();
+        if (!dist.isEmpty()) {
 
-            AttributeDTO attrDTO = AttributeDTOFactory.getInstance().toDTO(attr, parentId);
-            AttributeCount attrcnt = AttributeCount.newBuilder().setAttribute(attrDTO).setCount(count).build();
+            for (Triple<Attribute, Long, Long> t : dist) {
+                Attribute attr = t.getFirst();
+                Long parentId = t.getSecond();
+                Long count = t.getThird();
 
-            aTypes.add(attr.getAttributeTypeId());
+                AttributeDTO attrDTO = AttributeDTOFactory.getInstance().toDTO(attr, parentId);
+                AttributeCount attrcnt = AttributeCount.newBuilder().setAttribute(attrDTO).setCount(count).build();
 
-            b.addAttributeCounts(attrcnt);
-        }
+                aTypes.add(attr.getAttributeTypeId());
 
-        AutoCloseableIterator<AttributeType> iter = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
-        while (iter != null && iter.hasNext()) {
-            b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+                b.addAttributeCounts(attrcnt);
+            }
+
+            AutoCloseableIterator<AttributeType> iter = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
+            while (iter != null && iter.hasNext()) {
+                b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+            }
         }
 
         return b.build();
