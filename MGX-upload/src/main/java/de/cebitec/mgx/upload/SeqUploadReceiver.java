@@ -138,6 +138,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
                     stmt.setLong(1, runId);
+                    stmt.executeUpdate();
                 }
             }
 
