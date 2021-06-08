@@ -38,7 +38,14 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
     private volatile Exception error = null;
-    private final int bulkSize;
+    //
+    //
+    // there's a built-in limitation in the number of bind parameters
+    // in the postgresql jdbc driver/wire protocol at 32767 which must
+    // not be exceeded; with three bound parameters per read, limit
+    // this to 10k
+    //
+    private final static int bulkSize = 10_000;
     //
     private final List<T> holder = new ArrayList<>();
     //
@@ -51,8 +58,6 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
-        this.bulkSize = 25_000;
-
         dataSource.subscribe(this);
     }
 
