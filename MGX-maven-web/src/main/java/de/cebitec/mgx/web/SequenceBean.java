@@ -62,7 +62,7 @@ public class SequenceBean {
     DownloadSessions downSessions;
     @EJB
     Executor executor;
-    
+
     @GET
     @Path("sleep/{duration}")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
@@ -92,7 +92,7 @@ public class SequenceBean {
             SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
 
             mgx.log("Creating upload session for sequencing run \"" + run.getName() + "\".");
-            
+
             SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
                     mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
                     hasQual);
@@ -172,7 +172,8 @@ public class SequenceBean {
         try {
             // make sure requested run exists
             SeqRun seqrun = mgx.getSeqRunDAO().getById(seqrun_id);
-            mgx.log("Creating download session for run ID " + seqrun_id);
+            
+            mgx.log("Creating download session for run \"" + seqrun.getName() + "\".");
             provider = new SeqRunDownloadProvider(mgx.getDataSource(), mgx.getProjectName(), seqrun.getDBFile());
         } catch (MGXException ex) {
             mgx.log(ex.getMessage());
