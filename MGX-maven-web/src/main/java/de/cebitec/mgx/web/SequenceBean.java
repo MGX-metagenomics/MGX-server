@@ -89,9 +89,10 @@ public class SequenceBean {
         UUID uuid = null;
         try {
             // check seqrun exists before creating upload session
-            mgx.getSeqRunDAO().getById(seqrun_id);
+            SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
 
-            mgx.log("Creating upload session for " + mgx.getProjectName());
+            mgx.log("Creating upload session for sequencing run \"" + run.getName() + "\".");
+            
             SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
                     mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
                     hasQual);
