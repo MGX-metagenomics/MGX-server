@@ -39,6 +39,8 @@ public class UploadSessions {
 
     @PreDestroy
     public void stop() {
+        Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Undeploying MGX, aborting all pending upload sessions..");
+
         for (UUID uuid : sessions.keySet()) {
             UploadReceiverI ur = sessions.remove(uuid);
             ur.cancel();
@@ -94,7 +96,7 @@ public class UploadSessions {
                 recv.cancel();
             }
         }
-        
+
         if (toRemove != null) {
             for (UUID uuid : toRemove) {
                 sessions.remove(uuid);
