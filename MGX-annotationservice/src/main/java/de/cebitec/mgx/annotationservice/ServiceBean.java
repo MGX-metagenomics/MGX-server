@@ -421,6 +421,8 @@ public class ServiceBean {
                     if (seq == null || seq.length() == 0) {
                         throw new MGXServiceException("No sequence found for contig " + contig.getName());
                     }
+
+                    // TODO: unneeded string creation here? check this
                     contigSeq = new String(seq.getBases());
                     ret.addSeq(SequenceDTO.newBuilder()
                             .setId(contig.getId())
