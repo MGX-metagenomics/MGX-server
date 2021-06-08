@@ -45,6 +45,9 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     //
     private final BlockingQueue<SequenceDTO> queue = new LinkedBlockingQueue<>(100_000);
     private final SeqFlusher<T> flush;
+    //
+    private static final Logger LOG = Logger.getLogger(SeqUploadReceiver.class.getName());
+    
 
     @SuppressWarnings("unchecked")
     public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality) throws MGXException {
@@ -130,7 +133,9 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
 
     @Override
     public void cancel() {
-        System.err.println("Upload cancelled after " + total_num_sequences + " sequences, queue size " + queue.size());
+        
+        LOG.log(Level.INFO, "Upload cancelled after " + total_num_sequences + " sequences.");
+        
         try {
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
@@ -149,7 +154,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 }
             }
         } catch (Exception ex) {
-            Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
 
         if (dataSource != null) {
