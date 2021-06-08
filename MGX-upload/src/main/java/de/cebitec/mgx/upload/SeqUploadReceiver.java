@@ -80,7 +80,6 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 if (s.getName().length() > 255) {
                     throw new MGXException("Sequence name too long, max 255 characters supported.");
                 }
-                System.err.println("SeqUpload queue size: " + queue.size());
                 queue.put(s);
                 total_num_sequences++;
             }
