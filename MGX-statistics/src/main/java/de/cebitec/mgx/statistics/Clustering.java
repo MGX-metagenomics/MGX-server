@@ -131,15 +131,15 @@ public class Clustering {
     }
     
     
-    public String newickToSVG(String newick) {
+    public String newickToSVG(String newick) throws MGXException {
         String svgString ="";
         RWrappedConnection conn = r.getR();
         if (conn == null) {
             throw new MGXException("Could not connect to Rserve.");
         }
-        try{
+        try {
             svgString = conn.eval("create_nwk_tree("+newick+")").asString();
-        }catch(REngineException | REXPMismatchException ex){
+        } catch (REngineException | REXPMismatchException ex){
             throw new MGXException("Computing clustering failed: " + ex.getMessage());
         } finally {
             conn.close();
