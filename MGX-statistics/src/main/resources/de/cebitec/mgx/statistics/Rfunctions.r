@@ -7,7 +7,10 @@ library('MASS', warn.conflicts=F)
 library('rtk', warn.conflicts=F)
 suppressPackageStartupMessages(library('compositions'))
 suppressPackageStartupMessages(library('coda.base'))
-
+library("tidyverse", warn.conflict=F)
+library("ggtree", warn.conflict=F)
+library("ape", warn.conflict=F)
+library("svglite", warn.conflict=F)
 
 #
 # additive zero replacement strategy according to aitchison, 1986
@@ -160,3 +163,24 @@ rarefaction<-function(x, subsample=2, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   ret
 }
 
+create_nwk_tree <- function(nwk_string){
+nwk_tree <- read.tree(text = nwk_string)
+pl <- ggtree(nwk_tree,
+       branch.length = "none",
+       size = 0.35) + geom_rootedge(rootedge = 1, size = 0.25) + geom_tiplab(
+         aes(label = nwk_tree),
+         as_ylab = TRUE,
+         size = 10,
+         color   = "black",
+         offset = 2,
+         align = T,
+         linetype = NA,
+         hjust = 0.5
+       );
+s <- svgstring()
+plot(pl)
+t <- s()
+dev.off()
+pdf(NULL)
+return(t)
+}

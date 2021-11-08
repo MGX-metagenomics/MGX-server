@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
 
@@ -128,6 +129,25 @@ public class Clustering {
 
         return nwk;
     }
+    
+    
+    public String newickToSVG(String newick) {
+        String svgString ="";
+        RWrappedConnection conn = r.getR();
+        if (conn == null) {
+            throw new MGXException("Could not connect to Rserve.");
+        }
+        try{
+            svgString = conn.eval("create_nwk_tree("+newick+")").asString();
+        }catch(REngineException | REXPMismatchException ex){
+            throw new MGXException("Computing clustering failed: " + ex.getMessage());
+        } finally {
+            conn.close();
+        }
+        return svgString;
+    }
+    
+    
     private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
 
 }

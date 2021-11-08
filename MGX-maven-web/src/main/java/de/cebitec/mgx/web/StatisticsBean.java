@@ -87,6 +87,22 @@ public class StatisticsBean {
         }
         return MGXString.newBuilder().setValue(ret).build();
     }
+    
+    @PUT
+    @Path("NewickToSVG")
+    @Consumes("application/x-protobuf")
+    @Produces("application/x-protobuf")
+    public MGXString newickToSVG(MGXString dto) {
+
+        String ret;
+        
+        try {
+            ret = clust.newickToSVG(dto.getValue());
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        return MGXString.newBuilder().setValue(ret).build();
+    }
 
     @PUT
     @Path("PCA/{pc1}/{pc2}")
