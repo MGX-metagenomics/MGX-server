@@ -11,7 +11,6 @@ public class Sequence extends Identifiable {
     protected String name;
     //protected long seqrun;
     protected int len = -1;
-    protected boolean discard = false;
     protected String sequence;
 
     public String getName() {

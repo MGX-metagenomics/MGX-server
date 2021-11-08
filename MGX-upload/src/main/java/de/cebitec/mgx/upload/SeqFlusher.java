@@ -7,8 +7,8 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.qc.Analyzer;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNASequenceI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,8 +35,15 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
     private final SeqWriterI<T> writer;
     private final Analyzer<T>[] analyzers;
     private volatile Exception error = null;
-    private final int bulkSize;
     private final boolean isPaired;
+    //
+    //
+    // there's a built-in limitation in the number of bind parameters
+    // in the postgresql jdbc driver/wire protocol at 32767 which must
+    // not be exceeded; with three bound parameters per read, limit
+    // this to 10k
+    //
+    private final static int bulkSize = 10_000;
     //
     private final List<T> holder = new ArrayList<>();
     //
@@ -49,57 +56,56 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         this.dataSource = dataSource;
         this.writer = writer;
         this.analyzers = analyzers;
-        this.bulkSize = 5_000;
         this.isPaired = isPaired;
-
         dataSource.subscribe(this);
     }
 
     @Override
     public void run() {
 
-        if (isPaired) {
-            T seq1 = null;
-            T seq2 = null;
-            while (!(mayTerminate && in.isEmpty())) {
+        try {
 
-                while (seq1 == null || seq2 == null) {
+            if (isPaired) {
+                T seq1 = null;
+                T seq2 = null;
+                while (!(mayTerminate && in.isEmpty())) {
+
+                    while (seq1 == null || seq2 == null) {
+                        try {
+                            if (seq1 == null) {
+                                seq1 = in.poll(500, TimeUnit.MILLISECONDS);
+                            }
+                            if (seq2 == null) {
+                                seq2 = in.poll(500, TimeUnit.MILLISECONDS);
+                            }
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    processPair(seq1, seq2);
+                    seq1 = null;
+                    seq2 = null;
+                }
+            } else {
+                T seq = null;
+                while (!(mayTerminate && in.isEmpty())) {
                     try {
-                        if (seq1 == null) {
-                            seq1 = in.poll(500, TimeUnit.MILLISECONDS);
-                        }
-                        if (seq2 == null) {
-                            seq2 = in.poll(500, TimeUnit.MILLISECONDS);
-                        }
+                        seq = in.poll(500, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException ex) {
                         Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-
-                processPair(seq1, seq2);
-                seq1 = null;
-                seq2 = null;
-            }
-        } else {
-            T seq = null;
-            while (!(mayTerminate && in.isEmpty())) {
-                try {
-                    seq = in.poll(500, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                if (seq != null) {
-                    processSingle(seq);
+                    if (seq != null) {
+                        processSingle(seq);
+                    }
                 }
             }
-        }
 
-        // flush remainder
-        if (!holder.isEmpty()) {
-            flushChunk();
-        }
+            // flush remainder
+            if (!holder.isEmpty()) {
+                flushChunk();
+            }
 
-        try {
             writer.close();
         } catch (Exception ex) {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
@@ -110,7 +116,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         allDone.countDown();
     }
 
-    private void processSingle(T seq) {
+    private void processSingle(T seq) throws SequenceException {
         for (Analyzer<T> a : analyzers) {
             a.add(seq);
         }
@@ -122,7 +128,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         }
     }
 
-    private void processPair(T seq1, T seq2) {
+    private void processPair(T seq1, T seq2) throws SequenceException {
         for (Analyzer<T> a : analyzers) {
             a.addPair(seq1, seq2);
         }
@@ -160,8 +166,8 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         int curPos = 0;
         long[] generatedIDs = new long[commitList.size()];
 
-        try (Connection conn = dataSource.getConnection(this)) {
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try ( Connection conn = dataSource.getConnection(this)) {
+            try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
                 int i = 1;
                 for (DNASequenceI s : commitList) {
                     stmt.setLong(i, seqrunId);
@@ -170,13 +176,13 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                     i += 3;
                 }
 
-                try (ResultSet res = stmt.executeQuery()) {
+                try ( ResultSet res = stmt.executeQuery()) {
                     while (res.next()) {
                         generatedIDs[curPos++] = res.getLong(1);
                     }
                 }
             }
-        } catch (SQLException ex) {
+        } catch (SequenceException | SQLException ex) {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, "Failed statement was: {0}", sql);
             error = ex;
@@ -193,7 +199,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                 seq.setId(generatedIDs[curPos++]);
                 writer.addSequence(seq);
             }
-        } catch (SeqStoreException ex) {
+        } catch (SequenceException ex) {
             error = ex;
         }
     }

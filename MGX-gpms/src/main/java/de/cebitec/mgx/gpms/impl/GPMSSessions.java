@@ -67,7 +67,10 @@ public class GPMSSessions {
         //
         // see GPMS#createMaster
         //
-        if (sessionsCache.getIfPresent(m) != null) {
+        MasterI oldMaster = sessionsCache.getIfPresent(m);
+        if (oldMaster != null) {
+            log("Replacing old master object.");
+            oldMaster.close();
             sessionsCache.invalidate(m);
         }
         sessionsCache.put(m, master);

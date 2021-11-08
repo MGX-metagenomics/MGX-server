@@ -3,13 +3,12 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqReaderI;
-import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -84,7 +83,7 @@ public class SequenceDAO extends DAO<Sequence> {
             getController().log(ex);
             throw new MGXException(ex);
         }
-        
+
         String dbFile = null;
         try {
             dbFile = getController().getSeqRunDAO().getDBFile(seqrun_id).getAbsolutePath();
@@ -109,8 +108,10 @@ public class SequenceDAO extends DAO<Sequence> {
                 String seqString = new String(seqdata).toUpperCase();
                 seq.setSequence(seqString);
                 seq.setLength(seqString.length());
+            } else {
+                throw new MGXException("No sequence data found for ID " + id);
             }
-        } catch (SeqStoreException ex) {
+        } catch (SequenceException ex) {
             getController().log(ex);
             throw new MGXException(ex);
         }
@@ -154,11 +155,11 @@ public class SequenceDAO extends DAO<Sequence> {
     }
 
     public Sequence byName(long runId, String seqName) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, length FROM read WHERE seqrun_id=? AND name=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, length FROM read WHERE seqrun_id=? AND name=?")) {
                 stmt.setLong(1, runId);
                 stmt.setString(2, seqName);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Sequence seq = new Sequence();
                         seq.setId(rs.getLong(1));
@@ -177,15 +178,31 @@ public class SequenceDAO extends DAO<Sequence> {
 
     public AutoCloseableIterator<Long> getSeqIDs(long attrId) throws MGXException {
         try {
+            long duration = System.currentTimeMillis();
             Connection conn = getConnection();
+            duration = System.currentTimeMillis() - duration;
+            if (duration > 1000) {
+                getController().log("slow getConnection(), " + duration + "ms.");
+            }
+
+            duration = System.currentTimeMillis();
+
             PreparedStatement stmt = conn.prepareStatement("SELECT seq_id FROM observation WHERE attr_id=?");
+            stmt.setFetchSize(50_000);
             stmt.setLong(1, attrId);
             ResultSet rs = stmt.executeQuery();
+
+            duration = System.currentTimeMillis() - duration;
+            if (duration > 1000) {
+                getController().log("slow query for attribute id " + attrId + ", " + duration + "ms.");
+            }
+
             return new DBIterator<Long>(rs, stmt, conn) {
                 @Override
                 public Long convert(ResultSet rs) throws SQLException {
                     return rs.getLong(1);
                 }
+
             };
         } catch (SQLException ex) {
             getController().log(ex);

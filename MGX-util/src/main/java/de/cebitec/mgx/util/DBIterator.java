@@ -16,6 +16,7 @@ public abstract class DBIterator<T> implements AutoCloseableIterator<T> {
     private ResultSet r;
     private Statement s;
     private Connection c;
+    private T elem = null;
 
     public DBIterator(final ResultSet r, final Statement s, final Connection c) {
         this.r = r;
@@ -25,26 +26,31 @@ public abstract class DBIterator<T> implements AutoCloseableIterator<T> {
 
     @Override
     public boolean hasNext() {
-        boolean ret = false;
+        if (r == null) {
+            return false;
+        }
+        
+        if (elem != null) {
+            return true;
+        }
+
         try {
-            ret = r != null && r.next();
+            if (r.next()) {
+                elem = convert(r);
+            } else {
+                close();
+            }
         } catch (SQLException ex) {
             Logger.getLogger(DBIterator.class.getName()).log(Level.SEVERE, null, ex);
         }
-        if (!ret) {
-            close();
-        }
-        return ret;
+        return elem != null;
     }
 
     @Override
     public T next() {
-        try {
-            return convert(r);
-        } catch (SQLException ex) {
-            Logger.getLogger(DBIterator.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
+        T ret = elem;
+        elem = null;
+        return ret;
     }
 
     public abstract T convert(ResultSet rs) throws SQLException;
