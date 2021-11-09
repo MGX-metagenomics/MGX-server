@@ -164,8 +164,8 @@ rarefaction<-function(x, subsample=2, symbol=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,
 }
 
 create_nwk_tree <- function(nwk_string){
-nwk_tree <- read.tree(text = nwk_string)
-pl <- ggtree(nwk_tree,
+  nwk_tree <- read.tree(text = nwk_string)
+  pl <- ggtree(nwk_tree,
        branch.length = "none",
        size = 0.35) + geom_rootedge(rootedge = 1, size = 0.25) + geom_tiplab(
          aes(label = nwk_tree),
@@ -177,10 +177,10 @@ pl <- ggtree(nwk_tree,
          linetype = NA,
          hjust = 0.5
        );
-s <- svgstring()
-plot(pl)
-t <- s()
-dev.off()
-pdf(NULL)
-return(t)
+  s <- svgstring()
+  plot(pl)
+  t <- s()
+  dev.off()
+  pdf(NULL)
+  return(t)
 }
