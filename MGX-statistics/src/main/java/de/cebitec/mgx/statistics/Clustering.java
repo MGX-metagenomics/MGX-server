@@ -145,7 +145,7 @@ public class Clustering {
             throw new MGXException("Could not connect to Rserve.");
         }
         try {
-            svgString = conn.eval("create_nwk_tree(\"" + newick + "\")").asString();
+            svgString = conn.eval(String.format("create_nwk_tree(\"%s\")", newick)).asString();
         } catch (REngineException | REXPMismatchException ex) {
             throw new MGXException("SVG conversion failed: " + ex.getMessage());
         } finally {
@@ -153,7 +153,7 @@ public class Clustering {
         }
         return svgString;
     }
-
+    
     private static final Logger LOG = Logger.getLogger(Clustering.class.getName());
 
 }
