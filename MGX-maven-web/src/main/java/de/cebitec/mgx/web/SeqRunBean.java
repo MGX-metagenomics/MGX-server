@@ -237,6 +237,7 @@ public class SeqRunBean {
     @GET
     @Path("getQC/{id}")
     @Produces("application/x-protobuf")
+    @SuppressWarnings("unchecked")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
         Analyzer<? extends DNASequenceI>[] analyzers = null;
         SeqRun sr = null;
