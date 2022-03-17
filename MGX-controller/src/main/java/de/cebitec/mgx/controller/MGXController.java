@@ -47,6 +47,8 @@ public interface MGXController extends AutoCloseable {
     public ObservationDAO getObservationDAO();
 
     public ReferenceDAO getReferenceDAO();
+    
+    public ReferenceRegionDAO getReferenceRegionDAO();
 
     public MappingDAO getMappingDAO();
 
@@ -56,7 +58,7 @@ public interface MGXController extends AutoCloseable {
 
     public ContigDAO getContigDAO();
 
-    public GeneDAO getGeneDAO();
+    public AssembledRegionDAO getAssembledRegionDAO();
 
     public GeneCoverageDAO getGeneCoverageDAO();
 

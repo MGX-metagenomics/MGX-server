@@ -9,12 +9,15 @@ import de.cebitec.gpms.core.UserI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.model.User;
 import de.cebitec.gpms.util.GPMSDataLoaderI;
+import jakarta.annotation.Resource;
+import jakarta.ejb.EJB;
+import jakarta.ejb.EJBContext;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Resource;
-import javax.ejb.*;
 
 /**
  *

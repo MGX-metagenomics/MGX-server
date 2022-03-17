@@ -5,20 +5,23 @@
  */
 package de.cebitec.mgx.annotationservice;
 
-import org.glassfish.jersey.server.ResourceConfig;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
 
 /**
  *
  * @author sj
  */
-public class AnnotationServiceApplication extends ResourceConfig {
+@ApplicationPath("/webresources")
+public class AnnotationServiceApplication extends Application {
 
     public AnnotationServiceApplication() {
-        super.packages("de.cebitec.mgx.annotationservice", 
-                "de.cebitec.mgx.annotationservice.exception", 
-                "de.cebitec.mgx.protobuf.serializer");
-
-        super.register(MGXProjectFilter.class);
-        super.register(APIKeyValidator.class);
+//        super.packages("de.cebitec.mgx.annotationservice", 
+//                "de.cebitec.mgx.annotationservice.exception", 
+//                "de.cebitec.mgx.protobuf.serializer");
+//
+//        super.register(MGXProjectFilter.class);
+//        super.register(APIKeyValidator.class);
     }
 }

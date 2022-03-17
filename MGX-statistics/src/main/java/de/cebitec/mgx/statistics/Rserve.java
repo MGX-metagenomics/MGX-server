@@ -2,6 +2,10 @@ package de.cebitec.mgx.statistics;
 
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.streamlogger.StreamLogger;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,10 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 

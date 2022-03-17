@@ -1,11 +1,12 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.common.RegionType;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dnautils.DNAUtils;
+import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.db.Contig;
-import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -27,30 +28,31 @@ import java.util.List;
  *
  * @author sjaenick
  */
-public class GeneDAO extends DAO<Gene> {
+public class AssembledRegionDAO extends DAO<AssembledRegion> {
 
-    public GeneDAO(MGXController ctx) {
+    public AssembledRegionDAO(MGXController ctx) {
         super(ctx);
     }
 
     @Override
     Class getType() {
-        return Gene.class;
+        return AssembledRegion.class;
     }
 
-    private final static String CREATE = "INSERT INTO gene (start, stop, coverage, contig_id) "
+    private final static String CREATE = "INSERT INTO gene (start, stop, coverage, type, contig_id) "
             + "VALUES (?,?,?,?) RETURNING id";
 
     @Override
-    public long create(Gene obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+    public long create(AssembledRegion obj) throws MGXException {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setInt(1, obj.getStart());
                 stmt.setInt(2, obj.getStop());
                 stmt.setInt(3, obj.getCoverage());
-                stmt.setLong(4, obj.getContigId());
+                stmt.setString(4, obj.getType().toString());
+                stmt.setLong(5, obj.getContigId());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -62,19 +64,20 @@ public class GeneDAO extends DAO<Gene> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE gene SET start=?, stop=?, coverage=?, contig_id=? WHERE id=?";
+    private final static String UPDATE = "UPDATE gene SET start=?, stop=?, coverage=?, type=?, contig_id=? WHERE id=?";
 
-    public void update(Gene obj) throws MGXException {
+    public void update(AssembledRegion obj) throws MGXException {
         if (obj.getId() == Contig.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setInt(1, obj.getStart());
                 stmt.setInt(2, obj.getStop());
                 stmt.setInt(3, obj.getCoverage());
-                stmt.setLong(4, obj.getContigId());
-                stmt.setLong(5, obj.getId());
+                stmt.setString(4, obj.getType().toString());
+                stmt.setLong(5, obj.getContigId());
+                stmt.setLong(6, obj.getId());
 
                 stmt.setLong(6, obj.getId());
                 int numRows = stmt.executeUpdate();
@@ -111,26 +114,50 @@ public class GeneDAO extends DAO<Gene> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, start, stop, coverage, contig_id FROM gene";
-    private static final String BY_ID = "SELECT id, start, stop, coverage, contig_id FROM gene WHERE id=?";
+    private static final String FETCHALL = "SELECT id, start, stop, coverage, type, contig_id FROM gene";
+    private static final String BY_ID = "SELECT id, start, stop, coverage, type, contig_id FROM gene WHERE id=?";
 
     @Override
-    public Gene getById(long id) throws MGXException {
+    public AssembledRegion getById(long id) throws MGXException {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        Gene ret = new Gene();
+                        AssembledRegion ret = new AssembledRegion();
                         ret.setId(rs.getLong(1));
                         ret.setStart(rs.getInt(2));
                         ret.setStop(rs.getInt(3));
                         ret.setCoverage(rs.getInt(4));
-                        ret.setContigId(rs.getLong(5));
+
+                        String type = rs.getString(5);
+                        switch (type) {
+                            case "CDS":
+                                ret.setType(RegionType.CDS);
+                                break;
+                            case "tRNA":
+                                ret.setType(RegionType.TRNA);
+                                break;
+                            case "rRNA":
+                                ret.setType(RegionType.RRNA);
+                                break;
+                            case "tmRNA":
+                                ret.setType(RegionType.TMRNA);
+                                break;
+                            case "ncRNA":
+                                ret.setType(RegionType.NCRNA);
+                                break;
+                            default:
+                                getController().log("Unhandled region type " + type + "for ID " + id);
+                                ret.setType(RegionType.MISC);
+
+                        }
+
+                        ret.setContigId(rs.getLong(6));
                         return ret;
                     }
                 }
@@ -142,21 +169,45 @@ public class GeneDAO extends DAO<Gene> {
         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<Gene> getAll() throws MGXException {
+    public AutoCloseableIterator<AssembledRegion> getAll() throws MGXException {
 
-        List<Gene> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        List<AssembledRegion> l = null;
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
 
-                        Gene ret = new Gene();
+                        AssembledRegion ret = new AssembledRegion();
                         ret.setId(rs.getLong(1));
                         ret.setStart(rs.getInt(2));
                         ret.setStop(rs.getInt(3));
                         ret.setCoverage(rs.getInt(4));
-                        ret.setContigId(rs.getLong(5));
+
+                        String type = rs.getString(5);
+                        switch (type) {
+                            case "CDS":
+                                ret.setType(RegionType.CDS);
+                                break;
+                            case "tRNA":
+                                ret.setType(RegionType.TRNA);
+                                break;
+                            case "rRNA":
+                                ret.setType(RegionType.RRNA);
+                                break;
+                            case "tmRNA":
+                                ret.setType(RegionType.TMRNA);
+                                break;
+                            case "ncRNA":
+                                ret.setType(RegionType.NCRNA);
+                                break;
+                            default:
+                                getController().log("Unhandled region type " + type + "for ID " + ret.getId());
+                                ret.setType(RegionType.MISC);
+
+                        }
+
+                        ret.setContigId(rs.getLong(6));
 
                         if (l == null) {
                             l = new ArrayList<>();
@@ -171,27 +222,51 @@ public class GeneDAO extends DAO<Gene> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_CONTIG = "SELECT g.id, g.start, g.stop, g.coverage FROM contig c "
+    private static final String BY_CONTIG = "SELECT g.id, g.start, g.stop, g.coverage, g.type FROM contig c "
             + "LEFT JOIN gene g ON (g.contig_id=c.id) WHERE c.id=?";
 
-    public AutoCloseableIterator<Gene> byContig(long contig_id) throws MGXException {
+    public AutoCloseableIterator<AssembledRegion> byContig(long contig_id) throws MGXException {
 
-        List<Gene> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_CONTIG)) {
+        List<AssembledRegion> l = null;
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_CONTIG)) {
                 stmt.setLong(1, contig_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
                         throw new MGXException("No object of type Contig for ID " + contig_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
-                            Gene ret = new Gene();
+                            AssembledRegion ret = new AssembledRegion();
                             ret.setId(rs.getLong(1));
                             ret.setStart(rs.getInt(2));
                             ret.setStop(rs.getInt(3));
                             ret.setCoverage(rs.getInt(4));
+
+                            String type = rs.getString(5);
+                            switch (type) {
+                                case "CDS":
+                                    ret.setType(RegionType.CDS);
+                                    break;
+                                case "tRNA":
+                                    ret.setType(RegionType.TRNA);
+                                    break;
+                                case "rRNA":
+                                    ret.setType(RegionType.RRNA);
+                                    break;
+                                case "tmRNA":
+                                    ret.setType(RegionType.TMRNA);
+                                    break;
+                                case "ncRNA":
+                                    ret.setType(RegionType.NCRNA);
+                                    break;
+                                default:
+                                    getController().log("Unhandled region type " + type + "for ID " + ret.getId());
+                                    ret.setType(RegionType.MISC);
+
+                            }
+
                             ret.setContigId(contig_id);
 
                             if (l == null) {
@@ -210,10 +285,10 @@ public class GeneDAO extends DAO<Gene> {
         return new ForwardingIterator<>(l == null ? null : l.iterator());
     }
 
-    private static final String BY_CONTIGS = "SELECT g.id, g.start, g.stop, g.coverage, g.contig_id FROM gene g "
+    private static final String BY_CONTIGS = "SELECT g.id, g.start, g.stop, g.coverage, g.type, g.contig_id FROM gene g "
             + "WHERE g.contig_id IN (";
 
-    public AutoCloseableIterator<Gene> byContigs(Collection<Long> ids) throws MGXException {
+    public AutoCloseableIterator<AssembledRegion> byContigs(Collection<Long> ids) throws MGXException {
 
         if (ids == null || ids.isEmpty()) {
             throw new MGXException("Null/empty ID list.");
@@ -230,15 +305,38 @@ public class GeneDAO extends DAO<Gene> {
             }
 
             ResultSet rs = stmt.executeQuery();
-            return new DBIterator<Gene>(rs, stmt, conn) {
+            return new DBIterator<AssembledRegion>(rs, stmt, conn) {
                 @Override
-                public Gene convert(ResultSet rs) throws SQLException {
-                    Gene ret = new Gene();
+                public AssembledRegion convert(ResultSet rs) throws SQLException {
+                    AssembledRegion ret = new AssembledRegion();
                     ret.setId(rs.getLong(1));
                     ret.setStart(rs.getInt(2));
                     ret.setStop(rs.getInt(3));
                     ret.setCoverage(rs.getInt(4));
-                    ret.setContigId(rs.getLong(5));
+
+                    String type = rs.getString(5);
+                    switch (type) {
+                        case "CDS":
+                            ret.setType(RegionType.CDS);
+                            break;
+                        case "tRNA":
+                            ret.setType(RegionType.TRNA);
+                            break;
+                        case "rRNA":
+                            ret.setType(RegionType.RRNA);
+                            break;
+                        case "tmRNA":
+                            ret.setType(RegionType.TMRNA);
+                            break;
+                        case "ncRNA":
+                            ret.setType(RegionType.NCRNA);
+                            break;
+                        default:
+                            getController().log("Unhandled region type " + type + "for ID " + ret.getId());
+                            ret.setType(RegionType.MISC);
+
+                    }
+                    ret.setContigId(rs.getLong(6));
                     return ret;
                 }
             };
@@ -250,8 +348,8 @@ public class GeneDAO extends DAO<Gene> {
     }
 
     public void createCoverage(long geneId, long runId, int coverage) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_coverage (run_id, gene_id, coverage) VALUES (?,?,?)")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_coverage (run_id, gene_id, coverage, type) VALUES (?,?,?)")) {
                 stmt.setLong(1, runId);
                 stmt.setLong(2, geneId);
                 stmt.setInt(3, coverage);
@@ -270,7 +368,7 @@ public class GeneDAO extends DAO<Gene> {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public AutoCloseableIterator<Gene> byBin(Long id) throws MGXException {
+    public AutoCloseableIterator<AssembledRegion> byBin(Long id) throws MGXException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -278,8 +376,8 @@ public class GeneDAO extends DAO<Gene> {
             = "INSERT INTO gene_observation (start, stop, attr_id, gene_id) VALUES (?, ?, ?, ?)";
 
     public void createAnnotations(List<GeneAnnotation> annots) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BULK_GENE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BULK_GENE)) {
                 for (GeneAnnotation obs : annots) {
                     stmt.setInt(1, obs.getStart());
                     stmt.setInt(2, obs.getStop());
@@ -313,10 +411,10 @@ public class GeneDAO extends DAO<Gene> {
 
     public Sequence getDNASequence(long gene_id) throws MGXException {
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
                 stmt.setLong(1, gene_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
                         throw new MGXException("No object of type Gene for ID " + gene_id + ".");
                     }
@@ -330,7 +428,7 @@ public class GeneDAO extends DAO<Gene> {
                     File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(assembly_id));
                     File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
                     String geneSeq;
-                    try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                    try ( IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
                         ReferenceSequence seq;
                         if (start < stop) {
                             // htsjdk uses 1-based positions

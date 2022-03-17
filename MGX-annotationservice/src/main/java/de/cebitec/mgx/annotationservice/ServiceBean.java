@@ -16,6 +16,8 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.SeqRunDownloadProvider;
+import de.cebitec.mgx.dto.dto.AssembledRegionDTO;
+import de.cebitec.mgx.dto.dto.AssembledRegionDTOList;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTO;
@@ -26,8 +28,6 @@ import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.GeneAnnotationDTOList;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTO;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
-import de.cebitec.mgx.dto.dto.GeneDTO;
-import de.cebitec.mgx.dto.dto.GeneDTOList;
 import de.cebitec.mgx.dto.dto.JobDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXLongList;
@@ -35,22 +35,22 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
+import de.cebitec.mgx.dtoadapter.AssembledRegionDTOFactory;
 import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeDTOFactory;
 import de.cebitec.mgx.dtoadapter.AttributeTypeDTOFactory;
 import de.cebitec.mgx.dtoadapter.BinDTOFactory;
 import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.GeneAnnotationDTOFactory;
-import de.cebitec.mgx.dtoadapter.GeneDTOFactory;
 import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
+import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.model.db.Contig;
-import de.cebitec.mgx.model.db.Gene;
 import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -59,6 +59,17 @@ import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequence;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -72,17 +83,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 
 /**
  *
@@ -322,19 +322,19 @@ public class ServiceBean {
     }
 
     @GET
-    @Path("getGenes/{contig_ids}")
+    @Path("getSubregions/{contig_ids}")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public GeneDTOList getGenes(@PathParam("contig_ids") String contig_ids) {
+    public AssembledRegionDTOList getSubregions(@PathParam("contig_ids") String contig_ids) {
         try {
             String[] splitted = contig_ids.split(",");
             Collection<Long> ids = new ArrayList<>(splitted.length);
             for (String s : splitted) {
                 ids.add(Long.valueOf(s));
             }
-            AutoCloseableIterator<Gene> iter = mgx.getGeneDAO().byContigs(ids);
-            return GeneDTOFactory.getInstance().toDTOList(iter);
+            AutoCloseableIterator<AssembledRegion> iter = mgx.getAssembledRegionDAO().byContigs(ids);
+            return AssembledRegionDTOFactory.getInstance().toDTOList(iter);
         } catch (MGXException ex) {
             LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());
@@ -498,16 +498,16 @@ public class ServiceBean {
     }
 
     @PUT
-    @Path("createGenes")
+    @Path("createSubregions")
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public MGXLongList createGenes(GeneDTOList dtos) {
+    public MGXLongList createSubregions(AssembledRegionDTOList dtos) {
         try {
             MGXLongList.Builder generatedIds = MGXLongList.newBuilder();
-            for (GeneDTO dto : dtos.getGeneList()) {
-                Gene c = GeneDTOFactory.getInstance().toDB(dto);
-                long id = mgx.getGeneDAO().create(c);
+            for (AssembledRegionDTO dto : dtos.getRegionList()) {
+                AssembledRegion c = AssembledRegionDTOFactory.getInstance().toDB(dto);
+                long id = mgx.getAssembledRegionDAO().create(c);
                 generatedIds.addLong(id);
             }
             return generatedIds.build();
@@ -526,9 +526,9 @@ public class ServiceBean {
             Job asmJob = mgx.getJobDAO().getByApiKey(apiKey);
             for (GeneCoverageDTO geneCov : dtoList.getGeneCoverageList()) {
                 if (!arrayContains(asmJob.getSeqrunIds(), geneCov.getRunId())) {
-                    throw new MGXServiceException("Invalid seqrun ID for gene " + geneCov.getGeneId());
+                    throw new MGXServiceException("Invalid seqrun ID for gene " + geneCov.getRegionId());
                 }
-                mgx.getGeneDAO().createCoverage(geneCov.getGeneId(), geneCov.getRunId(), geneCov.getCoverage());
+                mgx.getAssembledRegionDAO().createCoverage(geneCov.getRegionId(), geneCov.getRunId(), geneCov.getCoverage());
             }
         } catch (MGXException ex) {
             LOG.log(Level.SEVERE, null, ex);
@@ -544,7 +544,7 @@ public class ServiceBean {
     public Response createGeneObservations(GeneAnnotationDTOList dtoList) {
         try {
             List<GeneAnnotation> annots = GeneAnnotationDTOFactory.getInstance().toList(dtoList);
-            mgx.getGeneDAO().createAnnotations(annots);
+            mgx.getAssembledRegionDAO().createAnnotations(annots);
         } catch (MGXException ex) {
             LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(ex.getMessage());

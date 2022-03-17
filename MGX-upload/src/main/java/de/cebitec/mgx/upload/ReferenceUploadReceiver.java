@@ -1,11 +1,14 @@
 package de.cebitec.mgx.upload;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
+import de.cebitec.mgx.common.RegionType;
 import de.cebitec.mgx.core.MGXException;
-import de.cebitec.mgx.dto.dto.RegionDTO;
-import de.cebitec.mgx.dto.dto.RegionDTOList;
+import de.cebitec.mgx.dto.dto.ReferenceRegionDTO;
+import de.cebitec.mgx.dto.dto.ReferenceRegionDTOList;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Region;
+import de.cebitec.mgx.model.db.ReferenceRegion;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,15 +20,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 /**
  *
  * @author sjaenick
  */
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
-public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
+public class ReferenceUploadReceiver implements UploadReceiverI<ReferenceRegionDTOList> {
 
     private final Reference reference;
     private final long referenceId;
@@ -39,7 +40,7 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
     private File fasta = null;
     private BufferedWriter writer = null;
     private int dnaSize = 0;
-    private List<Region> regions;
+    private List<ReferenceRegion> regions;
 
     public ReferenceUploadReceiver(Reference reference, String projectName, GPMSManagedDataSourceI dataSource) {
         this.reference = reference;
@@ -116,10 +117,10 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
         if (regions != null && !regions.isEmpty()) {
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, description, type, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
-                    for (Region r : regions) {
+                    for (ReferenceRegion r : regions) {
                         stmt.setString(1, r.getName());
                         stmt.setString(2, r.getDescription());
-                        stmt.setString(3, r.getType());
+                        stmt.setString(3, r.getType().toString());
                         stmt.setInt(4, r.getStart());
                         stmt.setInt(5, r.getStop());
                         stmt.setLong(6, referenceId);
@@ -145,15 +146,15 @@ public class ReferenceUploadReceiver implements UploadReceiverI<RegionDTOList> {
     }
 
     @Override
-    public void add(RegionDTOList data) throws MGXException {
+    public void add(ReferenceRegionDTOList data) throws MGXException {
         if (regions == null) {
             regions = new LinkedList<>();
         }
-        for (RegionDTO dto : data.getRegionList()) {
-            Region r = new Region();
+        for (ReferenceRegionDTO dto : data.getRegionList()) {
+            ReferenceRegion r = new ReferenceRegion();
             r.setName(dto.getName());
             r.setDescription(dto.getDescription());
-            r.setType(dto.getType());
+            r.setType(RegionType.values()[dto.getType().ordinal()]);
             r.setStart(dto.getStart());
             r.setStop(dto.getStop());
             regions.add(r);

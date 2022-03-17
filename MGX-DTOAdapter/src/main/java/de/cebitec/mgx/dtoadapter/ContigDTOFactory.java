@@ -31,7 +31,7 @@ public class ContigDTOFactory extends DTOConversionBase<Contig, ContigDTO, Conti
                 .setGc(h.getGC())
                 .setLengthBp(h.getLength())
                 .setCoverage(h.getCoverage())
-                .setNumberCDS(h.getNumberCDS())
+                .setNumberSubregions(h.getNumberSubregions())
                 .setBinId(h.getBinId())
                 .build();
     }

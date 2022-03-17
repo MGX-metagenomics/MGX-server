@@ -8,14 +8,14 @@ import com.google.common.cache.RemovalNotification;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
+import jakarta.annotation.PreDestroy;
+import jakarta.ejb.EJB;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.inject.Produces;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PreDestroy;
-import javax.ejb.EJB;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Produces;
 
 /**
  *

@@ -3,7 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.Attribute;
-import de.cebitec.mgx.model.db.Gene;
+import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.misc.GeneObservation;
 import de.cebitec.mgx.util.DBIterator;
 import java.sql.Connection;
@@ -23,7 +23,7 @@ public class GeneObservationDAO {
         this.ctx = ctx;
     }
 
-    public void create(GeneObservation obs, Gene seq, Attribute attr) throws MGXException {
+    public void create(GeneObservation obs, AssembledRegion seq, Attribute attr) throws MGXException {
         try (Connection conn = ctx.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_observation (start, stop, gene_id, attr_id) VALUES (?,?,?,?)")) {
                 stmt.setInt(1, obs.getStart());

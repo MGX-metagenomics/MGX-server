@@ -49,7 +49,7 @@
     </modules>
     
     <properties>
-        <eeapi.version>8.0.1</eeapi.version>
+        <eeapi.version>9.1.0</eeapi.version>
     </properties>
 
 </project>

@@ -6,13 +6,13 @@ import de.cebitec.mgx.statistics.data.NamedVector;
 import de.cebitec.mgx.statistics.data.PCAResult;
 import de.cebitec.mgx.statistics.data.Point;
 import de.cebitec.mgx.util.StringUtils;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
 

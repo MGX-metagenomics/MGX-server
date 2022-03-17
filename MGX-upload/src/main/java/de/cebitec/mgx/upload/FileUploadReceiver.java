@@ -2,12 +2,12 @@ package de.cebitec.mgx.upload;
 
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.util.UnixHelper;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 /**
  *

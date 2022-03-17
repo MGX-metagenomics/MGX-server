@@ -5,20 +5,26 @@
  */
 package de.cebitec.mgx.web;
 
-import org.glassfish.jersey.server.ResourceConfig;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
 
 /**
  *
  * @author sj
  */
-public class MGXApplication extends ResourceConfig {
+@ApplicationPath("/webresources")
+public class MGXApplication extends Application {
 
     public MGXApplication() {
-        super.packages("de.cebitec.mgx.web", 
-                "de.cebitec.web.exception", 
-                "de.cebitec.mgx.protobuf.serializer");
+//        super.packages("de.cebitec.mgx.web",
+//                "de.cebitec.web.exception",
+//                "de.cebitec.mgx.protobuf.serializer");
+//
+//        super.register(UriProjectFilter.class);
+//        super.register(GPMSRoleFilter.class);
+//        super.register(PBWriter.class);
+//        super.register(PBReader.class);
+        
 
-        super.register(UriProjectFilter.class);
-        super.register(GPMSRoleFilter.class);
     }
 }

@@ -4,13 +4,12 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.statistics.data.Matrix;
 import de.cebitec.mgx.statistics.data.NamedVector;
 import de.cebitec.mgx.util.StringUtils;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
 

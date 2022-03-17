@@ -112,6 +112,11 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             error = ex;
         }
 
+        if (!holder.isEmpty()) {
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, "Holder not empty when expected? BUG");
+            flushChunk();
+        }
+
         assert holder.isEmpty();
         allDone.countDown();
     }
@@ -200,11 +205,12 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                 writer.addSequence(seq);
             }
         } catch (SequenceException ex) {
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             error = ex;
         }
     }
 
-    private String createSQLBulkStatement(int elements) {
+    private static String createSQLBulkStatement(int elements) {
         // build sql bulk insert statement
         StringBuilder sql = new StringBuilder("INSERT INTO read (seqrun_id, name, length) VALUES ");
         for (int cnt = 1; cnt <= elements; cnt++) {
@@ -230,6 +236,11 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
         try {
             allDone.await();
         } catch (InterruptedException ex) {
+            Throwable inner = ex;
+            while (inner.getCause() != null) {
+                inner = inner.getCause();
+                Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, inner.getMessage());
+            }
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (error()) {

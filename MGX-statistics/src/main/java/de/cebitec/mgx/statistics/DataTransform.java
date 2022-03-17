@@ -1,8 +1,8 @@
 package de.cebitec.mgx.statistics;
 
 import de.cebitec.mgx.core.MGXException;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;

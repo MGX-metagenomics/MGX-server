@@ -15,13 +15,13 @@ import de.cebitec.gpms.dto.impl.MembershipDTO;
 import de.cebitec.gpms.dto.impl.MembershipDTOList;
 import de.cebitec.gpms.dto.impl.ProjectClassDTOList;
 import de.cebitec.mgx.util.ForwardingIterator;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import java.util.Collection;
 import java.util.List;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 
 /**
  *

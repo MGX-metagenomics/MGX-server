@@ -289,6 +289,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public ReferenceRegionDAO getReferenceRegionDAO() {
+        return new ReferenceRegionDAO(this);
+    }
+
+    @Override
     public MappingDAO getMappingDAO() {
         return new MappingDAO(this);
     }
@@ -326,8 +331,8 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
-    public GeneDAO getGeneDAO() {
-        return new GeneDAO(this);
+    public AssembledRegionDAO getAssembledRegionDAO() {
+        return new AssembledRegionDAO(this);
     }
 
     @Override

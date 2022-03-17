@@ -16,6 +16,8 @@ import de.cebitec.mgx.sequence.SeqReaderFactory;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sequence.SeqWriterI;
 import de.cebitec.mgx.util.UnixHelper;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -25,8 +27,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 /**
  *
@@ -88,12 +88,12 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                     qd.setName(s.getName().getBytes());
                     qd.setEncodedSequence(s.getSequence().toByteArray());
                     qd.setEncodedQuality(s.getQuality().toByteArray());
-                    queue.put((T)qd);
+                    queue.put((T) qd);
                 } else {
                     EncodedDNASequence eds = new EncodedDNASequence();
                     eds.setName(s.getName().getBytes());
                     eds.setEncodedSequence(s.getSequence().toByteArray());
-                    queue.put((T)eds);
+                    queue.put((T) eds);
                 }
 
                 total_num_sequences++;
@@ -149,20 +149,12 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
             flush.complete();
             SeqReaderFactory.delete(file.getCanonicalPath());
 
-            String delReads = "DELETE FROM read WHERE ctid = any(array(SELECT ctid FROM read WHERE seqrun_id=? LIMIT 10000))";
-            int rowsAffected;
-            //
-            // delete in chunks to make sure the DB connections gets returned
-            // to the pool in a timely manner
-            //
-            do {
-                try (Connection conn = dataSource.getConnection(this)) {
-                    try (PreparedStatement stmt = conn.prepareStatement(delReads)) {
-                        stmt.setLong(1, runId);
-                        rowsAffected = stmt.executeUpdate();
-                    }
+            try (Connection conn = dataSource.getConnection(this)) {
+                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM read WHERE seqrun_id=?")) {
+                    stmt.setLong(1, runId);
+                    stmt.executeUpdate();
                 }
-            } while (rowsAffected == 10_000);
+            }
 
             try (Connection conn = dataSource.getConnection(this)) {
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM seqrun WHERE id=?")) {
