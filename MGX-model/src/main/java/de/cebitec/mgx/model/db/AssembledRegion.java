@@ -5,17 +5,20 @@
  */
 package de.cebitec.mgx.model.db;
 
+import de.cebitec.mgx.common.RegionType;
+
 /**
  *
  * @author sj
  */
-public class Gene extends Identifiable {
+public class AssembledRegion extends Identifiable {
 
     private int coverage;
     private int start, stop;
     private long contig_id;
+    private RegionType type;
 
-    public Gene() {
+    public AssembledRegion() {
     }
 
     public int getCoverage() {
@@ -49,6 +52,12 @@ public class Gene extends Identifiable {
     public void setContigId(long contig_id) {
         this.contig_id = contig_id;
     }
-   
-    
+
+    public RegionType getType() {
+        return type;
+    }
+
+    public void setType(RegionType type) {
+        this.type = type;
+    }
 }

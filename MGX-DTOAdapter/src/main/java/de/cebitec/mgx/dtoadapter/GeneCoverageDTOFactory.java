@@ -28,7 +28,7 @@ public class GeneCoverageDTOFactory extends DTOConversionBase<GeneCoverage, Gene
     @Override
     public GeneCoverageDTO toDTO(GeneCoverage a) {
         return GeneCoverageDTO.newBuilder()
-                .setGeneId(a.getGeneId())
+                .setRegionId(a.getGeneId())
                 .setRunId(a.getRunId())
                 .setCoverage(a.getCoverage())
                 .build();
@@ -36,7 +36,7 @@ public class GeneCoverageDTOFactory extends DTOConversionBase<GeneCoverage, Gene
 
     @Override
     public GeneCoverage toDB(GeneCoverageDTO dto) {
-        return new GeneCoverage(dto.getCoverage(), dto.getGeneId(), dto.getRunId());
+        return new GeneCoverage(dto.getCoverage(), dto.getRegionId(), dto.getRunId());
     }
 
     @Override

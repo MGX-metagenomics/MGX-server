@@ -5,7 +5,7 @@ import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Region;
+import de.cebitec.mgx.model.db.ReferenceRegion;
 import de.cebitec.mgx.util.UnixHelper;
 import java.io.File;
 import java.io.IOException;
@@ -112,7 +112,7 @@ public class InstallGlobalReference extends TaskI {
 
         // transfer regions
         // TODO: convert to iterator
-        Collection<Region> regions;
+        Collection<ReferenceRegion> regions;
         try {
             regions = global.getRegionDAO().byReference(globalId);
         } catch (MGXGlobalException ex) {
@@ -127,9 +127,9 @@ public class InstallGlobalReference extends TaskI {
 
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, type, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
-                for (Region r : regions) {
+                for (ReferenceRegion r : regions) {
                     stmt.setString(1, r.getName());
-                    stmt.setString(2, r.getType());
+                    stmt.setString(2, r.getType().toString());
                     stmt.setString(3, r.getDescription());
                     stmt.setInt(4, r.getStart());
                     stmt.setInt(5, r.getStop());

@@ -9,9 +9,8 @@ import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTO;
 import de.cebitec.mgx.dto.dto.ReferenceDTOList;
-import de.cebitec.mgx.dto.dto.RegionDTOList;
+import de.cebitec.mgx.dto.dto.ReferenceRegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
-import de.cebitec.mgx.dtoadapter.RegionDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
 import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.global.worker.InstallGlobalReference;
@@ -22,23 +21,21 @@ import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Response;
 
 /**
  *
@@ -156,19 +153,7 @@ public class ReferenceBean {
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
-    @GET
-    @Path("byReferenceInterval/{refid}/{from}/{to}")
-    @Produces("application/x-protobuf")
-    public RegionDTOList byReferenceInterval(@PathParam("refid") Long refid, @PathParam("from") int from, @PathParam("to") int to) {
-        RegionDTOList ret = null;
-        try {
-            Reference ref = mgx.getReferenceDAO().getById(refid);
-            ret = RegionDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().byReferenceInterval(refid, ref, from, to));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
-        return ret;
-    }
+ 
 
     @GET
     @Path("getSequence/{refid}/{from}/{to}")
@@ -209,7 +194,7 @@ public class ReferenceBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public Response addSequence(@PathParam("uuid") UUID session_id, MGXString chunkDNA) {
         try {
-            ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.<RegionDTOList>getSession(session_id);
+            ReferenceUploadReceiver recv = (ReferenceUploadReceiver) upSessions.<ReferenceRegionDTOList>getSession(session_id);
             recv.addSequenceData(chunkDNA.getValue().toUpperCase());
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());
@@ -221,9 +206,9 @@ public class ReferenceBean {
     @Path("addRegions/{uuid}")
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
-    public Response addRegions(@PathParam("uuid") UUID session_id, RegionDTOList dtos) {
+    public Response addRegions(@PathParam("uuid") UUID session_id, ReferenceRegionDTOList dtos) {
         try {
-            UploadReceiverI<RegionDTOList> recv = upSessions.getSession(session_id);
+            UploadReceiverI<ReferenceRegionDTOList> recv = upSessions.getSession(session_id);
             recv.add(dtos);
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());

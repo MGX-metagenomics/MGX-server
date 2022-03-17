@@ -5,9 +5,7 @@ import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.model.db.Reference;
-import de.cebitec.mgx.model.db.Region;
 import de.cebitec.mgx.util.AutoCloseableIterator;
-import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.workers.DeleteReference;
 import java.io.BufferedReader;
@@ -89,17 +87,17 @@ public class ReferenceDAO extends DAO<Reference> {
 
     public TaskI delete(long id) throws MGXException, IOException {
         List<TaskI> subtasks = new ArrayList<>();
-        try(AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
-             while (iter.hasNext()) {
+        try (AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
+            while (iter.hasNext()) {
                 Mapping s = iter.next();
                 TaskI del = getController().getMappingDAO().delete(s.getId(), getController().getDataSource(),
                         getController().getProjectName(), getController().getProjectJobDirectory().getAbsolutePath());
                 subtasks.add(del);
             }
         }
-        return new DeleteReference(id, 
-                getController().getDataSource(), 
-                getController().getProjectName(), 
+        return new DeleteReference(id,
+                getController().getDataSource(),
+                getController().getProjectName(),
                 getController().getProjectJobDirectory().getAbsolutePath(),
                 subtasks.toArray(new TaskI[]{}));
     }
@@ -215,44 +213,5 @@ public class ReferenceDAO extends DAO<Reference> {
             getController().log(ex);
             throw new MGXException(ex.getMessage());
         }
-    }
-
-    public DBIterator<Region> byReferenceInterval(final long refId, final Reference ref, int from, int to) throws MGXException {
-
-        if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
-            throw new MGXException("Invalid coordinates: " + from + " " + to);
-        }
-        DBIterator<Region> iter = null;
-        ResultSet rset;
-        PreparedStatement stmt;
-
-        try {
-            Connection conn = getConnection();
-            stmt = conn.prepareStatement("SELECT * from getRegions(?,?,?)");
-            stmt.setLong(1, refId);
-            stmt.setInt(2, from);
-            stmt.setInt(3, to);
-            rset = stmt.executeQuery();
-
-            iter = new DBIterator<Region>(rset, stmt, conn) {
-                @Override
-                public Region convert(ResultSet rs) throws SQLException {
-                    Region r = new Region();
-                    r.setReferenceId(refId);
-                    r.setId(rs.getLong(1));
-                    r.setName(rs.getString(2));
-                    r.setType(rs.getString(3));
-                    r.setDescription(rs.getString(4));
-                    r.setStart(rs.getInt(5));
-                    r.setStop(rs.getInt(6));
-                    return r;
-                }
-            };
-
-        } catch (SQLException ex) {
-            getController().log(ex);
-            throw new MGXException(ex.getMessage());
-        }
-        return iter;
     }
 }
