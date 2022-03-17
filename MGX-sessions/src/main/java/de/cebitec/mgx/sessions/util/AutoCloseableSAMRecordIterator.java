@@ -65,11 +65,11 @@ public class AutoCloseableSAMRecordIterator implements AutoCloseableIterator<Map
         int matched = 0;
         int alnLen = 0;
         for (CigarElement elem : c.getCigarElements()) {
-            if (elem.getOperator() == CigarOperator.HARD_CLIP) {
-                continue;
-            }
+//            if (elem.getOperator() == CigarOperator.HARD_CLIP) {
+//                continue;
+//            }
             alnLen += elem.getLength();
-            if (elem.getOperator() == CigarOperator.M) {
+            if (elem.getOperator() == CigarOperator.M || elem.getOperator() == CigarOperator.EQ) {
                 matched += elem.getLength();
             }
         }
