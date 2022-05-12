@@ -8,7 +8,13 @@ library('rtk', warn.conflicts=F)
 suppressPackageStartupMessages(library('compositions'))
 suppressPackageStartupMessages(library('coda.base'))
 suppressPackageStartupMessages(library("tidyverse", warn.conflict=F))
-suppressPackageStartupMessages(library("ggtree", warn.conflict=F))
+
+# ggtree
+suppressWarnings(suppressMessages(library("ggtree", quietly = T)))
+# suppressPackageStartupMessages(library("ggtree", warn.conflict=F))
+# suppressMessages(library("ggtree", warn.conflict=F))
+
+
 library("ape", warn.conflict=F)
 library("svglite", warn.conflict=F)
 
