@@ -9,6 +9,7 @@ import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.GeneAnnotation;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.model.misc.BinSearchResult;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -370,6 +371,49 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
 
     public AutoCloseableIterator<AssembledRegion> byBin(Long id) throws MGXException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private final static String SQL_SEARCH
+            = "SELECT c.id, c.name, g.id, a.value, at.name"
+            + " FROM contig c"
+            + " LEFT JOIN gene g ON c.id=g.contig_id"
+            + " LEFT JOIN gene_observation go ON g.id=go.gene_id"
+            + " LEFT JOIN attribute a ON a.id=go.attr_id"
+            + " LEFT JOIN attributetype at ON at.id=a.attrtype_id"
+            + " WHERE c.bin_id=? AND UPPER(a.value) LIKE CONCAT('%', UPPER(?), '%')";
+
+    public AutoCloseableIterator<BinSearchResult> search(Long bin_id, String term) throws MGXException {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement stmt = conn.prepareStatement(SQL_SEARCH);
+            stmt.setLong(1, bin_id);
+            stmt.setString(2, term);
+            ResultSet rs = stmt.executeQuery();
+
+            return new DBIterator<BinSearchResult>(rs, stmt, conn) {
+                @Override
+                public BinSearchResult convert(ResultSet rs) throws SQLException {
+                    BinSearchResult res = new BinSearchResult(
+                            rs.getLong(1),
+                            rs.getString(2),
+                            rs.getLong(3),
+                            rs.getString(4),
+                            rs.getString(5)
+                    );
+                    return res;
+                }
+
+            };
+
+        } catch (SQLException ex) {
+            getController().log(ex);
+            SQLException sqle = ex;
+            while (sqle.getNextException() != null) {
+                sqle = sqle.getNextException();
+                getController().log(sqle);
+            }
+            throw new MGXException(ex.getMessage());
+        }
     }
 
     private final static String SQL_BULK_GENE

@@ -9,13 +9,16 @@ import de.cebitec.mgx.download.GeneByAttributeDownloadProvider;
 import de.cebitec.mgx.dto.dto.AssembledRegionDTOList;
 import de.cebitec.mgx.dto.dto.AttributeDTO;
 import de.cebitec.mgx.dto.dto.AttributeDTOList;
+import de.cebitec.mgx.dto.dto.BinSearchResultDTOList;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SequenceDTO;
 import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.AssembledRegionDTOFactory;
+import de.cebitec.mgx.dtoadapter.BinSearchResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.model.misc.BinSearchResult;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -66,7 +69,6 @@ public class AssembledRegionBean {
 //            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
 //        }
 //    }
-
 //    @POST
 //    @Path("update")
 //    @Consumes("application/x-protobuf")
@@ -81,7 +83,6 @@ public class AssembledRegionBean {
 //        }
 //        return Response.ok().build();
 //    }
-
 //    @GET
 //    @Path("fetch/{id}")
 //    @Produces("application/x-protobuf")
@@ -94,7 +95,6 @@ public class AssembledRegionBean {
 //        }
 //        return ReferenceRegionDTOFactory.getInstance().toDTO(obj);
 //    }
-
 //    @GET
 //    @Path("fetchall")
 //    @Produces("application/x-protobuf")
@@ -105,7 +105,6 @@ public class AssembledRegionBean {
 //            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
 //        }
 //    }
-
 //    @GET
 //    @Path("byReferenceInterval/{refid}/{from}/{to}")
 //    @Produces("application/x-protobuf")
@@ -119,7 +118,6 @@ public class AssembledRegionBean {
 //        }
 //        return ret;
 //    }
-
     @GET
     @Path("byBin/{id}")
     @Produces("application/x-protobuf")
@@ -145,6 +143,7 @@ public class AssembledRegionBean {
         }
         return AssembledRegionDTOFactory.getInstance().toDTOList(bins);
     }
+
     @GET
     @Path("getDNASequence/{id}")
     @Produces("application/x-protobuf")
@@ -156,6 +155,19 @@ public class AssembledRegionBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return SequenceDTOFactory.getInstance().toDTO(obj);
+    }
+
+    @GET
+    @Path("search/{id}/{term}")
+    @Produces("application/x-protobuf")
+    public BinSearchResultDTOList search(@PathParam("id") Long bin_id, @PathParam("term") String term) {
+        AutoCloseableIterator<BinSearchResult> iter;
+        try {
+            iter = mgx.getAssembledRegionDAO().search(bin_id, term);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        }
+        return BinSearchResultDTOFactory.getInstance().toDTOList(iter);
     }
 
 //    @DELETE
@@ -172,7 +184,6 @@ public class AssembledRegionBean {
 //        return MGXString.newBuilder().setValue(taskId.toString()).build();
 //
 //    }
-
     @PUT
     @Path("initDownloadforAttributes")
     @Produces("application/x-protobuf")
