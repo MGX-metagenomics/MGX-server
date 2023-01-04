@@ -31,8 +31,9 @@ public class JobSubmitterImpl implements JobSubmitterI {
 
     private Host currentHost = null;
     private Client currentClient = null;
-
-    private final static String MGX_CLASS = "MGX-2";
+    //
+    // GPMS project class for MGX 2.x projects
+    private final static String MGX_PROJECT_CLASS = "MGX-2";
 
     @Override
     public void shutdown(Host dispatcherHost, String token) throws MGXDispatcherException {
@@ -48,22 +49,22 @@ public class JobSubmitterImpl implements JobSubmitterI {
         // dispatcher will update the DB job state to either JobState.VERIFIED
         // or JobState.FAILED
         //
-        return get(dispatcherHost, Boolean.class, "validate", MGX_CLASS, projName, String.valueOf(jobId));
+        return get(dispatcherHost, Boolean.class, "validate", MGX_PROJECT_CLASS, projName, String.valueOf(jobId));
     }
 
     @Override
     public boolean submit(Host dispatcherHost, String projName, long jobId) throws MGXDispatcherException {
-        return get(dispatcherHost, Boolean.class, "submit", MGX_CLASS, projName, String.valueOf(jobId));
+        return get(dispatcherHost, Boolean.class, "submit", MGX_PROJECT_CLASS, projName, String.valueOf(jobId));
     }
 
     @Override
     public void cancel(Host dispatcherHost, String projectName, long jobId) throws MGXDispatcherException {
-        delete(dispatcherHost, "cancel", MGX_CLASS, projectName, String.valueOf(jobId));
+        delete(dispatcherHost, "cancel", MGX_PROJECT_CLASS, projectName, String.valueOf(jobId));
     }
 
     @Override
     public void delete(Host dispatcherHost, String projectName, long jobId) throws MGXDispatcherException {
-        delete(dispatcherHost, "delete", MGX_CLASS, projectName, String.valueOf(jobId));
+        delete(dispatcherHost, "delete", MGX_PROJECT_CLASS, projectName, String.valueOf(jobId));
     }
 
     private WebTarget getWebResource(Host target) throws MGXDispatcherException {
@@ -93,19 +94,19 @@ public class JobSubmitterImpl implements JobSubmitterI {
         return UriBuilder.fromUri(uri).build();
     }
 
-    protected final <U> U put(Host target, final String path, Object obj, Class<U> targetClass) throws MGXDispatcherException {
-        Invocation.Builder buildPath = buildPath(target, path);
-        try (Response res = buildPath.put(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE))) {
-            catchException(res);
-            return res.readEntity(targetClass);
-        } catch (ProcessingException che) {
-            if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause().getMessage());
-            } else {
-                throw new MGXDispatcherException(che.getMessage());
-            }
-        }
-    }
+//    protected final <U> U put(Host target, final String path, Object obj, Class<U> targetClass) throws MGXDispatcherException {
+//        Invocation.Builder buildPath = buildPath(target, path);
+//        try (Response res = buildPath.put(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE))) {
+//            catchException(res);
+//            return res.readEntity(targetClass);
+//        } catch (ProcessingException che) {
+//            if (che.getCause() != null && che.getCause() instanceof Exception) {
+//                throw new MGXDispatcherException(che.getCause().getMessage());
+//            } else {
+//                throw new MGXDispatcherException(che.getMessage());
+//            }
+//        }
+//    }
 
     protected final <U> U get(Host target, Class<U> targetClass, final String... path) throws MGXDispatcherException {
         Invocation.Builder buildPath = buildPath(target, path);
@@ -135,19 +136,19 @@ public class JobSubmitterImpl implements JobSubmitterI {
         }
     }
 
-    protected final <U> void post(Host target, U obj, final String... path) throws MGXDispatcherException {
-        Invocation.Builder buildPath = buildPath(target, path);
-        try {
-            Response res = buildPath.post(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE));
-            catchException(res);
-        } catch (ProcessingException che) {
-            if (che.getCause() != null && che.getCause() instanceof Exception) {
-                throw new MGXDispatcherException(che.getCause().getMessage());
-            } else {
-                throw new MGXDispatcherException(che.getMessage());
-            }
-        }
-    }
+//    protected final <U> void post(Host target, U obj, final String... path) throws MGXDispatcherException {
+//        Invocation.Builder buildPath = buildPath(target, path);
+//        try {
+//            Response res = buildPath.post(Entity.entity(obj, MediaType.TEXT_PLAIN_TYPE));
+//            catchException(res);
+//        } catch (ProcessingException che) {
+//            if (che.getCause() != null && che.getCause() instanceof Exception) {
+//                throw new MGXDispatcherException(che.getCause().getMessage());
+//            } else {
+//                throw new MGXDispatcherException(che.getMessage());
+//            }
+//        }
+//    }
 
     protected final void catchException(final Response res) throws MGXDispatcherException {
         if (Response.Status.fromStatusCode(res.getStatus()) != Response.Status.OK) {
