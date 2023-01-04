@@ -59,11 +59,11 @@ public class SequenceDAO extends DAO<Sequence> {
     }
 
     private static final String GET_SEQRUN = "SELECT r.seqrun_id, r.name FROM read r WHERE r.id=?";
-
+    
     @Override
     @SuppressWarnings("unchecked")
-    public Sequence getById(long id) throws MGXException {
-        if (id <= 0) {
+    public Sequence getById(long readId) throws MGXException {
+        if (readId <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
         // find the storage file for this sequence
@@ -71,7 +71,7 @@ public class SequenceDAO extends DAO<Sequence> {
         String seqName = null;
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(GET_SEQRUN)) {
-                stmt.setLong(1, id);
+                stmt.setLong(1, readId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         seqrun_id = rs.getLong(1);
@@ -92,16 +92,16 @@ public class SequenceDAO extends DAO<Sequence> {
         }
 
         if (dbFile == null || dbFile.isEmpty() || seqName == null || seqName.isEmpty()) {
-            throw new MGXException("No sequence for ID " + id);
+            throw new MGXException("No sequence for ID " + readId);
         }
 
         Sequence seq = new Sequence();
-        seq.setId(id);
+        seq.setId(readId);
         seq.setName(seqName);
 
         // read sequence data
         try (SeqReaderI<? extends DNASequenceI> reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile)) {
-            Iterator<? extends DNASequenceI> iter = reader.fetch(new long[]{id}).iterator();
+            Iterator<? extends DNASequenceI> iter = reader.fetch(new long[]{readId}).iterator();
             if (iter.hasNext()) {
                 DNASequenceI dnaSeq = iter.next();
                 byte[] seqdata = dnaSeq.getSequence();
@@ -109,7 +109,7 @@ public class SequenceDAO extends DAO<Sequence> {
                 seq.setSequence(seqString);
                 seq.setLength(seqString.length());
             } else {
-                throw new MGXException("No sequence data found for ID " + id);
+                throw new MGXException("No sequence data found for ID " + readId);
             }
         } catch (SequenceException ex) {
             getController().log(ex);
