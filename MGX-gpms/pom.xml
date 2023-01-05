@@ -41,14 +41,6 @@
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
         </dependency>
-        <!--
-<dependency>
-    <groupId>javax</groupId>
-    <artifactId>javaee-api</artifactId>
-    <version>8.0.1</version>
-    <scope>provided</scope>
-</dependency>
-        -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
