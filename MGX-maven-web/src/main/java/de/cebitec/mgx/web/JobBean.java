@@ -23,7 +23,6 @@ import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.jobsubmitter.api.Host;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
 import de.cebitec.mgx.model.db.*;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.UnixHelper;
@@ -77,14 +76,12 @@ public class JobBean {
     MGXConfigurationI mgxconfig;
     @EJB
     DispatcherClientConfigurationI dispConfig;
-    @EJB
-    MappingSessions mappingSessions;
 
     @PUT
     @Path("runDefaultTools")
     @Consumes("application/x-protobuf")
     public Response runDefaultTools(MGXString dto) {
-        long seqrunId = Long.valueOf(dto.getValue());
+        long seqrunId = Long.parseLong(dto.getValue());
         try {
             // fetch run to make sure it exists
             SeqRun run = mgx.getSeqRunDAO().getById(seqrunId);
