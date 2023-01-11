@@ -3,7 +3,6 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.MGXDouble;
 import de.cebitec.mgx.dto.dto.MGXDoubleList;
-import de.cebitec.mgx.dto.dto.MGXLongList;
 import de.cebitec.mgx.dto.dto.MGXMatrixDTO;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.PCAResultDTO;
@@ -16,7 +15,6 @@ import de.cebitec.mgx.statistics.DataTransform;
 import de.cebitec.mgx.statistics.Distance;
 import de.cebitec.mgx.statistics.NMDS;
 import de.cebitec.mgx.statistics.PCA;
-import de.cebitec.mgx.statistics.RarefactionRTK;
 import de.cebitec.mgx.statistics.data.Matrix;
 import de.cebitec.mgx.statistics.data.NamedVector;
 import de.cebitec.mgx.statistics.data.PCAResult;
@@ -39,10 +37,6 @@ import jakarta.ws.rs.Produces;
 @Stateless
 public class StatisticsBean {
 
-//    @EJB
-//    Rarefaction rarefaction;
-    @EJB
-    RarefactionRTK rarefactionRTK;
     @EJB
     Clustering clust;
     @EJB
@@ -53,24 +47,6 @@ public class StatisticsBean {
     DataTransform transform;
     @EJB
     Distance distance;
-
-    @PUT
-    @Path("Rarefaction")
-    @Consumes("application/x-protobuf")
-    @Produces("application/x-protobuf")
-    public PointDTOList rarefy(MGXLongList dto) {
-        double[] data = new double[dto.getLongCount()];
-        for (int i = 0; i < dto.getLongCount(); i++) {
-            data[i] = (double) dto.getLong(i);
-        }
-        AutoCloseableIterator<Point> ret;
-        try {
-            ret = rarefactionRTK.rarefy(data);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ex.getMessage());
-        }
-        return PointDTOFactory.getInstance().toDTOList(ret);
-    }
 
     @PUT
     @Path("Clustering/{dist}/{agglo}")
