@@ -7,6 +7,7 @@ import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.qc.QCFactory;
 import de.cebitec.mgx.qc.io.Persister;
+import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.seqstorage.CSFWriter;
 import de.cebitec.mgx.seqstorage.CSQFWriter;
 import de.cebitec.mgx.seqstorage.EncodedDNASequence;
@@ -84,21 +85,18 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
                 }
 
                 if (!s.getQuality().isEmpty()) {
-                    EncodedQualityDNASequence qd = new EncodedQualityDNASequence();
+                    EncodedQualityDNASequence qd = new EncodedQualityDNASequence(-1, s.getSequence().toByteArray(), s.getQuality().toByteArray(), true);
                     qd.setName(s.getName().getBytes());
-                    qd.setEncodedSequence(s.getSequence().toByteArray());
-                    qd.setEncodedQuality(s.getQuality().toByteArray());
                     queue.put((T) qd);
                 } else {
-                    EncodedDNASequence eds = new EncodedDNASequence();
+                    EncodedDNASequence eds = new EncodedDNASequence(-1, s.getSequence().toByteArray(), true);
                     eds.setName(s.getName().getBytes());
-                    eds.setEncodedSequence(s.getSequence().toByteArray());
                     queue.put((T) eds);
                 }
 
                 total_num_sequences++;
             }
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | SequenceException ex) {
             Logger.getLogger(SeqUploadReceiver.class.getName()).log(Level.SEVERE, null, ex);
             throw new MGXException(ex);
         }
