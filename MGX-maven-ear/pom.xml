@@ -150,12 +150,17 @@
             <groupId>de.cebitec.mgx</groupId>
             <artifactId>MGX-sessions</artifactId>
             <version>${project.version}</version>
+            <type>ejb</type>        
+        </dependency>
+        <dependency>
+            <groupId>de.cebitec.gpms</groupId>
+            <artifactId>GPMS-ldap-loader</artifactId>
+            <version>2.0</version>
             <type>ejb</type>
         </dependency>
-       
     </dependencies>
     
-    <profiles>
+<!--    <profiles>
         <profile>
             <id>gpms-mysql</id>
             <dependencies>
@@ -179,4 +184,5 @@
             </dependencies>
         </profile>
     </profiles>
+            -->
 </project>
