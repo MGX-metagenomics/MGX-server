@@ -87,6 +87,9 @@ public class NMDS {
             conn.assign(tmp, colAliases);
             conn.eval(String.format("colnames(%s) <- %s", matrixName, tmp));
             conn.eval(String.format("rm(%s)", tmp));
+            
+            // we need to set a random seed for reproducible results
+            conn.eval("set.seed(42)");
 
             String pcoaName = Util.generateSuffix("pcoa");
             conn.eval(String.format("x <- capture.output(%s <- metaMDS(%s, distance=\"%s\", k=2))", pcoaName, matrixName, distMethod));
