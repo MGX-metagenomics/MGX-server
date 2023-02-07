@@ -87,9 +87,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
                 for (long id : attributeIDs) {
                     stmt.setLong(pos++, id);
                 }
-                System.err.println("call executeQuery()");
                 rs = stmt.executeQuery();
-                System.err.println("executeQuery() done");
             } catch (SQLException ex) {
                 exception = new MGXException(ex);
                 lock.unlock();
