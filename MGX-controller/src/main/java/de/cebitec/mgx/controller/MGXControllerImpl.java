@@ -185,6 +185,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public int getDatabasePort() {
+        return gpmsmaster.getGPMSDatasource().getHost().getPort();
+    }
+
+    @Override
     public String getDatabaseName() {
         return gpmsmaster.getGPMSDatasource().getName();
     }

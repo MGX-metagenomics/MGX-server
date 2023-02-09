@@ -697,7 +697,7 @@ public class JobDAO extends DAO<Job> {
         paramCache.clear();
     }
 
-    public void writeConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+    public void writeConfigFile(Job job, File projectDir, String dbUser, String dbPass, String dbName, String dbHost, int dbPort) throws MGXException {
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
                 .append("jobs")
@@ -712,6 +712,8 @@ public class JobDAO extends DAO<Job> {
             cfgFile.write("mgx.host=" + dbHost);
             cfgFile.newLine();
             cfgFile.write("mgx.database=" + dbName);
+            cfgFile.newLine();
+            cfgFile.write("mgx.port=" + dbPort);
             cfgFile.newLine();
             cfgFile.write("mgx.job_id=" + job.getId());
             cfgFile.newLine();

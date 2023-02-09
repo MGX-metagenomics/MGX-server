@@ -72,6 +72,8 @@ public interface MGXController extends AutoCloseable {
 
     public String getDatabaseHost();
 
+    public int getDatabasePort();
+
     public String getDatabaseName();
 
     @Override
