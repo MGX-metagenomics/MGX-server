@@ -208,6 +208,11 @@ public class MGXControllerImpl implements MGXController {
     }
 
     @Override
+    public int getDatabasePort() {
+        return gpmsmaster.getGPMSDatasource().getHost().getPort();
+    }
+
+    @Override
     public void close() {
         // jobdao instances are handled differently because they 
         // cache job parameters internally

@@ -61,8 +61,8 @@ public class JobDAO extends DAO<Job> {
             throw new MGXException("Job object does not reference sequencing runs or assemblies.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getCreator());
                 stmt.setInt(2, obj.getStatus().getValue());
 
@@ -83,7 +83,7 @@ public class JobDAO extends DAO<Job> {
 
                 stmt.setLong(5, obj.getToolId());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -134,10 +134,10 @@ public class JobDAO extends DAO<Job> {
         }
 
         Job job = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
                         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
@@ -208,8 +208,8 @@ public class JobDAO extends DAO<Job> {
                 + "FROM job j "
                 + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id IN (" + toSQLTemplateString(ids.length) + ")";
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_IDS)) {
                 int idx = 1;
                 for (long id : ids) {
                     if (id <= 0) {
@@ -218,7 +218,7 @@ public class JobDAO extends DAO<Job> {
                     stmt.setLong(idx++, id);
                 }
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -301,10 +301,10 @@ public class JobDAO extends DAO<Job> {
                 .toString();
 
         Job job = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_APIKEY)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_APIKEY)) {
                 stmt.setString(1, sha256hex);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
                         throw new MGXException("Invalid API key.");
@@ -368,9 +368,9 @@ public class JobDAO extends DAO<Job> {
     @SuppressWarnings("unchecked")
     public AutoCloseableIterator<Job> getAll() throws MGXException {
         List<Job> ret = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -449,10 +449,10 @@ public class JobDAO extends DAO<Job> {
     @SuppressWarnings("unchecked")
     public AutoCloseableIterator<Job> byTool(long tool_id) throws MGXException {
         List<Job> ret = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BYTOOL)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BYTOOL)) {
                 stmt.setLong(1, tool_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -529,8 +529,8 @@ public class JobDAO extends DAO<Job> {
         String sha256hex = Hashing.sha256()
                 .hashString(apiKey, StandardCharsets.UTF_8)
                 .toString();
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE_APIKEY)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE_APIKEY)) {
                 stmt.setString(1, sha256hex);
                 stmt.setLong(2, obj.getId());
                 stmt.executeUpdate();
@@ -553,8 +553,8 @@ public class JobDAO extends DAO<Job> {
             throw new MGXException("Job object does not reference sequencing runs or assemblies.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, job.getCreator());
                 stmt.setInt(2, job.getStatus().getValue());
                 if (job.getSeqrunIds() != null) {
@@ -579,9 +579,9 @@ public class JobDAO extends DAO<Job> {
         }
 
         if (job.getStatus().equals(JobState.RUNNING) || job.getStatus().equals(JobState.SUBMITTED)) {
-            try (Connection conn = getConnection()) {
+            try ( Connection conn = getConnection()) {
                 // set start date
-                try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET startdate=NOW() WHERE id=?")) {
+                try ( PreparedStatement stmt = conn.prepareStatement("UPDATE job SET startdate=NOW() WHERE id=?")) {
                     stmt.setLong(1, job.getId());
                     stmt.executeUpdate();
                     stmt.close();
@@ -592,16 +592,16 @@ public class JobDAO extends DAO<Job> {
         }
 
         if (job.getStatus().equals(JobState.FINISHED)) {
-            try (Connection conn = getConnection()) {
+            try ( Connection conn = getConnection()) {
                 // set finished date
-                try (PreparedStatement stmt = conn.prepareStatement("UPDATE job SET finishdate=NOW() WHERE id=?")) {
+                try ( PreparedStatement stmt = conn.prepareStatement("UPDATE job SET finishdate=NOW() WHERE id=?")) {
                     stmt.setLong(1, job.getId());
                     stmt.executeUpdate();
                     stmt.close();
                 }
 
                 // remove attribute counts
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
                     stmt.close();
@@ -614,13 +614,13 @@ public class JobDAO extends DAO<Job> {
                         + "LEFT JOIN read ON (observation.seq_id=read.id) "
                         + "WHERE job_id=? GROUP BY attribute.id, read.seqrun_id ORDER BY attribute.id";
 
-                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
                     stmt.close();
                 }
 
-                 // create coverage-based counts for gene attributes
+                // create coverage-based counts for gene attributes
                 String sql2 = "INSERT INTO attributecount "
                         + "SELECT attribute.id, gene_coverage.run_id, sum(gene_coverage.coverage) FROM attribute "
                         + "LEFT JOIN gene_observation ON (attribute.id = gene_observation.attr_id) "
@@ -629,7 +629,7 @@ public class JobDAO extends DAO<Job> {
                         + "WHERE job_id=? AND gene_coverage.coverage > 0 "
                         + "GROUP BY attribute.id, gene_coverage.run_id ORDER BY attribute.id";
 
-                try (PreparedStatement stmt = conn.prepareStatement(sql2)) {
+                try ( PreparedStatement stmt = conn.prepareStatement(sql2)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
                     stmt.close();
@@ -703,10 +703,10 @@ public class JobDAO extends DAO<Job> {
         }
         List<Job> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -788,10 +788,10 @@ public class JobDAO extends DAO<Job> {
         }
         List<Job> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_ASM)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_ASM)) {
                 stmt.setLong(1, asm_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -874,16 +874,16 @@ public class JobDAO extends DAO<Job> {
         }
 
         List<Job> ret = null;
-        try (Connection conn = getConnection()) {
+        try ( Connection conn = getConnection()) {
 
             String sql = BY_ATTRS + toSQLTemplateString(attributeIDs.length) + ")";
 
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
                 int pos = 1;
                 for (long attrId : attributeIDs) {
                     stmt.setLong(pos++, attrId);
                 }
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     Job currentJob = null;
 
@@ -1041,7 +1041,7 @@ public class JobDAO extends DAO<Job> {
                 .append(job.getId())
                 .toString();
 
-        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
+        try ( BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("projectName: " + projectName);
             cfgFile.newLine();
             cfgFile.write("apiKey: " + createApiKey(job));
@@ -1080,7 +1080,7 @@ public class JobDAO extends DAO<Job> {
         }
     }
 
-    public void writeConveyorConfigFile(Job job, URI annotationService, String projectName, File projectDir, String dbUser, String dbPass, String dbName, String dbHost) throws MGXException {
+    public void writeConveyorConfigFile(Job job, URI annotationService, String projectName, File projectDir, String dbUser, String dbPass, String dbName, String dbHost, int dbPort) throws MGXException {
 
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
@@ -1088,7 +1088,7 @@ public class JobDAO extends DAO<Job> {
                 .append(File.separator)
                 .append(job.getId()).toString();
 
-        try (BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
+        try ( BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("mgx.username=" + dbUser);
             cfgFile.newLine();
             cfgFile.write("mgx.password=" + dbPass);
@@ -1096,6 +1096,8 @@ public class JobDAO extends DAO<Job> {
             cfgFile.write("mgx.host=" + dbHost);
             cfgFile.newLine();
             cfgFile.write("mgx.database=" + dbName);
+            cfgFile.newLine();
+            cfgFile.write("mgx.port=" + dbPort);
             cfgFile.newLine();
             cfgFile.write("mgx.job_id=" + job.getId());
             cfgFile.newLine();

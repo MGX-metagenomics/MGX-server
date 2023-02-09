@@ -116,7 +116,7 @@ public class JobBean {
 
                 if (t.getFile().endsWith("xml")) {
                     mgx.getJobDAO().writeConveyorConfigFile(j, mgxconfig.getAnnotationService(), mgx.getProjectName(), mgx.getProjectDirectory(),
-                            mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost());
+                            mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(), mgx.getDatabaseName(), mgx.getDatabaseHost(), mgx.getDatabasePort());
                 } else if (t.getFile().endsWith("cwl")) {
                     mgx.getJobDAO().writeCWLConfigFile(j, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
                 } else {
@@ -318,7 +318,7 @@ public class JobBean {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
                         mgx.getProjectName(),
                         mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(),
-                        mgx.getDatabaseName(), mgx.getDatabaseHost());
+                        mgx.getDatabaseName(), mgx.getDatabaseHost(), mgx.getDatabasePort());
             } else if (t.getFile().endsWith("cwl")) {
                 // as the stored job parameters do not have a class name, we
                 // need to fetch these from the workflow and update the params
@@ -390,8 +390,37 @@ public class JobBean {
             if (status != JobState.FAILED && status != JobState.ABORTED) {
                 throw new MGXWebException("Job is in invalid state.");
             }
-            TaskI t = mgx.getJobDAO().restart(job, dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), js);
-            UUID taskId = taskHolder.addTask(t);
+
+            //
+            // re-create the jobs config file to account for changes, e.g.
+            // when the database was moved to a different server
+            //
+            Tool t = mgx.getToolDAO().getById(job.getToolId());
+            if (t.getFile().endsWith("xml")) {
+                mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
+                        mgx.getProjectName(),
+                        mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(),
+                        mgx.getDatabaseName(), mgx.getDatabaseHost(), mgx.getDatabasePort());
+            } else if (t.getFile().endsWith("cwl")) {
+                // as the stored job parameters do not have a class name, we
+                // need to fetch these from the workflow and update the params
+                String toolContent = UnixHelper.readFile(new File(t.getFile()));
+                AutoCloseableIterator<JobParameter> params = CommonWL.getParameters(toolContent);
+                Map<String, JobParameter> tmp = new HashMap<>();
+                while (params.hasNext()) {
+                    JobParameter jp = params.next();
+                    tmp.put(jp.getUserName(), jp);
+                }
+                for (JobParameter jp : job.getParameters()) {
+                    jp.setClassName(tmp.get(jp.getUserName()).getClassName());
+                }
+                mgx.getJobDAO().writeCWLConfigFile(job, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
+            } else {
+                throw new MGXWebException("Unable to determine workflow type.");
+            }
+
+            TaskI task = mgx.getJobDAO().restart(job, dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), js);
+            UUID taskId = taskHolder.addTask(task);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
         } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
@@ -521,7 +550,7 @@ public class JobBean {
         }
     }
 
-        @GET
+    @GET
     @Path("ByAssembly/{asm_id}")
     @Produces("application/x-protobuf")
     public JobDTOList ByAssembly(@PathParam("asm_id") Long asm_id) {
@@ -532,7 +561,7 @@ public class JobBean {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
     }
-    
+
     @GET
     @Path("GetError/{id}")
     @Produces("application/x-protobuf")
