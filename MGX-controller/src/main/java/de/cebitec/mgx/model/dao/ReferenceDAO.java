@@ -44,12 +44,12 @@ public class ReferenceDAO extends DAO<Reference> {
             }
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
                 stmt.setString(1, obj.getName());
                 stmt.setInt(2, obj.getLength());
                 stmt.setString(3, obj.getFile());
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -68,8 +68,8 @@ public class ReferenceDAO extends DAO<Reference> {
         if (obj.getId() == Reference.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setInt(2, obj.getLength());
 
@@ -87,7 +87,7 @@ public class ReferenceDAO extends DAO<Reference> {
 
     public TaskI delete(long id) throws MGXException, IOException {
         List<TaskI> subtasks = new ArrayList<>();
-        try (AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
+        try ( AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
             while (iter.hasNext()) {
                 Mapping s = iter.next();
                 TaskI del = getController().getMappingDAO().delete(s.getId(), getController().getDataSource(),
@@ -109,10 +109,10 @@ public class ReferenceDAO extends DAO<Reference> {
         if (id <= 0) {
             throw new MGXException("No/Invalid ID supplied.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
                         throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
@@ -141,9 +141,9 @@ public class ReferenceDAO extends DAO<Reference> {
 
     public AutoCloseableIterator<Reference> getAll() throws MGXException {
         List<Reference> refs = new ArrayList<>();
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Reference ref = new Reference();
                         ref.setId(rs.getLong(1));
@@ -174,14 +174,15 @@ public class ReferenceDAO extends DAO<Reference> {
     public String getSequence(long refId, int from, int to) throws MGXException {
         int refLen = -1;
         String filePath = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT ref_length, ref_filepath FROM reference WHERE id=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT ref_length, ref_filepath FROM reference WHERE id=?")) {
                 stmt.setLong(1, refId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        refLen = rs.getInt(1);
-                        filePath = rs.getString(2);
+                try ( ResultSet rs = stmt.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new MGXException("No object of type " + getClassName() + " for ID " + refId + ".");
                     }
+                    refLen = rs.getInt(1);
+                    filePath = rs.getString(2);
                 }
             }
         } catch (SQLException ex) {
@@ -202,7 +203,7 @@ public class ReferenceDAO extends DAO<Reference> {
         }
         int len = to - from + 1;
         char[] buf = new char[len];
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+        try ( BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             br.readLine(); // skip header line
             br.skip(from);
             if (len != br.read(buf)) {
