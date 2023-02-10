@@ -1,5 +1,5 @@
 
-name: Java CI with Maven
+name: MGX 2.x server CI
 
 on:
   push:
