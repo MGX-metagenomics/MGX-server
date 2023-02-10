@@ -8,6 +8,7 @@ package de.cebitec.mgx.annotationservice;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.cebitec.mgx.annotationservice.exception.MGXServiceException;
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
@@ -38,23 +39,27 @@ public class APIKeyValidator implements ContainerRequestFilter {
     @MGX
     MGXController mgx;
 
-    private static Cache<CacheKey, Boolean> cache;
+    private static final Logger LOG = Logger.getLogger(APIKeyValidator.class.getName());
+
+    private static Cache<CacheKey, Boolean> cache = null;
 
     public APIKeyValidator() {
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(500)
-                .expireAfterAccess(5, TimeUnit.MINUTES)
-                .build();
+        if (cache == null) {
+            cache = CacheBuilder.newBuilder()
+                    .maximumSize(500)
+                    .expireAfterAccess(5, TimeUnit.MINUTES)
+                    .build();
+        }
     }
 
     @Override
     public void filter(ContainerRequestContext cr) {
 
         if (mgx == null) {
-            Logger.getLogger(APIKeyValidator.class.getName()).log(Level.INFO, "No MGX instance!");
-            return;
+            LOG.log(Level.INFO, "No MGX instance, API key access disabled.");
+            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Server error");
         }
-        
+
         String apiKey = cr.getHeaders().getFirst("apiKey");
 
         if (apiKey == null || apiKey.isEmpty()) {
@@ -63,18 +68,26 @@ public class APIKeyValidator implements ContainerRequestFilter {
 
         CacheKey key = new CacheKey(apiKey, mgx.getProjectName());
         if (Objects.equals(cache.getIfPresent(key), Boolean.TRUE)) {
-            // cache hit
+            // cache hit, api key is valid
             return;
         }
 
-        // cache miss
+        // cache miss, obtain data from projects DB
         try {
             Job job = mgx.getJobDAO().getByApiKey(apiKey);
-            if (job != null) {
-                cache.put(key, Boolean.TRUE);
+            if (job == null) {
+                throw new MGXServiceException(Response.Status.UNAUTHORIZED, "API key not valid");
             }
+
+            // validate job state
+            JobState status = job.getStatus();
+            if (!(status == JobState.QUEUED || status == JobState.RUNNING)) {
+                throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
+            }
+
+            cache.put(key, Boolean.TRUE);
         } catch (MGXException ex) {
-            Logger.getLogger(APIKeyValidator.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
             throw new MGXServiceException(Response.Status.UNAUTHORIZED, ex.getMessage());
         }
     }
