@@ -295,13 +295,9 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     private final static String SQL_BY_EXTRACT
-            = "WITH complete_runs AS ("
-            + "SELECT id, name, database_accession, num_sequences, sequencing_method, "
-            + "sequencing_technology, submitted_to_insdc, paired, dnaextract_id FROM seqrun WHERE num_sequences <> -1"
-            + ")"
-            + "SELECT s.id, s.name, s.database_accession, s.num_sequences, s.sequencing_method, "
-            + "s.sequencing_technology, s.submitted_to_insdc, s.paired "
-            + "FROM dnaextract d LEFT JOIN complete_runs s ON (d.id=s.dnaextract_id) WHERE d.id=?";
+            = "SELECT id, name, database_accession, num_sequences, sequencing_method, "
+            + "sequencing_technology, submitted_to_insdc, paired, dnaextract_id FROM seqrun WHERE num_sequences <> -1 "
+            + "AND dnaextract_id=?";
 
     public AutoCloseableIterator<SeqRun> byDNAExtract(final long extract_id) throws MGXException {
         if (extract_id <= 0) {
