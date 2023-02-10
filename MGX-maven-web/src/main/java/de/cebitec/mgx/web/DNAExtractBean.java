@@ -118,6 +118,7 @@ public class DNAExtractBean {
 
         UUID taskId;
         try {
+            DNAExtract obj = mgx.getDNAExtractDAO().getById(id);
             taskId = taskHolder.addTask(mgx.getDNAExtractDAO().delete(id));
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ex.getMessage());
