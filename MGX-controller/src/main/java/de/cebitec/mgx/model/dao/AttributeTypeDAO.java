@@ -209,7 +209,7 @@ public class AttributeTypeDAO extends DAO<AttributeType> {
                 + "FROM job "
                 + "JOIN attribute attr ON (job.id = attr.job_id) "
                 + "JOIN attributetype atype ON (attr.attrtype_id = atype.id) "
-                + "WHERE job.job_state=? AND job.seqrun_id=?";
+                + "WHERE job.job_state=? AND ?=ANY(job.seqruns)";
 
         PreparedStatement stmt;
         ResultSet rset;
