@@ -227,6 +227,8 @@ public class SeqRunBean {
     public MGXBoolean hasQuality(@PathParam("id") Long id) {
         boolean hasQual;
         try {
+            // make sure run exists
+            SeqRun run = mgx.getSeqRunDAO().getById(id);
             hasQual = mgx.getSeqRunDAO().hasQuality(id);
         } catch (IOException | MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
