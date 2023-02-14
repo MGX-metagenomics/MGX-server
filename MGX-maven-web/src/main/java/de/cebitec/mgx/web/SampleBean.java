@@ -10,6 +10,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.SampleDTO;
 import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
+import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
 import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -111,6 +112,8 @@ public class SampleBean {
     public SampleDTOList byHabitat(@PathParam("id") Long hab_id) {
         AutoCloseableIterator<Sample> samples;
         try {
+            // make sure the habitat exists
+            Habitat obj = mgx.getHabitatDAO().getById(hab_id);
             samples = mgx.getSampleDAO().byHabitat(hab_id);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -126,6 +129,7 @@ public class SampleBean {
 
         UUID taskId;
         try {
+            Sample obj = mgx.getSampleDAO().getById(id);
             taskId = taskHolder.addTask(mgx.getSampleDAO().delete(id));
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));

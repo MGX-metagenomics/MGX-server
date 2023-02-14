@@ -530,19 +530,8 @@ public class JobBean {
     @Path("BySeqRun/{seqrun_id}")
     @Produces("application/x-protobuf")
     public JobDTOList BySeqRun(@PathParam("seqrun_id") Long seqrun_id) {
-//        SeqRun run = null;
-//        try {
-//            run = mgx.getSeqRunDAO().getById(seqrun_id);
-//        } catch (MGXException ex) {
-//            try {
-//                // we don't fail for non-existing seqruns; instead, an empty
-//                // result is returned
-//                return JobDTOFactory.getInstance().toDTOList(mgx.getJobDAO().BySeqRun(seqrun_id));
-//            } catch (MGXException ex1) {
-//                Logger.getLogger(JobBean.class.getName()).log(Level.SEVERE, null, ex1);
-//            }
-//        }
         try {
+            SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
             AutoCloseableIterator<Job> acit = mgx.getJobDAO().bySeqRun(seqrun_id);
             return JobDTOFactory.getInstance().toDTOList(acit);
         } catch (MGXException ex) {
@@ -555,6 +544,7 @@ public class JobBean {
     @Produces("application/x-protobuf")
     public JobDTOList ByAssembly(@PathParam("asm_id") Long asm_id) {
         try {
+            Assembly asm = mgx.getAssemblyDAO().getById(asm_id);
             AutoCloseableIterator<Job> acit = mgx.getJobDAO().byAssembly(asm_id);
             return JobDTOFactory.getInstance().toDTOList(acit);
         } catch (MGXException ex) {

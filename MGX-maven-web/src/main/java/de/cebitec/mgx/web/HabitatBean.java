@@ -104,6 +104,8 @@ public class HabitatBean {
     public MGXString delete(@PathParam("id") Long id) {
         UUID taskId;
         try {
+            // verify the habitat exists
+            Habitat obj = mgx.getHabitatDAO().getById(id);
             taskId = taskHolder.addTask(mgx.getHabitatDAO().delete(id));
         } catch (MGXException | IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
