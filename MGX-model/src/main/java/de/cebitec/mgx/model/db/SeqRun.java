@@ -13,10 +13,9 @@ public class SeqRun extends Identifiable {
     protected String database_accession;
     protected boolean submitted_to_insdc;
     protected boolean isPaired;
-    protected Long sequencing_technology;
-    protected Long sequencing_method;
-    protected Long num_sequences = Long.valueOf(0);
-    protected Collection<Sequence> sequences;
+    protected long sequencing_technology;
+    protected long sequencing_method;
+    protected long num_sequences = 0;
     protected long dnaextract;
     protected Collection<Job> jobs;
 
@@ -70,16 +69,7 @@ public class SeqRun extends Identifiable {
         return this;
     }
 
-    public Collection<Sequence> getSequences() {
-        return sequences;
-    }
-
-    public SeqRun setSequences(Collection<Sequence> sequences) {
-        this.sequences = sequences;
-        return this;
-    }
-
-    public Long getSequencingMethod() {
+    public long getSequencingMethod() {
         return sequencing_method;
     }
 
@@ -88,7 +78,7 @@ public class SeqRun extends Identifiable {
         return this;
     }
 
-    public Long getSequencingTechnology() {
+    public long getSequencingTechnology() {
         return sequencing_technology;
     }
 
@@ -106,7 +96,7 @@ public class SeqRun extends Identifiable {
         return this;
     }
 
-    public Long getNumberOfSequences() {
+    public long getNumberOfSequences() {
         return num_sequences;
     }
 
