@@ -59,7 +59,7 @@ public class SequenceDAO extends DAO<Sequence> {
     }
 
     private static final String GET_SEQRUN = "SELECT r.seqrun_id, r.name FROM read r WHERE r.id=?";
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public Sequence getById(long readId) throws MGXException {
@@ -73,9 +73,11 @@ public class SequenceDAO extends DAO<Sequence> {
             try (PreparedStatement stmt = conn.prepareStatement(GET_SEQRUN)) {
                 stmt.setLong(1, readId);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
+                    if (rs.next()) {
                         seqrun_id = rs.getLong(1);
                         seqName = rs.getString(2);
+                    } else {
+                        throw new MGXException("No object of type Sequence for ID " + readId);
                     }
                 }
             }
