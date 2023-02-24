@@ -31,7 +31,7 @@ public class HabitatDAO extends DAO<Habitat> {
         return Habitat.class;
     }
 
-    private final static String CREATE = "INSERT INTO habitat (name, altitude, biome, description, latitude, longitude) "
+    private final static String CREATE = "INSERT INTO habitat (name, biome, description, latitude, longitude) "
             + "VALUES (?,?,?,?,?,?) RETURNING id";
 
     @Override
@@ -39,11 +39,10 @@ public class HabitatDAO extends DAO<Habitat> {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
-                stmt.setInt(2, obj.getAltitude());
-                stmt.setString(3, obj.getBiome());
-                stmt.setString(4, obj.getDescription());
-                stmt.setDouble(5, obj.getLatitude());
-                stmt.setDouble(6, obj.getLongitude());
+                stmt.setString(2, obj.getBiome());
+                stmt.setString(3, obj.getDescription());
+                stmt.setDouble(4, obj.getLatitude());
+                stmt.setDouble(5, obj.getLongitude());
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -57,7 +56,7 @@ public class HabitatDAO extends DAO<Habitat> {
         return obj.getId();
     }
 
-    private final static String UPDATE = "UPDATE habitat SET name=?, altitude=?, biome=?, description=?, latitude=?, "
+    private final static String UPDATE = "UPDATE habitat SET name=?, biome=?, description=?, latitude=?, "
             + "longitude=? WHERE id=?";
 
     public void update(Habitat obj) throws MGXException {
@@ -67,13 +66,12 @@ public class HabitatDAO extends DAO<Habitat> {
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
-                stmt.setInt(2, obj.getAltitude());
-                stmt.setString(3, obj.getBiome());
-                stmt.setString(4, obj.getDescription());
-                stmt.setDouble(5, obj.getLatitude());
-                stmt.setDouble(6, obj.getLongitude());
+                stmt.setString(2, obj.getBiome());
+                stmt.setString(3, obj.getDescription());
+                stmt.setDouble(4, obj.getLatitude());
+                stmt.setDouble(5, obj.getLongitude());
 
-                stmt.setLong(7, obj.getId());
+                stmt.setLong(6, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
                     throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
@@ -109,8 +107,8 @@ public class HabitatDAO extends DAO<Habitat> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, altitude, biome, description, latitude, longitude FROM habitat";
-    private static final String BY_ID = "SELECT name, altitude, biome, description, latitude, longitude FROM habitat WHERE id=?";
+    private static final String FETCHALL = "SELECT id, name, biome, description, latitude, longitude FROM habitat";
+    private static final String BY_ID = "SELECT name, biome, description, latitude, longitude FROM habitat WHERE id=?";
 
     @Override
     public Habitat getById(long id) throws MGXException {
@@ -126,11 +124,10 @@ public class HabitatDAO extends DAO<Habitat> {
                         Habitat ret = new Habitat();
                         ret.setId(id);
                         ret.setName(rs.getString(1));
-                        ret.setAltitude(rs.getInt(2));
-                        ret.setBiome(rs.getString(3));
-                        ret.setDescription(rs.getString(4));
-                        ret.setLatitude(rs.getDouble(5));
-                        ret.setLongitude(rs.getDouble(6));
+                        ret.setBiome(rs.getString(2));
+                        ret.setDescription(rs.getString(3));
+                        ret.setLatitude(rs.getDouble(4));
+                        ret.setLongitude(rs.getDouble(5));
                         return ret;
                     }
                 }
@@ -153,11 +150,10 @@ public class HabitatDAO extends DAO<Habitat> {
                         Habitat ret = new Habitat();
                         ret.setId(rs.getLong(1));
                         ret.setName(rs.getString(2));
-                        ret.setAltitude(rs.getInt(3));
-                        ret.setBiome(rs.getString(4));
-                        ret.setDescription(rs.getString(5));
-                        ret.setLatitude(rs.getDouble(6));
-                        ret.setLongitude(rs.getDouble(7));
+                        ret.setBiome(rs.getString(3));
+                        ret.setDescription(rs.getString(4));
+                        ret.setLatitude(rs.getDouble(5));
+                        ret.setLongitude(rs.getDouble(6));
                         if (l == null) {
                             l = new ArrayList<>();
                         }

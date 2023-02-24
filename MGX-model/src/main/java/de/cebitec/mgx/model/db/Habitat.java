@@ -61,15 +61,6 @@ public class Habitat extends Identifiable {
         return this;
     }
 
-    public int getAltitude() {
-        return altitude;
-    }
-
-    public Habitat setAltitude(int altitude) {
-        this.altitude = altitude;
-        return this;
-    }
-
     public String getBiome() {
         return biome;
     }
