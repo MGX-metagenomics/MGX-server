@@ -5,7 +5,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-
+import java.io.Serial;
 
 /**
  *
@@ -13,6 +13,9 @@ import jakarta.ws.rs.core.Response.Status;
  */
 @ApplicationException
 public class MGXWebException extends WebApplicationException {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private Status http_status = null;
 

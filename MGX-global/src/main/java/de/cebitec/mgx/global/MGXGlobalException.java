@@ -1,10 +1,15 @@
 package de.cebitec.mgx.global;
 
+import java.io.Serial;
+
 /**
  *
  * @author sjaenick
  */
 public class MGXGlobalException extends Exception {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public MGXGlobalException(Throwable cause) {
         super(cause);

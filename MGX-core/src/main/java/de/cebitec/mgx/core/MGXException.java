@@ -1,10 +1,15 @@
 package de.cebitec.mgx.core;
 
+import java.io.Serial;
+
 /**
  *
  * @author sjaenick
  */
 public class MGXException extends Exception {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public MGXException(Throwable cause) {
         super(cause);
