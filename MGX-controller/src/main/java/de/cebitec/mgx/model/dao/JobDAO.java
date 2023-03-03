@@ -47,7 +47,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     @Override
-    Class getType() {
+    Class<Job> getType() {
         return Job.class;
     }
 
@@ -299,6 +299,9 @@ public class JobDAO extends DAO<Job> {
         String sha256hex = Hashing.sha256()
                 .hashString(apiKey, StandardCharsets.UTF_8)
                 .toString();
+
+        // DEBUG
+        //System.err.println("API key " + apiKey + " hashed to " + sha256hex);
 
         Job job = null;
         try ( Connection conn = getConnection()) {
@@ -584,7 +587,6 @@ public class JobDAO extends DAO<Job> {
                 try ( PreparedStatement stmt = conn.prepareStatement("UPDATE job SET startdate=NOW() WHERE id=?")) {
                     stmt.setLong(1, job.getId());
                     stmt.executeUpdate();
-                    stmt.close();
                 }
             } catch (SQLException ex) {
                 throw new MGXException(ex);
@@ -597,14 +599,12 @@ public class JobDAO extends DAO<Job> {
                 try ( PreparedStatement stmt = conn.prepareStatement("UPDATE job SET finishdate=NOW() WHERE id=?")) {
                     stmt.setLong(1, job.getId());
                     stmt.executeUpdate();
-                    stmt.close();
                 }
 
                 // remove attribute counts
                 try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
-                    stmt.close();
                 }
 
                 // create assignment counts for read-based attributes belonging to this job
@@ -617,7 +617,6 @@ public class JobDAO extends DAO<Job> {
                 try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
-                    stmt.close();
                 }
 
                 // create coverage-based counts for gene attributes
@@ -632,10 +631,14 @@ public class JobDAO extends DAO<Job> {
                 try ( PreparedStatement stmt = conn.prepareStatement(sql2)) {
                     stmt.setLong(1, job.getId());
                     stmt.execute();
-                    stmt.close();
                 }
 
-                conn.close();
+                // invalidate api key
+                try ( PreparedStatement stmt = conn.prepareStatement("UPDATE job SET apikey=NULL WHERE id=?")) {
+                    stmt.setLong(1, job.getId());
+                    stmt.executeUpdate();
+                }
+
             } catch (SQLException ex) {
                 throw new MGXException(ex);
             }
