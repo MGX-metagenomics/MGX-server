@@ -29,7 +29,7 @@ public class BinDAO extends DAO<Bin> {
     }
 
     @Override
-    Class getType() {
+    Class<Bin> getType() {
         return Bin.class;
     }
 

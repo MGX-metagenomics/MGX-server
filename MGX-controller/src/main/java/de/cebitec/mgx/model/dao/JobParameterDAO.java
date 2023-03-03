@@ -22,7 +22,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
     }
 
     @Override
-    Class getType() {
+    Class<JobParameter> getType() {
         return JobParameter.class;
     }
 

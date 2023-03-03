@@ -27,7 +27,7 @@ public class ContigDAO extends DAO<Contig> {
     }
 
     @Override
-    Class getType() {
+    Class<Contig> getType() {
         return Contig.class;
     }
 

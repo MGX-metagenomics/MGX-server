@@ -30,7 +30,7 @@ public class SequenceDAO extends DAO<Sequence> {
     }
 
     @Override
-    Class getType() {
+    Class<Sequence> getType() {
         return Sequence.class;
     }
 

@@ -27,7 +27,7 @@ public class SampleDAO extends DAO<Sample> {
     }
 
     @Override
-    Class getType() {
+    Class<Sample> getType() {
         return Sample.class;
     }
 

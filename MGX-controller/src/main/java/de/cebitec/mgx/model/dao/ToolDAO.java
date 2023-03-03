@@ -35,7 +35,7 @@ public class ToolDAO extends DAO<Tool> {
     }
 
     @Override
-    Class getType() {
+    Class<Tool> getType() {
         return Tool.class;
     }
 

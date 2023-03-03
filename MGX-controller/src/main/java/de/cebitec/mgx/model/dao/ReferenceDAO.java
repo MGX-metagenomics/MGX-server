@@ -30,7 +30,7 @@ public class ReferenceDAO extends DAO<Reference> {
     }
 
     @Override
-    public Class getType() {
+    public Class<Reference> getType() {
         return Reference.class;
     }
 

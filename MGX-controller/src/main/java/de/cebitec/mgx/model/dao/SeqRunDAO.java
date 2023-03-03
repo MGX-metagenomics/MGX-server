@@ -25,7 +25,7 @@ public class SeqRunDAO extends DAO<SeqRun> {
     }
 
     @Override
-    Class getType() {
+    Class<SeqRun> getType() {
         return SeqRun.class;
     }
 

@@ -36,7 +36,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
     }
 
     @Override
-    Class getType() {
+    Class<AssembledRegion> getType() {
         return AssembledRegion.class;
     }
 

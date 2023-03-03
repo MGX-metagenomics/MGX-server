@@ -27,7 +27,7 @@ public class HabitatDAO extends DAO<Habitat> {
     }
 
     @Override
-    Class getType() {
+    Class<Habitat> getType() {
         return Habitat.class;
     }
 

@@ -23,7 +23,7 @@ public class GeneCoverageDAO extends DAO<GeneCoverage> {
     }
 
     @Override
-    Class getType() {
+    Class<GeneCoverage> getType() {
         return GeneCoverage.class;
     }
 

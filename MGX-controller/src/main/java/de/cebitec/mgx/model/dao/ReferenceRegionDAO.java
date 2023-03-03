@@ -23,7 +23,7 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
     }
 
     @Override
-    Class getType() {
+    Class<ReferenceRegion> getType() {
         return ReferenceRegion.class;
     }
 

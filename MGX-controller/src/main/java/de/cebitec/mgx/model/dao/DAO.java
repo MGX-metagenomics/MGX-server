@@ -29,7 +29,7 @@ public abstract class DAO<T extends Identifiable> {
         return ctx.getConnection();
     }
 
-    abstract Class getType();
+    abstract Class<T> getType();
     
     public abstract T getById(long id) throws MGXException;
     

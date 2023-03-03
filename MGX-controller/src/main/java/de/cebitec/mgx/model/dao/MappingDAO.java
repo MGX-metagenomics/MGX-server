@@ -26,7 +26,7 @@ public class MappingDAO extends DAO<Mapping> {
     }
 
     @Override
-    Class getType() {
+    Class<Mapping> getType() {
         return Mapping.class;
     }
 

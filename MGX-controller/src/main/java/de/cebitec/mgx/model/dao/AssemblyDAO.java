@@ -31,7 +31,7 @@ public class AssemblyDAO extends DAO<Assembly> {
     }
 
     @Override
-    Class getType() {
+    Class<Assembly> getType() {
         return Assembly.class;
     }
 

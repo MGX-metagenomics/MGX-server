@@ -27,7 +27,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
     }
 
     @Override
-    Class getType() {
+    Class<DNAExtract> getType() {
         return DNAExtract.class;
     }
 
