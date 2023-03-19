@@ -4,7 +4,7 @@ import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;

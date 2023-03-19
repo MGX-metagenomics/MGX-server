@@ -3,7 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;

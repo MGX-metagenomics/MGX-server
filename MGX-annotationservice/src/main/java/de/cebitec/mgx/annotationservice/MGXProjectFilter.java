@@ -4,7 +4,7 @@ import de.cebitec.gpms.core.GPMSException;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.data.DBGPMSI;
 import de.cebitec.gpms.data.JDBCMasterI;
-import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXRoles;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.WebApplicationException;

@@ -5,7 +5,7 @@ import de.cebitec.mgx.commonwl.CommonWL;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.conveyor.XMLValidator;
 import de.cebitec.mgx.core.MGXException;

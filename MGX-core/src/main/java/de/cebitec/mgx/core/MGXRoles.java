@@ -1,4 +1,4 @@
-package de.cebitec.mgx.controller;
+package de.cebitec.mgx.core;
 
 /**
  *

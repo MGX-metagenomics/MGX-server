@@ -5,7 +5,7 @@ import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.controller.MGXRoles;
+import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
