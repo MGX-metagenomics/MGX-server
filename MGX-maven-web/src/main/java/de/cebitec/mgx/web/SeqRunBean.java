@@ -241,13 +241,13 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @SuppressWarnings("unchecked")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
-        Analyzer<? extends DNASequenceI>[] analyzers = null;
+        Analyzer<DNASequenceI>[] analyzers = null;
         SeqRun sr = null;
         try {
             sr = mgx.getSeqRunDAO().getById(id);
             if (sr.getNumberOfSequences() > 0) {
                 File dbFile = mgx.getSeqRunDAO().getDBFile(sr.getId());
-                SeqReaderI r = SeqReaderFactory.getReader(dbFile.getAbsolutePath());
+                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.getReader(dbFile.getAbsolutePath());
                 if (r != null) {
                     analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality(), sr.isPaired());
                     r.close();
@@ -273,7 +273,7 @@ public class SeqRunBean {
             final String prefix = qcDir.getAbsolutePath() + File.separator + id + ".";
             final SeqRun run = sr;
             final String dbFilename = dbFile;
-            for (final Analyzer analyzer : analyzers) {
+            for (final Analyzer<DNASequenceI> analyzer : analyzers) {
                 File outFile = new File(prefix + analyzer.getName());
 
                 if (!outFile.exists()) {
@@ -288,7 +288,7 @@ public class SeqRunBean {
                                 while (r != null && r.hasMoreElements()) {
                                     DNASequenceI h = r.nextElement();
                                     try {
-                                        analyzer.add(h);
+                                        analyzer.<DNASequenceI>add(h);
                                     } catch (SequenceException ex) {
                                         Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed when adding {1}", new Object[]{analyzer.getName(), new String(h.getSequence())});
                                         Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);

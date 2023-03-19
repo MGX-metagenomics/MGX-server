@@ -20,6 +20,7 @@ import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sessions.IteratorHolder;
 import de.cebitec.mgx.upload.SeqUploadReceiver;
 import de.cebitec.mgx.upload.UploadSessions;
@@ -93,7 +94,7 @@ public class SequenceBean {
             SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
             
             mgx.log("Creating upload session for " + mgx.getProjectName());
-            SeqUploadReceiver recv = new SeqUploadReceiver(executor, mgx.getProjectDirectory(),
+            SeqUploadReceiver<? extends DNASequenceI> recv = new SeqUploadReceiver<>(executor, mgx.getProjectDirectory(),
                     mgx.getProjectQCDirectory(), mgx.getDataSource(), mgx.getProjectName(), seqrun_id,
                     hasQual, run.isPaired());
             uuid = upSessions.registerUploadSession(recv);
