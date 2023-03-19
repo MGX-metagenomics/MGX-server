@@ -80,8 +80,15 @@ public class APIKeyValidator implements ContainerRequestFilter {
             }
 
             // validate job state
+            //
+            // CREATED needs to be accepted so "GraphRun --validate" can retrieve the job
+            //
+            // during Conveyor workflow execution, a job starts with QUEUED state and is 
+            // then updated to RUNNING
+            //
             JobState status = job.getStatus();
-            if (!(status == JobState.QUEUED || status == JobState.RUNNING)) {
+            if (!(status == JobState.CREATED || status == JobState.QUEUED || status == JobState.RUNNING)) {
+                LOG.log(Level.SEVERE, "Denied API access due to invalid job state {0} for job {1}", new Object[]{status.toString(), job.getId()});
                 throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
             }
 
