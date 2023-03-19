@@ -6,6 +6,7 @@
 package de.cebitec.mgx.global;
 
 import de.cebitec.mgx.common.ToolScope;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -30,7 +31,7 @@ public class GlobalToolDAO {
         this.global = global;
     }
 
-    public AutoCloseableIterator<Tool> getAll() throws MGXGlobalException {
+    public Result<AutoCloseableIterator<Tool>> getAll() {
         List<Tool> tools = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
@@ -51,12 +52,12 @@ public class GlobalToolDAO {
             }
         } catch (SQLException ex) {
             Logger.getLogger(GlobalToolDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(tools.iterator());
+        return Result.ok(new ForwardingIterator<>(tools.iterator()));
     }
 
-    public Tool getById(Long id) throws MGXGlobalException {
+    public Result<Tool> getById(Long id) {
         Tool t = null;
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
@@ -77,9 +78,9 @@ public class GlobalToolDAO {
             }
         } catch (SQLException ex) {
             Logger.getLogger(GlobalToolDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return t;
+        return Result.ok(t);
     }
 
 }

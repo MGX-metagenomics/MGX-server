@@ -5,6 +5,7 @@
  */
 package de.cebitec.mgx.global;
 
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -30,12 +31,12 @@ public class GlobalReferenceDAO {
         this.global = global;
     }
 
-    public Reference getById(Long id) throws MGXGlobalException {
+    public Result<Reference> getById(Long id) {
         Reference ref = null;
-        try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT name, ref_length, ref_filepath FROM reference WHERE id=?")) {
+        try ( Connection conn = global.getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT name, ref_length, ref_filepath FROM reference WHERE id=?")) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ref = new Reference();
                         ref.setId(id);
@@ -48,24 +49,24 @@ public class GlobalReferenceDAO {
 
         } catch (SQLException ex) {
             Logger.getLogger(GlobalReferenceDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
 
         if (ref != null) {
             File seqFile = new File(ref.getFile());
             if (!(seqFile.exists() && seqFile.canRead())) {
                 global.log("Global reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
-                throw new MGXGlobalException("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                return Result.error("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
             }
         }
-        return ref;
+        return Result.ok(ref);
     }
 
-    public AutoCloseableIterator<Reference> getAll() throws MGXGlobalException {
+    public Result<AutoCloseableIterator<Reference>> getAll() {
         List<Reference> refs = new ArrayList<>();
-        try (Connection conn = global.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = global.getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Reference ref = new Reference();
                         ref.setId(rs.getLong(1));
@@ -76,7 +77,7 @@ public class GlobalReferenceDAO {
                         File seqFile = new File(ref.getFile());
                         if (!(seqFile.exists() && seqFile.canRead())) {
                             global.log("Global reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
-                            throw new MGXGlobalException("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                            return Result.error("Global reference sequence data file for " + ref.getName() + " is missing or unreadable.");
                         }
 
                         refs.add(ref);
@@ -86,9 +87,9 @@ public class GlobalReferenceDAO {
 
         } catch (SQLException ex) {
             Logger.getLogger(GlobalReferenceDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(refs.iterator());
+        return Result.ok(new ForwardingIterator<>(refs.iterator()));
     }
 
 }

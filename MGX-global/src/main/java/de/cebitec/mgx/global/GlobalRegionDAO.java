@@ -6,6 +6,7 @@
 package de.cebitec.mgx.global;
 
 import de.cebitec.mgx.common.RegionType;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.ReferenceRegion;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,7 +29,7 @@ public class GlobalRegionDAO {
         this.global = global;
     }
 
-    public Collection<ReferenceRegion> byReference(long refId) throws MGXGlobalException {
+    public Result<Collection<ReferenceRegion>> byReference(long refId) {
         Collection<ReferenceRegion> regions = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT id, name, description, reg_start, reg_stop, type FROM region WHERE ref_id=?")) {
@@ -73,9 +74,9 @@ public class GlobalRegionDAO {
             }
         } catch (SQLException ex) {
             Logger.getLogger(GlobalRegionDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return regions;
+        return Result.ok(regions);
     }
 
 }

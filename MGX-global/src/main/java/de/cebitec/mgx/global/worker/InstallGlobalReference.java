@@ -1,9 +1,9 @@
 package de.cebitec.mgx.global.worker;
 
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.ReferenceRegion;
 import de.cebitec.mgx.util.UnixHelper;
@@ -47,23 +47,22 @@ public class InstallGlobalReference extends TaskI {
             }
         }
 
-        Reference globalRef;
-        try {
-            globalRef = global.getReferenceDAO().getById(globalId);
-        } catch (MGXGlobalException ex) {
-            setStatus(State.FAILED, ex.getMessage());
+        Result<Reference> res = global.getReferenceDAO().getById(globalId);
+        if (res.isError()) {
+            setStatus(State.FAILED, res.getError());
             return;
         }
+        Reference globalRef = res.getValue();
 
         // create reference in project to obtain an id
         long newRefId = -1;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO reference (name, ref_length, ref_filepath) VALUES (?,?,?) RETURNING id")) {
                 stmt.setString(1, globalRef.getName());
                 stmt.setInt(2, globalRef.getLength());
                 stmt.setString(3, "");
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         newRefId = rs.getLong(1);
                     } else {
@@ -92,8 +91,8 @@ public class InstallGlobalReference extends TaskI {
         }
 
         // update filepath on reference
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("UPDATE reference SET ref_filepath=? WHERE id=?")) {
                 stmt.setString(1, targetFile.getAbsolutePath());
                 stmt.setLong(2, newRefId);
                 stmt.execute();
@@ -111,13 +110,11 @@ public class InstallGlobalReference extends TaskI {
         setStatus(TaskI.State.PROCESSING, "Copying subregions");
 
         // transfer regions
-        // TODO: convert to iterator
-        Collection<ReferenceRegion> regions;
-        try {
+        Result<Collection<ReferenceRegion>> regions;
             regions = global.getRegionDAO().byReference(globalId);
-        } catch (MGXGlobalException ex) {
-            Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, ex);
-            setStatus(State.FAILED, ex.getMessage());
+        if (regions.isError()) {
+            Logger.getLogger(InstallGlobalReference.class.getName()).log(Level.SEVERE, null, regions.getError());
+            setStatus(State.FAILED, regions.getError());
 
             // cleanup attempt
             delReference(newRefId);
@@ -125,9 +122,9 @@ public class InstallGlobalReference extends TaskI {
             return;
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, type, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
-                for (ReferenceRegion r : regions) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO region (name, type, description, reg_start, reg_stop, ref_id) VALUES (?,?,?,?,?,?)")) {
+                for (ReferenceRegion r : regions.getValue()) {
                     stmt.setString(1, r.getName());
                     stmt.setString(2, r.getType().toString());
                     stmt.setString(3, r.getDescription());
@@ -153,8 +150,8 @@ public class InstallGlobalReference extends TaskI {
 
     private void delRegions(long refId) {
         if (refId != -1) {
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE ref_id=?")) {
                     stmt.setLong(1, refId);
                     stmt.execute();
                 }
@@ -167,8 +164,8 @@ public class InstallGlobalReference extends TaskI {
     private void delReference(long refId) {
         if (refId != -1) {
             // cleanup attempt
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM reference WHERE id=?")) {
                     stmt.setLong(1, refId);
                     stmt.execute();
                 }

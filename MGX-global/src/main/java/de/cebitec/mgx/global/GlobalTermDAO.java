@@ -1,5 +1,6 @@
 package de.cebitec.mgx.global;
 
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -27,7 +28,7 @@ public class GlobalTermDAO {
         this.global = global;
     }
 
-    public Term getById(long id) throws MGXGlobalException {
+    public Result<Term> getById(long id) {
         Term t = null;
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("SELECT parent_id, name, description FROM term WHERE id=?")) {
@@ -44,12 +45,12 @@ public class GlobalTermDAO {
             }
         } catch (SQLException ex) {
             Logger.getLogger(GlobalTermDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return t;
+        return Result.ok(t);
     }
 
-    public AutoCloseableIterator<Term> byCategory(String cat) throws MGXGlobalException {
+    public Result<AutoCloseableIterator<Term>> byCategory(String cat) {
         List<Term> terms = new ArrayList<>();
         try (Connection conn = global.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(BY_CATNAME)) {
@@ -67,8 +68,8 @@ public class GlobalTermDAO {
             }
         } catch (SQLException ex) {
             Logger.getLogger(GlobalTermDAO.class.getName()).log(Level.SEVERE, null, ex);
-            throw new MGXGlobalException(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(terms.iterator());
+        return Result.ok(new ForwardingIterator<>(terms.iterator()));
     }
 }
