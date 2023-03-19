@@ -10,11 +10,11 @@ import jakarta.ejb.ConcurrencyManagementType;
 import jakarta.ejb.Schedule;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,12 +27,12 @@ import java.util.logging.Logger;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class Sessions {
 
-    private Map<UUID, TaskI> sessions = null;
+    private ConcurrentMap<UUID, TaskI> sessions = null;
     private final int timeout = 60;
 
     @PostConstruct
     public void start() {
-        sessions = new HashMap<>(10);
+        sessions = new ConcurrentHashMap<>(10);
     }
 
     @PreDestroy
