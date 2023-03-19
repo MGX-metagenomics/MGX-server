@@ -62,7 +62,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>MGX-maven-web</artifactId>
+            <artifactId>MGX-rest</artifactId>
             <version>${project.version}</version>
             <type>war</type>
         </dependency>

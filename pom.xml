@@ -49,7 +49,6 @@
     </dependencies>
     
     <modules>
-        <module>MGX-maven-web</module>
         <module>MGX-maven-ear</module>
         <module>MGX-upload</module>
         <module>MGX-DTOAdapter</module>
@@ -69,6 +68,7 @@
         <module>MGX-conveyor</module>
         <module>MGX-annotationservice</module>
         <module>MGX-commonwl</module>
+        <module>MGX-rest</module>
     </modules>
     
     <properties>
