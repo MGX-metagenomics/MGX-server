@@ -1,7 +1,6 @@
 package de.cebitec.mgx.model.db;
 
 import java.math.BigDecimal;
-import java.util.Collection;
 
 /**
  *
@@ -9,7 +8,6 @@ import java.util.Collection;
  */
 public class Habitat extends Identifiable {
 
-    private static final long serialVersionUID = 1L;
     protected String name;
     /* GPS location of habitat */
     protected BigDecimal latitude;
@@ -17,22 +15,6 @@ public class Habitat extends Identifiable {
     protected String description;
     protected int altitude;
     protected String biome;
-    protected Collection<Sample> samples;
-
-    public Collection<Sample> getSamples() {
-        return samples;
-    }
-
-    public Habitat addSample(Sample s) {
-        getSamples().add(s);
-        s.setHabitatId(getId());
-        return this;
-    }
-
-    public Habitat setSamples(Collection<Sample> samples) {
-        this.samples = samples;
-        return this;
-    }
 
     public String getName() {
         return name;

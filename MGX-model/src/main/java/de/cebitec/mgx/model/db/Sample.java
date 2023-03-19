@@ -1,7 +1,6 @@
 package de.cebitec.mgx.model.db;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
@@ -11,7 +10,6 @@ import java.util.Date;
  */
 public class Sample extends Identifiable {
 
-    private static final long serialVersionUID = 1L;
     protected Date collectiondate = null;
     protected String material;
     protected BigDecimal temperature;
@@ -73,24 +71,6 @@ public class Sample extends Identifiable {
 
     public Sample setVolumeUnit(String volume_unit) {
         this.volume_unit = volume_unit;
-        return this;
-    }
-
-    public Collection<DNAExtract> getDNAExtracts() {
-        if (extracts == null) {
-            extracts = new ArrayList<>();
-        }
-        return extracts;
-    }
-
-    public Sample setDNAExtracts(Collection<DNAExtract> extracts) {
-        this.extracts = extracts;
-        return this;
-    }
-
-    public Sample addDNAExtract(DNAExtract d) {
-        getDNAExtracts().add(d);
-        d.setSampleId(getId());
         return this;
     }
 

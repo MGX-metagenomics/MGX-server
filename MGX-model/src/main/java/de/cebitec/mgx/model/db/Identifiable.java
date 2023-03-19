@@ -1,12 +1,10 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
-
 /**
  *
  * @author sjaenick
  */
-public abstract class Identifiable implements Serializable {
+public abstract class Identifiable {
 
     public static long INVALID_IDENTIFIER = -1;
     private long id = INVALID_IDENTIFIER;

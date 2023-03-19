@@ -1,6 +1,5 @@
 package de.cebitec.mgx.model.db;
 
-import java.util.Collection;
 
 /**
  *
@@ -8,7 +7,6 @@ import java.util.Collection;
  */
 public class DNAExtract extends Identifiable {
 
-    private static final long serialVersionUID = 1L;
     private String name;
     protected String method;
     protected String protocol;
@@ -17,8 +15,6 @@ public class DNAExtract extends Identifiable {
     protected String targetGene;
     protected String targetFragment;
     protected String description;
-    //
-    protected Collection<SeqRun> seqruns;
     //
     protected long sample;
 
@@ -99,19 +95,6 @@ public class DNAExtract extends Identifiable {
     
     public void setSampleId(long sample) {
         this.sample = sample;
-    }
-
-    public Collection<SeqRun> getSeqruns() {
-        return seqruns;
-    }
-
-    public void setSeqruns(Collection<SeqRun> seqruns) {
-        this.seqruns = seqruns;
-    }
-
-    public void addSeqRun(SeqRun s) {
-        getSeqruns().add(s);
-        s.setExtractId(getId());
     }
 
     @Override

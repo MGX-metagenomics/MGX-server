@@ -1,14 +1,11 @@
 package de.cebitec.mgx.model.db;
 
-import java.util.Collection;
-
 /**
  *
  * @author sjaenick
  */
 public class SeqRun extends Identifiable {
 
-    private static final long serialVersionUID = 1L;
     protected String name;
     protected String database_accession;
     protected boolean submitted_to_insdc;
@@ -17,7 +14,6 @@ public class SeqRun extends Identifiable {
     protected long sequencing_method;
     protected long num_sequences = 0;
     protected long dnaextract;
-    protected Collection<Job> jobs;
 
     public long getExtractId() {
         return dnaextract;
@@ -27,15 +23,6 @@ public class SeqRun extends Identifiable {
         this.dnaextract = dnaextract;
         return this;
     }
-
-//    public String getDBFile() {
-//        return DBFile;
-//    }
-//
-//    public SeqRun setDBFile(String DBFile) {
-//        this.DBFile = DBFile;
-//        return this;
-//    }
 
     public String getName() {
         return name;

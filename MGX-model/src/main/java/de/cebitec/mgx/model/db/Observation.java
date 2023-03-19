@@ -1,13 +1,10 @@
 package de.cebitec.mgx.model.db;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 /**
  *
  * @author sjaenick
  */
-public class Observation implements Serializable {
+public class Observation {
 
     private long seq_id;
     //
