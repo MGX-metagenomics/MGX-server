@@ -29,8 +29,6 @@ public class MGXServiceException extends WebApplicationException {
 
     public MGXServiceException(Status status, String message) {
         super(Response.status(status).entity(message).type(MediaType.TEXT_PLAIN).build());
-        assert message != null;
-        assert !"".equals(message);
         http_status = status;
     }
 
