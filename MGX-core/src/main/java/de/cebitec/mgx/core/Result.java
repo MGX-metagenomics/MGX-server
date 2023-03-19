@@ -3,10 +3,6 @@ package de.cebitec.mgx.core;
 import java.util.Optional;
 import java.util.function.Function;
 
-/**
- *
- * @author sj
- */
 public class Result<T> {
 
     private final Optional<T> value;
