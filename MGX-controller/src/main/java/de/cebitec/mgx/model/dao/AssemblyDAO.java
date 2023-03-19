@@ -71,7 +71,7 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     public void update(Assembly obj) throws MGXException {
         if (obj.getId() == Assembly.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Assembly without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -83,7 +83,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                 stmt.setLong(5, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type Assembly for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -157,7 +157,7 @@ public class AssemblyDAO extends DAO<Assembly> {
             throw new MGXException(ex);
         }
 
-        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+        throw new MGXException("No object of type Assembly for ID " + id + ".");
     }
 
     public AutoCloseableIterator<Assembly> getAll() throws MGXException {
@@ -211,7 +211,7 @@ public class AssemblyDAO extends DAO<Assembly> {
             throw new MGXException(ex);
         }
 
-        throw new MGXException("No object of type " + getClassName() + " for job ID " + jobId + ".");
+        throw new MGXException("No object of type Assembly for job ID " + jobId + ".");
     }
 
     private static final String BY_SEQRUN_ID = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id FROM assembly a "

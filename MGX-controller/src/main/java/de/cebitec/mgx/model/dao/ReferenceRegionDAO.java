@@ -59,7 +59,7 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                 stmt.setLong(1, id);
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                    throw new MGXException("No object of type ReferenceRegion for ID " + id + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -80,7 +80,7 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type ReferenceRegion for ID " + id + ".");
                     }
                     ReferenceRegion ret = new ReferenceRegion();
                     ret.setId(rs.getLong(1));

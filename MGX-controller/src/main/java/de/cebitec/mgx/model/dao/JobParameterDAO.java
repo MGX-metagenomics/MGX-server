@@ -81,7 +81,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
 
     public void update(JobParameter obj) throws MGXException {
         if (obj.getId() == JobParameter.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type JobParameter without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -95,7 +95,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
                 stmt.setLong(7, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type JobParameter for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -109,7 +109,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
                 stmt.setLong(1, id);
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                    throw new MGXException("No object of type JobParameter for ID " + id + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -130,7 +130,7 @@ public class JobParameterDAO extends DAO<JobParameter> {
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type JobParameter for ID " + id + ".");
                     }
 
                     JobParameter jp = new JobParameter();

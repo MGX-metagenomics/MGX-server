@@ -112,7 +112,7 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type Tool for ID " + id + ".");
                     }
                     Tool t = new Tool();
                     t.setId(rs.getLong(1));
@@ -196,7 +196,7 @@ public class ToolDAO extends DAO<Tool> {
 
     public void update(Tool obj) throws MGXException {
         if (obj.getId() == Tool.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Tool without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {

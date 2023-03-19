@@ -66,7 +66,7 @@ public class ReferenceDAO extends DAO<Reference> {
 
     public void update(Reference obj) throws MGXException {
         if (obj.getId() == Reference.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Reference without an ID.");
         }
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -76,7 +76,7 @@ public class ReferenceDAO extends DAO<Reference> {
                 stmt.setLong(3, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type Reference for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -115,7 +115,7 @@ public class ReferenceDAO extends DAO<Reference> {
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type Reference for ID " + id + ".");
                     }
                     Reference ref = new Reference();
                     ref.setId(rs.getLong(1));
@@ -179,7 +179,7 @@ public class ReferenceDAO extends DAO<Reference> {
                 stmt.setLong(1, refId);
                 try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + refId + ".");
+                        throw new MGXException("No object of type Reference for ID " + refId + ".");
                     }
                     refLen = rs.getInt(1);
                     filePath = rs.getString(2);

@@ -35,10 +35,6 @@ public abstract class DAO<T extends Identifiable> {
     
     public abstract long create(T obj) throws MGXException;
 
-    protected final String getClassName() {
-        return getType().getSimpleName();
-    }
-
     public void dispose() {
     }
 

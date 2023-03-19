@@ -68,7 +68,7 @@ public class MappingDAO extends DAO<Mapping> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type Mapping for ID " + id + ".");
                     }
                     Mapping m = new Mapping();
                     m.setId(rs.getLong(1));

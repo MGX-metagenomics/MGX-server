@@ -61,7 +61,7 @@ public class HabitatDAO extends DAO<Habitat> {
 
     public void update(Habitat obj) throws MGXException {
         if (obj.getId() == Habitat.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Habitat without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -74,7 +74,7 @@ public class HabitatDAO extends DAO<Habitat> {
                 stmt.setLong(6, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type Habitat for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -136,7 +136,7 @@ public class HabitatDAO extends DAO<Habitat> {
             throw new MGXException(ex);
         }
 
-        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+        throw new MGXException("No object of type Habitat for ID " + id + ".");
     }
 
     public AutoCloseableIterator<Habitat> getAll() throws MGXException {

@@ -67,7 +67,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
 
     public void update(DNAExtract obj) throws MGXException {
         if (obj.getId() == DNAExtract.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type DNAExtract without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -83,7 +83,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                 stmt.setLong(9, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type DNAExtract for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -134,7 +134,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type DNAExtract for ID " + id + ".");
                     }
                     DNAExtract d = new DNAExtract();
                     d.setId(rs.getLong(1));

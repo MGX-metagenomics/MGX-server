@@ -62,7 +62,7 @@ public class SampleDAO extends DAO<Sample> {
 
     public void update(Sample obj) throws MGXException {
         if (obj.getId() == Sample.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Sample without an ID.");
         }
         try (Connection conn = getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
@@ -76,7 +76,7 @@ public class SampleDAO extends DAO<Sample> {
                 stmt.setLong(7, obj.getId());
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
-                    throw new MGXException("No object of type " + getClassName() + " for ID " + obj.getId() + ".");
+                    throw new MGXException("No object of type Sample for ID " + obj.getId() + ".");
                 }
             }
         } catch (SQLException ex) {
@@ -126,7 +126,7 @@ public class SampleDAO extends DAO<Sample> {
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type Sample for ID " + id + ".");
                     }
                     Sample s = new Sample();
                     s.setId(rs.getLong(1));

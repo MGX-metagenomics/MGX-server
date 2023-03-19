@@ -140,7 +140,7 @@ public class JobDAO extends DAO<Job> {
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type " + getClassName() + " for ID " + id + ".");
+                        throw new MGXException("No object of type Job for ID " + id + ".");
                     }
 
                     job = new Job();
@@ -549,7 +549,7 @@ public class JobDAO extends DAO<Job> {
 
     public void update(Job job) throws MGXException {
         if (job.getId() == Job.INVALID_IDENTIFIER) {
-            throw new MGXException("Cannot update object of type " + getClassName() + " without an ID.");
+            throw new MGXException("Cannot update object of type Job without an ID.");
         }
 
         if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
