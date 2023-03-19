@@ -7,6 +7,7 @@ import de.cebitec.gpms.core.MasterI;
 import de.cebitec.gpms.core.MembershipI;
 import de.cebitec.gpms.data.JDBCMasterI;
 import de.cebitec.gpms.util.GPMSDataSourceSelector;
+import java.util.logging.Level;
 
 /**
  *
@@ -28,11 +29,8 @@ public class MGX2DataSourceSelector extends GPMSDataSourceSelector {
                 DataSource_DBI dsdb = (DataSource_DBI) gpmsDS;
                 if ("MGX-2".equals(dsdb.getType().getName()) && "MGX".equals(dsdb.getAPIType().getName())) {
                     return dsdb;
-                } else if ("MGX".equals(dsdb.getType().getName()) && "O2DBI2".equals(dsdb.getAPIType().getName())) {
-                    // Bielefeld setup does not have a MGX api type yet
-                    return dsdb;
                 } else {
-                    System.err.println("Skipping datasource type "+dsdb.getType().getName()+ " with API type "+dsdb.getAPIType().getName());
+                    LOG.log(Level.INFO, "Skipping datasource type {0} with API type {1}", new Object[]{dsdb.getType().getName(), dsdb.getAPIType().getName()});
                 }
             }
         }
