@@ -81,7 +81,7 @@ public class ResultHolder {
     public void timeout() {
         Set<UUID> toRemove = new HashSet<>();
         for (UUID uuid : sessions.keySet()) {
-            LimitingIterator s = sessions.get(uuid);
+            LimitingIterator<?> s = sessions.get(uuid);
             long sessionIdleTime = (System.currentTimeMillis() - s.lastAccessed()) / 1000;
             if (sessionIdleTime > timeout) {
                 toRemove.add(uuid);

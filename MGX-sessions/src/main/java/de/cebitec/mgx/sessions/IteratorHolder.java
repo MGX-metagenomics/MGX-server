@@ -25,7 +25,7 @@ public class IteratorHolder {
     MGXConfigurationI mgxconfig;
     @EJB
     Executor executor;
-    private final ConcurrentMap<UUID, AutoCloseableIterator> content = new ConcurrentHashMap<>(10);
+    private final ConcurrentMap<UUID, AutoCloseableIterator<?>> content = new ConcurrentHashMap<>(10);
 
     public synchronized <T> UUID add(final AutoCloseableIterator<T> iter) {
         final UUID uuid = UUID.randomUUID();
