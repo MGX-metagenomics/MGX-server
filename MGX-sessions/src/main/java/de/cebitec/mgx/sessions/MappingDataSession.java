@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.concurrent.ForkJoinPool;
@@ -170,6 +171,9 @@ public class MappingDataSession {
 
     public static class GetReferenceCoverage extends RecursiveTask<Long> {
 
+        @Serial
+        private static final long serialVersionUID = 1L;
+
         private final File samFile;
         private final int from;  // 1-based
         private final int to; // 1-based
@@ -235,6 +239,9 @@ public class MappingDataSession {
     }
 
     public static class GetCoverage extends RecursiveTask<Long> {
+        
+        @Serial
+        private static final long serialVersionUID = 1L;
 
         private final File samFile;
         private final int from;  // 1-based
