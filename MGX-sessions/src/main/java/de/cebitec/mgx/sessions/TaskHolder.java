@@ -1,6 +1,5 @@
 package de.cebitec.mgx.sessions;
 
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.core.TaskI;
 import jakarta.ejb.ConcurrencyManagement;
 import jakarta.ejb.ConcurrencyManagementType;
@@ -26,8 +25,6 @@ import java.util.logging.Logger;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class TaskHolder {
 
-    @EJB
-    MGXConfigurationI mgxconfig;
     @EJB
     Executor executor;
     private final int timeout = 60 * 60 * 24; // a day;

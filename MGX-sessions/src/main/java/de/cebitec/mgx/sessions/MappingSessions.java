@@ -1,12 +1,10 @@
 package de.cebitec.mgx.sessions;
 
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.core.MGXException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.ejb.ConcurrencyManagement;
 import jakarta.ejb.ConcurrencyManagementType;
-import jakarta.ejb.EJB;
 import jakarta.ejb.Schedule;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.Startup;
@@ -28,8 +26,6 @@ import java.util.logging.Logger;
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class MappingSessions {
 
-    @EJB
-    MGXConfigurationI mgxconfig;
     private int timeout;
     private final ConcurrentMap<UUID, MappingDataSession> tasks = new ConcurrentHashMap<>();
 
