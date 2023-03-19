@@ -9,6 +9,7 @@ import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.conveyor.XMLValidator;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -17,7 +18,6 @@ import de.cebitec.mgx.dto.dto.ToolDTOList;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.dtoadapter.ToolDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.model.db.Tool;
 import de.cebitec.mgx.sessions.TaskHolder;
@@ -39,6 +39,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -116,11 +117,11 @@ public class ToolBean {
     @Path("listGlobalTools")
     @Produces("application/x-protobuf")
     public ToolDTOList listGlobalTools() {
-        try {
-            return ToolDTOFactory.getInstance().toDTOList(global.getToolDAO().getAll());
-        } catch (MGXGlobalException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Tool>> res = global.getToolDAO().getAll();
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
+        return ToolDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
@@ -180,16 +181,14 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXLong installGlobalTool(@PathParam("global_id") Long global_id) {
-        Tool globalTool = null;
-        try {
-            globalTool = global.getToolDAO().getById(global_id);
-        } catch (MGXGlobalException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Tool> globalTool = global.getToolDAO().getById(global_id);
+        if (globalTool.isError()) {
+            throw new MGXWebException(globalTool.getError());
         }
 
         long id;
         try {
-            id = mgx.getToolDAO().installGlobalTool(globalTool);
+            id = mgx.getToolDAO().installGlobalTool(globalTool.getValue());
         } catch (MGXException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -203,7 +202,16 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
         try {
-            Tool tool = isGlobalTool ? global.getToolDAO().getById(id) : mgx.getToolDAO().getById(id);
+            Tool tool;
+            if (isGlobalTool) {
+                Result<Tool> res = global.getToolDAO().getById(id);
+                if (res.isError()) {
+                    throw new MGXWebException(res.getError());
+                }
+                tool = res.getValue();
+            } else {
+                tool = mgx.getToolDAO().getById(id);
+            }
             String toolContent = UnixHelper.readFile(new File(tool.getFile()));
             if (tool.getFile().endsWith("xml")) {
                 return getParams(toolContent);
@@ -213,7 +221,7 @@ public class ToolBean {
             } else {
                 throw new MGXWebException("Unable to determine workflow type.");
             }
-        } catch (MGXGlobalException | MGXException | IOException ex) {
+        } catch (MGXException | IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }

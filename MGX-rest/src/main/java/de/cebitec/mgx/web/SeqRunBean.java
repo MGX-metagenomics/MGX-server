@@ -7,6 +7,7 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -22,7 +23,6 @@ import de.cebitec.mgx.dtoadapter.JobDTOFactory;
 import de.cebitec.mgx.dtoadapter.QCResultDTOFactory;
 import de.cebitec.mgx.dtoadapter.SeqRunDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -111,18 +111,24 @@ public class SeqRunBean {
          *
          */
         SeqRun orig = null;
-        Term seqMethod = null;
-        Term seqTech = null;
+        Result<Term> seqMethod = global.getTermDAO().getById(dto.getSequencingMethod().getId());
+        Result<Term> seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
+
+        if (seqMethod.isError()) {
+            throw new MGXWebException(seqMethod.getError());
+        }
+        if (seqTech.isError()) {
+            throw new MGXWebException(seqTech.getError());
+        }
+        
         try {
             orig = mgx.getSeqRunDAO().getById(dto.getId());
-            seqMethod = global.getTermDAO().getById(dto.getSequencingMethod().getId());
-            seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
-        } catch (MGXGlobalException | MGXException ex) {
+        } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
-                .setSequencingMethod(seqMethod.getId())
-                .setSequencingTechnology(seqTech.getId())
+                .setSequencingMethod(seqMethod.getValue().getId())
+                .setSequencingTechnology(seqTech.getValue().getId())
                 .setName(dto.getName())
                 .setExtractId(dto.getExtractId());
 
@@ -333,12 +339,12 @@ public class SeqRunBean {
 
         switch (tscope) {
             case READ:
-                try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
+                try ( AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
                 while (iter.hasNext()) {
                     Job job = iter.next();
                     JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                    try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                    try ( AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
                         AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
                         if (dtoList.getAttributeTypeCount() > 0) {
                             JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
@@ -360,12 +366,12 @@ public class SeqRunBean {
 
             case GENE_ANNOTATION:
                 try {
-                try (AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(assembly_id)) {
+                try ( AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(assembly_id)) {
                     while (iter.hasNext()) {
                         Job job = iter.next();
                         JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                        try (AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                        try ( AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
                             AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
                             if (dtoList.getAttributeTypeCount() > 0) {
                                 JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()

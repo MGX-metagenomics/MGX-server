@@ -1,11 +1,11 @@
 package de.cebitec.mgx.dtoadapter;
 
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.SeqRunDTO;
 import de.cebitec.mgx.dto.dto.SeqRunDTO.Builder;
 import de.cebitec.mgx.dto.dto.SeqRunDTOList;
 import de.cebitec.mgx.dto.dto.TermDTO;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.global.model.Term;
 import de.cebitec.mgx.model.db.SeqRun;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -34,18 +34,18 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
 
     @Override
     public final SeqRunDTO toDTO(SeqRun s) {
-        Term seqMethod = null;
-        Term seqTech = null;
+        Result<Term> seqMethod = global.getTermDAO().getById(s.getSequencingMethod());
+        Result<Term> seqTech = global.getTermDAO().getById(s.getSequencingTechnology());
 
-        try {
-            seqMethod = global.getTermDAO().getById(s.getSequencingMethod());
-            seqTech = global.getTermDAO().getById(s.getSequencingTechnology());
-        } catch (MGXGlobalException ex) {
-            Logger.getLogger(SeqRunDTOFactory.class.getName()).log(Level.SEVERE, null, ex);
+        if (seqMethod.isError()) {
+            Logger.getLogger(SeqRunDTOFactory.class.getName()).log(Level.SEVERE, seqMethod.getError());
+        }
+        if (seqTech.isError()) {
+            Logger.getLogger(SeqRunDTOFactory.class.getName()).log(Level.SEVERE, seqTech.getError());
         }
 
-        TermDTO techDTO = TermDTOFactory.getInstance().toDTO(seqTech);
-        TermDTO methDTO = TermDTOFactory.getInstance().toDTO(seqMethod);
+        TermDTO techDTO = TermDTOFactory.getInstance().toDTO(seqTech.getValue());
+        TermDTO methDTO = TermDTOFactory.getInstance().toDTO(seqMethod.getValue());
 
         Builder b = SeqRunDTO.newBuilder()
                 .setId(s.getId())
@@ -88,7 +88,7 @@ public class SeqRunDTOFactory extends DTOConversionBase<SeqRun, SeqRunDTO, SeqRu
     @Override
     public SeqRunDTOList toDTOList(AutoCloseableIterator<SeqRun> acit) {
         SeqRunDTOList.Builder b = SeqRunDTOList.newBuilder();
-        try (AutoCloseableIterator<SeqRun> iter = acit) {
+        try ( AutoCloseableIterator<SeqRun> iter = acit) {
             while (iter.hasNext()) {
                 b.addSeqrun(toDTO(iter.next()));
             }

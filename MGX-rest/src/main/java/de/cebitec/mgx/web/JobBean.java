@@ -9,6 +9,7 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.dispatcher.common.api.MGXInsufficientJobConfigurationException;
@@ -37,7 +38,6 @@ import java.util.Set;
 import java.util.UUID;
 import de.cebitec.mgx.dispatcher.common.api.DispatcherClientConfigurationI;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -52,6 +52,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -86,10 +87,14 @@ public class JobBean {
             // fetch run to make sure it exists
             SeqRun run = mgx.getSeqRunDAO().getById(seqrunId);
 
-            AutoCloseableIterator<Tool> globalT = global.getToolDAO().getAll();
+            Result<AutoCloseableIterator<Tool>> globalT = global.getToolDAO().getAll();
+            if (globalT.isError()) {
+                throw new MGXWebException(globalT.getError());
+            }
+            Iterator<Tool> tIter = globalT.getValue();
             List<Tool> globalTools = new ArrayList<>();
-            while (globalT != null && globalT.hasNext()) {
-                globalTools.add(globalT.next());
+            while (tIter != null && tIter.hasNext()) {
+                globalTools.add(tIter.next());
             }
 
             List<Tool> defaultTools = mgx.getToolDAO().getDefaultTools(globalTools);
@@ -125,7 +130,7 @@ public class JobBean {
                 js.submit(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), j.getId());
             }
 
-        } catch (MGXException | MGXDispatcherException | MGXGlobalException | IOException ex) {
+        } catch (MGXException | MGXDispatcherException | IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }

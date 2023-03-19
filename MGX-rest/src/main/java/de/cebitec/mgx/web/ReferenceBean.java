@@ -5,6 +5,7 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.controller.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTO;
@@ -12,13 +13,13 @@ import de.cebitec.mgx.dto.dto.ReferenceDTOList;
 import de.cebitec.mgx.dto.dto.ReferenceRegionDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceDTOFactory;
 import de.cebitec.mgx.global.MGXGlobal;
-import de.cebitec.mgx.global.MGXGlobalException;
 import de.cebitec.mgx.global.worker.InstallGlobalReference;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.upload.ReferenceUploadReceiver;
 import de.cebitec.mgx.upload.UploadReceiverI;
 import de.cebitec.mgx.upload.UploadSessions;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
@@ -129,11 +130,11 @@ public class ReferenceBean {
     @Path("listGlobalReferences")
     @Produces("application/x-protobuf")
     public ReferenceDTOList listGlobalReferences() {
-        try {
-            return ReferenceDTOFactory.getInstance().toDTOList(global.getReferenceDAO().getAll());
-        } catch (MGXGlobalException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Reference>> res = global.getReferenceDAO().getAll();
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
+        return ReferenceDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
@@ -148,12 +149,10 @@ public class ReferenceBean {
         } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
-        
+
         UUID taskId = taskHolder.addTask(new InstallGlobalReference(mgx.getDataSource(), global, globalId, projReferenceDir, mgx.getProjectName()));
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
-
- 
 
     @GET
     @Path("getSequence/{refid}/{from}/{to}")
