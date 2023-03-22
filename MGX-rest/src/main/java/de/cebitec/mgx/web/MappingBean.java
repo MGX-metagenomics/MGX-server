@@ -24,7 +24,6 @@ import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.model.misc.MappedSequence;
 import de.cebitec.mgx.web.exception.MGXWebException;
-import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;

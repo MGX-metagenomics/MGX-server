@@ -2,14 +2,12 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dtoadapter.GeneCoverageDTOFactory;
 import de.cebitec.mgx.model.db.GeneCoverage;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
-import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;

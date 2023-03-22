@@ -2,7 +2,6 @@ package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
 import de.cebitec.mgx.common.ToolScope;
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
@@ -79,8 +78,6 @@ public class SeqRunBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
-    @EJB
-    MGXConfigurationI mgxconfig;
     @EJB
     MGXGlobal global;
     @EJB

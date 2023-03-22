@@ -27,7 +27,6 @@ import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sessions.ResultHolder;
-import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.LimitingIterator;
@@ -63,8 +62,6 @@ public class AttributeBean {
     //
     @EJB
     ResultHolder resultHolder;
-    @EJB
-    TaskHolder taskHolder;
 
     @PUT
     @Path("create")

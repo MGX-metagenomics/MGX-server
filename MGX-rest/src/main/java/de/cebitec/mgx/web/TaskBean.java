@@ -1,7 +1,5 @@
 package de.cebitec.mgx.web;
 
-import de.cebitec.mgx.controller.MGX;
-import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.core.TaskI.State;
 import de.cebitec.mgx.dto.dto.TaskDTO;
@@ -10,7 +8,6 @@ import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -25,9 +22,6 @@ import java.util.UUID;
 @Path("Task")
 public class TaskBean {
     
-    @Inject
-    @MGX
-    MGXController mgx;
     @EJB
     TaskHolder taskHolder;
     

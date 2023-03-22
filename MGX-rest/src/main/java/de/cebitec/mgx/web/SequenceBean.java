@@ -1,7 +1,6 @@
 package de.cebitec.mgx.web;
 
 import de.cebitec.gpms.security.Secure;
-import de.cebitec.mgx.configuration.api.MGXConfigurationI;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
@@ -44,8 +43,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -58,8 +55,6 @@ public class SequenceBean {
     @Inject
     @MGX
     MGXController mgx;
-    @EJB
-    MGXConfigurationI mgxconfig;
     @EJB
     UploadSessions upSessions;
     @EJB

@@ -14,7 +14,6 @@ import de.cebitec.mgx.dto.dto.SampleDTOList;
 import de.cebitec.mgx.dtoadapter.SampleDTOFactory;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
-import de.cebitec.mgx.sessions.MappingSessions;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -46,8 +45,6 @@ public class SampleBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
-    @EJB
-    MappingSessions mappingSessions;
 
     @PUT
     @Path("create")

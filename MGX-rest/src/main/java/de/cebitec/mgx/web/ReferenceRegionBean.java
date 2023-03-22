@@ -19,7 +19,6 @@ import de.cebitec.mgx.dto.dto.SequenceDTOList;
 import de.cebitec.mgx.dtoadapter.ReferenceRegionDTOFactory;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.ReferenceRegion;
-import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -50,8 +49,6 @@ public class ReferenceRegionBean {
     MGXController mgx;
     @EJB
     DownloadSessions downSessions;
-    @EJB
-    TaskHolder taskHolder;
     @EJB
     Executor executor;
 
