@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.AssemblyDTO;
 import de.cebitec.mgx.dto.dto.AssemblyDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -12,6 +14,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.AssemblyDTOFactory;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
@@ -76,24 +79,22 @@ public class AssemblyBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public AssemblyDTO fetch(@PathParam("id") Long id) {
-        Assembly obj = null;
-        try {
-            obj = mgx.getAssemblyDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Assembly> obj = mgx.getAssemblyDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return AssemblyDTOFactory.getInstance().toDTO(obj);
+        return AssemblyDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public AssemblyDTOList fetchall() {
-        try {
-            return AssemblyDTOFactory.getInstance().toDTOList(mgx.getAssemblyDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Assembly>> all = mgx.getAssemblyDAO().getAll();
+        if (all.isError()) {
+            throw new MGXWebException(all.getError());
         }
+        return AssemblyDTOFactory.getInstance().toDTOList(all.getValue());
     }
 
     @DELETE
@@ -101,12 +102,11 @@ public class AssemblyBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
-        try {
-            taskId = taskHolder.addTask(mgx.getAssemblyDAO().delete(id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<TaskI> delete = mgx.getAssemblyDAO().delete(id);
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
         }
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
 
     }

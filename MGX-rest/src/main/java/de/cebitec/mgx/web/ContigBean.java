@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.ContigDTO;
 import de.cebitec.mgx.dto.dto.ContigDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -80,50 +82,44 @@ public class ContigBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public ContigDTO fetch(@PathParam("id") Long id) {
-        Contig obj = null;
-        try {
-            obj = mgx.getContigDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Contig> obj = mgx.getContigDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return ContigDTOFactory.getInstance().toDTO(obj);
+        return ContigDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ContigDTOList fetchall() {
-        try {
-            return ContigDTOFactory.getInstance().toDTOList(mgx.getContigDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Contig>> all = mgx.getContigDAO().getAll();
+        if (all.isError()) {
+            throw new MGXWebException(all.getError());
         }
+        return ContigDTOFactory.getInstance().toDTOList(all.getValue());
     }
 
     @GET
     @Path("byBin/{id}")
     @Produces("application/x-protobuf")
     public ContigDTOList byBin(@PathParam("id") Long id) {
-        AutoCloseableIterator<Contig> bins;
-        try {
-            bins = mgx.getContigDAO().byBin(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Contig>> contigs = mgx.getContigDAO().byBin(id);
+        if (contigs.isError()) {
+            throw new MGXWebException(contigs.getError());
         }
-        return ContigDTOFactory.getInstance().toDTOList(bins);
+        return ContigDTOFactory.getInstance().toDTOList(contigs.getValue());
     }
 
     @GET
     @Path("getDNASequence/{id}")
     @Produces("application/x-protobuf")
     public SequenceDTO getDNASequence(@PathParam("id") Long id) {
-        Sequence obj;
-        try {
-            obj = mgx.getContigDAO().getDNASequence(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Sequence> obj = mgx.getContigDAO().getDNASequence(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return SequenceDTOFactory.getInstance().toDTO(obj);
+        return SequenceDTOFactory.getInstance().toDTO(obj.getValue());
 
     }
 
@@ -132,12 +128,11 @@ public class ContigBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
-        try {
-            taskId = taskHolder.addTask(mgx.getContigDAO().delete(id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<TaskI> delete = mgx.getContigDAO().delete(id);
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
         }
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
 
     }

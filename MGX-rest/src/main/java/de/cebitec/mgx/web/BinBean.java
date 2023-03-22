@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.BinDTO;
 import de.cebitec.mgx.dto.dto.BinDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -77,37 +79,33 @@ public class BinBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public BinDTO fetch(@PathParam("id") Long id) {
-        Bin obj = null;
-        try {
-            obj = mgx.getBinDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Bin> obj = mgx.getBinDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return BinDTOFactory.getInstance().toDTO(obj);
+        return BinDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public BinDTOList fetchall() {
-        try {
-            return BinDTOFactory.getInstance().toDTOList(mgx.getBinDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Bin>> bins = mgx.getBinDAO().getAll();
+        if (bins.isError()) {
+            throw new MGXWebException(bins.getError());
         }
+        return BinDTOFactory.getInstance().toDTOList(bins.getValue());
     }
 
     @GET
     @Path("byAssembly/{id}")
     @Produces("application/x-protobuf")
     public BinDTOList byAssembly(@PathParam("id") Long asm_id) {
-        AutoCloseableIterator<Bin> bins;
-        try {
-            bins = mgx.getBinDAO().byAssembly(asm_id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Bin>> bins = mgx.getBinDAO().byAssembly(asm_id);
+        if (bins.isError()) {
+            throw new MGXWebException(bins.getError());
         }
-        return BinDTOFactory.getInstance().toDTOList(bins);
+        return BinDTOFactory.getInstance().toDTOList(bins.getValue());
     }
 
     @DELETE
@@ -115,12 +113,11 @@ public class BinBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
-        try {
-            taskId = taskHolder.addTask(mgx.getBinDAO().delete(id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<TaskI> delete = mgx.getBinDAO().delete(id);
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
         }
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
 
     }

@@ -6,6 +6,7 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dto.dto.ReferenceDTO;
@@ -37,6 +38,8 @@ import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -92,13 +95,11 @@ public class ReferenceBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public ReferenceDTO fetch(@PathParam("id") Long id) {
-        Reference obj = null;
-        try {
-            obj = mgx.getReferenceDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Reference> obj = mgx.getReferenceDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return ReferenceDTOFactory.getInstance().toDTO(obj);
+        return ReferenceDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @DELETE
@@ -106,12 +107,16 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
+        Result<TaskI> delete;
         try {
-            taskId = taskHolder.addTask(mgx.getReferenceDAO().delete(id));
-        } catch (MGXException | IOException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            delete = mgx.getReferenceDAO().delete(id);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
         }
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
+        }
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -119,11 +124,11 @@ public class ReferenceBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ReferenceDTOList fetchall() {
-        try {
-            return ReferenceDTOFactory.getInstance().toDTOList(mgx.getReferenceDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Reference>> all = mgx.getReferenceDAO().getAll();
+        if (all.isError()) {
+            throw new MGXWebException(all.getError());
         }
+        return ReferenceDTOFactory.getInstance().toDTOList(all.getValue());
     }
 
     @GET
@@ -158,13 +163,11 @@ public class ReferenceBean {
     @Path("getSequence/{refid}/{from}/{to}")
     @Produces("application/x-protobuf")
     public MGXString getSequence(@PathParam("refid") Long id, @PathParam("from") int from, @PathParam("to") int to) {
-        String subseq = null;
-        try {
-            subseq = mgx.getReferenceDAO().getSequence(id, from, to);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<String> subseq = mgx.getReferenceDAO().getSequence(id, from, to);
+        if (subseq.isError()) {
+            throw new MGXWebException(subseq.getError());
         }
-        return MGXString.newBuilder().setValue(subseq).build();
+        return MGXString.newBuilder().setValue(subseq.getValue()).build();
     }
 
     @GET
@@ -172,11 +175,17 @@ public class ReferenceBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString init(@PathParam("id") Long ref_id) {
-        Reference ref = null;
+
+        Result<Reference> obj = mgx.getReferenceDAO().getById(ref_id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+
+        Reference ref = obj.getValue();
+        mgx.log("creating reference importer session for " + ref.getName());
+
         UUID uuid = null;
         try {
-            ref = mgx.getReferenceDAO().getById(ref_id);
-            mgx.log("creating reference importer session for " + ref.getName());
             File target = new File(mgx.getProjectReferencesDirectory(), ref.getId() + ".fas");
             ref.setFile(target.getAbsolutePath());
             ReferenceUploadReceiver recv = new ReferenceUploadReceiver(ref, mgx.getProjectName(), mgx.getDataSource());

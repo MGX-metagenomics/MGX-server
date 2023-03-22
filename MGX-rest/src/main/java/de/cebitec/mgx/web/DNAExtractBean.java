@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.DNAExtractDTO;
 import de.cebitec.mgx.dto.dto.DNAExtractDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -12,6 +14,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.DNAExtractDTOFactory;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
@@ -79,35 +82,33 @@ public class DNAExtractBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public DNAExtractDTO fetch(@PathParam("id") Long id) {
-        DNAExtract obj = null;
-        try {
-            obj = mgx.getDNAExtractDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<DNAExtract> obj = mgx.getDNAExtractDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return DNAExtractDTOFactory.getInstance().toDTO(obj);
+        return DNAExtractDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList fetchall() {
-        try {
-            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<DNAExtract>> all = mgx.getDNAExtractDAO().getAll();
+        if (all.isError()) {
+            throw new MGXWebException(all.getError());
         }
+        return DNAExtractDTOFactory.getInstance().toDTOList(all.getValue());
     }
 
     @GET
     @Path("bySample/{id}")
     @Produces("application/x-protobuf")
     public DNAExtractDTOList bySample(@PathParam("id") Long sample_id) {
-        try {
-            return DNAExtractDTOFactory.getInstance().toDTOList(mgx.getDNAExtractDAO().bySample(sample_id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<DNAExtract>> iter = mgx.getDNAExtractDAO().bySample(sample_id);
+        if (iter.isError()) {
+            throw new MGXWebException(iter.getError());
         }
+        return DNAExtractDTOFactory.getInstance().toDTOList(iter.getValue());
     }
 
     @DELETE
@@ -115,12 +116,19 @@ public class DNAExtractBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+        Result<DNAExtract> obj = mgx.getDNAExtractDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
 
         UUID taskId;
         try {
-            DNAExtract obj = mgx.getDNAExtractDAO().getById(id);
-            taskId = taskHolder.addTask(mgx.getDNAExtractDAO().delete(id));
-        } catch (MGXException | IOException ex) {
+            Result<TaskI> delete = mgx.getDNAExtractDAO().delete(id);
+            if (delete.isError()) {
+                throw new MGXWebException(delete.getError());
+            }
+            taskId = taskHolder.addTask(delete.getValue());
+        } catch (IOException ex) {
             throw new MGXWebException(ex.getMessage());
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

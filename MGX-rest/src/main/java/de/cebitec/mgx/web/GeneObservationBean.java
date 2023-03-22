@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.GeneObservationDTOList;
 import de.cebitec.mgx.dtoadapter.GeneObservationDTOFactory;
 import de.cebitec.mgx.model.misc.GeneObservation;
@@ -32,12 +33,11 @@ public class GeneObservationBean {
     @Path("byGene/{id}")
     @Produces("application/x-protobuf")
     public GeneObservationDTOList byGene(@PathParam("id") Long id) {
-        try {
-            DBIterator<GeneObservation> iter = mgx.getGeneObservationDAO().byRead(id);
-            return GeneObservationDTOFactory.getInstance().toDTOList(iter);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<DBIterator<GeneObservation>> iter = mgx.getGeneObservationDAO().byRead(id);
+        if (iter.isError()) {
+            throw new MGXWebException(iter.getError());
         }
+        return GeneObservationDTOFactory.getInstance().toDTOList(iter.getValue());
     }
-   
+
 }

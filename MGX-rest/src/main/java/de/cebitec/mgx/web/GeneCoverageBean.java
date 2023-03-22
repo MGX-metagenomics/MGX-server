@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.GeneCoverageDTOList;
 import de.cebitec.mgx.dtoadapter.GeneCoverageDTOFactory;
 import de.cebitec.mgx.model.db.GeneCoverage;
@@ -32,13 +33,11 @@ public class GeneCoverageBean {
     @Path("byGene/{id}")
     @Produces("application/x-protobuf")
     public GeneCoverageDTOList byGene(@PathParam("id") Long id) {
-        AutoCloseableIterator<GeneCoverage> gcs;
-        try {
-            gcs = mgx.getGeneCoverageDAO().byGene(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<GeneCoverage>> gcs = mgx.getGeneCoverageDAO().byGene(id);
+        if (gcs.isError()) {
+            throw new MGXWebException(gcs.getError());
         }
-        return GeneCoverageDTOFactory.getInstance().toDTOList(gcs);
+        return GeneCoverageDTOFactory.getInstance().toDTOList(gcs.getValue());
     }
   
 }

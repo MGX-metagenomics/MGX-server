@@ -6,6 +6,7 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation;
 import de.cebitec.mgx.dto.dto.AttributeCorrelation.Builder;
 import de.cebitec.mgx.dto.dto.AttributeCount;
@@ -28,6 +29,7 @@ import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.sessions.ResultHolder;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.LimitingIterator;
 import de.cebitec.mgx.util.Pair;
 import de.cebitec.mgx.util.Triple;
@@ -94,53 +96,44 @@ public class AttributeBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public AttributeDTO fetch(@PathParam("id") Long id) {
-        Attribute obj = null;
-        try {
-            obj = mgx.getAttributeDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Attribute> obj = mgx.getAttributeDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return AttributeDTOFactory.getInstance().toDTO(obj);
+        return AttributeDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("BySeqSun/{runid}")
     @Produces("application/x-protobuf")
     public AttributeDTOList BySeqRun(@PathParam("runid") Long runid) {
-        AutoCloseableIterator<Attribute> iter = null;
-        try {
-            iter = mgx.getAttributeDAO().bySeqRun(runid);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Attribute>> res = mgx.getAttributeDAO().bySeqRun(runid);
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
-        return AttributeDTOFactory.getInstance().toDTOList(iter);
+        return AttributeDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
     @Path("ByJob/{jid}")
     @Produces("application/x-protobuf")
     public AttributeDTOList ByJob(@PathParam("jid") Long jid) {
-        AutoCloseableIterator<Attribute> iter = null;
-        try {
-            iter = mgx.getAttributeDAO().byJob(jid);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Attribute>> res = mgx.getAttributeDAO().byJob(jid);
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
-        return AttributeDTOFactory.getInstance().toDTOList(iter);
+        return AttributeDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
     @Path("getDistribution/{attrTypeId}/{jobId}/{runId}")
     @Produces("application/x-protobuf")
     public AttributeDistribution getDistribution(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("runId") Long runId) {
-
-        List<Triple<Attribute, Long, Long>> dist;
-        try {
-            dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId, runId);
-            return convert(dist);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<List<Triple<Attribute, Long, Long>>> dist = mgx.getAttributeDAO().getDistribution(attrTypeId, jobId, runId);
+        if (dist.isError()) {
+            throw new MGXWebException(dist.getError());
         }
+        return convert(dist.getValue());
     }
 
     @GET
@@ -148,13 +141,11 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     public AttributeDistribution getFilteredDistribution(@PathParam("filterAttrId") Long filterAttrId, @PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId) {
 
-        List<Triple<Attribute, Long, Long>> dist;
-        try {
-            dist = mgx.getAttributeDAO().getFilteredDistribution(filterAttrId, attrTypeId, jobId);
-            return convert(dist);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<List<Triple<Attribute, Long, Long>>> dist = mgx.getAttributeDAO().getFilteredDistribution(filterAttrId, attrTypeId, jobId);
+        if (dist.isError()) {
+            throw new MGXWebException(dist.getError());
         }
+        return convert(dist.getValue());
     }
 
     @GET
@@ -163,25 +154,29 @@ public class AttributeBean {
     public AttributeDistribution getHierarchy(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("runId") Long runId) {
 
         Map<Attribute, Long> dist;
-        try {
 
-            // validate attribute type strucure
-            AttributeType attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
-            if (attrType.getStructure() != AttributeType.STRUCTURE_HIERARCHICAL) {
-                throw new MGXException("Attribute type " + attrType.getName() + " is not an hierarchical attribute type.");
-            }
-
-            // TODO: check job state in sql query and remove this 
-            Job job = mgx.getJobDAO().getById(jobId);
-            if (job == null || job.getStatus() != JobState.FINISHED) {
-                throw new MGXWebException("Non-existing job or job in invalid state");
-            }
-
-            dist = mgx.getAttributeDAO().getHierarchy(attrTypeId, jobId, runId);
-            return convert(dist);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        // validate attribute type strucure
+        Result<AttributeType> attrType = mgx.getAttributeTypeDAO().getById(attrTypeId);
+        if (attrType.isError()) {
+            throw new MGXWebException(attrType.getError());
         }
+
+        AttributeType at = attrType.getValue();
+        if (at.getStructure() != AttributeType.STRUCTURE_HIERARCHICAL) {
+            throw new MGXWebException("Attribute type " + at.getName() + " is not an hierarchical attribute type.");
+        }
+
+        // TODO: check job state in sql query and remove this 
+        Result<Job> job = mgx.getJobDAO().getById(jobId);
+        if (job.isError() || job.getValue().getStatus() != JobState.FINISHED) {
+            throw new MGXWebException("Non-existing job or job in invalid state");
+        }
+
+        Result<Map<Attribute, Long>> hierarchy = mgx.getAttributeDAO().getHierarchy(attrTypeId, jobId, runId);
+        if (hierarchy.isError()) {
+            throw new MGXWebException(hierarchy.getError());
+        }
+        return convert(hierarchy.getValue());
 
     }
 
@@ -190,26 +185,24 @@ public class AttributeBean {
     @Produces("application/x-protobuf")
     public AttributeCorrelation getCorrelation(@PathParam("attrTypeId") Long attrTypeId, @PathParam("jobId") Long jobId, @PathParam("attrType2Id") Long attrType2Id, @PathParam("job2Id") Long job2Id) {
 
-        Map<Pair<Attribute, Attribute>, Integer> ret;
         try {
-//            Job job = mgx.getJobDAO().getById(jobId);
-//            if (job == null || job.getStatus() != JobState.FINISHED) {
-//                throw new MGXWebException("Non-existing job or job in invalid state");
-//            }
-//            Job job2 = mgx.getJobDAO().getById(job2Id);
-//            if (job2 == null || job2.getStatus() != JobState.FINISHED) {
-//                throw new MGXWebException("Non-existing job or job in invalid state");
-//            }
-            AutoCloseableIterator<Job> jobIter = mgx.getJobDAO().getByIds(jobId, job2Id);
-            while (jobIter.hasNext()) {
-                Job job = jobIter.next();
-                if (job == null || job.getStatus() != JobState.FINISHED) {
-                    throw new MGXWebException("Non-existing job or job in invalid state");
+            Result<AutoCloseableIterator<Job>> jobIter = mgx.getJobDAO().getByIds(jobId, job2Id);
+            if (jobIter.isError()) {
+                throw new MGXWebException(jobIter.getError());
+            }
+            try ( AutoCloseableIterator<Job> iter = jobIter.getValue()) {
+                while (iter.hasNext()) {
+                    Job job = iter.next();
+                    if (job == null || job.getStatus() != JobState.FINISHED) {
+                        throw new MGXWebException("Non-existing job or job in invalid state");
+                    }
                 }
             }
-
-            ret = mgx.getAttributeDAO().getCorrelation(attrTypeId, jobId, attrType2Id, job2Id);
-            return convertCorrelation(ret);
+            Result<Map<Pair<Attribute, Attribute>, Integer>> correlation = mgx.getAttributeDAO().getCorrelation(attrTypeId, jobId, attrType2Id, job2Id);
+            if (correlation.isError()) {
+                throw new MGXWebException(correlation.getError());
+            }
+            return convertCorrelation(correlation.getValue());
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -220,17 +213,17 @@ public class AttributeBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public MGXStringList find(SearchRequestDTO req) {
-        AutoCloseableIterator<String> iter = null;
-        try {
-            iter = mgx.getAttributeDAO().find(req.getTerm(), req.getSeqrunId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ex.getMessage());
+        Result<DBIterator<String>> iterres = mgx.getAttributeDAO().find(req.getTerm(), req.getSeqrunId());
+        if (iterres.isError()) {
+            throw new MGXWebException(iterres.getError());
         }
         MGXStringList.Builder dtos = MGXStringList.newBuilder();
-        while (iter != null && iter.hasNext()) {
-            dtos.addString(MGXString.newBuilder().setValue(iter.next()).build());
-        }
 
+        try ( DBIterator<String> iter = iterres.getValue()) {
+            while (iter.hasNext()) {
+                dtos.addString(MGXString.newBuilder().setValue(iter.next()).build());
+            }
+        }
         return dtos.build();
     }
 
@@ -239,14 +232,12 @@ public class AttributeBean {
     @Consumes("application/x-protobuf")
     @Produces("application/x-protobuf")
     public SequenceDTOList search(SearchRequestDTO req) {
-        AutoCloseableIterator<Sequence> ret = null;
-        try {
-            ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunId());
-        } catch (MGXException ex) {
-            mgx.log(ex);
-            throw new MGXWebException(ex.getMessage());
+        Result<DBIterator<Sequence>> ret = mgx.getAttributeDAO().search(req.getTerm(), req.getExact(), req.getSeqrunId());
+        if (ret.isError()) {
+            throw new MGXWebException(ret.getError());
         }
-        LimitingIterator<Sequence> liter = new LimitingIterator<>(50000, ret);
+
+        LimitingIterator<Sequence> liter = new LimitingIterator<>(50000, ret.getValue());
         SequenceDTOList dtos = SequenceDTOFactory.getInstance().toDTOList(liter);
 
         if (!dtos.getComplete()) {
@@ -282,7 +273,7 @@ public class AttributeBean {
         return dtos;
     }
 
-    private AttributeDistribution convert(Map<Attribute, Long> dist) throws MGXException {
+    private AttributeDistribution convert(Map<Attribute, Long> dist) {
 
         TLongSet aTypes = new TLongHashSet();
 
@@ -299,15 +290,20 @@ public class AttributeBean {
             b.addAttributeCounts(attrcnt);
         }
 
-        AutoCloseableIterator<AttributeType> iter = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
-        while (iter != null && iter.hasNext()) {
-            b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+        Result<AutoCloseableIterator<AttributeType>> iterres = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
+        if (iterres.isError()) {
+            throw new MGXWebException(iterres.getError());
+        }
+        try ( AutoCloseableIterator<AttributeType> iter = iterres.getValue()) {
+            while (iter.hasNext()) {
+                b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+            }
         }
 
         return b.build();
     }
 
-    private AttributeDistribution convert(List<Triple<Attribute, Long, Long>> dist) throws MGXException {
+    private AttributeDistribution convert(List<Triple<Attribute, Long, Long>> dist) {
         // attribute, parent id, count
 
         TLongSet aTypes = new TLongHashSet();
@@ -329,9 +325,14 @@ public class AttributeBean {
                 b.addAttributeCounts(attrcnt);
             }
 
-            AutoCloseableIterator<AttributeType> iter = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
-            while (iter != null && iter.hasNext()) {
-                b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+            Result<AutoCloseableIterator<AttributeType>> iterres = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
+            if (iterres.isError()) {
+                throw new MGXWebException(iterres.getError());
+            }
+            try ( AutoCloseableIterator<AttributeType> iter = iterres.getValue()) {
+                while (iter.hasNext()) {
+                    b.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+                }
             }
         }
 
@@ -360,9 +361,14 @@ public class AttributeBean {
             aTypes.add(second.getAttributeTypeId());
         }
 
-        AutoCloseableIterator<AttributeType> iter = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
-        while (iter != null && iter.hasNext()) {
-            ac.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+        Result<AutoCloseableIterator<AttributeType>> iterres = mgx.getAttributeTypeDAO().getByIds(aTypes.toArray());
+        if (iterres.isError()) {
+            throw new MGXWebException(iterres.getError());
+        }
+        try ( AutoCloseableIterator<AttributeType> iter = iterres.getValue()) {
+            while (iter.hasNext()) {
+                ac.addAttributeType(AttributeTypeDTOFactory.getInstance().toDTO(iter.next()));
+            }
         }
 
         return ac.build();

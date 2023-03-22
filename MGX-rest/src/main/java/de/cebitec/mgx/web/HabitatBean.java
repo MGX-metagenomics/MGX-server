@@ -5,6 +5,8 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.HabitatDTO;
 import de.cebitec.mgx.dto.dto.HabitatDTOList;
 import de.cebitec.mgx.dto.dto.MGXLong;
@@ -12,6 +14,7 @@ import de.cebitec.mgx.dto.dto.MGXString;
 import de.cebitec.mgx.dtoadapter.HabitatDTOFactory;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
@@ -77,24 +80,22 @@ public class HabitatBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public HabitatDTO fetch(@PathParam("id") Long id) {
-        Habitat obj = null;
-        try {
-            obj = mgx.getHabitatDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Habitat> obj = mgx.getHabitatDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return HabitatDTOFactory.getInstance().toDTO(obj);
+        return HabitatDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public HabitatDTOList fetchall() {
-        try {
-            return HabitatDTOFactory.getInstance().toDTOList(mgx.getHabitatDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Habitat>> obj = mgx.getHabitatDAO().getAll();
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
+        return HabitatDTOFactory.getInstance().toDTOList(obj.getValue());
     }
 
     @DELETE
@@ -102,12 +103,21 @@ public class HabitatBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
+
+        // verify the habitat exists
+        Result<Habitat> obj = mgx.getHabitatDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+
         UUID taskId;
         try {
-            // verify the habitat exists
-            Habitat obj = mgx.getHabitatDAO().getById(id);
-            taskId = taskHolder.addTask(mgx.getHabitatDAO().delete(id));
-        } catch (MGXException | IOException ex) {
+            Result<TaskI> delete = mgx.getHabitatDAO().delete(id);
+            if (delete.isError()) {
+                throw new MGXWebException(delete.getError());
+            }
+            taskId = taskHolder.addTask(delete.getValue());
+        } catch (IOException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
         return MGXString.newBuilder().setValue(taskId.toString()).build();

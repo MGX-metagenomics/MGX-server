@@ -55,6 +55,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -83,23 +85,30 @@ public class JobBean {
     @Consumes("application/x-protobuf")
     public Response runDefaultTools(MGXString dto) {
         long seqrunId = Long.parseLong(dto.getValue());
-        try {
-            // fetch run to make sure it exists
-            SeqRun run = mgx.getSeqRunDAO().getById(seqrunId);
+        // fetch run to make sure it exists
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(seqrunId);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
+        }
 
-            Result<AutoCloseableIterator<Tool>> globalT = global.getToolDAO().getAll();
-            if (globalT.isError()) {
-                throw new MGXWebException(globalT.getError());
-            }
-            Iterator<Tool> tIter = globalT.getValue();
-            List<Tool> globalTools = new ArrayList<>();
+        Result<AutoCloseableIterator<Tool>> globalT = global.getToolDAO().getAll();
+        if (globalT.isError()) {
+            throw new MGXWebException(globalT.getError());
+        }
+
+        Iterator<Tool> tIter = globalT.getValue();
+        List<Tool> globalTools = new ArrayList<>();
+        try {
             while (tIter != null && tIter.hasNext()) {
                 globalTools.add(tIter.next());
             }
 
-            List<Tool> defaultTools = mgx.getToolDAO().getDefaultTools(globalTools);
+            Result<List<Tool>> defaultTools = mgx.getToolDAO().getDefaultTools(globalTools);
+            if (defaultTools.isError()) {
+                throw new MGXWebException(defaultTools.getError());
+            }
 
-            for (Tool t : defaultTools) {
+            for (Tool t : defaultTools.getValue()) {
                 Job j = new Job();
                 j.setStatus(JobState.VERIFIED);
                 j.setToolId(t.getId());
@@ -152,32 +161,26 @@ public class JobBean {
 
         j.setCreator(mgx.getCurrentUser());
 
-        long jobId;
-        try {
-            jobId = createJob(j);
-        } catch (MGXException ex) {
-            mgx.log(ex);
-            throw new MGXWebException(ex.getMessage());
-        }
+        long jobId = createJob(j);
 
         return MGXLong.newBuilder().setValue(jobId).build();
     }
 
-    public long createJob(Job j) throws MGXException {
+    public long createJob(Job j) {
 
         if ((j.getSeqrunIds() == null || j.getSeqrunIds().length == 0) && j.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
-            throw new MGXException("Job object does not reference sequencing runs or assemblies.");
+            throw new MGXWebException("Job object does not reference sequencing runs or assemblies.");
+        }
+
+        Result<Tool> res = mgx.getToolDAO().getById(j.getToolId());
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
 
         // fetch default parameters for the referenced tool
+        Tool tool = res.getValue();
         Set<JobParameter> defaultParams = new HashSet<>();
-        Tool tool = null;
-        try {
-            tool = mgx.getToolDAO().getById(j.getToolId());
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-        }
+
         try {
             if (tool.getFile().endsWith(".xml")) {
                 String toolXMLData = UnixHelper.readFile(new File(tool.getFile()));
@@ -247,36 +250,34 @@ public class JobBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public JobDTO fetch(@PathParam("id") Long id) {
-        try {
-            Job job = mgx.getJobDAO().getById(id);
-            return JobDTOFactory.getInstance().toDTO(job);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Job> job = mgx.getJobDAO().getById(id);
+        if (job.isError()) {
+            throw new MGXWebException(job.getError());
         }
+
+        return JobDTOFactory.getInstance().toDTO(job.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public JobDTOList fetchall() {
-        try {
-            AutoCloseableIterator<Job> acit = mgx.getJobDAO().getAll();
-            return JobDTOFactory.getInstance().toDTOList(acit);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Job>> all = mgx.getJobDAO().getAll();
+        if (all.isError()) {
+            throw new MGXWebException(all.getError());
         }
+        return JobDTOFactory.getInstance().toDTOList(all.getValue());
     }
 
     @GET
     @Path("getParameters/{id}")
     @Produces("application/x-protobuf")
     public JobParameterListDTO getParameters(@PathParam("id") Long job_id) {
-        try {
-            AutoCloseableIterator<JobParameter> params = mgx.getJobParameterDAO().byJob(job_id);
-            return JobParameterDTOFactory.getInstance().toDTOList(params);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<JobParameter>> res = mgx.getJobParameterDAO().byJob(job_id);
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
+        return JobParameterDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @POST
@@ -285,8 +286,13 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public void setParameters(@PathParam("id") Long id, JobParameterListDTO paramdtos) {
+        Result<Job> obj = mgx.getJobDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+        Job job = obj.getValue();
+
         try {
-            Job job = mgx.getJobDAO().getById(id);
             for (JobParameter jp : JobParameterDTOFactory.getInstance().toDBList(paramdtos)) {
                 jp.setJobId(id);
 
@@ -309,16 +315,25 @@ public class JobBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean verify(@PathParam("id") Long id) {
 
+        Result<Job> obj = mgx.getJobDAO().getById(id, false);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+        Job job = obj.getValue();
+
+        if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+            throw new MGXWebException("Job object does not reference sequencing runs or assemblies.");
+        }
+
+        Result<Tool> toolres = mgx.getToolDAO().getById(job.getToolId());
+        if (toolres.isError()) {
+            throw new MGXWebException(toolres.getError());
+        }
+        Tool t = toolres.getValue();
+
         boolean verified = false;
+
         try {
-            Job job = mgx.getJobDAO().getById(id, false);
-
-            if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
-                throw new MGXException("Job object does not reference sequencing runs or assemblies.");
-            }
-
-            Tool t = mgx.getToolDAO().getById(job.getToolId());
-
             if (t.getFile().endsWith("xml")) {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
                         mgx.getProjectName(),
@@ -356,18 +371,23 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean execute(@PathParam("id") Long jobId) {
+        Result<Job> obj = mgx.getJobDAO().getById(jobId, false);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+        Job job = obj.getValue();
+
+        if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
+            throw new MGXWebException("Job object does not reference sequencing runs or assemblies.");
+        }
+
+        if (job.getStatus() != JobState.VERIFIED) {
+            throw new MGXWebException("Job %d in invalid state %s", jobId, job.getStatus());
+        }
 
         boolean submitted = false;
         try {
-            Job job = mgx.getJobDAO().getById(jobId);
 
-            if ((job.getSeqrunIds() == null || job.getSeqrunIds().length == 0) && job.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
-                throw new MGXException("Job object does not reference sequencing runs or assemblies.");
-            }
-
-            if (job.getStatus() != JobState.VERIFIED) {
-                throw new MGXWebException("Job %d in invalid state %s", jobId, job.getStatus());
-            }
             submitted = js.submit(new Host(dispConfig.getDispatcherHost()), mgx.getProjectName(), jobId);
 
             job.setStatus(submitted ? JobState.SUBMITTED : JobState.FAILED);
@@ -389,27 +409,39 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString restart(@PathParam("id") Long id) {
+
+        Result<Job> obj = mgx.getJobDAO().getById(id, false);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+        Job job = obj.getValue();
+
+        JobState status = job.getStatus();
+        if (status != JobState.FAILED && status != JobState.ABORTED) {
+            throw new MGXWebException("Job is in invalid state.");
+        }
+
+        Result<Tool> t = mgx.getToolDAO().getById(job.getToolId());
+        if (t.isError()) {
+            throw new MGXWebException(t.getError());
+        }
+        Tool tool = t.getValue();
+
         try {
-            Job job = mgx.getJobDAO().getById(id);
-            JobState status = job.getStatus();
-            if (status != JobState.FAILED && status != JobState.ABORTED) {
-                throw new MGXWebException("Job is in invalid state.");
-            }
 
             //
             // re-create the jobs config file to account for changes, e.g.
             // when the database was moved to a different server
             //
-            Tool t = mgx.getToolDAO().getById(job.getToolId());
-            if (t.getFile().endsWith("xml")) {
+            if (tool.getFile().endsWith("xml")) {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
                         mgx.getProjectName(),
                         mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(),
                         mgx.getDatabaseName(), mgx.getDatabaseHost(), mgx.getDatabasePort());
-            } else if (t.getFile().endsWith("cwl")) {
+            } else if (tool.getFile().endsWith("cwl")) {
                 // as the stored job parameters do not have a class name, we
                 // need to fetch these from the workflow and update the params
-                String toolContent = UnixHelper.readFile(new File(t.getFile()));
+                String toolContent = UnixHelper.readFile(new File(tool.getFile()));
                 AutoCloseableIterator<JobParameter> params = CommonWL.getParameters(toolContent);
                 Map<String, JobParameter> tmp = new HashMap<>();
                 while (params.hasNext()) {
@@ -439,17 +471,14 @@ public class JobBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXBoolean cancel(@PathParam("id") Long id) {
-        Job job = null;
-        try {
-            job = mgx.getJobDAO().getById(id);
-            JobState status = job.getStatus();
-            // check if job has already reached a terminal state
-            if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
-                throw new MGXWebException("Job is not being processed, cannot cancel.");
-            }
-        } catch (MGXException ex) {
-            mgx.log(ex.getMessage());
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Job> job = mgx.getJobDAO().getById(id);
+        if (job.isError()) {
+            throw new MGXWebException(job.getError());
+        }
+        JobState status = job.getValue().getStatus();
+        // check if job has already reached a terminal state
+        if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
+            throw new MGXWebException("Job is not being processed, cannot cancel.");
         }
 
         mgx.log("Cancelling job " + id + " on user request");
@@ -464,8 +493,8 @@ public class JobBean {
 
         // update job state
         try {
-            job.setStatus(JobState.ABORTED);
-            mgx.getJobDAO().update(job);
+            job.getValue().setStatus(JobState.ABORTED);
+            mgx.getJobDAO().update(job.getValue());
         } catch (MGXException ex) {
             throw new MGXWebException(ex.getMessage());
         }
@@ -498,15 +527,21 @@ public class JobBean {
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
 
+        Result<Job> obj = mgx.getJobDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+        Job job = obj.getValue();
+
         boolean isActive = true;
+        JobState status = job.getStatus();
+        // check if job has already reached a terminal state
+        if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
+            isActive = false;
+        }
+        job.setStatus(JobState.IN_DELETION);
+
         try {
-            Job job = mgx.getJobDAO().getById(id);
-            JobState status = job.getStatus();
-            // check if job has already reached a terminal state
-            if (status == JobState.FAILED || status == JobState.FINISHED || status == JobState.ABORTED) {
-                isActive = false;
-            }
-            job.setStatus(JobState.IN_DELETION);
             mgx.getJobDAO().update(job);
         } catch (MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -522,12 +557,17 @@ public class JobBean {
             }
         }
 
-        UUID taskId;
+        Result<TaskI> delete;
         try {
-            taskId = taskHolder.addTask(mgx.getJobDAO().delete(id));
+            delete = mgx.getJobDAO().delete(id);
         } catch (IOException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            throw new MGXWebException(ex.getMessage());
         }
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
+        }
+
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -535,38 +575,48 @@ public class JobBean {
     @Path("BySeqRun/{seqrun_id}")
     @Produces("application/x-protobuf")
     public JobDTOList BySeqRun(@PathParam("seqrun_id") Long seqrun_id) {
-        try {
-            SeqRun run = mgx.getSeqRunDAO().getById(seqrun_id);
-            AutoCloseableIterator<Job> acit = mgx.getJobDAO().bySeqRun(seqrun_id);
-            return JobDTOFactory.getInstance().toDTOList(acit);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(seqrun_id);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
         }
+
+        Result<AutoCloseableIterator<Job>> bySeqRun = mgx.getJobDAO().bySeqRun(seqrun_id);
+        if (bySeqRun.isError()) {
+            throw new MGXWebException(bySeqRun.getError());
+        }
+        return JobDTOFactory.getInstance().toDTOList(bySeqRun.getValue());
     }
 
     @GET
     @Path("ByAssembly/{asm_id}")
     @Produces("application/x-protobuf")
     public JobDTOList ByAssembly(@PathParam("asm_id") Long asm_id) {
-        try {
-            Assembly asm = mgx.getAssemblyDAO().getById(asm_id);
-            AutoCloseableIterator<Job> acit = mgx.getJobDAO().byAssembly(asm_id);
-            return JobDTOFactory.getInstance().toDTOList(acit);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Assembly> asm = mgx.getAssemblyDAO().getById(asm_id);
+        if (asm.isError()) {
+            throw new MGXWebException(asm.getError());
         }
+
+        Result<AutoCloseableIterator<Job>> res = mgx.getJobDAO().byAssembly(asm_id);
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
+        }
+        return JobDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
     @Path("GetError/{id}")
     @Produces("application/x-protobuf")
     public MGXString getError(@PathParam("id") Long id) {
-        try {
-            Job job = mgx.getJobDAO().getById(id);
-            return MGXString.newBuilder().setValue(mgx.getJobDAO().getError(job)).build();
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Job> job = mgx.getJobDAO().getById(id);
+        if (job.isError()) {
+            throw new MGXWebException(job.getError());
         }
+
+        Result<String> res = mgx.getJobDAO().getError(job.getValue());
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
+        }
+        return MGXString.newBuilder().setValue(res.getValue()).build();
     }
 
 //    private final Map<String, List<JobParameter>> paramCache = new HashMap<>();

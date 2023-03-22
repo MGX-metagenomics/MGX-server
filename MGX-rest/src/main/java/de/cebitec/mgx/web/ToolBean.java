@@ -10,6 +10,7 @@ import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.conveyor.XMLValidator;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dto.dto.MGXLong;
 import de.cebitec.mgx.dto.dto.MGXString;
@@ -39,7 +40,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -85,25 +85,23 @@ public class ToolBean {
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
     public ToolDTO byJob(@PathParam("id") Long job_id) {
-        try {
-            Tool tool = mgx.getToolDAO().byJob(job_id);
-            return ToolDTOFactory.getInstance().toDTO(tool);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Tool> tool = mgx.getToolDAO().byJob(job_id);
+        if (tool.isError()) {
+            throw new MGXWebException(tool.getError());
         }
+        return ToolDTOFactory.getInstance().toDTO(tool.getValue());
     }
 
     @GET
     @Path("getDefinition/{id}")
     @Produces("application/x-protobuf")
     public MGXString getDefinition(@PathParam("id") Long tool_id) {
-        Tool obj = null;
-        try {
-            obj = mgx.getToolDAO().getById(tool_id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Tool> obj = mgx.getToolDAO().getById(tool_id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        File f = new File(obj.getFile());
+
+        File f = new File(obj.getValue().getFile());
         String fileContents = null;
         try {
             fileContents = UnixHelper.readFile(f);
@@ -128,24 +126,23 @@ public class ToolBean {
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public ToolDTOList fetchall() {
-        try {
-            return ToolDTOFactory.getInstance().toDTOList(mgx.getToolDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<Tool>> res = mgx.getToolDAO().getAll();
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
+        return ToolDTOFactory.getInstance().toDTOList(res.getValue());
     }
 
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public ToolDTO fetch(@PathParam("id") Long id) {
-        Tool obj = null;
-        try {
-            obj = mgx.getToolDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Tool> obj = mgx.getToolDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return ToolDTOFactory.getInstance().toDTO(obj);
+
+        return ToolDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @POST
@@ -163,12 +160,16 @@ public class ToolBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-        UUID taskId;
+        Result<TaskI> delete;
         try {
-            taskId = taskHolder.addTask(mgx.getToolDAO().delete(id));
-        } catch (MGXException | IOException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+            delete = mgx.getToolDAO().delete(id);
+        } catch (IOException ex) {
+            throw new MGXWebException(ex.getMessage());
         }
+        if (delete.isError()) {
+            throw new MGXWebException(delete.getError());
+        }
+        UUID taskId = taskHolder.addTask(delete.getValue());
         return MGXString.newBuilder().setValue(taskId.toString()).build();
     }
 
@@ -186,32 +187,29 @@ public class ToolBean {
             throw new MGXWebException(globalTool.getError());
         }
 
-        long id;
-        try {
-            id = mgx.getToolDAO().installGlobalTool(globalTool.getValue());
-        } catch (MGXException ex) {
-            mgx.log(ex);
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Long> id = mgx.getToolDAO().installGlobalTool(globalTool.getValue());
+        if (id.isError()) {
+            throw new MGXWebException(id.getError());
         }
 
-        return MGXLong.newBuilder().setValue(id).build();
+        return MGXLong.newBuilder().setValue(id.getValue()).build();
     }
 
     @GET
     @Path("getAvailableParameters/{id}/{global}")
     @Produces("application/x-protobuf")
     public JobParameterListDTO getAvailableParameters(@PathParam("id") Long id, @PathParam("global") Boolean isGlobalTool) {
+        Result<Tool> obj = isGlobalTool
+                ? global.getToolDAO().getById(id)
+                : mgx.getToolDAO().getById(id);
+
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
+        }
+
+        Tool tool = obj.getValue();
+
         try {
-            Tool tool;
-            if (isGlobalTool) {
-                Result<Tool> res = global.getToolDAO().getById(id);
-                if (res.isError()) {
-                    throw new MGXWebException(res.getError());
-                }
-                tool = res.getValue();
-            } else {
-                tool = mgx.getToolDAO().getById(id);
-            }
             String toolContent = UnixHelper.readFile(new File(tool.getFile()));
             if (tool.getFile().endsWith("xml")) {
                 return getParams(toolContent);
@@ -221,7 +219,7 @@ public class ToolBean {
             } else {
                 throw new MGXWebException("Unable to determine workflow type.");
             }
-        } catch (MGXException | IOException ex) {
+        } catch (IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }

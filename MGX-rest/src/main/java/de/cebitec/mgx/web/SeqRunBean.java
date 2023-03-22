@@ -8,6 +8,7 @@ import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
+import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dto.dto.AttributeTypeDTOList;
 import de.cebitec.mgx.dto.dto.JobAndAttributeTypes;
 import de.cebitec.mgx.dto.dto.JobDTO;
@@ -39,6 +40,7 @@ import de.cebitec.mgx.sequence.SeqReaderI;
 import de.cebitec.mgx.sequence.SeqStoreException;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
+import de.cebitec.mgx.util.DBIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
@@ -110,22 +112,22 @@ public class SeqRunBean {
          * original object from the backend and update it's fields
          *
          */
-        SeqRun orig = null;
         Result<Term> seqMethod = global.getTermDAO().getById(dto.getSequencingMethod().getId());
-        Result<Term> seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
-
         if (seqMethod.isError()) {
             throw new MGXWebException(seqMethod.getError());
         }
+
+        Result<Term> seqTech = global.getTermDAO().getById(dto.getSequencingTechnology().getId());
         if (seqTech.isError()) {
             throw new MGXWebException(seqTech.getError());
         }
-        
-        try {
-            orig = mgx.getSeqRunDAO().getById(dto.getId());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(dto.getId());
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
         }
+
+        SeqRun orig = run.getValue();
         orig.setSubmittedToINSDC(dto.getSubmittedToInsdc())
                 .setSequencingMethod(seqMethod.getValue().getId())
                 .setSequencingTechnology(seqTech.getValue().getId())
@@ -150,59 +152,55 @@ public class SeqRunBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTO fetch(@PathParam("id") Long id) {
-        SeqRun seqrun;
-
-        try {
-            seqrun = mgx.getSeqRunDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(id);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
         }
-
-        return SeqRunDTOFactory.getInstance(global).toDTO(seqrun);
+        return SeqRunDTOFactory.getInstance(global).toDTO(run.getValue());
     }
 
     @GET
     @Path("fetchall")
     @Produces("application/x-protobuf")
     public SeqRunDTOList fetchall() {
-        try {
-            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().getAll());
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<SeqRun>> run = mgx.getSeqRunDAO().getAll();
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
         }
+        return SeqRunDTOFactory.getInstance(global).toDTOList(run.getValue());
     }
 
     @GET
     @Path("byExtract/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTOList byExtract(@PathParam("id") Long extract_id) {
-        try {
-            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byDNAExtract(extract_id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<SeqRun>> byDNAExtract = mgx.getSeqRunDAO().byDNAExtract(extract_id);
+        if (byDNAExtract.isError()) {
+            throw new MGXWebException(byDNAExtract.getError());
         }
+        return SeqRunDTOFactory.getInstance(global).toDTOList(byDNAExtract.getValue());
     }
 
     @GET
     @Path("byJob/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTOList byJob(@PathParam("id") Long jobId) {
-        try {
-            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byJob(jobId));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<SeqRun>> byJob = mgx.getSeqRunDAO().byJob(jobId);
+        if (byJob.isError()) {
+            throw new MGXWebException(byJob.getError());
         }
+        return SeqRunDTOFactory.getInstance(global).toDTOList(byJob.getValue());
     }
 
     @GET
     @Path("byAssembly/{id}")
     @Produces("application/x-protobuf")
     public SeqRunDTOList byAssembly(@PathParam("id") Long asmId) {
-        try {
-            return SeqRunDTOFactory.getInstance(global).toDTOList(mgx.getSeqRunDAO().byAssembly(asmId));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<SeqRun>> byAssembly = mgx.getSeqRunDAO().byAssembly(asmId);
+        if (byAssembly.isError()) {
+            throw new MGXWebException(byAssembly.getError());
         }
+        return SeqRunDTOFactory.getInstance(global).toDTOList(byAssembly.getValue());
     }
 
     @DELETE
@@ -210,17 +208,19 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @Secure(rightsNeeded = {MGXRoles.User, MGXRoles.Admin})
     public MGXString delete(@PathParam("id") Long id) {
-
-        try {
-            mgx.getSeqRunDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(id);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
         }
 
         UUID taskId;
         try {
-            taskId = taskHolder.addTask(mgx.getSeqRunDAO().delete(id));
-        } catch (IOException | MGXException ex) {
+            Result<TaskI> delete = mgx.getSeqRunDAO().delete(id);
+            if (delete.isError()) {
+                throw new MGXWebException(delete.getError());
+            }
+            taskId = taskHolder.addTask(delete.getValue());
+        } catch (IOException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -231,10 +231,14 @@ public class SeqRunBean {
     @Path("hasQuality/{id}")
     @Produces("application/x-protobuf")
     public MGXBoolean hasQuality(@PathParam("id") Long id) {
+        // make sure run exists
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(id);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
+        }
+
         boolean hasQual;
         try {
-            // make sure run exists
-            SeqRun run = mgx.getSeqRunDAO().getById(id);
             hasQual = mgx.getSeqRunDAO().hasQuality(id);
         } catch (IOException | MGXException ex) {
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
@@ -247,19 +251,28 @@ public class SeqRunBean {
     @Produces("application/x-protobuf")
     @SuppressWarnings("unchecked")
     public QCResultDTOList getQC(@PathParam("id") Long id) {
+
+        Result<SeqRun> run = mgx.getSeqRunDAO().getById(id);
+        if (run.isError()) {
+            throw new MGXWebException(run.getError());
+        }
+
+        SeqRun sr = run.getValue();
+
         Analyzer<DNASequenceI>[] analyzers = null;
-        SeqRun sr = null;
         try {
-            sr = mgx.getSeqRunDAO().getById(id);
             if (sr.getNumberOfSequences() > 0) {
-                File dbFile = mgx.getSeqRunDAO().getDBFile(sr.getId());
-                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.getReader(dbFile.getAbsolutePath());
+                Result<File> dbFile = mgx.getSeqRunDAO().getDBFile(id);
+                if (dbFile.isError()) {
+                    throw new MGXWebException(dbFile.getError());
+                }
+                SeqReaderI<? extends DNASequenceI> r = SeqReaderFactory.getReader(dbFile.getValue().getAbsolutePath());
                 if (r != null) {
                     analyzers = QCFactory.<DNASequenceI>getQCAnalyzers(r.hasQuality(), sr.isPaired());
                     r.close();
                 }
             }
-        } catch (MGXException | IOException | SeqStoreException ex) {
+        } catch (IOException | SeqStoreException ex) {
             mgx.log(ex);
             throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
         }
@@ -268,22 +281,24 @@ public class SeqRunBean {
 
         if (analyzers != null && analyzers.length > 0) {
             File qcDir;
-            String dbFile;
+            String dbFilename;
             try {
-                dbFile = mgx.getSeqRunDAO().getDBFile(sr.getId()).getAbsolutePath();
+                Result<File> dbFile = mgx.getSeqRunDAO().getDBFile(sr.getId());
+                if (dbFile.isError()) {
+                    throw new MGXWebException(dbFile.getError());
+                }
+                dbFilename = dbFile.getValue().getAbsolutePath();
                 qcDir = mgx.getProjectQCDirectory();
-            } catch (IOException | MGXException ex) {
+            } catch (IOException ex) {
                 mgx.log(ex);
                 throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
             }
             final String prefix = qcDir.getAbsolutePath() + File.separator + id + ".";
-            final SeqRun run = sr;
-            final String dbFilename = dbFile;
             for (final Analyzer<DNASequenceI> analyzer : analyzers) {
                 File outFile = new File(prefix + analyzer.getName());
 
                 if (!outFile.exists()) {
-                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Starting QC analyzer {0} for run {1}", new Object[]{analyzer.getName(), run.getName()});
+                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Starting QC analyzer {0} for run {1}", new Object[]{analyzer.getName(), sr.getName()});
                     executor.execute(new Runnable() {
 
                         @Override
@@ -303,10 +318,10 @@ public class SeqRunBean {
                                 if (r != null) {
                                     r.close();
                                 }
-                                if (analyzer.getNumberOfSequences() == run.getNumberOfSequences()) {
+                                if (analyzer.getNumberOfSequences() == sr.getNumberOfSequences()) {
                                     Persister.persist(prefix, analyzer);
                                 } else {
-                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{analyzer.getName(), run.getName(), analyzer.getNumberOfSequences()});
+                                    Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, "Analyzer {0} failed for {1} after {2} seqs", new Object[]{analyzer.getName(), sr.getName(), analyzer.getNumberOfSequences()});
                                 }
                             } catch (SequenceException ex) {
                                 Logger.getLogger(SeqRunBean.class.getName()).log(Level.SEVERE, null, ex);
@@ -339,39 +354,22 @@ public class SeqRunBean {
 
         switch (tscope) {
             case READ:
-                try ( AutoCloseableIterator<Job> iter = mgx.getJobDAO().bySeqRun(seqrun_id)) {
-                while (iter.hasNext()) {
-                    Job job = iter.next();
-                    JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
-
-                    try ( AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
-                        AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
-                        if (dtoList.getAttributeTypeCount() > 0) {
-                            JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
-                                    .setJob(jobDTO).setAttributeTypes(dtoList)
-                                    .build();
-                            b.addEntry(jat);
-                        }
-                    }
+                Result<AutoCloseableIterator<Job>> res = mgx.getJobDAO().bySeqRun(seqrun_id);
+                if (res.isError()) {
+                    throw new MGXWebException(res.getError());
                 }
-            } catch (Exception ex) {
-                mgx.log(ex);
-                throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-            }
-            break;
 
-            case ASSEMBLY:
-                // assembly jobs do not annotate attribute types
-                break;
-
-            case GENE_ANNOTATION:
-                try {
-                try ( AutoCloseableIterator<Job> iter = mgx.getJobDAO().byAssembly(assembly_id)) {
+                try ( AutoCloseableIterator<Job> iter = res.getValue()) {
                     while (iter.hasNext()) {
                         Job job = iter.next();
                         JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
 
-                        try ( AutoCloseableIterator<AttributeType> atiter = mgx.getAttributeTypeDAO().byJob(job.getId())) {
+                        Result<DBIterator<AttributeType>> res2 = mgx.getAttributeTypeDAO().byJob(job.getId());
+                        if (res2.isError()) {
+                            throw new MGXWebException(res2.getError());
+                        }
+
+                        try ( AutoCloseableIterator<AttributeType> atiter = res2.getValue()) {
                             AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
                             if (dtoList.getAttributeTypeCount() > 0) {
                                 JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
@@ -382,11 +380,40 @@ public class SeqRunBean {
                         }
                     }
                 }
-            } catch (Exception ex) {
-                mgx.log(ex);
-                throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
-            }
-            break;
+                break;
+
+            case ASSEMBLY:
+                // no-op; assembly jobs do not annotate attribute types
+                break;
+
+            case GENE_ANNOTATION:
+
+                Result<AutoCloseableIterator<Job>> byAsm = mgx.getJobDAO().byAssembly(assembly_id);
+                if (byAsm.isError()) {
+                    throw new MGXWebException(byAsm.getError());
+                }
+                try ( AutoCloseableIterator<Job> iter = byAsm.getValue()) {
+                    while (iter.hasNext()) {
+                        Job job = iter.next();
+                        JobDTO jobDTO = JobDTOFactory.getInstance().toDTO(job);
+
+                        Result<DBIterator<AttributeType>> byJob = mgx.getAttributeTypeDAO().byJob(job.getId());
+                        if (byJob.isError()) {
+                            throw new MGXWebException(byJob.getError());
+                        }
+
+                        try ( AutoCloseableIterator<AttributeType> atiter = byJob.getValue()) {
+                            AttributeTypeDTOList dtoList = AttributeTypeDTOFactory.getInstance().toDTOList(atiter);
+                            if (dtoList.getAttributeTypeCount() > 0) {
+                                JobAndAttributeTypes jat = JobAndAttributeTypes.newBuilder()
+                                        .setJob(jobDTO).setAttributeTypes(dtoList)
+                                        .build();
+                                b.addEntry(jat);
+                            }
+                        }
+                    }
+                }
+                break;
         }
         return b.build();
     }

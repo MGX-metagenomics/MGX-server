@@ -5,6 +5,7 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.GeneByAttributeDownloadProvider;
@@ -19,6 +20,7 @@ import de.cebitec.mgx.dtoadapter.ReferenceRegionDTOFactory;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.ReferenceRegion;
 import de.cebitec.mgx.sessions.TaskHolder;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
@@ -82,18 +84,16 @@ public class ReferenceRegionBean {
 //        }
 //        return Response.ok().build();
 //    }
-
     @GET
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public ReferenceRegionDTO fetch(@PathParam("id") Long id) {
-        ReferenceRegion obj = null;
-        try {
-            obj = mgx.getReferenceRegionDAO().getById(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<ReferenceRegion> obj = mgx.getReferenceRegionDAO().getById(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return ReferenceRegionDTOFactory.getInstance().toDTO(obj);
+
+        return ReferenceRegionDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
 //    @GET
@@ -106,19 +106,21 @@ public class ReferenceRegionBean {
 //            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
 //        }
 //    }
-
     @GET
     @Path("byReferenceInterval/{refid}/{from}/{to}")
     @Produces("application/x-protobuf")
     public ReferenceRegionDTOList byReferenceInterval(@PathParam("refid") Long refid, @PathParam("from") int from, @PathParam("to") int to) {
-        ReferenceRegionDTOList ret = null;
-        try {
-            Reference ref = mgx.getReferenceDAO().getById(refid);
-            ret = ReferenceRegionDTOFactory.getInstance().toDTOList(mgx.getReferenceRegionDAO().byReferenceInterval(refid, ref, from, to));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Reference> res = mgx.getReferenceDAO().getById(refid);
+        if (res.isError()) {
+            throw new MGXWebException(res.getError());
         }
-        return ret;
+
+        Result<AutoCloseableIterator<ReferenceRegion>> res2 = mgx.getReferenceRegionDAO().byReferenceInterval(refid, res.getValue(), from, to);
+        if (res2.isError()) {
+            throw new MGXWebException(res2.getError());
+        }
+
+        return ReferenceRegionDTOFactory.getInstance().toDTOList(res2.getValue());
     }
 
 //    @GET
@@ -158,7 +160,6 @@ public class ReferenceRegionBean {
 //        }
 //        return SequenceDTOFactory.getInstance().toDTO(obj);
 //    }
-
 //    @DELETE
 //    @Path("delete/{id}")
 //    @Produces("application/x-protobuf")
@@ -173,7 +174,6 @@ public class ReferenceRegionBean {
 //        return MGXString.newBuilder().setValue(taskId.toString()).build();
 //
 //    }
-
     @PUT
     @Path("initDownloadforAttributes")
     @Produces("application/x-protobuf")
@@ -195,7 +195,7 @@ public class ReferenceRegionBean {
 
             provider = new GeneByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(),
                     attributeIDs, mgx.getProjectAssemblyDirectory());
-        } catch (MGXException | IOException ex) {
+        } catch (IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }

@@ -3,6 +3,7 @@ package de.cebitec.mgx.web;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.download.DownloadProviderI;
 import de.cebitec.mgx.download.DownloadSessions;
 import de.cebitec.mgx.download.GeneByAttributeDownloadProvider;
@@ -22,7 +23,6 @@ import de.cebitec.mgx.model.misc.BinSearchResult;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
-import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -122,52 +122,44 @@ public class AssembledRegionBean {
     @Path("byBin/{id}")
     @Produces("application/x-protobuf")
     public AssembledRegionDTOList byBin(@PathParam("id") Long id) {
-        AutoCloseableIterator<AssembledRegion> bins;
-        try {
-            bins = mgx.getAssembledRegionDAO().byBin(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<AssembledRegion>> iter = mgx.getAssembledRegionDAO().byBin(id);
+        if (iter.isError()) {
+            throw new MGXWebException(iter.getError());
         }
-        return AssembledRegionDTOFactory.getInstance().toDTOList(bins);
+        return AssembledRegionDTOFactory.getInstance().toDTOList(iter.getValue());
     }
 
     @GET
     @Path("byContig/{id}")
     @Produces("application/x-protobuf")
     public AssembledRegionDTOList byContig(@PathParam("id") Long id) {
-        AutoCloseableIterator<AssembledRegion> bins;
-        try {
-            bins = mgx.getAssembledRegionDAO().byContig(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<AssembledRegion>> iter = mgx.getAssembledRegionDAO().byContig(id);
+        if (iter.isError()) {
+            throw new MGXWebException(iter.getError());
         }
-        return AssembledRegionDTOFactory.getInstance().toDTOList(bins);
+        return AssembledRegionDTOFactory.getInstance().toDTOList(iter.getValue());
     }
 
     @GET
     @Path("getDNASequence/{id}")
     @Produces("application/x-protobuf")
     public SequenceDTO getDNASequence(@PathParam("id") Long id) {
-        Sequence obj;
-        try {
-            obj = mgx.getAssembledRegionDAO().getDNASequence(id);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<Sequence> obj = mgx.getAssembledRegionDAO().getDNASequence(id);
+        if (obj.isError()) {
+            throw new MGXWebException(obj.getError());
         }
-        return SequenceDTOFactory.getInstance().toDTO(obj);
+        return SequenceDTOFactory.getInstance().toDTO(obj.getValue());
     }
 
     @GET
     @Path("search/{id}/{term}")
     @Produces("application/x-protobuf")
     public BinSearchResultDTOList search(@PathParam("id") Long bin_id, @PathParam("term") String term) {
-        AutoCloseableIterator<BinSearchResult> iter;
-        try {
-            iter = mgx.getAssembledRegionDAO().search(bin_id, term);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<BinSearchResult>> iter = mgx.getAssembledRegionDAO().search(bin_id, term);
+        if (iter.isError()) {
+            throw new MGXWebException(iter.getError());
         }
-        return BinSearchResultDTOFactory.getInstance().toDTOList(iter);
+        return BinSearchResultDTOFactory.getInstance().toDTOList(iter.getValue());
     }
 
 //    @DELETE
@@ -205,8 +197,8 @@ public class AssembledRegionBean {
 
             provider = new GeneByAttributeDownloadProvider(mgx.getDataSource(), mgx.getProjectName(),
                     attributeIDs, mgx.getProjectAssemblyDirectory());
-        } catch (MGXException | IOException ex) {
-            mgx.log(ex.getMessage());
+        } catch (IOException ex) {
+            mgx.log(ex);
             throw new MGXWebException(ex.getMessage());
         }
 

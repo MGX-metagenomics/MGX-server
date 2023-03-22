@@ -5,10 +5,12 @@ import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXRoles;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.dto.dto.JobParameterDTO;
 import de.cebitec.mgx.dto.dto.JobParameterListDTO;
 import de.cebitec.mgx.dtoadapter.JobParameterDTOFactory;
 import de.cebitec.mgx.model.db.JobParameter;
+import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
 import de.cebitec.mgx.web.helper.ExceptionMessageConverter;
 import jakarta.ejb.Stateless;
@@ -37,12 +39,11 @@ public class JobParameterBean {
     @Path("fetch/{id}")
     @Produces("application/x-protobuf")
     public JobParameterDTO fetch(@PathParam("id") Long id) {
-        try {
-            JobParameter jobparam = mgx.getJobParameterDAO().getById(id);
-            return JobParameterDTOFactory.getInstance().toDTO(jobparam);
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<JobParameter> jobparam = mgx.getJobParameterDAO().getById(id);
+        if (jobparam.isError()) {
+            throw new MGXWebException(jobparam.getError());
         }
+        return JobParameterDTOFactory.getInstance().toDTO(jobparam.getValue());
     }
 
     @POST
@@ -74,10 +75,10 @@ public class JobParameterBean {
     @Path("ByJob/{job_id}")
     @Produces("application/x-protobuf")
     public JobParameterListDTO ByJob(@PathParam("job_id") Long job_id) {
-        try {
-            return JobParameterDTOFactory.getInstance().toDTOList(mgx.getJobParameterDAO().byJob(job_id));
-        } catch (MGXException ex) {
-            throw new MGXWebException(ExceptionMessageConverter.convert(ex.getMessage()));
+        Result<AutoCloseableIterator<JobParameter>> byJob = mgx.getJobParameterDAO().byJob(job_id);
+        if (byJob.isError()) {
+            throw new MGXWebException(byJob.getError());
         }
+        return JobParameterDTOFactory.getInstance().toDTOList(byJob.getValue());
     }
 }
