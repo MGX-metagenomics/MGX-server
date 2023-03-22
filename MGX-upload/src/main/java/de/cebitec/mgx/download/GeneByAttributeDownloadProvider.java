@@ -49,7 +49,7 @@ public class GeneByAttributeDownloadProvider implements DownloadProviderI<Sequen
     protected final Lock lock = new ReentrantLock();
     protected volatile SequenceDTOList nextChunk = null;
 
-    public GeneByAttributeDownloadProvider(GPMSManagedDataSourceI dataSource, String projectName, long[] attributeIDs, File assemblyDir) throws MGXException {
+    public GeneByAttributeDownloadProvider(GPMSManagedDataSourceI dataSource, String projectName, long[] attributeIDs, File assemblyDir) {
         this.dataSource = dataSource;
         this.projectName = projectName;
         dataSource.subscribe(this);

@@ -49,23 +49,16 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     protected final Lock lock = new ReentrantLock();
     protected volatile SequenceDTOList nextChunk = null;
 
-    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws MGXException {
+    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws SeqStoreException {
         this(dataSource, projName, dbFile);
         maxSeqsPerChunk = chunkSize;
     }
 
-    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile) throws MGXException {
+    public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile) throws SeqStoreException {
         this.projectName = projName;
         this.dataSource = dataSource;
-
-        try {
-            reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile);
-        } catch (SeqStoreException ex) {
-            throw new MGXException("Could not initialize sequence download: " + ex.getMessage());
-        }
-
+        reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile);
         this.dataSource.subscribe(this);
-
         lastAccessed = System.currentTimeMillis();
     }
 
@@ -219,8 +212,8 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
         });
 
-        try (Connection conn = dataSource.getConnection(this)) {
-            try (PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
+        try ( Connection conn = dataSource.getConnection(this)) {
+            try ( PreparedStatement stmt = conn.prepareStatement(buildSQL(seqs.size()))) {
                 int idx = 1;
                 for (DNASequenceI seq : seqs) {
                     stmt.setLong(idx++, seq.getId());
@@ -228,7 +221,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
                 Iterator<DNASequenceI> seqIter = seqs.iterator();
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next() && seqIter.hasNext()) {
                         DNASequenceI seq = seqIter.next();
                         seq.setName(rs.getString(1).getBytes());

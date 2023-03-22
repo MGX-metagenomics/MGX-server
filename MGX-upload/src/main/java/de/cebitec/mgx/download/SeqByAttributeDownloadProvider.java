@@ -10,6 +10,7 @@ import de.cebitec.mgx.seqcompression.QualityEncoder;
 import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNAQualitySequenceI;
 import de.cebitec.mgx.sequence.DNASequenceI;
+import de.cebitec.mgx.sequence.SeqStoreException;
 import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TLongObjectHashMap;
 import java.sql.Connection;
@@ -33,7 +34,7 @@ public class SeqByAttributeDownloadProvider extends SeqRunDownloadProvider {
     private final long[] attributeIDs;
     private TLongObjectMap<String> readnames = null;
 
-    public SeqByAttributeDownloadProvider(GPMSManagedDataSourceI dataSource, String projectName, long[] attributeIDs, String dbFile) throws MGXException {
+    public SeqByAttributeDownloadProvider(GPMSManagedDataSourceI dataSource, String projectName, long[] attributeIDs, String dbFile) throws SeqStoreException {
         super(dataSource, projectName, dbFile);
         this.attributeIDs = attributeIDs;
         this.readnames = new TLongObjectHashMap<>(maxSeqsPerChunk);

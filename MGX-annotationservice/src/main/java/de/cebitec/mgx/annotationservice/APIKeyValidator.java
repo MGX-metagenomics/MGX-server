@@ -12,6 +12,7 @@ import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Job;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
@@ -73,30 +74,30 @@ public class APIKeyValidator implements ContainerRequestFilter {
         }
 
         // cache miss, obtain data from projects DB
-        try {
-            Job job = mgx.getJobDAO().getByApiKey(apiKey);
-            if (job == null) {
-                throw new MGXServiceException(Response.Status.UNAUTHORIZED, "API key not valid");
-            }
-
-            // validate job state
-            //
-            // CREATED needs to be accepted so "GraphRun --validate" can retrieve the job
-            //
-            // during Conveyor workflow execution, a job starts with QUEUED state and is 
-            // then updated to RUNNING
-            //
-            JobState status = job.getStatus();
-            if (!(status == JobState.CREATED || status == JobState.QUEUED || status == JobState.RUNNING)) {
-                LOG.log(Level.SEVERE, "Denied API access due to invalid job state {0} for job {1}", new Object[]{status.toString(), job.getId()});
-                throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
-            }
-
-            cache.put(key, Boolean.TRUE);
-        } catch (MGXException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-            throw new MGXServiceException(Response.Status.UNAUTHORIZED, ex.getMessage());
+        Result<Job> res = mgx.getJobDAO().getByApiKey(apiKey);
+        if (res.isError()) {
+            throw new MGXServiceException(res.getError());
         }
+        Job job = res.getValue();
+        if (job == null) {
+            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "API key not valid");
+        }
+
+        // validate job state
+        //
+        // CREATED needs to be accepted so "GraphRun --validate" can retrieve the job
+        //
+        // during Conveyor workflow execution, a job starts with QUEUED state and is 
+        // then updated to RUNNING
+        //
+        JobState status = job.getStatus();
+        if (!(status == JobState.CREATED || status == JobState.QUEUED || status == JobState.RUNNING)) {
+            LOG.log(Level.SEVERE, "Denied API access due to invalid job state {0} for job {1}", new Object[]{status.toString(), job.getId()});
+            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
+        }
+
+        cache.put(key, Boolean.TRUE);
+
     }
 
     private final static class CacheKey {
