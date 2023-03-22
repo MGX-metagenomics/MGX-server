@@ -5,8 +5,8 @@
     
     <module>
         <web>
-            <web-uri>MGX-maven-web-2.0.war</web-uri>
-            <context-root>/MGX-maven-web</context-root>
+            <web-uri>MGX-rest-2.0.war</web-uri>
+            <context-root>/MGX-rest</context-root>
         </web>
     </module>
     <module>
