@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AttributeType;
 import de.cebitec.mgx.model.db.Job;
@@ -80,14 +81,18 @@ public class AttributeDAO extends DAO<Attribute> {
             + "WHERE id=?";
 
     @Override
-    public Attribute getById(long id) throws MGXException {
+    public Result<Attribute> getById(long id) {
+        if (id <= 0) {
+            return Result.error("No/Invalid ID supplied.");
+        }
+
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
 
                 try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Attribute for ID " + id + ".");
+                        return Result.error("No object of type Attribute for ID " + id + ".");
                     }
                     Attribute attr = new Attribute();
                     attr.setId(rs.getLong(1));
@@ -99,18 +104,18 @@ public class AttributeDAO extends DAO<Attribute> {
                     }
                     attr.setJobId(rs.getLong(5));
 
-                    return attr;
+                    return Result.ok(attr);
                 }
             }
         } catch (SQLException ex) {
-            getController().log(ex.getMessage());
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public AutoCloseableIterator<Attribute> getByIds(long... ids) throws MGXException {
+    public Result<AutoCloseableIterator<Attribute>> getByIds(long... ids) {
         if (ids == null || ids.length == 0) {
-            throw new MGXException("Null/empty ID list.");
+            return Result.error("Null/empty ID list.");
         }
 
         List<Attribute> ret = null;
@@ -147,9 +152,9 @@ public class AttributeDAO extends DAO<Attribute> {
             }
         } catch (SQLException ex) {
             getController().log(ex.getMessage());
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(new ForwardingIterator<>(ret == null ? null : ret.iterator()));
     }
 
     @Override
@@ -157,7 +162,7 @@ public class AttributeDAO extends DAO<Attribute> {
         return Attribute.class;
     }
 
-    public List<Triple<Attribute, Long, Long>> getDistribution(long attrTypeId, long jobId, long seqrunId) throws MGXException {
+    public Result<List<Triple<Attribute, Long, Long>>> getDistribution(long attrTypeId, long jobId, long seqrunId) {
 
         // attribute, parent id, count
         List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
@@ -189,15 +194,15 @@ public class AttributeDAO extends DAO<Attribute> {
                 }
             }
         } catch (SQLException ex) {
-            getController().log(ex.getMessage());
-            throw new MGXException(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return ret;
+        return Result.ok(ret);
 
     }
 
-    public List<Triple<Attribute, Long, Long>> getFilteredDistribution(long filterAttrId, long attrTypeId, long jobId) throws MGXException {
+    public Result<List<Triple<Attribute, Long, Long>>> getFilteredDistribution(long filterAttrId, long attrTypeId, long jobId) {
 
         // attribute, parent id, count
         List<Triple<Attribute, Long, Long>> ret = new LinkedList<>();
@@ -229,15 +234,15 @@ public class AttributeDAO extends DAO<Attribute> {
                 }
             }
         } catch (SQLException ex) {
-            getController().log(ex.getMessage());
-            throw new MGXException(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return ret;
+        return Result.ok(ret);
 
     }
 
-    public Map<Attribute, Long> getHierarchy(long attrTypeId, long job_id, long seqrunId) throws MGXException {
+    public Result<Map<Attribute, Long>> getHierarchy(long attrTypeId, long job_id, long seqrunId) {
 
         Map<Attribute, Long> attrCount = new HashMap<>();
         TLongObjectMap<Attribute> attrByID = new TLongObjectHashMap<>();
@@ -269,8 +274,8 @@ public class AttributeDAO extends DAO<Attribute> {
                 }
             }
         } catch (SQLException ex) {
-            getController().log(ex.getMessage());
-            throw new MGXException(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
         for (Attribute a : attrCount.keySet()) {
@@ -281,10 +286,10 @@ public class AttributeDAO extends DAO<Attribute> {
             }
         }
 
-        return attrCount;
+        return Result.ok(attrCount);
     }
 
-    public Map<Pair<Attribute, Attribute>, Integer> getCorrelation(long attrTypeId, long job1Id, long attrType2Id, long job2id) throws MGXException {
+    public Result<Map<Pair<Attribute, Attribute>, Integer>> getCorrelation(long attrTypeId, long job1Id, long attrType2Id, long job2id) {
 
         Map<Pair<Attribute, Attribute>, Integer> ret = new HashMap<>();
 
@@ -318,21 +323,25 @@ public class AttributeDAO extends DAO<Attribute> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
-        return ret;
+        return Result.ok(ret);
     }
 
     private final static String SQL_BYJOB = "SELECT attr.id, attr.value, attr.attrtype_id, attr.parent_id FROM attribute attr "
             + "LEFT JOIN job ON (attr.job_id = job.id) "
             + "WHERE job_id=? AND job.job_state=?";
 
-    public AutoCloseableIterator<Attribute> byJob(long jobId) throws MGXException {
+    public Result<AutoCloseableIterator<Attribute>> byJob(long jobId) {
 
-//        Job job = getController().getJobDAO().getById(jobId);
+        Result<DBIterator<AttributeType>> res = getController().getAttributeTypeDAO().byJob(jobId);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+
         // pre-collect attribute types
         final TLongObjectMap<AttributeType> attrTypes = new TLongObjectHashMap<>();
-        try ( DBIterator<AttributeType> aTypes = getController().getAttributeTypeDAO().byJob(jobId)) {
+        try ( DBIterator<AttributeType> aTypes = res.getValue()) {
             while (aTypes.hasNext()) {
                 AttributeType attrType = aTypes.next();
                 attrTypes.put(attrType.getId(), attrType);
@@ -369,22 +378,32 @@ public class AttributeDAO extends DAO<Attribute> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
 
         attrTypes.clear();
 
-        return new ForwardingIterator<>(attrs.iterator());
+        return Result.ok(new ForwardingIterator<>(attrs.iterator()));
     }
 
-    public AutoCloseableIterator<Attribute> bySeqRun(long runId) throws MGXException {
+    public Result<AutoCloseableIterator<Attribute>> bySeqRun(long runId) {
+
+        Result<AutoCloseableIterator<Job>> res = getController().getJobDAO().bySeqRun(runId);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
 
         List<Attribute> attrs = new ArrayList<>();
 
-        try ( AutoCloseableIterator<Job> jobIter = getController().getJobDAO().bySeqRun(runId)) {
+        try ( AutoCloseableIterator<Job> jobIter = res.getValue()) {
             while (jobIter.hasNext()) {
                 Job job = jobIter.next();
-                try ( AutoCloseableIterator<Attribute> attrIter = getController().getAttributeDAO().byJob(job.getId())) {
+
+                Result<AutoCloseableIterator<Attribute>> res2 = getController().getAttributeDAO().byJob(job.getId());
+                if (res2.isError()) {
+                    return Result.error(res2.getError());
+                }
+                try ( AutoCloseableIterator<Attribute> attrIter = res2.getValue()) {
                     while (attrIter.hasNext()) {
                         attrs.add(attrIter.next());
                     }
@@ -392,45 +411,45 @@ public class AttributeDAO extends DAO<Attribute> {
             }
         }
 
-        return new ForwardingIterator<>(attrs.iterator());
+        return Result.ok(new ForwardingIterator<>(attrs.iterator()));
     }
 
     private final static String SQL_FIND = "SELECT value FROM attribute attr "
             + "LEFT JOIN job ON (attr.job_id = job.id) "
-            + "WHERE ?=ANY(job.seqruns) AND job.job_state=5 "
+            + "WHERE ?=ANY(job.seqruns) AND job.job_state=? "
             + "AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')";
 
-    public DBIterator<String> find(String term, long runId) throws MGXException {
-        if (term.isEmpty()) {
-            throw new MGXException("Empty search term or empty run list.");
+    public Result<DBIterator<String>> find(String term, long runId) {
+        if (term == null || term.isEmpty()) {
+            return Result.error("Empty search term.");
         }
-        DBIterator<String> iter = null;
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(SQL_FIND);
             stmt.setLong(1, runId);
-            stmt.setString(2, term);
+            stmt.setInt(2, JobState.FINISHED.getValue());
+            stmt.setString(3, term);
             ResultSet rset = stmt.executeQuery();
-            final ResultSet rs = rset;
 
-            iter = new DBIterator<String>(rs, stmt, conn) {
+            DBIterator<String> iter = new DBIterator<String>(rset, stmt, conn) {
                 @Override
                 public String convert(ResultSet rs) throws SQLException {
                     return rs.getString(1);
                 }
             };
+            return Result.ok(iter);
+
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
-        return iter;
     }
 
     private final static String SQL_SEARCH = "WITH matching_attrs AS ( "
             + "SELECT attr.id FROM attribute attr "
             + "LEFT JOIN job ON (attr.job_id = job.id) "
-            + "WHERE ?=ANY(job.seqruns) AND job.job_state=5 "
+            + "WHERE ?=ANY(job.seqruns) AND job.job_state=? "
             + "AND (? AND upper(attr.value) = upper(?) "
             + "OR NOT (?) AND upper(attr.value) LIKE CONCAT('%', upper(?), '%')) "
             + ")"
@@ -439,19 +458,20 @@ public class AttributeDAO extends DAO<Attribute> {
             + "JOIN observation obs ON (read.id = obs.seq_id) "
             + "JOIN matching_attrs ON (obs.attr_id = matching_attrs.id)";
 
-    public DBIterator<Sequence> search(String term, boolean exact, long runId) throws MGXException {
+    public Result<DBIterator<Sequence>> search(String term, boolean exact, long runId) {
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(SQL_SEARCH);
             stmt.setLong(1, runId);
-            stmt.setBoolean(2, exact);
-            stmt.setString(3, term);
-            stmt.setBoolean(4, exact);
-            stmt.setString(5, term);
+            stmt.setInt(2, JobState.FINISHED.getValue());
+            stmt.setBoolean(3, exact);
+            stmt.setString(4, term);
+            stmt.setBoolean(5, exact);
+            stmt.setString(6, term);
 
             ResultSet rset = stmt.executeQuery();
 
-            return new DBIterator<Sequence>(rset, stmt, conn) {
+            DBIterator<Sequence> dbIterator = new DBIterator<Sequence>(rset, stmt, conn) {
                 @Override
                 public Sequence convert(ResultSet rs) throws SQLException {
                     Sequence s = new Sequence();
@@ -461,8 +481,10 @@ public class AttributeDAO extends DAO<Attribute> {
                     return s;
                 }
             };
+            return Result.ok(dbIterator);
         } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 

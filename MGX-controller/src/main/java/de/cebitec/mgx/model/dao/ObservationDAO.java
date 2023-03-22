@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.Sequence;
 import de.cebitec.mgx.model.misc.BulkObservation;
@@ -112,9 +113,9 @@ public class ObservationDAO {
         }
     }
 
-    public DBIterator<SequenceObservation> byRead(final long seqId) throws MGXException {
+    public Result<DBIterator<SequenceObservation>> byRead(final long seqId) {
         if (seqId <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         DBIterator<SequenceObservation> iter = null;
         PreparedStatement stmt = null;
@@ -139,9 +140,10 @@ public class ObservationDAO {
             };
 
         } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
+            ctx.log(ex);
+            return Result.error(ex.getMessage());
         }
-        return iter;
+        return Result.ok(iter);
     }
 
 }

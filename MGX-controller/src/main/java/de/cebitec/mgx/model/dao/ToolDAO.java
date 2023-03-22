@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.common.ToolScope;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Job;
 import de.cebitec.mgx.model.db.Tool;
@@ -49,8 +50,8 @@ public class ToolDAO extends DAO<Tool> {
         obj.setFile(null);
 
 //        Long id = super.create(obj);
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getAuthor());
                 stmt.setString(2, obj.getDescription());
                 stmt.setString(3, obj.getName());
@@ -59,7 +60,7 @@ public class ToolDAO extends DAO<Tool> {
                 stmt.setString(6, obj.getFile());
                 stmt.setInt(7, obj.getScope().getValue());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -72,7 +73,7 @@ public class ToolDAO extends DAO<Tool> {
         String fname = null;
         try {
             fname = getController().getProjectJobDirectory() + File.separator + obj.getId() + ".xml";
-            try (Writer fw = new BufferedWriter(new FileWriter(fname))) {
+            try ( Writer fw = new BufferedWriter(new FileWriter(fname))) {
                 fw.write(xmldata);
                 fw.flush();
             }
@@ -80,8 +81,8 @@ public class ToolDAO extends DAO<Tool> {
         } catch (IOException ex) {
 
             // remove entity from DB
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM tool WHERE id=?")) {
                     stmt.setLong(1, obj.getId());
                     stmt.executeUpdate();
                 }
@@ -103,16 +104,16 @@ public class ToolDAO extends DAO<Tool> {
     }
 
     @Override
-    public Tool getById(long id) throws MGXException {
+    public Result<Tool> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool WHERE id=?")) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Tool for ID " + id + ".");
+                        return Result.error("No object of type Tool for ID " + id + ".");
                     }
                     Tool t = new Tool();
                     t.setId(rs.getLong(1));
@@ -124,24 +125,28 @@ public class ToolDAO extends DAO<Tool> {
                     t.setFile(rs.getString(7));
                     t.setScope(ToolScope.values()[rs.getInt(8)]);
 
-                    return t;
+                    return Result.ok(t);
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public AutoCloseableIterator<Tool> getAll() throws MGXException {
-        List<Tool> tools = getTools();
-        return new ForwardingIterator<>(tools.iterator());
+    public Result<AutoCloseableIterator<Tool>> getAll() {
+        Result<List<Tool>> tools = getTools();
+        if (tools.isError()) {
+            return Result.error(tools.getError());
+        }
+        return Result.ok(new ForwardingIterator<>(tools.getValue().iterator()));
     }
 
-    private List<Tool> getTools() throws MGXException {
+    private Result<List<Tool>> getTools() {
         List<Tool> tools = new ArrayList<>();
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, author, description, name, url, version, file, scope FROM tool")) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         Tool t = new Tool();
                         t.setId(rs.getLong(1));
@@ -157,20 +162,21 @@ public class ToolDAO extends DAO<Tool> {
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return tools;
+        return Result.ok(tools);
     }
 
     private final static String SQL_BY_JOB = "SELECT t.id, t.author, t.description, t.name, t.url, t.version, t.file, t.scope "
             + "FROM job j LEFT JOIN tool t on (j.tool_id=t.id) WHERE j.id=?";
 
-    public Tool byJob(long job_id) throws MGXException {
+    public Result<Tool> byJob(long job_id) {
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Tool t = new Tool();
                         t.setId(rs.getLong(1));
@@ -181,14 +187,15 @@ public class ToolDAO extends DAO<Tool> {
                         t.setVersion(rs.getFloat(6));
                         t.setFile(rs.getString(7));
                         t.setScope(ToolScope.values()[rs.getInt(8)]);
-                        return t;
+                        return Result.ok(t);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        throw new MGXException("No object of type Job for ID " + job_id + ".");
+        return Result.error("No object of type Job for ID " + job_id + ".");
     }
 
     private final static String UPDATE = "UPDATE tool SET author=?, description=?, name=?, url=?, version=?, file=?, scope=? "
@@ -198,8 +205,8 @@ public class ToolDAO extends DAO<Tool> {
         if (obj.getId() == Tool.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type Tool without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getAuthor());
                 stmt.setString(2, obj.getDescription());
                 stmt.setString(3, obj.getName());
@@ -215,7 +222,7 @@ public class ToolDAO extends DAO<Tool> {
         }
     }
 
-    public long installGlobalTool(Tool global) throws MGXException {
+    public Result<Long> installGlobalTool(Tool global) {
 
         Tool t = new Tool();
 
@@ -229,14 +236,20 @@ public class ToolDAO extends DAO<Tool> {
         t.setScope(global.getScope());
 
         // persist to create the id
-        long id = create(t);
+        Long id;
+        try {
+            id = create(t);
+        } catch (MGXException ex) {
+            getController().log(ex);
+            return Result.error(ex.getMessage());
+        }
 
         /*
          * copy over the graph description file in order to maintain a
          * consistent project state even if the global tool is updated; the
          * project directory is created on demand
          */
-        StringBuilder targetName = null;
+        StringBuilder targetName;
         try {
             targetName = new StringBuilder(getController().getProjectDirectory().getAbsolutePath())
                     .append(File.separator).append("jobs");
@@ -256,51 +269,78 @@ public class ToolDAO extends DAO<Tool> {
             UnixHelper.copyFile(src, dest);
             UnixHelper.makeFileGroupWritable(dest.getAbsolutePath());
         } catch (IOException ex) {
-            throw new MGXException(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
         // update graph description
         t.setFile(targetName.toString());
-        update(t);
+        try {
+            update(t);
+        } catch (MGXException ex) {
+            getController().log(ex);
+            return Result.error(ex.getMessage());
+        }
 
-        return id;
+        return Result.ok(id);
     }
 
-    public TaskI delete(long id) throws MGXException, IOException {
+    public Result<TaskI> delete(long id) throws IOException {
+
+        Result<AutoCloseableIterator<Job>> res = getController().getJobDAO().byTool(id);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+
         List<TaskI> subtasks = new ArrayList<>();
-        try (AutoCloseableIterator<Job> iter = getController().getJobDAO().byTool(id)) {
+        try ( AutoCloseableIterator<Job> iter = res.getValue()) {
             while (iter.hasNext()) {
                 Job d = iter.next();
-                TaskI t = getController().getJobDAO().delete(d.getId());
-                subtasks.add(t);
+                Result<TaskI> t = getController().getJobDAO().delete(d.getId());
+                if (t.isError()) {
+                    return Result.error(t.getError());
+                }
+                subtasks.add(t.getValue());
             }
         }
 
-        return new DeleteTool(getController().getDataSource(), id,
+        TaskI t = new DeleteTool(getController().getDataSource(), id,
                 getController().getProjectName(), getController().getProjectJobDirectory().getAbsolutePath());
+        return Result.ok(t);
     }
 
     private final static String[] DEFAULT_TOOL_NAMES = new String[]{"MGX taxonomic classification"};
 
-    public List<Tool> getDefaultTools(List<Tool> globalTools) throws MGXException {
+    public Result<List<Tool>> getDefaultTools(List<Tool> globalTools) {
         List<Tool> defaultTools = new ArrayList<>();
 
-        List<Tool> projectTools = getTools();
+        Result<List<Tool>> projectTools = getTools();
+        if (projectTools.isError()) {
+            return Result.error(projectTools.getError());
+        }
+
         for (String toolName : DEFAULT_TOOL_NAMES) {
-            Tool projectTool = findByName(toolName, projectTools);
+            Tool projectTool = findByName(toolName, projectTools.getValue());
 
             if (projectTool == null) {
                 // tool missing, need to install from repo
                 getController().log("Installing tool " + toolName + " from global repository.");
                 Tool globalTool = findByName(toolName, globalTools);
-                long projectToolId = installGlobalTool(globalTool);
-                projectTool = getById(projectToolId);
+                Result<Long> projectToolId = installGlobalTool(globalTool);
+                if (projectToolId.isError()) {
+                    return Result.error(projectToolId.getError());
+                }
+                Result<Tool> res = getById(projectToolId.getValue());
+                if (res.isError()) {
+                    return Result.error(res.getError());
+                }
+                projectTool = res.getValue();
             }
 
             defaultTools.add(projectTool);
         }
 
-        return defaultTools;
+        return Result.ok(defaultTools);
     }
 
     private static Tool findByName(String name, List<Tool> tools) {

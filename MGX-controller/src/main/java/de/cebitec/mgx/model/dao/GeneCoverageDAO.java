@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.GeneCoverage;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
@@ -30,7 +31,7 @@ public class GeneCoverageDAO extends DAO<GeneCoverage> {
     private static final String BY_GENE = "SELECT gc.run_id, gc.coverage FROM gene g "
             + "LEFT JOIN gene_coverage gc ON (g.id=gc.gene_id) WHERE g.id=?";
 
-    public AutoCloseableIterator<GeneCoverage> byGene(long gene_id) throws MGXException {
+    public Result<AutoCloseableIterator<GeneCoverage>> byGene(long gene_id) {
 
         List<GeneCoverage> l = null;
         try (Connection conn = getConnection()) {
@@ -39,7 +40,7 @@ public class GeneCoverageDAO extends DAO<GeneCoverage> {
                 try (ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Gene for ID " + gene_id + ".");
+                        return Result.error("No object of type Gene for ID " + gene_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -59,13 +60,15 @@ public class GeneCoverageDAO extends DAO<GeneCoverage> {
 
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
+        ForwardingIterator<GeneCoverage> iter = new ForwardingIterator<>(l == null ? null : l.iterator());
+        return Result.ok(iter);
     }
 
     @Override
-    public GeneCoverage getById(long id) throws MGXException {
+    public Result<GeneCoverage> getById(long id) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

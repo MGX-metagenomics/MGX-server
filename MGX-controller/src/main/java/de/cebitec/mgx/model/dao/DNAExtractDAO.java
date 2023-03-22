@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.DNAExtract;
 import de.cebitec.mgx.model.db.SeqRun;
@@ -36,8 +37,8 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
 
     @Override
     public long create(DNAExtract obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setLong(1, obj.getSampleId());
                 stmt.setString(2, obj.getName());
                 stmt.setString(3, obj.getDescription());
@@ -48,7 +49,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                 stmt.setString(8, obj.getTargetGene());
                 stmt.setString(9, obj.getThreePrimer());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -69,8 +70,8 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
         if (obj.getId() == DNAExtract.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type DNAExtract without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setString(2, obj.getDescription());
                 stmt.setString(3, obj.getFivePrimer());
@@ -92,18 +93,27 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
         }
     }
 
-    public TaskI delete(long extractID) throws MGXException, IOException {
+    public Result<TaskI> delete(long extractID) throws IOException {
+
+        Result<AutoCloseableIterator<SeqRun>> res = getController().getSeqRunDAO().byDNAExtract(extractID);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
 
         List<TaskI> subtasks = new ArrayList<>();
-        try (AutoCloseableIterator<SeqRun> iter = getController().getSeqRunDAO().byDNAExtract(extractID)) {
+        try ( AutoCloseableIterator<SeqRun> iter = res.getValue()) {
             while (iter.hasNext()) {
                 SeqRun run = iter.next();
-                TaskI delRun = getController().getSeqRunDAO().delete(run.getId());
-                subtasks.add(delRun);
+                Result<TaskI> delRun = getController().getSeqRunDAO().delete(run.getId());
+                if (delRun.isError()) {
+                    return Result.error(delRun.getError());
+                }
+                subtasks.add(delRun.getValue());
             }
         }
-        return new DeleteDNAExtract(extractID, getController().getDataSource(),
+        TaskI t = new DeleteDNAExtract(extractID, getController().getDataSource(),
                 getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        return Result.ok(t);
     }
 
 //    public void delete(long id) throws MGXException {
@@ -125,16 +135,16 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
             + "FROM dnaextract WHERE id=?";
 
     @Override
-    public DNAExtract getById(long id) throws MGXException {
+    public Result<DNAExtract> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type DNAExtract for ID " + id + ".");
+                        return Result.error("No object of type DNAExtract for ID " + id + ".");
                     }
                     DNAExtract d = new DNAExtract();
                     d.setId(rs.getLong(1));
@@ -148,12 +158,12 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                     d.setThreePrimer(rs.getString(9));
                     d.setSampleId(rs.getLong(10));
 
-                    return d;
+                    return Result.ok(d);
                 }
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -161,14 +171,14 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
             + "d.targetfragment, d.targetgene, d.threeprimer, d.sample_id "
             + "FROM dnaextract d";
 
-    public AutoCloseableIterator<DNAExtract> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<DNAExtract>> getAll() {
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(FETCHALL);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<DNAExtract>(rs, stmt, conn) {
+            DBIterator<DNAExtract> dbIterator = new DBIterator<DNAExtract>(rs, stmt, conn) {
                 @Override
                 public DNAExtract convert(ResultSet rs) throws SQLException {
                     DNAExtract d = new DNAExtract();
@@ -185,10 +195,11 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                     return d;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -196,9 +207,9 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
             + "d.targetfragment, d.targetgene, d.threeprimer "
             + "FROM dnaextract d WHERE d.sample_id=?";
 
-    public AutoCloseableIterator<DNAExtract> bySample(final long sample_id) throws MGXException {
+    public Result<AutoCloseableIterator<DNAExtract>> bySample(final long sample_id) {
         if (sample_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         try {
@@ -207,7 +218,7 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
             stmt.setLong(1, sample_id);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<DNAExtract>(rs, stmt, conn) {
+            DBIterator<DNAExtract> dbIterator = new DBIterator<DNAExtract>(rs, stmt, conn) {
                 @Override
                 public DNAExtract convert(ResultSet rs) throws SQLException {
                     DNAExtract d = new DNAExtract();
@@ -224,10 +235,11 @@ public class DNAExtractDAO extends DAO<DNAExtract> {
                     return d;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 }

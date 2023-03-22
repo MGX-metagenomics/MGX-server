@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXControllerImpl;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.model.db.Reference;
@@ -36,11 +37,18 @@ public class ReferenceDAO extends DAO<Reference> {
 
     @Override
     public long create(Reference obj) throws MGXException {
-        AutoCloseableIterator<Reference> iter = getAll();
-        while (iter.hasNext()) {
-            Reference ref = iter.next();
-            if (ref.getName().equals(obj.getName())) {
-                throw new MGXException("A reference named " + obj.getName() + " already exists.");
+        Result<AutoCloseableIterator<Reference>> res = getAll();
+        if (res.isError()) {
+            throw new MGXException(res.getError());
+        }
+
+        // check for duplicate name
+        try ( AutoCloseableIterator<Reference> iter = res.getValue()) {
+            while (iter.hasNext()) {
+                Reference ref = iter.next();
+                if (ref.getName().equals(obj.getName())) {
+                    throw new MGXException("A reference named " + obj.getName() + " already exists.");
+                }
             }
         }
 
@@ -85,29 +93,38 @@ public class ReferenceDAO extends DAO<Reference> {
         }
     }
 
-    public TaskI delete(long id) throws MGXException, IOException {
+    public Result<TaskI> delete(long id) throws IOException {
+
+        Result<AutoCloseableIterator<Mapping>> res = getController().getMappingDAO().byReference(id);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+
         List<TaskI> subtasks = new ArrayList<>();
-        try ( AutoCloseableIterator<Mapping> iter = getController().getMappingDAO().byReference(id)) {
+        try ( AutoCloseableIterator<Mapping> iter = res.getValue()) {
             while (iter.hasNext()) {
                 Mapping s = iter.next();
-                TaskI del = getController().getMappingDAO().delete(s.getId(), getController().getDataSource(),
+                Result<TaskI> del = getController().getMappingDAO().delete(s.getId(), getController().getDataSource(),
                         getController().getProjectName(), getController().getProjectJobDirectory().getAbsolutePath());
-                subtasks.add(del);
+                if (del.isError()) {
+                    return Result.error(del.getError());
+                }
+                subtasks.add(del.getValue());
             }
         }
-        return new DeleteReference(id,
+        return Result.ok(new DeleteReference(id,
                 getController().getDataSource(),
                 getController().getProjectName(),
                 getController().getProjectJobDirectory().getAbsolutePath(),
-                subtasks.toArray(new TaskI[]{}));
+                subtasks.toArray(new TaskI[]{})));
     }
 
     private final static String BY_ID = "SELECT id, name, ref_length, ref_filepath FROM reference WHERE id=?";
 
     @Override
-    public Reference getById(long id) throws MGXException {
+    public Result<Reference> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
@@ -115,7 +132,7 @@ public class ReferenceDAO extends DAO<Reference> {
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Reference for ID " + id + ".");
+                        return Result.error("No object of type Reference for ID " + id + ".");
                     }
                     Reference ref = new Reference();
                     ref.setId(rs.getLong(1));
@@ -127,19 +144,19 @@ public class ReferenceDAO extends DAO<Reference> {
                         File seqFile = new File(ref.getFile());
                         if (!(seqFile.exists() && seqFile.canRead())) {
                             getController().log("Reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
-                            throw new MGXException("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                            return Result.error("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
                         }
                     }
-                    return ref;
+                    return Result.ok(ref);
                 }
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public AutoCloseableIterator<Reference> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Reference>> getAll() {
         List<Reference> refs = new ArrayList<>();
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement("SELECT id, name, ref_length, ref_filepath FROM reference")) {
@@ -155,7 +172,7 @@ public class ReferenceDAO extends DAO<Reference> {
                             File seqFile = new File(ref.getFile());
                             if (!(seqFile.exists() && seqFile.canRead())) {
                                 getController().log("Reference sequence data file " + ref.getFile() + " for " + ref.getName() + " is missing or unreadable.");
-                                throw new MGXException("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
+                                return Result.error("Reference sequence data file for " + ref.getName() + " is missing or unreadable.");
                             }
                         }
 
@@ -166,20 +183,20 @@ public class ReferenceDAO extends DAO<Reference> {
 
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(refs.iterator());
+        return Result.ok(new ForwardingIterator<>(refs.iterator()));
     }
 
-    public String getSequence(long refId, int from, int to) throws MGXException {
+    public Result<String> getSequence(long refId, int from, int to) {
         int refLen = -1;
-        String filePath = null;
+        String filePath;
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement("SELECT ref_length, ref_filepath FROM reference WHERE id=?")) {
                 stmt.setLong(1, refId);
                 try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Reference for ID " + refId + ".");
+                        return Result.error("No object of type Reference for ID " + refId + ".");
                     }
                     refLen = rs.getInt(1);
                     filePath = rs.getString(2);
@@ -187,19 +204,19 @@ public class ReferenceDAO extends DAO<Reference> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
         if (refLen == -1 || filePath == null) {
-            throw new MGXException("Cannot read data for project reference id " + refId);
+            return Result.error("Cannot read data for project reference id " + refId);
         }
 
         if (!new File(filePath).exists()) {
-            throw new MGXException("Sequence data file for ID " + refId + " is missing.");
+            return Result.error("Sequence data file for ID " + refId + " is missing.");
         }
 
         if (from > to || from < 0 || to < 0 || from == to || to > refLen) {
-            throw new MGXException("Invalid coordinates: " + from + " " + to + ", reference length is " + refLen);
+            return Result.error("Invalid coordinates: " + from + " " + to + ", reference length is " + refLen);
         }
         int len = to - from + 1;
         char[] buf = new char[len];
@@ -207,12 +224,12 @@ public class ReferenceDAO extends DAO<Reference> {
             br.readLine(); // skip header line
             br.skip(from);
             if (len != br.read(buf)) {
-                throw new MGXException("Cannot retrieve sequence");
+                return Result.error("Cannot retrieve sequence");
             }
-            return String.valueOf(buf).toUpperCase();
+            return Result.ok(String.valueOf(buf).toUpperCase());
         } catch (IOException ex) {
             getController().log(ex);
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
     }
 }

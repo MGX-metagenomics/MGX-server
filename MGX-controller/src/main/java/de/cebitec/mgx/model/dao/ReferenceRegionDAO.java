@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.common.RegionType;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Reference;
 import de.cebitec.mgx.model.db.ReferenceRegion;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -32,8 +33,8 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
 
     @Override
     public long create(ReferenceRegion obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setString(2, obj.getDescription());
                 stmt.setString(3, obj.getType().toString());
@@ -41,7 +42,7 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                 stmt.setInt(5, obj.getStop());
                 stmt.setLong(6, obj.getReferenceId());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -54,8 +55,8 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
     }
 
     public void delete(long id) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE id=?")) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM region WHERE id=?")) {
                 stmt.setLong(1, id);
                 int numRows = stmt.executeUpdate();
                 if (numRows != 1) {
@@ -71,22 +72,22 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
             + "WHERE id=?";
 
     @Override
-    public ReferenceRegion getById(final long id) throws MGXException {
+    public Result<ReferenceRegion> getById(final long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type ReferenceRegion for ID " + id + ".");
+                        return Result.error("No object of type ReferenceRegion for ID " + id + ".");
                     }
                     ReferenceRegion ret = new ReferenceRegion();
                     ret.setId(rs.getLong(1));
                     ret.setName(rs.getString(2));
                     ret.setDescription(rs.getString(3));
-                    
+
                     String type = rs.getString(4);
                     switch (type) {
                         case "CDS":
@@ -109,26 +110,26 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                             ret.setType(RegionType.MISC);
 
                     }
-                    
+
                     ret.setStart(rs.getInt(5));
                     ret.setStop(rs.getInt(6));
                     ret.setReferenceId(rs.getLong(7));
 
-                    return ret;
+                    return Result.ok(ret);
                 }
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
     private static final String REGIONS_BY_REF = "SELECT id, name, description, type, reg_start, reg_stop FROM region "
             + "WHERE ref_id=?";
 
-    public AutoCloseableIterator<ReferenceRegion> byReference(final long ref_id) throws MGXException {
+    public Result<AutoCloseableIterator<ReferenceRegion>> byReference(final long ref_id) {
         if (ref_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         try {
             Connection conn = getConnection();
@@ -136,7 +137,7 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
             stmt.setLong(1, ref_id);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<ReferenceRegion>(rs, stmt, conn) {
+            DBIterator<ReferenceRegion> dbIterator = new DBIterator<ReferenceRegion>(rs, stmt, conn) {
                 @Override
                 public ReferenceRegion convert(ResultSet rs) throws SQLException {
                     ReferenceRegion ret = new ReferenceRegion();
@@ -173,15 +174,18 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                     return ret;
                 }
             };
+
+            return Result.ok(dbIterator);
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public AutoCloseableIterator<ReferenceRegion> byReferenceInterval(final long refId, final Reference ref, int from, int to) throws MGXException {
+    public Result<AutoCloseableIterator<ReferenceRegion>> byReferenceInterval(final long refId, final Reference ref, int from, int to) {
 
         if (from > to || from < 0 || to < 0 || from == to || to > ref.getLength()) {
-            throw new MGXException("Invalid coordinates: " + from + " " + to);
+            return Result.error("Invalid coordinates: " + from + " " + to);
         }
         DBIterator<ReferenceRegion> iter = null;
         ResultSet rset;
@@ -232,10 +236,10 @@ public class ReferenceRegionDAO extends DAO<ReferenceRegion> {
                 }
             };
 
+            return Result.ok(iter);
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
-        return iter;
     }
 }

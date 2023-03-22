@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Habitat;
 import de.cebitec.mgx.model.db.Sample;
@@ -36,15 +37,15 @@ public class HabitatDAO extends DAO<Habitat> {
 
     @Override
     public long create(Habitat obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setString(2, obj.getBiome());
                 stmt.setString(3, obj.getDescription());
                 stmt.setDouble(4, obj.getLatitude());
                 stmt.setDouble(5, obj.getLongitude());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -63,8 +64,8 @@ public class HabitatDAO extends DAO<Habitat> {
         if (obj.getId() == Habitat.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type Habitat without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setString(2, obj.getBiome());
                 stmt.setString(3, obj.getDescription());
@@ -82,16 +83,25 @@ public class HabitatDAO extends DAO<Habitat> {
         }
     }
 
-    public TaskI delete(long id) throws MGXException, IOException {
+    public Result<TaskI> delete(long id) throws IOException {
+        Result<AutoCloseableIterator<Sample>> res = getController().getSampleDAO().byHabitat(id);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+
         List<TaskI> subtasks = new ArrayList<>();
-        try (AutoCloseableIterator<Sample> iter = getController().getSampleDAO().byHabitat(id)) {
+        try ( AutoCloseableIterator<Sample> iter = res.getValue()) {
             while (iter.hasNext()) {
                 Sample s = iter.next();
-                TaskI del = getController().getSampleDAO().delete(s.getId());
-                subtasks.add(del);
+                Result<TaskI> del = getController().getSampleDAO().delete(s.getId());
+                if (del.isError()) {
+                    return Result.error(del.getError());
+                }
+                subtasks.add(del.getValue());
             }
         }
-        return new DeleteHabitat(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        TaskI t = new DeleteHabitat(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        return Result.ok(t);
     }
 
 //    public void delete(long id) throws MGXException {
@@ -111,15 +121,15 @@ public class HabitatDAO extends DAO<Habitat> {
     private static final String BY_ID = "SELECT name, biome, description, latitude, longitude FROM habitat WHERE id=?";
 
     @Override
-    public Habitat getById(long id) throws MGXException {
+    public Result<Habitat> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Habitat ret = new Habitat();
                         ret.setId(id);
@@ -128,23 +138,24 @@ public class HabitatDAO extends DAO<Habitat> {
                         ret.setDescription(rs.getString(3));
                         ret.setLatitude(rs.getDouble(4));
                         ret.setLongitude(rs.getDouble(5));
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type Habitat for ID " + id + ".");
+        return Result.error("No object of type Habitat for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<Habitat> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Habitat>> getAll() {
 
         List<Habitat> l = null;
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     while (rs.next()) {
                         Habitat ret = new Habitat();
@@ -162,9 +173,11 @@ public class HabitatDAO extends DAO<Habitat> {
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
+        ForwardingIterator<Habitat> iter = new ForwardingIterator<>(l == null ? null : l.iterator());
+        return Result.ok(iter);
     }
 
 }

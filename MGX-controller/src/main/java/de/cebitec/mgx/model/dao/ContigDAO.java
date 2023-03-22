@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Sequence;
@@ -36,15 +37,15 @@ public class ContigDAO extends DAO<Contig> {
 
     @Override
     public long create(Contig obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
                 stmt.setFloat(3, obj.getGC());
                 stmt.setInt(4, obj.getCoverage());
                 stmt.setLong(5, obj.getBinId());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -62,8 +63,8 @@ public class ContigDAO extends DAO<Contig> {
         if (obj.getId() == Contig.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type Contig without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getLength());
                 stmt.setFloat(3, obj.getGC());
@@ -110,15 +111,15 @@ public class ContigDAO extends DAO<Contig> {
     private static final String BY_IDS = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id IN (";
 
     @Override
-    public Contig getById(long id) throws MGXException {
+    public Result<Contig> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Contig ret = new Contig();
                         ret.setId(rs.getLong(1));
@@ -127,20 +128,21 @@ public class ContigDAO extends DAO<Contig> {
                         ret.setGC(rs.getFloat(4));
                         ret.setCoverage(rs.getInt(5));
                         ret.setBinId(rs.getLong(6));
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type Contig for ID " + id + ".");
+        return Result.error("No object of type Contig for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<Contig> getByIds(long... ids) throws MGXException {
+    public Result<AutoCloseableIterator<Contig>> getByIds(long... ids) {
         if (ids == null || ids.length == 0) {
-            throw new MGXException("Null/empty ID list.");
+            return Result.error("Null/empty ID list.");
         }
 
         String query = BY_IDS + toSQLTemplateString(ids.length) + ")";
@@ -151,13 +153,13 @@ public class ContigDAO extends DAO<Contig> {
             int idx = 1;
             for (long id : ids) {
                 if (id <= 0) {
-                    throw new MGXException("No/Invalid ID supplied.");
+                    return Result.error("No/Invalid ID supplied.");
                 }
                 stmt.setLong(idx++, id);
             }
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Contig>(rs, stmt, conn) {
+            DBIterator<Contig> dbIterator = new DBIterator<Contig>(rs, stmt, conn) {
                 @Override
                 public Contig convert(ResultSet rs) throws SQLException {
                     Contig ret = new Contig();
@@ -170,22 +172,22 @@ public class ContigDAO extends DAO<Contig> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
-
     }
 
-    public AutoCloseableIterator<Contig> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Contig>> getAll() {
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(FETCHALL);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Contig>(rs, stmt, conn) {
+            DBIterator<Contig> dbIterator = new DBIterator<Contig>(rs, stmt, conn) {
                 @Override
                 public Contig convert(ResultSet rs) throws SQLException {
                     Contig ret = new Contig();
@@ -199,9 +201,11 @@ public class ContigDAO extends DAO<Contig> {
                 }
 
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -211,7 +215,7 @@ public class ContigDAO extends DAO<Contig> {
     //
     // FIXME get num cds
     //
-    public AutoCloseableIterator<Contig> byBin(final long bin_id) throws MGXException {
+    public Result<AutoCloseableIterator<Contig>> byBin(final long bin_id) {
 
         try {
             Connection conn = getConnection();
@@ -219,7 +223,7 @@ public class ContigDAO extends DAO<Contig> {
             stmt.setLong(1, bin_id);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Contig>(rs, stmt, conn) {
+            DBIterator<Contig> dbIterator = new DBIterator<Contig>(rs, stmt, conn) {
                 @Override
                 public Contig convert(ResultSet rs) throws SQLException {
                     Contig ret = new Contig();
@@ -232,8 +236,9 @@ public class ContigDAO extends DAO<Contig> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -242,14 +247,14 @@ public class ContigDAO extends DAO<Contig> {
             + "LEFT JOIN bin b ON (c.bin_id=b.id) "
             + "WHERE c.id=?";
 
-    public Sequence getDNASequence(long contig_id) throws MGXException {
+    public Result<Sequence> getDNASequence(long contig_id) {
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
                 stmt.setLong(1, contig_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Contig for ID " + contig_id + ".");
+                        return Result.error("No object of type Contig for ID " + contig_id + ".");
                     }
 
                     String contig_name = rs.getString(1);
@@ -259,11 +264,11 @@ public class ContigDAO extends DAO<Contig> {
 
                     File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(assembly_id));
                     File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
-                    try (IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
+                    try ( IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
                         ReferenceSequence seq = ifsf.getSequence(contig_name);
 
                         if (seq == null || seq.length() == 0) {
-                            throw new MGXException("No sequence found for contig " + contig_name);
+                            return Result.error("No sequence found for contig " + contig_name);
                         }
                         contigSeq = new String(seq.getBases());
                     }
@@ -273,15 +278,16 @@ public class ContigDAO extends DAO<Contig> {
                     ret.setName(contig_name);
                     ret.setSequence(contigSeq);
 
-                    return ret;
+                    return Result.ok(ret);
                 }
             }
         } catch (SQLException | IOException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public TaskI delete(long id) throws MGXException {
+    public Result<TaskI> delete(long id) {
         // FIXME
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

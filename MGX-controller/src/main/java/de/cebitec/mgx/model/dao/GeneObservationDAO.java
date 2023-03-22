@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Attribute;
 import de.cebitec.mgx.model.db.AssembledRegion;
 import de.cebitec.mgx.model.misc.GeneObservation;
@@ -24,8 +25,8 @@ public class GeneObservationDAO {
     }
 
     public void create(GeneObservation obs, AssembledRegion seq, Attribute attr) throws MGXException {
-        try (Connection conn = ctx.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_observation (start, stop, gene_id, attr_id) VALUES (?,?,?,?)")) {
+        try ( Connection conn = ctx.getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_observation (start, stop, gene_id, attr_id) VALUES (?,?,?,?)")) {
                 stmt.setInt(1, obs.getStart());
                 stmt.setInt(2, obs.getStop());
                 stmt.setLong(3, seq.getId());
@@ -38,8 +39,8 @@ public class GeneObservationDAO {
     }
 
     public void create(long geneId, long attrId, int start, int stop) throws MGXException {
-        try (Connection conn = ctx.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_observation (start, stop, gene_id, attr_id) VALUES (?,?,?,?)")) {
+        try ( Connection conn = ctx.getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_observation (start, stop, gene_id, attr_id) VALUES (?,?,?,?)")) {
                 stmt.setInt(1, start);
                 stmt.setInt(2, stop);
                 stmt.setLong(3, geneId);
@@ -109,10 +110,9 @@ public class GeneObservationDAO {
 //            throw new MGXException(ex.getMessage());
 //        }
 //    }
-
-    public DBIterator<GeneObservation> byRead(final long geneId) throws MGXException {
+    public Result<DBIterator<GeneObservation>> byRead(final long geneId) {
         if (geneId <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         DBIterator<GeneObservation> iter = null;
         PreparedStatement stmt = null;
@@ -137,9 +137,10 @@ public class GeneObservationDAO {
             };
 
         } catch (SQLException ex) {
-            throw new MGXException(ex.getMessage());
+            ctx.log(ex);
+            return Result.error(ex.getMessage());
         }
-        return iter;
+        return Result.ok(iter);
     }
 
 }

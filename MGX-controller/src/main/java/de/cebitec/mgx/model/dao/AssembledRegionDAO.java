@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.mgx.common.RegionType;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dnautils.DNAUtils;
 import de.cebitec.mgx.model.db.AssembledRegion;
@@ -119,9 +120,9 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
     private static final String BY_ID = "SELECT id, start, stop, coverage, type, contig_id FROM gene WHERE id=?";
 
     @Override
-    public AssembledRegion getById(long id) throws MGXException {
+    public Result<AssembledRegion> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         try ( Connection conn = getConnection()) {
@@ -159,18 +160,19 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                         }
 
                         ret.setContigId(rs.getLong(6));
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type AssembledRegion for ID " + id + ".");
+        return Result.error("No object of type AssembledRegion for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<AssembledRegion> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<AssembledRegion>> getAll() {
 
         List<AssembledRegion> l = null;
         try ( Connection conn = getConnection()) {
@@ -218,15 +220,17 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
+        ForwardingIterator<AssembledRegion> iter = new ForwardingIterator<>(l == null ? null : l.iterator());
+        return Result.ok(iter);
     }
 
     private static final String BY_CONTIG = "SELECT g.id, g.start, g.stop, g.coverage, g.type FROM contig c "
             + "LEFT JOIN gene g ON (g.contig_id=c.id) WHERE c.id=?";
 
-    public AutoCloseableIterator<AssembledRegion> byContig(long contig_id) throws MGXException {
+    public Result<AutoCloseableIterator<AssembledRegion>> byContig(long contig_id) {
 
         List<AssembledRegion> l = null;
         try ( Connection conn = getConnection()) {
@@ -235,7 +239,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Contig for ID " + contig_id + ".");
+                        return Result.error("No object of type Contig for ID " + contig_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -281,18 +285,20 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
 
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(l == null ? null : l.iterator());
+        ForwardingIterator<AssembledRegion> iter = new ForwardingIterator<>(l == null ? null : l.iterator());
+        return Result.ok(iter);
     }
 
     private static final String BY_CONTIGS = "SELECT g.id, g.start, g.stop, g.coverage, g.type, g.contig_id FROM gene g "
             + "WHERE g.contig_id IN (";
 
-    public AutoCloseableIterator<AssembledRegion> byContigs(Collection<Long> ids) throws MGXException {
+    public Result<AutoCloseableIterator<AssembledRegion>> byContigs(Collection<Long> ids) {
 
         if (ids == null || ids.isEmpty()) {
-            throw new MGXException("Null/empty ID list.");
+            return Result.error("Null/empty ID list.");
         }
 
         String sql = BY_CONTIGS + toSQLTemplateString(ids.size()) + ")";
@@ -306,7 +312,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
             }
 
             ResultSet rs = stmt.executeQuery();
-            return new DBIterator<AssembledRegion>(rs, stmt, conn) {
+            DBIterator<AssembledRegion> dbIterator = new DBIterator<AssembledRegion>(rs, stmt, conn) {
                 @Override
                 public AssembledRegion convert(ResultSet rs) throws SQLException {
                     AssembledRegion ret = new AssembledRegion();
@@ -342,9 +348,11 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                 }
             };
 
+            return Result.ok(dbIterator);
+
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -365,11 +373,11 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
         }
     }
 
-    public TaskI delete(long id) throws MGXException {
+    public Result<TaskI> delete(long id) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public AutoCloseableIterator<AssembledRegion> byBin(Long id) throws MGXException {
+    public Result<AutoCloseableIterator<AssembledRegion>> byBin(Long id) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -382,7 +390,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
             + " LEFT JOIN attributetype at ON at.id=a.attrtype_id"
             + " WHERE c.bin_id=? AND UPPER(a.value) LIKE CONCAT('%', UPPER(?), '%')";
 
-    public AutoCloseableIterator<BinSearchResult> search(Long bin_id, String term) throws MGXException {
+    public Result<AutoCloseableIterator<BinSearchResult>> search(Long bin_id, String term) {
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(SQL_SEARCH);
@@ -390,7 +398,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
             stmt.setString(2, term);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<BinSearchResult>(rs, stmt, conn) {
+            DBIterator<BinSearchResult> dbIterator = new DBIterator<BinSearchResult>(rs, stmt, conn) {
                 @Override
                 public BinSearchResult convert(ResultSet rs) throws SQLException {
                     BinSearchResult res = new BinSearchResult(
@@ -404,15 +412,11 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                 }
 
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
             getController().log(ex);
-            SQLException sqle = ex;
-            while (sqle.getNextException() != null) {
-                sqle = sqle.getNextException();
-                getController().log(sqle);
-            }
-            throw new MGXException(ex.getMessage());
+            return Result.error(ex.getMessage());
         }
     }
 
@@ -453,14 +457,14 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
             + "LEFT JOIN bin b ON (c.bin_id=b.id) "
             + "WHERE g.id=?";
 
-    public Sequence getDNASequence(long gene_id) throws MGXException {
+    public Result<Sequence> getDNASequence(long gene_id) {
 
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(SQL_FETCH)) {
                 stmt.setLong(1, gene_id);
                 try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Gene for ID " + gene_id + ".");
+                        return Result.error("No object of type Gene for ID " + gene_id + ".");
                     }
 
                     int start = rs.getInt(1);
@@ -483,7 +487,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                             geneSeq = DNAUtils.reverseComplement(new String(seq.getBases()));
                         }
                         if (seq == null || seq.length() == 0) {
-                            throw new MGXException("No sequence found for contig " + contigName);
+                            return Result.error("No sequence found for contig " + contigName);
                         }
                     }
 
@@ -492,12 +496,13 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
                     ret.setName(contigName + "_" + String.valueOf(gene_id));
                     ret.setSequence(geneSeq);
 
-                    return ret;
+                    return Result.ok(ret);
 
                 }
             }
         } catch (SQLException | IOException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 }

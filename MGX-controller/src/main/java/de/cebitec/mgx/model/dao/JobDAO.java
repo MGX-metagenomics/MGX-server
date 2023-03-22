@@ -6,6 +6,7 @@ import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.conveyor.JobParameterHelper;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.dispatcher.common.api.MGXDispatcherException;
 import de.cebitec.mgx.jobsubmitter.api.JobSubmitterI;
@@ -35,6 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -107,9 +110,10 @@ public class JobDAO extends DAO<Job> {
         return obj.getId();
     }
 
-    public TaskI delete(long id) throws IOException {
-        return new DeleteJob(id, getController().getDataSource(), getController().getProjectName(),
+    public Result<TaskI> delete(long id) throws IOException {
+        TaskI t = new DeleteJob(id, getController().getDataSource(), getController().getProjectName(),
                 getController().getProjectJobDirectory().getAbsolutePath());
+        return Result.ok(t);
     }
 
     public TaskI restart(Job job, String dispHost, GPMSManagedDataSourceI ds, String projectName, JobSubmitterI js) throws IOException, MGXDispatcherException {
@@ -117,7 +121,7 @@ public class JobDAO extends DAO<Job> {
     }
 
     @Override
-    public Job getById(long id) throws MGXException {
+    public Result<Job> getById(long id) {
         return getById(id, true);
     }
 
@@ -127,20 +131,19 @@ public class JobDAO extends DAO<Job> {
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.id=?";
 
-    public Job getById(long id, boolean mangleParameters) throws MGXException {
-
+    public Result<Job> getById(long id, boolean mangleParameters) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
-        Job job = null;
+        Job job;
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Job for ID " + id + ".");
+                        return Result.error("No object of type Job for ID " + id + ".");
                     }
 
                     job = new Job();
@@ -167,7 +170,7 @@ public class JobDAO extends DAO<Job> {
                         job.setAssemblyId(rs.getLong(8));
                     }
 
-                    job.setParameters(new ArrayList<JobParameter>());
+                    job.setParameters(new ArrayList<>());
 
                     //
                     do {
@@ -187,18 +190,23 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
         if (mangleParameters) {
-            fixParameters(job);
+            try {
+                fixParameters(job);
+            } catch (MGXException ex) {
+                Logger.getLogger(JobDAO.class.getName()).log(Level.SEVERE, null, ex);
+                return Result.error(ex.getMessage());
+            }
         }
-        return job;
+        return Result.ok(job);
     }
 
-    public AutoCloseableIterator<Job> getByIds(long... ids) throws MGXException {
+    public Result<AutoCloseableIterator<Job>> getByIds(long... ids) {
         if (ids == null || ids.length == 0) {
-            throw new MGXException("Null/empty ID list.");
+            return Result.error("Null/empty ID list.");
         }
         List<Job> ret = null;
 
@@ -213,7 +221,7 @@ public class JobDAO extends DAO<Job> {
                 int idx = 1;
                 for (long id : ids) {
                     if (id <= 0) {
-                        throw new MGXException("No/Invalid ID supplied.");
+                        return Result.error("Invalid job ID supplied: " + id);
                     }
                     stmt.setLong(idx++, id);
                 }
@@ -249,7 +257,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(rs.getLong(8));
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -276,16 +284,21 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(new ForwardingIterator<>(ret == null ? null : ret.iterator()));
     }
 
     private final static String BY_APIKEY = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
@@ -294,7 +307,7 @@ public class JobDAO extends DAO<Job> {
             + "FROM job j "
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.apikey=?";
 
-    public Job getByApiKey(String apiKey) throws MGXException {
+    public Result<Job> getByApiKey(String apiKey) {
 
         String sha256hex = Hashing.sha256()
                 .hashString(apiKey, StandardCharsets.UTF_8)
@@ -302,15 +315,14 @@ public class JobDAO extends DAO<Job> {
 
         // DEBUG
         //System.err.println("API key " + apiKey + " hashed to " + sha256hex);
-
-        Job job = null;
+        Job job;
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(BY_APIKEY)) {
                 stmt.setString(1, sha256hex);
                 try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("Invalid API key.");
+                        return Result.error("Invalid API key.");
                     }
 
                     job = new Job();
@@ -336,7 +348,7 @@ public class JobDAO extends DAO<Job> {
                         long assemblyId = rs.getLong(8);
                         job.setAssemblyId(assemblyId);
                     }
-                    job.setParameters(new ArrayList<JobParameter>());
+                    job.setParameters(new ArrayList<>());
 
                     //
                     do {
@@ -356,10 +368,10 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return job;
+        return Result.ok(job);
     }
 
     private final static String FETCHALL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
@@ -369,7 +381,7 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id)";
 
     @SuppressWarnings("unchecked")
-    public AutoCloseableIterator<Job> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Job>> getAll() {
         List<Job> ret = null;
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
@@ -405,7 +417,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(assemblyId);
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -432,15 +444,21 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+
+        return Result.ok(new ForwardingIterator<>(ret == null ? null : ret.iterator()));
     }
 
     private final static String BYTOOL = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
@@ -450,7 +468,7 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) WHERE j.tool_id=?";
 
     @SuppressWarnings("unchecked")
-    public AutoCloseableIterator<Job> byTool(long tool_id) throws MGXException {
+    public Result<AutoCloseableIterator<Job>> byTool(long tool_id) {
         List<Job> ret = null;
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(BYTOOL)) {
@@ -486,7 +504,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(rs.getLong(8));
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -513,20 +531,26 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+
+        ForwardingIterator<Job> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
     private final static String CREATE_APIKEY = "UPDATE job SET apikey=? WHERE id=?";
 
-    public String createApiKey(Job obj) throws MGXException {
+    public Result<String> createApiKey(Job obj) {
         // create a random API key 
         String apiKey = UUID.randomUUID().toString().replaceAll("-", "");
         String sha256hex = Hashing.sha256()
@@ -539,9 +563,10 @@ public class JobDAO extends DAO<Job> {
                 stmt.executeUpdate();
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return apiKey;
+        return Result.ok(apiKey);
     }
 
     private final static String UPDATE = "UPDATE job SET created_by=?, job_state=?, seqruns=?, assembly=?, tool_id=? "
@@ -700,9 +725,9 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
             + "WHERE ?=ANY(j.seqruns)";
 
-    public AutoCloseableIterator<Job> bySeqRun(final long run_id) throws MGXException {
+    public Result<AutoCloseableIterator<Job>> bySeqRun(final long run_id) {
         if (run_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         List<Job> ret = null;
 
@@ -740,7 +765,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(rs.getLong(8));
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -767,15 +792,20 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+
+        return Result.ok(new ForwardingIterator<>(ret == null ? null : ret.iterator()));
     }
 
     private final static String SQL_BY_ASM = "SELECT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
@@ -785,9 +815,9 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
             + "WHERE j.assembly=?";
 
-    public AutoCloseableIterator<Job> byAssembly(final long asm_id) throws MGXException {
+    public Result<AutoCloseableIterator<Job>> byAssembly(final long asm_id) {
         if (asm_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         List<Job> ret = null;
 
@@ -825,7 +855,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(rs.getLong(8));
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -852,15 +882,21 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            return Result.error(ex.getMessage());
         }
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+
+        ForwardingIterator<Job> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
     private final static String BY_ATTRS = "SELECT DISTINCT j.id, j.created_by, j.job_state, j.startdate, j.finishdate, j.tool_id, j.seqruns, "
@@ -871,9 +907,9 @@ public class JobDAO extends DAO<Job> {
             + "LEFT JOIN jobparameter jp ON (j.id=jp.job_id) "
             + "WHERE a.id IN (";
 
-    public List<Job> byAttributes(long[] attributeIDs) throws MGXException {
+    public Result<List<Job>> byAttributes(long[] attributeIDs) {
         if (attributeIDs == null || attributeIDs.length == 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         List<Job> ret = null;
@@ -917,7 +953,7 @@ public class JobDAO extends DAO<Job> {
                                     job.setAssemblyId(rs.getLong(8));
                                 }
 
-                                job.setParameters(new ArrayList<JobParameter>());
+                                job.setParameters(new ArrayList<>());
 
                                 if (ret == null) {
                                     ret = new ArrayList<>();
@@ -944,37 +980,47 @@ public class JobDAO extends DAO<Job> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        if (ret != null) {
-            for (Job j : ret) {
-                fixParameters(j);
+        try {
+            if (ret != null) {
+                for (Job j : ret) {
+                    fixParameters(j);
+                }
             }
+        } catch (MGXException ex) {
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return ret;
+
+        return Result.ok(ret);
     }
 
-    public String getError(Job job) throws MGXException {
+    public Result<String> getError(Job job) {
         if (job.getStatus() != JobState.FAILED) {
-            //getController().log("state: "+job.getStatus());
-            return "Job is not in FAILED state.";
+            return Result.error("Job is not in FAILED state.");
         }
         try {
             String fname = new StringBuilder(getController().getProjectJobDirectory().getAbsolutePath())
                     .append(File.separator).append(job.getId())
                     .append(".stderr").toString();
-            return UnixHelper.readFile(new File(fname));
+            return Result.ok(UnixHelper.readFile(new File(fname)));
         } catch (IOException ex) {
-            getController().log(ex.getMessage());
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return "";
     }
 
     private final Map<String, List<JobParameter>> paramCache = new HashMap<>();
 
     private void fixParameters(Job job) throws MGXException {
-        Tool tool = getController().getToolDAO().getById(job.getToolId());
+        Result<Tool> res = getController().getToolDAO().getById(job.getToolId());
+        if (res.isError()) {
+            throw new MGXException(res.getError());
+        }
+        Tool tool = res.getValue();
+
         String fName = tool.getFile();
         if (!tool.getFile().endsWith(".xml")) {
             return;

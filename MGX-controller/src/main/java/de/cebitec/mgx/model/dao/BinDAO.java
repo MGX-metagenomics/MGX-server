@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Bin;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -65,8 +66,8 @@ public class BinDAO extends DAO<Bin> {
         if (obj.getId() == Bin.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type Bin without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setFloat(2, obj.getCompleteness());
                 stmt.setFloat(3, obj.getContamination());
@@ -90,15 +91,15 @@ public class BinDAO extends DAO<Bin> {
     private static final String BY_ID = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, total_bp, assembly_id FROM bin WHERE id=?";
 
     @Override
-    public Bin getById(long id) throws MGXException {
+    public Result<Bin> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Bin ret = new Bin();
                         ret.setId(rs.getLong(1));
@@ -110,27 +111,28 @@ public class BinDAO extends DAO<Bin> {
                         ret.setPredictedCDS(rs.getInt(7));
                         ret.setTotalBp(rs.getLong(8));
                         ret.setAssemblyId(rs.getLong(9));
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type Bin for ID " + id + ".");
+        return Result.error("No object of type Bin for ID " + id + ".");
     }
 
     private static final String FETCHALL = "SELECT id, name, completeness, contamination, taxonomy, n50, predicted_cds, total_bp, assembly_id FROM bin";
 
-    public AutoCloseableIterator<Bin> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Bin>> getAll() {
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(FETCHALL);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Bin>(rs, stmt, conn) {
+            DBIterator<Bin> dbIterator = new DBIterator<Bin>(rs, stmt, conn) {
                 @Override
                 public Bin convert(ResultSet rs) throws SQLException {
                     Bin ret = new Bin();
@@ -146,14 +148,16 @@ public class BinDAO extends DAO<Bin> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
     private static final String BY_ASM = "SELECT b.id, b.name, b.completeness, b.contamination, b.taxonomy, b.n50, b.num_contigs, b.total_bp, b.predicted_cds FROM bin b WHERE b.assembly_id=?";
 
-    public AutoCloseableIterator<Bin> byAssembly(final long asm_id) throws MGXException {
+    public Result<AutoCloseableIterator<Bin>> byAssembly(final long asm_id) {
 
         try {
             Connection conn = getConnection();
@@ -161,7 +165,7 @@ public class BinDAO extends DAO<Bin> {
             stmt.setLong(1, asm_id);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Bin>(rs, stmt, conn) {
+            DBIterator<Bin> dbIterator = new DBIterator<Bin>(rs, stmt, conn) {
                 @Override
                 public Bin convert(ResultSet rs) throws SQLException {
                     Bin ret = new Bin();
@@ -178,14 +182,20 @@ public class BinDAO extends DAO<Bin> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
-    public TaskI delete(long bin_id) throws MGXException {
-        Bin bin = getById(bin_id);
+    public Result<TaskI> delete(long bin_id) {
+        Result<Bin> res = getById(bin_id);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+        Bin bin = res.getValue();
+
         try {
             File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(bin.getAssemblyId()));
             File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
@@ -193,10 +203,12 @@ public class BinDAO extends DAO<Bin> {
             File binFastaIdx = new File(assemblyDir, String.valueOf(bin_id) + ".fna.fai");
             binFastaIdx.delete();
         } catch (IOException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), new TaskI[]{});
+        TaskI t = new DeleteBin(getController().getDataSource(), bin_id, getController().getProjectName(), new TaskI[]{});
+        return Result.ok(t);
     }
 
     private static final String BINS_BY_ASM_TMPL = "WITH temp as ( "

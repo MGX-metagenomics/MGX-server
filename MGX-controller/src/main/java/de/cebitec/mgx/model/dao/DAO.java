@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.gpms.util.GPMSManagedConnectionI;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Identifiable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ public abstract class DAO<T extends Identifiable> {
 
     abstract Class<T> getType();
     
-    public abstract T getById(long id) throws MGXException;
+    public abstract Result<T> getById(long id);
     
     public abstract long create(T obj) throws MGXException;
 

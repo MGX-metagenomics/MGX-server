@@ -2,6 +2,7 @@ package de.cebitec.mgx.model.dao;
 
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Assembly;
 import de.cebitec.mgx.model.db.Bin;
@@ -91,23 +92,39 @@ public class AssemblyDAO extends DAO<Assembly> {
         }
     }
 
-    public TaskI delete(long id) throws MGXException {
+    public Result<TaskI> delete(long id) {
         List<TaskI> subtasks = new ArrayList<>();
 
-        AutoCloseableIterator<Job> jobs = getController().getJobDAO().byAssembly(id);
-        while (jobs != null && jobs.hasNext()) {
+        Result<AutoCloseableIterator<Job>> jobs = getController().getJobDAO().byAssembly(id);
+        if (jobs.isError()) {
+            return Result.error(jobs.getError());
+        }
+        AutoCloseableIterator<Job> iter = jobs.getValue();
+        while (iter != null && iter.hasNext()) {
             try {
-                subtasks.add(getController().getJobDAO().delete(jobs.next().getId()));
+                Result<TaskI> delete = getController().getJobDAO().delete(iter.next().getId());
+                if (delete.isError()) {
+                    return Result.error(delete.getError());
+                }
+                subtasks.add(delete.getValue());
             } catch (IOException ex) {
                 Logger.getLogger(AssemblyDAO.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        try (AutoCloseableIterator<Bin> iter = getController().getBinDAO().byAssembly(id)) {
-            while (iter.hasNext()) {
-                Bin s = iter.next();
-                TaskI del = getController().getBinDAO().delete(s.getId());
-                subtasks.add(del);
+        Result<AutoCloseableIterator<Bin>> res = getController().getBinDAO().byAssembly(id);
+        if (res.isError()) {
+            return Result.error(res.getError());
+        }
+        
+        try (AutoCloseableIterator<Bin> biter = res.getValue()) {
+            while (biter.hasNext()) {
+                Bin s = biter.next();
+                Result<TaskI> del = getController().getBinDAO().delete(s.getId());
+                if (del.isError()) {
+                    return Result.error(del.getError());
+                }
+                subtasks.add(del.getValue());
             }
         }
 
@@ -124,18 +141,20 @@ public class AssemblyDAO extends DAO<Assembly> {
                 subtasks.add(delAssemblyDir);
             }
         } catch (IOException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
-        return new DeleteAssembly(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        TaskI t = new DeleteAssembly(getController().getDataSource(), id, getController().getProjectName(), subtasks.toArray(new TaskI[]{}));
+        return Result.ok(t);
     }
 
     private static final String FETCHALL = "SELECT id, name, reads_assembled, n50, job_id FROM assembly";
     private static final String BY_ID = "SELECT id, name, reads_assembled, n50, job_id FROM assembly WHERE id=?";
 
     @Override
-    public Assembly getById(long id) throws MGXException {
+    public Result<Assembly> getById(long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         try (Connection conn = getConnection()) {
@@ -149,25 +168,26 @@ public class AssemblyDAO extends DAO<Assembly> {
                         ret.setReadsAssembled(rs.getLong(3));
                         ret.setN50(rs.getInt(4));
                         ret.setAsmjobId(rs.getLong(5));
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type Assembly for ID " + id + ".");
+        return Result.error("No object of type Assembly for ID " + id + ".");
     }
 
-    public AutoCloseableIterator<Assembly> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Assembly>> getAll() {
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(FETCHALL);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Assembly>(rs, stmt, conn) {
+            DBIterator<Assembly> dbIterator = new DBIterator<Assembly>(rs, stmt, conn) {
                 @Override
                 public Assembly convert(ResultSet rs) throws SQLException {
                     Assembly ret = new Assembly();
@@ -179,17 +199,19 @@ public class AssemblyDAO extends DAO<Assembly> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
     private static final String BY_JOB_ID = "SELECT id, name, reads_assembled, n50 FROM assembly WHERE job_id=?";
 
-    public Assembly byJob(long jobId) throws MGXException {
+    public Result<Assembly> byJob(long jobId) {
         if (jobId <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         try (Connection conn = getConnection()) {
@@ -203,24 +225,25 @@ public class AssemblyDAO extends DAO<Assembly> {
                         ret.setReadsAssembled(rs.getLong(3));
                         ret.setN50(rs.getInt(4));
                         ret.setAsmjobId(jobId);
-                        return ret;
+                        return Result.ok(ret);
                     }
                 }
             }
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
 
-        throw new MGXException("No object of type Assembly for job ID " + jobId + ".");
+        return Result.error("No object of type Assembly for job ID " + jobId + ".");
     }
 
     private static final String BY_SEQRUN_ID = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id FROM assembly a "
             + "LEFT JOIN job j ON (j.id=a.job_id) "
             + "WHERE ?=ANY(j.seqruns)";
 
-    public AutoCloseableIterator<Assembly> bySeqRun(long seqrun_id) throws MGXException {
+    public Result<AutoCloseableIterator<Assembly>> bySeqRun(long seqrun_id) {
         if (seqrun_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
 
         try {
@@ -229,7 +252,7 @@ public class AssemblyDAO extends DAO<Assembly> {
             stmt.setLong(1, seqrun_id);
             ResultSet rs = stmt.executeQuery();
 
-            return new DBIterator<Assembly>(rs, stmt, conn) {
+            DBIterator<Assembly> dbIterator = new DBIterator<Assembly>(rs, stmt, conn) {
                 @Override
                 public Assembly convert(ResultSet rs) throws SQLException {
                     Assembly ret = new Assembly();
@@ -241,9 +264,11 @@ public class AssemblyDAO extends DAO<Assembly> {
                     return ret;
                 }
             };
+            return Result.ok(dbIterator);
 
         } catch (SQLException ex) {
-            throw new MGXException(ex);
+            getController().log(ex);
+            return Result.error(ex.getMessage());
         }
     }
 

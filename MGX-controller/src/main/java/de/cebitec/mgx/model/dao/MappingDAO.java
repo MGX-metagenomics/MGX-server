@@ -3,6 +3,7 @@ package de.cebitec.mgx.model.dao;
 import de.cebitec.gpms.util.GPMSManagedDataSourceI;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
+import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.core.TaskI;
 import de.cebitec.mgx.model.db.Mapping;
 import de.cebitec.mgx.util.AutoCloseableIterator;
@@ -35,14 +36,14 @@ public class MappingDAO extends DAO<Mapping> {
 
     @Override
     public long create(Mapping obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setLong(1, obj.getReferenceId());
                 stmt.setLong(2, obj.getSeqRunId());
                 stmt.setLong(3, obj.getJobId());
                 stmt.setString(4, obj.getBAMFile());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -59,16 +60,16 @@ public class MappingDAO extends DAO<Mapping> {
             + "FROM mapping m WHERE m.id=?";
 
     @Override
-    public Mapping getById(final long id) throws MGXException {
+    public Result<Mapping> getById(final long id) {
         if (id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Mapping for ID " + id + ".");
+                        return Result.error("No object of type Mapping for ID " + id + ".");
                     }
                     Mapping m = new Mapping();
                     m.setId(rs.getLong(1));
@@ -76,25 +77,25 @@ public class MappingDAO extends DAO<Mapping> {
                     m.setReferenceId(rs.getLong(3));
                     m.setJobId(rs.getLong(4));
                     m.setBAMFile(rs.getString(5));
-                    return m;
+                    return Result.ok(m);
                 }
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
     }
 
     private final static String FETCHALL = "SELECT m.id, m.run_id, m.ref_id, m.job_id, m.bam_file "
             + "FROM mapping m";
 
-    public AutoCloseableIterator<Mapping> getAll() throws MGXException {
+    public Result<AutoCloseableIterator<Mapping>> getAll() {
         List<Mapping> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(FETCHALL)) {
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
 
                         if (ret == null) {
@@ -113,10 +114,11 @@ public class MappingDAO extends DAO<Mapping> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        ForwardingIterator<Mapping> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
     private final static String SQL_BY_SEQRUN = "SELECT m.id, m.ref_id, m.job_id, m.bam_file "
@@ -124,19 +126,19 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.run_id=s.id) "
             + "WHERE s.id=?";
 
-    public AutoCloseableIterator<Mapping> bySeqRun(final long run_id) throws MGXException {
+    public Result<AutoCloseableIterator<Mapping>> bySeqRun(final long run_id) {
         if (run_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         List<Mapping> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_SEQRUN)) {
                 stmt.setLong(1, run_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type SeqRun for ID " + run_id + ".");
+                        return Result.error("No object of type SeqRun for ID " + run_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -158,10 +160,11 @@ public class MappingDAO extends DAO<Mapping> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        ForwardingIterator<Mapping> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
     private final static String SQL_BY_REFERENCE = "SELECT m.id, m.run_id, m.job_id, m.bam_file "
@@ -169,19 +172,19 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.ref_id=r.id) "
             + "WHERE r.id=?";
 
-    public AutoCloseableIterator<Mapping> byReference(final long ref_id) throws MGXException {
+    public Result<AutoCloseableIterator<Mapping>> byReference(final long ref_id) {
         if (ref_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         List<Mapping> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_REFERENCE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_REFERENCE)) {
                 stmt.setLong(1, ref_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Reference for ID " + ref_id + ".");
+                        return Result.error("No object of type Reference for ID " + ref_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -203,10 +206,11 @@ public class MappingDAO extends DAO<Mapping> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        ForwardingIterator<Mapping> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
     private final static String SQL_BY_JOB = "SELECT m.id, m.run_id, m.ref_id, m.bam_file "
@@ -214,19 +218,19 @@ public class MappingDAO extends DAO<Mapping> {
             + "LEFT JOIN mapping m ON (m.job_id=j.id) "
             + "WHERE j.id=?";
 
-    public AutoCloseableIterator<Mapping> byJob(final long job_id) throws MGXException {
+    public Result<AutoCloseableIterator<Mapping>> byJob(final long job_id) {
         if (job_id <= 0) {
-            throw new MGXException("No/Invalid ID supplied.");
+            return Result.error("No/Invalid ID supplied.");
         }
         List<Mapping> ret = null;
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(SQL_BY_JOB)) {
                 stmt.setLong(1, job_id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
 
                     if (!rs.next()) {
-                        throw new MGXException("No object of type Job for ID " + job_id + ".");
+                        return Result.error("No object of type Job for ID " + job_id + ".");
                     }
                     do {
                         if (rs.getLong(1) != 0) {
@@ -248,15 +252,16 @@ public class MappingDAO extends DAO<Mapping> {
             }
         } catch (SQLException ex) {
             getController().log(ex);
-            throw new MGXException(ex);
+            return Result.error(ex.getMessage());
         }
 
-        return new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        ForwardingIterator<Mapping> iter = new ForwardingIterator<>(ret == null ? null : ret.iterator());
+        return Result.ok(iter);
     }
 
-    public TaskI delete(long id, GPMSManagedDataSourceI ds, String projectName, String jobDir) throws MGXException {
-
-        return new DeleteMapping(id, ds, projectName, jobDir);
+    public Result<TaskI> delete(long id, GPMSManagedDataSourceI ds, String projectName, String jobDir) {
+        DeleteMapping del = new DeleteMapping(id, ds, projectName, jobDir);
+        return Result.ok(del);
     }
 
 }
