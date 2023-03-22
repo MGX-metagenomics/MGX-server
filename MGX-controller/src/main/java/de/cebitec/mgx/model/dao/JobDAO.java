@@ -1136,6 +1136,11 @@ public class JobDAO extends DAO<Job> {
                 .append("jobs")
                 .append(File.separator)
                 .append(job.getId()).toString();
+        
+        Result<String> apikey = createApiKey(job);
+        if (apikey.isError()) {
+            throw new MGXException(apikey.getError());
+        }
 
         try ( BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("mgx.username=" + dbUser);
@@ -1152,7 +1157,7 @@ public class JobDAO extends DAO<Job> {
             cfgFile.newLine();
             cfgFile.write("mgx.projectDir=" + projectDir);
             cfgFile.newLine();
-            cfgFile.write("mgx.apiKey=" + createApiKey(job));
+            cfgFile.write("mgx.apiKey=" + apikey.getValue());
             cfgFile.newLine();
             cfgFile.write("mgx.annotationService=" + annotationService.toASCIIString());
             cfgFile.newLine();
