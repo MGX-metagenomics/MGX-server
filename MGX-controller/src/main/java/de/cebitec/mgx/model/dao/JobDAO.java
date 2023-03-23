@@ -1083,6 +1083,11 @@ public class JobDAO extends DAO<Job> {
 
     public void writeCWLConfigFile(Job job, File projectDir, String projectName, URI annotationService) throws MGXException {
 
+        Result<String> apikey = createApiKey(job);
+        if (apikey.isError()) {
+            throw new MGXException(apikey.getError());
+        }
+
         String jobconfigFile = new StringBuilder(projectDir.getAbsolutePath())
                 .append(File.separator)
                 .append("jobs")
@@ -1093,7 +1098,7 @@ public class JobDAO extends DAO<Job> {
         try ( BufferedWriter cfgFile = new BufferedWriter(new FileWriter(jobconfigFile, false))) {
             cfgFile.write("projectName: " + projectName);
             cfgFile.newLine();
-            cfgFile.write("apiKey: " + createApiKey(job));
+            cfgFile.write("apiKey: " + apikey.getValue());
             cfgFile.newLine();
             cfgFile.write("hostURI: " + annotationService.toASCIIString());
             cfgFile.newLine();
@@ -1136,7 +1141,7 @@ public class JobDAO extends DAO<Job> {
                 .append("jobs")
                 .append(File.separator)
                 .append(job.getId()).toString();
-        
+
         Result<String> apikey = createApiKey(job);
         if (apikey.isError()) {
             throw new MGXException(apikey.getError());
