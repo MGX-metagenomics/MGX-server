@@ -6,12 +6,16 @@
 package de.cebitec.mgx.conveyor;
 
 import de.cebitec.mgx.core.MGXException;
+import java.io.Serial;
 
 /**
  *
  * @author sj
  */
 public class WorkflowException extends MGXException {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public WorkflowException(Throwable cause) {
         super(cause);
@@ -24,5 +28,5 @@ public class WorkflowException extends MGXException {
     public WorkflowException(String msg, Object... args) {
         super(msg, args);
     }
-    
+
 }
