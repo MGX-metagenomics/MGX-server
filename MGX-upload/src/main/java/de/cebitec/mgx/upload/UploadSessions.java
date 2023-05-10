@@ -31,7 +31,7 @@ public class UploadSessions {
 
     @EJB
     MGXConfigurationI mgxconfig;
-    private Map<UUID, UploadReceiverI> sessions = null;
+    private Map<UUID, UploadReceiverI<?>> sessions = null;
     private int uploadTimeout = 60; // seconds
 
     @PostConstruct
@@ -42,12 +42,12 @@ public class UploadSessions {
     @PreDestroy
     public void stop() {
         for (UUID uuid : sessions.keySet()) {
-            UploadReceiverI ur = sessions.remove(uuid);
+            UploadReceiverI<?> ur = sessions.remove(uuid);
             ur.cancel();
         }
     }
 
-    public UUID registerUploadSession(UploadReceiverI recv) throws MGXException {
+    public UUID registerUploadSession(UploadReceiverI<?> recv) throws MGXException {
         if (recv == null) {
             throw new MGXException("Cannot register null session.");
         }
@@ -66,7 +66,7 @@ public class UploadSessions {
 
     //@Asynchronous -- not here
     public void closeSession(UUID uuid) throws MGXException {
-        UploadReceiverI recv = sessions.remove(uuid);
+        UploadReceiverI<?> recv = sessions.remove(uuid);
         if (recv == null) {
             throw new MGXException("No active session for " + uuid);
         }
@@ -75,7 +75,7 @@ public class UploadSessions {
 
     @Asynchronous
     public void cancelSession(UUID uuid) throws MGXException {
-        UploadReceiverI recv = sessions.remove(uuid);
+        UploadReceiverI<?> recv = sessions.remove(uuid);
         if (recv != null) {
             recv.cancel();
         }
@@ -84,8 +84,8 @@ public class UploadSessions {
     @Schedule(hour = "*", minute = "*", second = "0", persistent = false)
     public void timeout(Timer timer) {
         Collection<UUID> toRemove = null;
-        for (Map.Entry<UUID, UploadReceiverI> me : sessions.entrySet()) {
-            UploadReceiverI recv = me.getValue();
+        for (Map.Entry<UUID, UploadReceiverI<?>> me : sessions.entrySet()) {
+            UploadReceiverI<?> recv = me.getValue();
             long sessionIdleTime = (System.currentTimeMillis() - recv.lastAccessed()) / 1000;
             if (sessionIdleTime > uploadTimeout) {
                 Logger.getLogger(UploadSessions.class.getPackage().getName()).log(Level.INFO, "Timeout exceeded ({0} sec), aborting upload session for {1}", new Object[]{uploadTimeout, recv.getProjectName()});

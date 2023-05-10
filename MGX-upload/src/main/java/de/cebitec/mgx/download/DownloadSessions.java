@@ -47,7 +47,7 @@ public class DownloadSessions {
         }
     }
 
-    public UUID registerDownloadSession(DownloadProviderI provider) {
+    public UUID registerDownloadSession(DownloadProviderI<?> provider) {
         UUID uuid = UUID.randomUUID();
         sessions.put(uuid, provider);
         return uuid;

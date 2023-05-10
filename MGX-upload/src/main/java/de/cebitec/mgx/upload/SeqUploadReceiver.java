@@ -133,7 +133,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         // write QC stats
         String prefix = new StringBuilder(projectQCDirectory.getAbsolutePath())
                 .append(File.separator).append(runId).append(".").toString();
-        for (Analyzer a : qcAnalyzers) {
+        for (Analyzer<?> a : qcAnalyzers) {
             Persister.persist(prefix, a);
         }
 
