@@ -5,7 +5,6 @@
  */
 package de.cebitec.mgx.commonwl;
 
-import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.model.db.JobParameter;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.util.ForwardingIterator;
