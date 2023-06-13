@@ -176,13 +176,17 @@ public class ServiceBean {
                 throw new MGXServiceException("Invalid API key.");
             }
 
-            mgx.log("Creating download session for run ID " + seqrun_id);
+            mgx.log("Creating sequence download session for run ID " + seqrun_id);
             Result<File> dbFile = mgx.getSeqRunDAO().getDBFile(seqrun_id);
             if (dbFile.isError()) {
                 throw new MGXServiceException(dbFile.getError());
             }
             provider = new SeqRunDownloadProvider(mgx.getDataSource(),
                     mgx.getProjectName(), dbFile.getValue().getAbsolutePath(), 3_000);
+
+            // submit for async background prefetch
+            executor.execute(provider);
+            
         } catch (SeqStoreException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXServiceException(ex.getMessage());
