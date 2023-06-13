@@ -40,7 +40,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     protected final String projectName;
     private final GPMSManagedDataSourceI dataSource;
-    protected SeqReaderI<? extends DNASequenceI> reader;
+    protected final SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
     protected final static int BASE_PAIR_LIMIT = 2_000_000;
@@ -51,6 +51,9 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
 
     public SeqRunDownloadProvider(GPMSManagedDataSourceI dataSource, String projName, String dbFile, int chunkSize) throws SeqStoreException {
         this(dataSource, projName, dbFile);
+        if (chunkSize <= 0) {
+            throw new SeqStoreException("Invalid chunk size: " + chunkSize);
+        }
         maxSeqsPerChunk = chunkSize;
     }
 
@@ -58,6 +61,9 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         this.projectName = projName;
         this.dataSource = dataSource;
         reader = SeqReaderFactory.<DNASequenceI>getReader(dbFile);
+        if (reader == null) {
+            throw new SeqStoreException("Unable to obtain sequence data reader for file " + dbFile);
+        }
         this.dataSource.subscribe(this);
         lastAccessed = System.currentTimeMillis();
     }
@@ -72,7 +78,6 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         try {
             if (reader != null) {
                 reader.close();
-                reader = null;
             }
         } catch (SeqStoreException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
@@ -86,7 +91,6 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
         try {
             if (reader != null) {
                 reader.close();
-                reader = null;
             }
         } catch (SeqStoreException ex) {
             Logger.getLogger(SeqRunDownloadProvider.class.getName()).log(Level.SEVERE, null, ex);
