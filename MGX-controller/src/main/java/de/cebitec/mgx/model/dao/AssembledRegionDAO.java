@@ -42,7 +42,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
     }
 
     private final static String CREATE = "INSERT INTO gene (start, stop, coverage, type, contig_id) "
-            + "VALUES (?,?,?,?) RETURNING id";
+            + "VALUES (?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(AssembledRegion obj) throws MGXException {
@@ -358,7 +358,7 @@ public class AssembledRegionDAO extends DAO<AssembledRegion> {
 
     public void createCoverage(long geneId, long runId, int coverage) throws MGXException {
         try ( Connection conn = getConnection()) {
-            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_coverage (run_id, gene_id, coverage, type) VALUES (?,?,?)")) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO gene_coverage (run_id, gene_id, coverage) VALUES (?,?,?)")) {
                 stmt.setLong(1, runId);
                 stmt.setLong(2, geneId);
                 stmt.setInt(3, coverage);
