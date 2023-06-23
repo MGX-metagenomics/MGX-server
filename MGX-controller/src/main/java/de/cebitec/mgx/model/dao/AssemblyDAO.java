@@ -1,5 +1,6 @@
 package de.cebitec.mgx.model.dao;
 
+import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGXController;
 import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
@@ -41,14 +42,14 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     @Override
     public long create(Assembly obj) throws MGXException {
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(CREATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getReadsAssembled());
                 stmt.setLong(3, obj.getN50());
                 stmt.setLong(4, obj.getAsmjobId());
 
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         obj.setId(rs.getLong(1));
                     }
@@ -74,8 +75,8 @@ public class AssemblyDAO extends DAO<Assembly> {
         if (obj.getId() == Assembly.INVALID_IDENTIFIER) {
             throw new MGXException("Cannot update object of type Assembly without an ID.");
         }
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(UPDATE)) {
                 stmt.setString(1, obj.getName());
                 stmt.setLong(2, obj.getReadsAssembled());
                 stmt.setLong(3, obj.getN50());
@@ -116,8 +117,8 @@ public class AssemblyDAO extends DAO<Assembly> {
         if (res.isError()) {
             return Result.error(res.getError());
         }
-        
-        try (AutoCloseableIterator<Bin> biter = res.getValue()) {
+
+        try ( AutoCloseableIterator<Bin> biter = res.getValue()) {
             while (biter.hasNext()) {
                 Bin s = biter.next();
                 Result<TaskI> del = getController().getBinDAO().delete(s.getId());
@@ -148,7 +149,6 @@ public class AssemblyDAO extends DAO<Assembly> {
         return Result.ok(t);
     }
 
-    private static final String FETCHALL = "SELECT id, name, reads_assembled, n50, job_id FROM assembly";
     private static final String BY_ID = "SELECT id, name, reads_assembled, n50, job_id FROM assembly WHERE id=?";
 
     @Override
@@ -157,10 +157,10 @@ public class AssemblyDAO extends DAO<Assembly> {
             return Result.error("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_ID)) {
                 stmt.setLong(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Assembly ret = new Assembly();
                         ret.setId(rs.getLong(1));
@@ -180,11 +180,20 @@ public class AssemblyDAO extends DAO<Assembly> {
         return Result.error("No object of type Assembly for ID " + id + ".");
     }
 
+    //
+    // importing an assembly via the REST api takes some time; in order
+    // to avoid showing incomplete data, we only return those assemblies
+    // where the corresponding job is already in 'finished' state
+    //
+    private static final String FETCHALL = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, j.job_state FROM assembly a "
+            + "LEFT JOIN job j ON a.job_id=j.id WHERE j.job_state=?";
+
     public Result<AutoCloseableIterator<Assembly>> getAll() {
 
         try {
             Connection conn = getConnection();
             PreparedStatement stmt = conn.prepareStatement(FETCHALL);
+            stmt.setInt(1, JobState.FINISHED.getValue());
             ResultSet rs = stmt.executeQuery();
 
             DBIterator<Assembly> dbIterator = new DBIterator<Assembly>(rs, stmt, conn) {
@@ -214,10 +223,10 @@ public class AssemblyDAO extends DAO<Assembly> {
             return Result.error("No/Invalid ID supplied.");
         }
 
-        try (Connection conn = getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(BY_JOB_ID)) {
+        try ( Connection conn = getConnection()) {
+            try ( PreparedStatement stmt = conn.prepareStatement(BY_JOB_ID)) {
                 stmt.setLong(1, jobId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try ( ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Assembly ret = new Assembly();
                         ret.setId(rs.getLong(1));
