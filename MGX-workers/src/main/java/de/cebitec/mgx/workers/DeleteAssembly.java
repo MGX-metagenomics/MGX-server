@@ -35,26 +35,53 @@ public final class DeleteAssembly extends TaskI {
 
         try {
             String name = null;
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("SELECT name FROM assembly WHERE id=?")) {
+            long asmJobId = -1;
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("SELECT name, job_id FROM assembly WHERE id=?")) {
                     stmt.setLong(1, id);
-                    try (ResultSet rs = stmt.executeQuery()) {
+                    try ( ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             name = rs.getString(1);
+                            asmJobId = rs.getLong(2);
                         }
                     }
                 }
             }
+            
+            if (asmJobId == -1) {
+                setStatus(TaskI.State.FAILED, "No such assembly.");
+                return;
+            }
+            
             if (name != null) {
                 setStatus(TaskI.State.PROCESSING, "Deleting assembly " + name);
             }
 
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM assembly WHERE id=?")) {
+            // delete the assembly itself
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM assembly WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.execute();
                 }
             }
+
+            //
+            // delete the job (and its parameters) that created this assembly
+            //
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM jobparameter WHERE job_id=?")) {
+                    stmt.setLong(1, asmJobId);
+                    stmt.executeUpdate();
+                }
+            }
+
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
+                    stmt.setLong(1, asmJobId);
+                    stmt.executeUpdate();
+                }
+            }
+
             if (name != null) {
                 setStatus(TaskI.State.FINISHED, name + " deleted");
             }

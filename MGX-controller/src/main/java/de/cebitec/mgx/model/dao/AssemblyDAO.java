@@ -95,7 +95,10 @@ public class AssemblyDAO extends DAO<Assembly> {
 
     public Result<TaskI> delete(long id) {
         List<TaskI> subtasks = new ArrayList<>();
-
+        
+        //
+        // delete all jobs that were used to analyze this assembly
+        //
         Result<AutoCloseableIterator<Job>> jobs = getController().getJobDAO().byAssembly(id);
         if (jobs.isError()) {
             return Result.error(jobs.getError());
