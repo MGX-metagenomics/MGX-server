@@ -32,6 +32,7 @@ public class AssemblyDTOFactory extends DTOConversionBase<Assembly, AssemblyDTO,
                 .setReadsAssembled(h.getReadsAssembled())
                 .setN50(h.getN50())
                 .setJobId(h.getAsmjobId())
+                .setTotalCds(h.getNumCDS())
                 .build();
     }
     
@@ -42,6 +43,8 @@ public class AssemblyDTOFactory extends DTOConversionBase<Assembly, AssemblyDTO,
         h.setAsmjobId(dto.getJobId());
         h.setReadsAssembled(dto.getReadsAssembled());
         h.setN50(dto.getN50());
+        
+        // ignore num cds here
         
         if (dto.getId() != 0) {
             h.setId(dto.getId());

@@ -152,7 +152,9 @@ public class AssemblyDAO extends DAO<Assembly> {
         return Result.ok(t);
     }
 
-    private static final String BY_ID = "SELECT id, name, reads_assembled, n50, job_id FROM assembly WHERE id=?";
+    private static final String BY_ID = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, SUM(b.predicted_cds) FROM assembly a "
+            + "LET JOIN bin b ON (a.id=b.assembly_id) "
+            + "WHERE a.id=? GROUP BY a.id";
 
     @Override
     public Result<Assembly> getById(long id) {
@@ -171,6 +173,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                         ret.setReadsAssembled(rs.getLong(3));
                         ret.setN50(rs.getInt(4));
                         ret.setAsmjobId(rs.getLong(5));
+                        ret.setNumCDS(rs.getInt(6));
                         return Result.ok(ret);
                     }
                 }
@@ -188,8 +191,10 @@ public class AssemblyDAO extends DAO<Assembly> {
     // to avoid showing incomplete data, we only return those assemblies
     // where the corresponding job is already in 'finished' state
     //
-    private static final String FETCHALL = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, j.job_state FROM assembly a "
-            + "LEFT JOIN job j ON a.job_id=j.id WHERE j.job_state=?";
+    private static final String FETCHALL = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, j.job_state, sum(b.predicted_cds) FROM assembly a "
+            + "LEFT JOIN job j ON (a.job_id=j.id) "
+            + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
+            + "WHERE j.job_state=? GROUP BY a.id";
 
     public Result<AutoCloseableIterator<Assembly>> getAll() {
 
@@ -208,6 +213,7 @@ public class AssemblyDAO extends DAO<Assembly> {
                     ret.setReadsAssembled(rs.getLong(3));
                     ret.setN50(rs.getInt(4));
                     ret.setAsmjobId(rs.getLong(5));
+                    ret.setNumCDS(rs.getInt(6));
                     return ret;
                 }
             };

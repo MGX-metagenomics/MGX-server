@@ -15,6 +15,7 @@ public class Assembly extends Identifiable {
     private long reads_assembled;
     private long asmjob_id;
     private long n50;
+    private long total_cds;
 
     public Assembly() {
     }
@@ -50,5 +51,12 @@ public class Assembly extends Identifiable {
     public long getN50() {
         return n50;
     }
-
+    
+    public long getNumCDS() {
+        return total_cds;
+    }
+    
+    public void setNumCDS(long cds) {
+        this.total_cds = cds;
+    }
 }
