@@ -191,10 +191,10 @@ public class AssemblyDAO extends DAO<Assembly> {
     // to avoid showing incomplete data, we only return those assemblies
     // where the corresponding job is already in 'finished' state
     //
-    private static final String FETCHALL = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, j.job_state, sum(b.predicted_cds) FROM assembly a "
+    private static final String FETCHALL = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, sum(b.predicted_cds) FROM assembly a "
             + "LEFT JOIN job j ON (a.job_id=j.id) "
             + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
-            + "WHERE j.job_state=? GROUP BY a.id";
+            + "WHERE j.job_state=? GROUP BY a.id, j.job_state";
 
     public Result<AutoCloseableIterator<Assembly>> getAll() {
 
