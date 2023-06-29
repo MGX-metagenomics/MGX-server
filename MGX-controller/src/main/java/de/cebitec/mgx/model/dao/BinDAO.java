@@ -39,6 +39,14 @@ public class BinDAO extends DAO<Bin> {
 
     @Override
     public long create(Bin obj) throws MGXException {
+
+        //
+        // for the unclassified bin, reset taxonomic assignment
+        //
+        if (obj.getName().toLowerCase().equals("unclassified") || obj.getName().toLowerCase().equals("unbinned")) {
+            obj.setTaxonomy("root");
+        }
+
         try ( Connection conn = getConnection()) {
             try ( PreparedStatement stmt = conn.prepareStatement(CREATE)) {
                 stmt.setString(1, obj.getName());
