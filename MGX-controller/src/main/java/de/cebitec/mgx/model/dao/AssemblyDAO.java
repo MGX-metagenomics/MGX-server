@@ -153,7 +153,7 @@ public class AssemblyDAO extends DAO<Assembly> {
     }
 
     private static final String BY_ID = "SELECT a.id, a.name, a.reads_assembled, a.n50, a.job_id, SUM(b.predicted_cds) FROM assembly a "
-            + "LET JOIN bin b ON (a.id=b.assembly_id) "
+            + "LEFT JOIN bin b ON (a.id=b.assembly_id) "
             + "WHERE a.id=? GROUP BY a.id";
 
     @Override
