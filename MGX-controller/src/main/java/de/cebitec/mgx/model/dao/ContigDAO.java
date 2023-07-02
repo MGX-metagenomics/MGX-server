@@ -210,7 +210,7 @@ public class ContigDAO extends DAO<Contig> {
     }
 
     private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage FROM contig c "
-            + "WHERE c.bin_id=?";
+            + "WHERE c.bin_id=? ORDER BY c.length_bp DESC";
 
     //
     // FIXME get num cds
@@ -222,7 +222,7 @@ public class ContigDAO extends DAO<Contig> {
             PreparedStatement stmt = conn.prepareStatement(BY_BIN);
             stmt.setLong(1, bin_id);
             ResultSet rs = stmt.executeQuery();
-
+            
             DBIterator<Contig> dbIterator = new DBIterator<Contig>(rs, stmt, conn) {
                 @Override
                 public Contig convert(ResultSet rs) throws SQLException {
