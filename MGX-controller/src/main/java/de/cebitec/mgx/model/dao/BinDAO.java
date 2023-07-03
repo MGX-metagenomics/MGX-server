@@ -273,7 +273,7 @@ public class BinDAO extends DAO<Bin> {
         File dir = binFasta.getParentFile();
         if (!dir.exists() && dir.canWrite()) {
             Logger.getLogger(BinDAO.class.getName()).log(Level.SEVERE, "Cannot write to directory {0}", dir.getAbsolutePath());
-            return;
+            throw new MGXException("Cannot write to directory " + dir.getAbsolutePath());
         }
         try {
             FastaSequenceIndexCreator.create(binFasta.toPath(), true);
