@@ -43,7 +43,7 @@ public class SeqRunDownloadProvider implements DownloadProviderI<SequenceDTOList
     protected final SeqReaderI<? extends DNASequenceI> reader;
     protected long lastAccessed;
     protected int maxSeqsPerChunk = 200;
-    protected final static int BASE_PAIR_LIMIT = 2_000_000;
+    protected final static int BASE_PAIR_LIMIT = 3_000_000;
 
     protected volatile MGXException exception = null;
     protected final Lock lock = new ReentrantLock();
