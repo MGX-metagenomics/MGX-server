@@ -182,11 +182,11 @@ public class ServiceBean {
                 throw new MGXServiceException(dbFile.getError());
             }
             provider = new SeqRunDownloadProvider(mgx.getDataSource(),
-                    mgx.getProjectName(), dbFile.getValue().getAbsolutePath(), 3_000);
+                    mgx.getProjectName(), dbFile.getValue().getAbsolutePath(), 10_000);
 
             // submit for async background prefetch
             executor.execute(provider);
-            
+
         } catch (SeqStoreException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXServiceException(ex.getMessage());
