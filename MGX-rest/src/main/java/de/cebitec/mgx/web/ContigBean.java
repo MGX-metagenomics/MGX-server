@@ -16,6 +16,7 @@ import de.cebitec.mgx.dtoadapter.ContigDTOFactory;
 import de.cebitec.mgx.dtoadapter.SequenceDTOFactory;
 import de.cebitec.mgx.model.db.Contig;
 import de.cebitec.mgx.model.db.Sequence;
+import de.cebitec.mgx.sessions.IteratorHolder;
 import de.cebitec.mgx.sessions.TaskHolder;
 import de.cebitec.mgx.util.AutoCloseableIterator;
 import de.cebitec.mgx.web.exception.MGXWebException;
@@ -47,6 +48,12 @@ public class ContigBean {
     MGXController mgx;
     @EJB
     TaskHolder taskHolder;
+    @EJB
+    IteratorHolder iterHolder;
+
+    //
+    private final static int FETCH_LIMIT = 20_000;
+    //
 
     @PUT
     @Path("create")
@@ -97,7 +104,7 @@ public class ContigBean {
         if (all.isError()) {
             throw new MGXWebException(all.getError());
         }
-        return ContigDTOFactory.getInstance().toDTOList(all.getValue());
+        return extractChunk(all.getValue());
     }
 
     @GET
@@ -108,7 +115,69 @@ public class ContigBean {
         if (contigs.isError()) {
             throw new MGXWebException(contigs.getError());
         }
-        return ContigDTOFactory.getInstance().toDTOList(contigs.getValue());
+        return extractChunk(contigs.getValue());
+    }
+
+    //
+    // extracts up to FETCH_LIMIT contigs from the iterator and returns
+    // them; if there are more elements, the iterator is deposited with
+    // the iteratorHolder, and the corresponding session UUID is returned
+    // with the data chunk
+    //
+    // subsequent chunks can then be retrieved via continueSession(uuid)
+    //
+    private ContigDTOList extractChunk(AutoCloseableIterator<Contig> iter) {
+        int cnt = 0;
+        ContigDTOList.Builder b = ContigDTOList.newBuilder();
+        while (iter.hasNext() && cnt < FETCH_LIMIT) {
+            ContigDTO dto = ContigDTOFactory.getInstance().toDTO(iter.next());
+            b.addContig(dto);
+            cnt++;
+        }
+
+        // if fetchlimit has been reached, deposit iterator for later
+        // retrieval via byBinSession(uuid)
+        //
+        if (iter.hasNext()) {
+            UUID uuid = iterHolder.add(iter);
+            b.setComplete(false);
+            b.setUuid(uuid.toString());
+        } else {
+            b.setComplete(true);
+            iter.close();
+        }
+
+        return b.build();
+    }
+
+    @GET
+    @Path("continueSession/{uuid}")
+    @Produces("application/x-protobuf")
+    public ContigDTOList continueSession(@PathParam("uuid") String uuid) {
+        UUID session = UUID.fromString(uuid);
+        AutoCloseableIterator<Contig> iter = iterHolder.get(session);
+        if (iter == null) {
+            throw new MGXWebException("Invalid UUID");
+        }
+
+        int cnt = 0;
+        ContigDTOList.Builder b = ContigDTOList.newBuilder();
+        while (iter.hasNext() && cnt < FETCH_LIMIT) {
+            ContigDTO dto = ContigDTOFactory.getInstance().toDTO(iter.next());
+            b.addContig(dto);
+            cnt++;
+        }
+
+        if (iter.hasNext()) {
+            b.setComplete(false);
+            b.setUuid(session.toString());
+        } else {
+            iterHolder.remove(session);
+            b.setComplete(true);
+            iter.close();
+        }
+
+        return b.build();
     }
 
     @GET
