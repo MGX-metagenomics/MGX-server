@@ -106,9 +106,10 @@ public class ContigDAO extends DAO<Contig> {
 //            throw new MGXException(ex);
 //        }
 //    }
-    private static final String FETCHALL = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig";
-    private static final String BY_ID = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id=?";
-    private static final String BY_IDS = "SELECT id, name, length_bp, gc, coverage, bin_id FROM contig WHERE id IN (";
+    private static final String BY_ID = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, c.bin_id, COUNT(g.contig_id) "
+            + "FROM contig c "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "WHERE id=? GROUP BY c.id";
 
     @Override
     public Result<Contig> getById(long id) {
@@ -128,6 +129,7 @@ public class ContigDAO extends DAO<Contig> {
                         ret.setGC(rs.getFloat(4));
                         ret.setCoverage(rs.getInt(5));
                         ret.setBinId(rs.getLong(6));
+                        ret.setNumberSubregions(rs.getInt(7));
                         return Result.ok(ret);
                     }
                 }
@@ -140,12 +142,16 @@ public class ContigDAO extends DAO<Contig> {
         return Result.error("No object of type Contig for ID " + id + ".");
     }
 
+    private static final String BY_IDS = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, c.bin_id FROM contig c "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "WHERE id IN (";
+
     public Result<AutoCloseableIterator<Contig>> getByIds(long... ids) {
         if (ids == null || ids.length == 0) {
             return Result.error("Null/empty ID list.");
         }
 
-        String query = BY_IDS + toSQLTemplateString(ids.length) + ")";
+        String query = BY_IDS + toSQLTemplateString(ids.length) + ") GROUP BY c.id";
 
         try {
             Connection conn = getConnection();
@@ -169,6 +175,7 @@ public class ContigDAO extends DAO<Contig> {
                     ret.setGC(rs.getFloat(4));
                     ret.setCoverage(rs.getInt(5));
                     ret.setBinId(rs.getLong(6));
+                    ret.setNumberSubregions(rs.getInt(7));
                     return ret;
                 }
             };
@@ -179,6 +186,11 @@ public class ContigDAO extends DAO<Contig> {
             return Result.error(ex.getMessage());
         }
     }
+
+    private static final String FETCHALL = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, c.bin_id, COUNT(g.contig_id) "
+            + "FROM contig c "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "GROUP BY c.id ORDER BY c.length_bp DESC";
 
     public Result<AutoCloseableIterator<Contig>> getAll() {
 
@@ -197,6 +209,7 @@ public class ContigDAO extends DAO<Contig> {
                     ret.setGC(rs.getFloat(4));
                     ret.setCoverage(rs.getInt(5));
                     ret.setBinId(rs.getLong(6));
+                    ret.setNumberSubregions(rs.getInt(7));
                     return ret;
                 }
 
@@ -209,12 +222,11 @@ public class ContigDAO extends DAO<Contig> {
         }
     }
 
-    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage FROM contig c "
-            + "WHERE c.bin_id=? ORDER BY c.length_bp DESC";
+    private static final String BY_BIN = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, COUNT(g.contig_id) "
+            + "FROM contig c "
+            + "LEFT JOIN gene g ON (c.id=g.contig_id) "
+            + "WHERE c.bin_id=? GROUP BY c.id ORDER BY c.length_bp DESC";
 
-    //
-    // FIXME get num cds
-    //
     public Result<AutoCloseableIterator<Contig>> byBin(final long bin_id) {
 
         try {
@@ -222,7 +234,7 @@ public class ContigDAO extends DAO<Contig> {
             PreparedStatement stmt = conn.prepareStatement(BY_BIN);
             stmt.setLong(1, bin_id);
             ResultSet rs = stmt.executeQuery();
-            
+
             DBIterator<Contig> dbIterator = new DBIterator<Contig>(rs, stmt, conn) {
                 @Override
                 public Contig convert(ResultSet rs) throws SQLException {
@@ -232,6 +244,7 @@ public class ContigDAO extends DAO<Contig> {
                     ret.setLength(rs.getInt(3));
                     ret.setGC(rs.getFloat(4));
                     ret.setCoverage(rs.getInt(5));
+                    ret.setNumberSubregions(rs.getInt(6));
                     ret.setBinId(bin_id);
                     return ret;
                 }
@@ -264,6 +277,12 @@ public class ContigDAO extends DAO<Contig> {
 
                     File assemblyDir = new File(getController().getProjectAssemblyDirectory(), String.valueOf(assembly_id));
                     File binFasta = new File(assemblyDir, String.valueOf(bin_id) + ".fna");
+
+                    File fastaIdx = new File(assemblyDir, String.valueOf(bin_id) + ".fna.fai");
+                    if (!fastaIdx.exists()) {
+                        // create index
+                        getController().getBinDAO().indexFASTA(binFasta);
+                    }
                     try ( IndexedFastaSequenceFile ifsf = new IndexedFastaSequenceFile(binFasta)) {
                         ReferenceSequence seq = ifsf.getSequence(contig_name);
 
@@ -277,11 +296,12 @@ public class ContigDAO extends DAO<Contig> {
                     ret.setId(contig_id);
                     ret.setName(contig_name);
                     ret.setSequence(contigSeq);
+                    ret.setLength(contigSeq.length());
 
                     return Result.ok(ret);
                 }
             }
-        } catch (SQLException | IOException ex) {
+        } catch (SQLException | IOException | MGXException ex) {
             getController().log(ex);
             return Result.error(ex.getMessage());
         }
