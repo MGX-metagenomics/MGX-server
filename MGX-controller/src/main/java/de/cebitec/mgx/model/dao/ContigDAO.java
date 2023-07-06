@@ -142,9 +142,10 @@ public class ContigDAO extends DAO<Contig> {
         return Result.error("No object of type Contig for ID " + id + ".");
     }
 
-    private static final String BY_IDS = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, c.bin_id FROM contig c "
+    private static final String BY_IDS = "SELECT c.id, c.name, c.length_bp, c.gc, c.coverage, c.bin_id , COUNT(g.contig_id) "
+            + "FROM contig c "
             + "LEFT JOIN gene g ON (c.id=g.contig_id) "
-            + "WHERE id IN (";
+            + "WHERE c.id IN (";
 
     public Result<AutoCloseableIterator<Contig>> getByIds(long... ids) {
         if (ids == null || ids.length == 0) {
