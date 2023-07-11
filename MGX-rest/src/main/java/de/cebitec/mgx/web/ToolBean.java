@@ -209,8 +209,14 @@ public class ToolBean {
 
         Tool tool = obj.getValue();
 
+        File toolDefinition = new File(tool.getFile());
+        if (!toolDefinition.exists() && toolDefinition.canRead()) {
+            mgx.log("Tool definition " + toolDefinition.getAbsolutePath() + " missing or unreadable.");
+            throw new MGXWebException("Cannot read tool data.");
+        }
+
         try {
-            String toolContent = UnixHelper.readFile(new File(tool.getFile()));
+            String toolContent = UnixHelper.readFile(toolDefinition);
             if (tool.getFile().endsWith("xml")) {
                 return getParams(toolContent);
             } else if (tool.getFile().endsWith("cwl")) {
