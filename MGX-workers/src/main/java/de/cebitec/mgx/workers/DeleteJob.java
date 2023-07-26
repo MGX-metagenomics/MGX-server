@@ -43,15 +43,15 @@ public final class DeleteJob extends TaskI {
             }
 
             setStatus(TaskI.State.PROCESSING, "Deleting observations");
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
                 }
             }
 
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene_observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM gene_observation WHERE attr_id IN (SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
                 }
@@ -59,8 +59,8 @@ public final class DeleteJob extends TaskI {
 
             // delete attributecounts
             setStatus(TaskI.State.PROCESSING, "Deleting attributes");
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM attributecount WHERE attr_id IN "
                         + "(SELECT id FROM attribute WHERE job_id=?)")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
@@ -68,8 +68,8 @@ public final class DeleteJob extends TaskI {
             }
 
             // delete attributes
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM attribute WHERE job_id=?")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
                 }
@@ -77,10 +77,10 @@ public final class DeleteJob extends TaskI {
 
             // delete mappings
             setStatus(TaskI.State.PROCESSING, "Deleting mapping data for job " + id);
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM mapping WHERE job_id=? RETURNING bam_file")) {
                     stmt.setLong(1, id);
-                    try (ResultSet rs = stmt.executeQuery()) {
+                    try ( ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
                             // remove persistent data
                             String bamName = rs.getString(1);
@@ -96,6 +96,10 @@ public final class DeleteJob extends TaskI {
                             if (maxCov.exists()) {
                                 maxCov.delete();
                             }
+                            File refCov = new File(bamName + ".refCov");
+                            if (refCov.exists()) {
+                                refCov.delete();
+                            }
                         }
                     }
                 }
@@ -103,8 +107,8 @@ public final class DeleteJob extends TaskI {
 
             // parameters
             setStatus(TaskI.State.PROCESSING, "Deleting job parameters for job " + id);
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM jobparameter WHERE job_id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM jobparameter WHERE job_id=?")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
                 }
@@ -112,8 +116,8 @@ public final class DeleteJob extends TaskI {
 
             // job
             setStatus(TaskI.State.PROCESSING, "Deleting job " + id);
-            try (Connection conn = getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
+            try ( Connection conn = getConnection()) {
+                try ( PreparedStatement stmt = conn.prepareStatement("DELETE FROM job WHERE id=?")) {
                     stmt.setLong(1, id);
                     stmt.executeUpdate();
                 }
