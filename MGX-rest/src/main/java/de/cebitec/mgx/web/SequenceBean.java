@@ -64,18 +64,6 @@ public class SequenceBean {
     @EJB
     Executor executor;
 
-    @GET
-    @Path("sleep/{duration}")
-    @Secure(rightsNeeded = {MGXRoles.Guest, MGXRoles.User, MGXRoles.Admin})
-    public Response sleep(@PathParam("duration") Long duration) {
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException ex) {
-            mgx.log(ex);
-        }
-        return Response.ok().build();
-    }
-
     /*
      * 
      * Upload interface
