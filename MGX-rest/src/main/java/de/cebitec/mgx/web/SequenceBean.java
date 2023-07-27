@@ -354,6 +354,14 @@ public class SequenceBean {
             b.addLong(iter.next());
             cnt++;
         }
+        
+        //
+        // we transfer at most FETCH_LIMIT sequences in one chunk; if
+        // more data is available, the iterator is deposited within
+        // the iterator holder and a session id is provided to the 
+        // calling client, which can later retrieve the remaining
+        // data.
+        //
 
         if (iter.hasNext()) {
             UUID sessionId = iterHolder.add(iter);
