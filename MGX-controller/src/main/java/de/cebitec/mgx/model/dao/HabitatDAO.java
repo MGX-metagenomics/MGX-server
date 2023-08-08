@@ -33,7 +33,7 @@ public class HabitatDAO extends DAO<Habitat> {
     }
 
     private final static String CREATE = "INSERT INTO habitat (name, biome, description, latitude, longitude) "
-            + "VALUES (?,?,?,?,?,?) RETURNING id";
+            + "VALUES (?,?,?,?,?) RETURNING id";
 
     @Override
     public long create(Habitat obj) throws MGXException {
