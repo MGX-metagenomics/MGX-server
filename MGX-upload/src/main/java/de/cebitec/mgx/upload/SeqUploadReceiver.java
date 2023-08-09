@@ -86,7 +86,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         //
         if (isPairedEnd) {
             if (seqs.getSeqCount() % 2 != 0) {
-                throw new MGXException("Invalid data chunk with unbalanced forward/reverse reads.");
+                throw new MGXException("Invalid data chunk with unbalanced forward/reverse reads, got "+ seqs.getSeqCount() + " sequences in chunk.");
             }
         }
         
