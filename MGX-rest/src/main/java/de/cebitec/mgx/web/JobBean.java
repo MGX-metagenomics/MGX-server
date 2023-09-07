@@ -426,10 +426,12 @@ public class JobBean {
         Tool tool = t.getValue();
 
         try {
-
             //
             // re-create the jobs config file to account for changes, e.g.
             // when the database was moved to a different server
+            //
+            // this also creates a new API key to be used in conjunction with
+            // the REST annotation interface
             //
             if (tool.getFile().endsWith("xml")) {
                 mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
