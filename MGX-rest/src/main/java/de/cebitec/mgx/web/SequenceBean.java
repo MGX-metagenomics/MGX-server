@@ -310,19 +310,19 @@ public class SequenceBean {
         return SequenceDTOFactory.getInstance().toDTO(res.getValue());
     }
 
-    //
-    // this should be @GET, but GF has problems with encoded slashes (%2F)
-    //
-    @PUT
-    @Path("byName/{runId}")
-    @Produces("application/x-protobuf")
-    public SequenceDTO byName(@PathParam("runId") Long runId, MGXString seqName) {
-        Result<Sequence> obj = mgx.getSequenceDAO().byName(runId, seqName.getValue());
-        if (obj.isError()) {
-            throw new MGXWebException(obj.getError());
-        }
-        return SequenceDTOFactory.getInstance().toDTO(obj.getValue());
-    }
+//    //
+//    // this should be @GET, but GF has problems with encoded slashes (%2F)
+//    //
+//    @PUT
+//    @Path("byName/{runId}")
+//    @Produces("application/x-protobuf")
+//    public SequenceDTO byName(@PathParam("runId") Long runId, MGXString seqName) {
+//        Result<Sequence> obj = mgx.getSequenceDAO().byName(runId, seqName.getValue());
+//        if (obj.isError()) {
+//            throw new MGXWebException(obj.getError());
+//        }
+//        return SequenceDTOFactory.getInstance().toDTO(obj.getValue());
+//    }
 
     @PUT
     @Path("fetchByIds")
