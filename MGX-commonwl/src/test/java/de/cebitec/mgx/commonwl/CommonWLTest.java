@@ -72,7 +72,7 @@ public class CommonWLTest {
         }
 
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+        try ( BufferedReader br = new BufferedReader(new FileReader(f))) {
             String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
@@ -93,6 +93,40 @@ public class CommonWLTest {
             cnt++;
         }
         assertEquals(1, cnt);
+    }
+
+    @Test
+    public void testGetParametersMTPipeline() {
+        System.out.println("testGetParametersMTPipeline");
+
+        File f = new File("src/main/resources/metat.cwl");
+
+        if (!f.exists() && f.canRead()) {
+            fail("File " + f.getAbsolutePath() + " missing or unreadable.");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try ( BufferedReader br = new BufferedReader(new FileReader(f))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+            }
+        } catch (IOException ex) {
+            fail(ex.getMessage());
+        }
+        String workflowContent = sb.toString();
+        AutoCloseableIterator<JobParameter> result = CommonWL.getParameters(workflowContent);
+        int cnt = 0;
+        while (result.hasNext()) {
+            JobParameter jp = result.next();
+            System.out.println(jp.getClassName());
+            System.out.println(jp.getUserName());
+            System.out.println(jp.getUserDescription());
+            System.out.println(jp.getDisplayName());
+            cnt++;
+        }
+        assertEquals(1, cnt); // 
     }
 
 }
