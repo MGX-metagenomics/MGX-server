@@ -240,6 +240,12 @@ public class ServiceBean {
             throw new MGXServiceException(res.getError());
         }
         Job asmJob = res.getValue();
+        
+        // disallow creating more than one assembly by job
+        Result<Assembly> byJob = mgx.getAssemblyDAO().byJob(res.getValue().getId());
+        if (!byJob.isError()) {
+            throw new MGXServiceException("An assembly for this job already exists.");
+        }
 
         Assembly x = AssemblyDTOFactory.getInstance().toDB(dto);
         x.setAsmjobId(asmJob.getId());
