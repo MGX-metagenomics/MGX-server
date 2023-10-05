@@ -10,6 +10,7 @@ import de.cebitec.mgx.qc.Analyzer;
 import de.cebitec.mgx.seqcompression.SequenceException;
 import de.cebitec.mgx.sequence.DNASequenceI;
 import de.cebitec.mgx.sequence.SeqWriterI;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -107,7 +108,7 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
             }
 
             writer.close();
-        } catch (Exception ex) {
+        } catch (SequenceException | IOException ex) {
             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             error = ex;
         }
