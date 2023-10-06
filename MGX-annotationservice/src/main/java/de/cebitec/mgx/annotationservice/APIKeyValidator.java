@@ -8,16 +8,13 @@ package de.cebitec.mgx.annotationservice;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.cebitec.mgx.annotationservice.exception.MGXServiceException;
-import de.cebitec.mgx.common.JobState;
 import de.cebitec.mgx.controller.MGX;
 import de.cebitec.mgx.controller.MGXController;
-import de.cebitec.mgx.core.MGXException;
 import de.cebitec.mgx.core.Result;
 import de.cebitec.mgx.model.db.Job;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Response;
@@ -64,7 +61,7 @@ public class APIKeyValidator implements ContainerRequestFilter {
         String apiKey = cr.getHeaders().getFirst("apiKey");
 
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new WebApplicationException("No API key provided.", Response.Status.UNAUTHORIZED);
+            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "No API key provided.");
         }
 
         CacheKey key = new CacheKey(apiKey, mgx.getProjectName());
@@ -90,11 +87,14 @@ public class APIKeyValidator implements ContainerRequestFilter {
         // during Conveyor workflow execution, a job starts with QUEUED state and is 
         // then updated to RUNNING
         //
-        JobState status = job.getStatus();
-        if (!(status == JobState.CREATED || status == JobState.QUEUED || status == JobState.RUNNING)) {
-            LOG.log(Level.SEVERE, "Denied API access due to invalid job state {0} for job {1}", new Object[]{status.toString(), job.getId()});
-            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
-        }
+        //
+        // FAILED does not need to pass here, since it gets reset to CREATED
+        // state in JobBean#restart(jobId) before submitting to the dispatcher
+//        JobState status = job.getStatus();
+//        if (!(status == JobState.CREATED || status == JobState.QUEUED || status == JobState.RUNNING || status == JobState.ABORTED)) {
+//            LOG.log(Level.SEVERE, "Denied API access due to invalid job state {0} for job {1}", new Object[]{status.toString(), job.getId()});
+//            throw new MGXServiceException(Response.Status.UNAUTHORIZED, "Invalid job state: " + status.toString());
+//        }
 
         cache.put(key, Boolean.TRUE);
 

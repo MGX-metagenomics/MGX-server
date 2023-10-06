@@ -63,7 +63,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.1.1-jre</version>
+            <version>32.1.2-jre</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
-            <version>3.0.5</version>
+            <version>4.0.1</version>
         </dependency>
         <dependency>
             <groupId>de.cebitec.mgx</groupId>

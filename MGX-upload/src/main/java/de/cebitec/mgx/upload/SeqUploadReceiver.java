@@ -38,6 +38,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
 
     protected final String projectName;
     protected final long runId;
+    protected final boolean isPairedEnd;
     protected GPMSManagedDataSourceI dataSource;
     protected final File projectDirectory;
     protected final File projectQCDirectory;
@@ -53,6 +54,7 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
     public SeqUploadReceiver(Executor executor, File projectDir, File projectQCDir, GPMSManagedDataSourceI dataSource, String projName, long run_id, boolean hasQuality, boolean isPaired) throws MGXException {
         this.projectName = projName;
         this.runId = run_id;
+        this.isPairedEnd = isPaired;
         this.projectDirectory = projectDir;
         this.projectQCDirectory = projectQCDir;
         this.dataSource = dataSource;
@@ -78,6 +80,16 @@ public class SeqUploadReceiver<T extends DNASequenceI> implements UploadReceiver
         //
         throwIfError();
         //
+        
+        //
+        // for paired-end data, each chunk has to contain an even number of sequences
+        //
+        if (isPairedEnd) {
+            if (seqs.getSeqCount() % 2 != 0) {
+                throw new MGXException("Invalid data chunk with unbalanced forward/reverse reads, got "+ seqs.getSeqCount() + " sequences in chunk.");
+            }
+        }
+        
         try {
             for (SequenceDTO s : seqs.getSeqList()) {
                 if (s.getName().length() > 255) {

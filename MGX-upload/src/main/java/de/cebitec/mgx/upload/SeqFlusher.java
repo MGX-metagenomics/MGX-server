@@ -71,7 +71,29 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                 T seq2 = null;
                 while (!(mayTerminate && in.isEmpty())) {
 
-                    while (seq1 == null || seq2 == null) {
+                    if (!mayTerminate) {
+                        //
+                        // we're still up and running, poll queue for new data
+                        //
+                        while (seq1 == null || seq2 == null) {
+                            try {
+                                if (seq1 == null) {
+                                    seq1 = in.poll(500, TimeUnit.MILLISECONDS);
+                                }
+                                if (seq2 == null) {
+                                    seq2 = in.poll(500, TimeUnit.MILLISECONDS);
+                                }
+
+                            } catch (InterruptedException ex) {
+                                error = ex;
+                                Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    } else {
+                        //
+                        // we terminate, and no new data will be added to the input queue, flush 
+                        // anything left
+                        //
                         try {
                             if (seq1 == null) {
                                 seq1 = in.poll(500, TimeUnit.MILLISECONDS);
@@ -80,15 +102,21 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
                                 seq2 = in.poll(500, TimeUnit.MILLISECONDS);
                             }
                         } catch (InterruptedException ex) {
+                            error = ex;
                             Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
                         }
+                    }
+                    
+                    if (seq1 == null || seq2 == null) {
+                        error = new RuntimeException("Unbalanced fwd/rev reads.");
+                        return;
                     }
 
                     processPair(seq1, seq2);
                     seq1 = null;
                     seq2 = null;
                 }
-            } else {
+            } else { // single-end data
                 T seq = null;
                 while (!(mayTerminate && in.isEmpty())) {
                     try {
@@ -234,20 +262,24 @@ public class SeqFlusher<T extends DNASequenceI> implements Runnable {
 
     public void complete() throws Exception {
         mayTerminate = true;
+        Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, "Closing upload with {0} elements held, {1} remaining in queue.", new Object[]{holder.size(), in.size()});
         try {
-            allDone.await();
+            allDone.await(2, TimeUnit.MINUTES);
         } catch (InterruptedException ex) {
+            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
             Throwable inner = ex;
             while (inner.getCause() != null) {
                 inner = inner.getCause();
                 Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, inner.getMessage());
             }
-            Logger.getLogger(SeqFlusher.class.getName()).log(Level.SEVERE, null, ex);
+            error = ex;
         }
+
+        dataSource.close(this);
+
         if (error()) {
             throw getError();
         }
-        dataSource.close(this);
     }
 
     public boolean error() {

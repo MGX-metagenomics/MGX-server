@@ -13,7 +13,6 @@ import jakarta.ejb.Stateless;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
@@ -34,6 +33,10 @@ public class JobSubmitterImpl implements JobSubmitterI {
     //
     // GPMS project class for MGX 2.x projects
     private final static String MGX_PROJECT_CLASS = "MGX-2";
+    //
+    public final static String URI_BASE = "/MGX-dispatcher-web/webresources/Job/";
+    public final static int DEFAULT_DISPATCHER_PORT = 4444;
+
 
     @Override
     public void shutdown(Host dispatcherHost, String token) throws MGXDispatcherException {
