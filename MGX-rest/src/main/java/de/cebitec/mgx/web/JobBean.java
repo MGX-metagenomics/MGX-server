@@ -164,7 +164,7 @@ public class JobBean {
         return MGXLong.newBuilder().setValue(jobId).build();
     }
 
-    public long createJob(Job j) {
+    private long createJob(Job j) {
 
         if ((j.getSeqrunIds() == null || j.getSeqrunIds().length == 0) && j.getAssemblyId() == Identifiable.INVALID_IDENTIFIER) {
             throw new MGXWebException("Job object does not reference sequencing runs or assemblies.");
@@ -419,49 +419,41 @@ public class JobBean {
             throw new MGXWebException("Job is in invalid state.");
         }
 
-        Result<Tool> t = mgx.getToolDAO().getById(job.getToolId());
-        if (t.isError()) {
-            throw new MGXWebException(t.getError());
-        }
-        Tool tool = t.getValue();
-
+        //
+        // reset job state to CREATED, so it can pass the APIKeyValidator
+        // state checks
         try {
-
-            //
-            // re-create the jobs config file to account for changes, e.g.
-            // when the database was moved to a different server
-            //
-            if (tool.getFile().endsWith("xml")) {
-                mgx.getJobDAO().writeConveyorConfigFile(job, mgxconfig.getAnnotationService(),
-                        mgx.getProjectName(),
-                        mgx.getProjectDirectory(), mgxconfig.getMGXUser(), mgxconfig.getMGXPassword(),
-                        mgx.getDatabaseName(), mgx.getDatabaseHost(), mgx.getDatabasePort());
-            } else if (tool.getFile().endsWith("cwl")) {
-                // as the stored job parameters do not have a class name, we
-                // need to fetch these from the workflow and update the params
-                String toolContent = UnixHelper.readFile(new File(tool.getFile()));
-                AutoCloseableIterator<JobParameter> params = CommonWL.getParameters(toolContent);
-                Map<String, JobParameter> tmp = new HashMap<>();
-                while (params.hasNext()) {
-                    JobParameter jp = params.next();
-                    tmp.put(jp.getUserName(), jp);
-                }
-                for (JobParameter jp : job.getParameters()) {
-                    jp.setClassName(tmp.get(jp.getUserName()).getClassName());
-                }
-                mgx.getJobDAO().writeCWLConfigFile(job, mgx.getProjectDirectory(), mgx.getProjectName(), mgxconfig.getAnnotationService());
-            } else {
-                throw new MGXWebException("Unable to determine workflow type.");
-            }
-
+            job.setStatus(JobState.CREATED);
+            mgx.getJobDAO().update(job);
+        } catch (MGXException ex) {
+            throw new MGXWebException(ex.getMessage());
+        }
+        
+        //
+        // Do NOT recreate the job configuration file here; restarting
+        // a job means it is resubmitted with the same set of user-supplied
+        // parameters specified initially.
+        //
+        // If we create a new configuration file, this always means we have
+        // to create a new API key (since the project database only stores
+        // hashed versions of it). This, however, would also imply changes
+        // in the command line(s) invoked by workflows, e.g. the initial
+        // seqrunfetcher step of CWL workflows. Thus, these steps would
+        // need to be re-executed, thereby effectively resulting in re-execution
+        // of the complete workflow.
+        //
+        // if this is not what you want, the failed job should be deleted
+        // and a new one created instead.
+        //
+        
+        try {
             TaskI task = mgx.getJobDAO().restart(job, dispConfig.getDispatcherHost(), mgx.getDataSource(), mgx.getProjectName(), js);
             UUID taskId = taskHolder.addTask(task);
             return MGXString.newBuilder().setValue(taskId.toString()).build();
-        } catch (MGXException | MGXDispatcherException | IOException ex) {
+        } catch (MGXDispatcherException | IOException ex) {
             mgx.log(ex.getMessage());
             throw new MGXWebException(ex.getMessage());
         }
-
     }
 
     @GET
