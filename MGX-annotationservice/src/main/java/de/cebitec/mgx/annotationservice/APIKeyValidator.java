@@ -73,10 +73,12 @@ public class APIKeyValidator implements ContainerRequestFilter {
         // cache miss, obtain data from projects DB
         Result<Job> res = mgx.getJobDAO().getByApiKey(apiKey);
         if (res.isError()) {
+            LOG.log(Level.INFO, res.getError());
             throw new MGXServiceException(res.getError());
         }
         Job job = res.getValue();
         if (job == null) {
+            LOG.log(Level.INFO, "Rejecting unknown API key {0} for project {1}", new Object[]{apiKey, mgx.getProjectName()});
             throw new MGXServiceException(Response.Status.UNAUTHORIZED, "API key not valid");
         }
 
