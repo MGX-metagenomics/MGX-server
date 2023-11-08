@@ -50,10 +50,6 @@ public class MGXGlobal {
         }
     }
 
-    public DataSource getDataSource() {
-        return globalDS;
-    }
-
     Connection getConnection() throws SQLException {
         return globalDS.getConnection();
     }
